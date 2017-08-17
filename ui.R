@@ -274,6 +274,8 @@ tabPanel("Impute",
           tabPanel("Approximate",                       
                    h4("Approximate the model:"),
                    h4("Create a parsimonious model with an equivalent level of prediction as the \"Full Model\" ."  ),
+                   uiOutput("MIForAprx"),
+                   h5("If you answered yes, click 'No' and 'Yes' to #2 in the 'Model builder' tab to clear old data and load new data."  ),
                    plotOutput("approximate_plot"),                  #Creates a new panel named "Summary"
                    br(),
                    h5("Proportion of \"Full Model\" R2 remaining after deletion of each predictor. Select a stopping rule that makes approximation inadequate (e.g., 0.95)."),

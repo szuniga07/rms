@@ -348,6 +348,11 @@ shinyServer(
     
         
     ########### Model approximation section ###########        
+    output$MIForAprx <- renderUI({  
+      selectInput("MI_for_aprx", "1. Did you do Multiple Imputation?", 
+                  choices = c("No", "Yes"), multiple=FALSE, selected="No")     
+    })
+    
     ## Reactive functions for model approximation ##
     #1. Get yhat values
     #Function that creates data frame for approximation
@@ -357,18 +362,27 @@ shinyServer(
           colnames(df)[1] <-  y
           return(df)
         }
-    #Runs the above function
-#        apprx_df <- reactive({
-#          apprx_df_fnc(adf=df(), x=predictor(), y=input$variableY, fit=fit1())
-#        })
-    apprx_df <- reactive({
-      if (input$MIbegin == "Yes") {
-        apprx_df_fnc(adf=new_imputed.si(), x=predictor(), y=input$variableY, fit=fit.si())
-      } else {
-        apprx_df_fnc(adf=df(), x=predictor(), y=input$variableY, fit=fit1())
-      }
-    })
-    
+
+        #Runs the above function
+        apprx_df <- reactive({
+          
+          if (input$MI_for_aprx == "No") {
+            
+            if (input$begin_mdl == "Yes") {
+              apprx_df_fnc(adf=df(), x=predictor(), y=input$variableY, fit=fit1())
+            }
+          }
+          
+          if (input$MI_for_aprx == "Yes") {
+            
+            if (input$MIbegin == "Yes") {
+              #input$begin_mdl == "No"
+              apprx_df_fnc(adf=new_imputed.si(), x=predictor(), y=input$variableY, fit=fit.si())
+
+            }
+          }
+          
+        })
             
         #Creates a formula for the model approximation
         aprx_mdl_fmla <- reactive({             #Spline terms 

@@ -338,14 +338,15 @@ tabPanel("Impute",
           tabPanel("Calibration",
                    fluidRow(
                    column(3, 
-                   uiOutput("calibrate_type")
+                   uiOutput("calibrate_type"),
+                   uiOutput("MIForCali")
                    ),  
                    column(3, offset=1,
-                   uiOutput("calibrate_B_arg_n")
-                   ),
-                   column(3, offset=1,
+                   uiOutput("calibrate_B_arg_n"),
                    uiOutput("BeginCalibrate")
                    )),
+                   h6("Note: Confirm the single imputed or original dataframe is loaded in the 'Model builder' tab, depending on your purpose."),
+                   br(),
                    h4("Model calibration (e.g, bootstrapped, cross-validated--repeated 100 times)"),
                    h4("The reliability of a model, meaning the ability of the model to predict future observations as well as it appeared to predict the responses at hand."),
                    plotOutput("cali_brate")
@@ -354,14 +355,15 @@ tabPanel("Impute",
           tabPanel("Validation", 
                    fluidRow(
                      column(3, 
-                            uiOutput("validate_type")
+                            uiOutput("validate_type"),
+                            uiOutput("MIForVali")
                      ),  
                      column(3, offset=1,
-                            uiOutput("validate_B_arg_n")
-                     ),
-                     column(3, offset=1,
+                            uiOutput("validate_B_arg_n"),
                             uiOutput("BeginValidate")
                      )),
+                   h6("Note: Confirm the single imputed or original dataframe is loaded in the 'Model builder' tab, depending on your purpose."),
+                   br(),
                    h4("Calibration and discrimination indexes (from bootstrapped methods, cross-validated--100 repeats)"),
                    h4("The worth of a model can be judged by how far it goes out on a limb while 
                       still maintaining good calibration. If one model assigns .02 of 

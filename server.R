@@ -895,15 +895,21 @@ output$calibrate_B_arg_n <- renderUI({
   numericInput("cali_B_n", "2. Crossvalidation k-folds or Bootstrap #", value = 10, min=2)
 })
 
+#Asks if you did multiple imputation.
+output$MIForCali <- renderUI({  
+  selectInput("MI_for_cali", "3. Did you do Multiple Imputation?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")     #Will make choices based on my reactive function.
+})
+
 #Determine if we should begin the calibration.
 output$BeginCalibrate <- renderUI({  
-  selectInput("begin_cali", "3. Begin calibration?", 
+  selectInput("begin_cali", "4. Begin calibration?", 
               choices = c("No", "Yes"), multiple=FALSE, selected="No")     #Will make choices based on my reactive function.
 })
 
 #This creates a calibration curve    
 output$cali_brate <- renderPlot({
-  if (input$MIbegin == "No") {
+  if (input$MI_for_cali == "No") {
     
   if (input$begin_cali == "Yes") {
   values$md_y <- median(as.numeric(df()[, input$variableY], na.rm=TRUE))
@@ -922,9 +928,9 @@ output$cali_brate <- renderPlot({
     plot(calibrate(fit1(),  u=values$mn_y, method="randomization", B=input$cali_B_n), subtitles=TRUE)
   }
   }
-  }
+  } 
   ######
-  if (input$MIbegin == "Yes") {
+  if (input$MI_for_cali == "Yes") {
     
     if (input$begin_cali == "Yes") {
       values$md_y <- median(as.numeric(new_imputed.si()[, input$variableY], na.rm=TRUE))
@@ -960,6 +966,12 @@ output$validate_B_arg_n <- renderUI({
   numericInput("vali_B_n", "2. Crossvalidation k-folds or Bootstrap #", value = 10, min=2)
 })
 
+#Asks if you did multiple imputation.
+output$MIForVali <- renderUI({  
+  selectInput("MI_for_vali", "3. Did you do Multiple Imputation?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")     #Will make choices based on my reactive function.
+})
+
 #Determine if we should begin the calibration.
 output$BeginValidate <- renderUI({  
   selectInput("begin_vali", "3. Begin validation?", 
@@ -967,42 +979,42 @@ output$BeginValidate <- renderUI({
 })
 
 output$vali_date <- renderPrint({
-  if (input$MIbegin == "No") {
+  if (input$MI_for_vali == "No") {
     
-  if (input$begin_vali == "Yes") {
-    set.seed(1)
-  if (input$valiType == "boot") {
-    print(validate(fit1(), B=input$vali_B_n, method="boot", bw=TRUE), digits=3, B=50)
-  }
-  if (input$valiType == "crossvalidation") {
-    print(validate(fit1(), B=input$vali_B_n, method="crossvalidation"), digits=3)
-  }
-  if (input$valiType == ".632") {
-    print(validate(fit1(),  method=".632", B=input$vali_B_n), digits=3)
-  }
-  if (input$valiType == "randomization") {
-    print(validate(fit1(),  method="randomization", B=input$vali_B_n), digits=3)
-  }
-  }
+    if (input$begin_vali == "Yes") {
+      set.seed(1)
+      if (input$valiType == "boot") {
+        print(validate(fit1(), B=input$vali_B_n, method="boot", bw=TRUE), digits=3, B=50)
+      }
+      if (input$valiType == "crossvalidation") {
+        print(validate(fit1(), B=input$vali_B_n, method="crossvalidation"), digits=3)
+      }
+      if (input$valiType == ".632") {
+        print(validate(fit1(),  method=".632", B=input$vali_B_n), digits=3)
+      }
+      if (input$valiType == "randomization") {
+        print(validate(fit1(),  method="randomization", B=input$vali_B_n), digits=3)
+      }
+    }
   }
   ##########
-    if (input$MIbegin == "Yes") {
-      
-      if (input$begin_vali == "Yes") {
-        set.seed(1)
-        if (input$valiType == "boot") {
-          print(validate(fit.si(), B=input$vali_B_n, method="boot", bw=TRUE), digits=3, B=50)
-        }
-        if (input$valiType == "crossvalidation") {
-          print(validate(fit.si(), B=input$vali_B_n, method="crossvalidation"), digits=3)
-        }
-        if (input$valiType == ".632") {
-          print(validate(fit.si(),  method=".632", B=input$vali_B_n), digits=3)
-        }
-        if (input$valiType == "randomization") {
-          print(validate(fit.si(),  method="randomization", B=input$vali_B_n), digits=3)
-        }
+  if (input$MI_for_vali == "Yes") {
+    
+    if (input$begin_vali == "Yes") {
+      set.seed(1)
+      if (input$valiType == "boot") {
+        print(validate(fit.si(), B=input$vali_B_n, method="boot", bw=TRUE), digits=3, B=50)
       }
+      if (input$valiType == "crossvalidation") {
+        print(validate(fit.si(), B=input$vali_B_n, method="crossvalidation"), digits=3)
+      }
+      if (input$valiType == ".632") {
+        print(validate(fit.si(),  method=".632", B=input$vali_B_n), digits=3)
+      }
+      if (input$valiType == "randomization") {
+        print(validate(fit.si(),  method="randomization", B=input$vali_B_n), digits=3)
+      }
+    }
   }
 })
 

@@ -275,7 +275,7 @@ tabPanel("Impute",
                    h4("Approximate the model:"),
                    h4("Create a parsimonious model with an equivalent level of prediction as the \"Full Model\" ."  ),
                    uiOutput("MIForAprx"),
-                   h5("If you answered yes, click 'No' and 'Yes' to #2 in the 'Model builder' tab to clear old data and load new data."  ),
+                   h5("If you will answer \"Yes\", also click \"Yes\" to #2 in the 'Model builder' tab before imputing and approximating if you want to compare the imputed/non-imputed results."  ),
                    plotOutput("approximate_plot"),                  #Creates a new panel named "Summary"
                    br(),
                    h5("Proportion of \"Full Model\" R2 remaining after deletion of each predictor. Select a stopping rule that makes approximation inadequate (e.g., 0.95)."),
@@ -446,7 +446,7 @@ tabPanel("Cutoff plot",
 
 tabPanel("Cobweb plot",                                #Creates a new panel named "Test Plot"
          fluidRow(                           #Wrapping them in a fluidRow provides easy control over  
-           h4("Cobeweb plot of best 5% of predicted outcome scores (\"best\" can be top or bottom values.)"),
+           h4("Cobeweb plot of best 1% or 5% of predicted outcome scores (\"best\" can be top or bottom values.)"),
            h5("Shows responses of predictors with best predicted outcome values. Narrower spread indicates greater predictor importance."),
            h6("Note: Requires at least 2 predictors, 1 of which needs to be continuous. If not, produces error message."),
            uiOutput("top_bottom_5"),

@@ -356,48 +356,73 @@ shinyServer(
     ## Reactive functions for model approximation ##
     #1. Get yhat values
     #Function that creates data frame for approximation
-        apprx_df_fnc <- function(adf, x, y, fit) {
-          adf <- adf[complete.cases(adf[, c(y, x)]),] #Added y in case there are NAs for the outcome
-          df <- data.frame(predict(fit)[!is.na(predict(fit))], adf[, x, drop=FALSE]) #drop=FALSE allows me to have 1 variable and keep the column name
-          colnames(df)[1] <-  y
-          return(df)
+    apprx_df_fnc <- function(adf, x, y, fit) {
+      adf <- adf[complete.cases(adf[, c(y, x)]),] #Added y in case there are NAs for the outcome
+      df <- data.frame(predict(fit)[!is.na(predict(fit))], adf[, x, drop=FALSE]) #drop=FALSE allows me to have 1 variable and keep the column name
+      colnames(df)[1] <-  y
+      return(df)
+    }
+    
+    #Runs the above function
+    apprx_df_og <- reactive({
+      if (input$MI_for_aprx == "No") {
+        apprx_df_fnc(adf=df(), x=predictor(), y=input$variableY, fit=fit1())
+      }
+    })
+    
+    apprx_df_si <- reactive({
+      if (input$MI_for_aprx == "Yes") {
+        apprx_df_fnc(adf=new_imputed.si(), x=predictor(), y=input$variableY, fit=fit.si())
+      }
+    })
+    
+    #Creates a formula for the model approximation
+    aprx_mdl_fmla <- reactive({             #Spline terms 
+      as.formula(paste(paste0(input$variableY , "~"),   
+                       paste(mdl_vnms(), collapse= "+")))
+    })
+    
+    #Runs the approximated model using the linear predictor as the outcome
+    apprx_fit1 <- reactive({
+      
+      if (input$MI_for_aprx == "No") {
+        
+        if(input$updy == "Yes") {
+          ols(as.formula(input$up_fmla), sigma=1, data=apprx_df_og()) 
+        } else {
+          ols(mdl_fmla(), sigma=1, data=apprx_df_og()) 
         }
-
-        #Runs the above function
-        apprx_df <- reactive({
-          
-          if (input$MI_for_aprx == "No") {
-            
-            if (input$begin_mdl == "Yes") {
-              apprx_df_fnc(adf=df(), x=predictor(), y=input$variableY, fit=fit1())
-            }
-          }
-          
-          if (input$MI_for_aprx == "Yes") {
-            
-            if (input$MIbegin == "Yes") {
-              #input$begin_mdl == "No"
-              apprx_df_fnc(adf=new_imputed.si(), x=predictor(), y=input$variableY, fit=fit.si())
-
-            }
-          }
-          
-        })
-            
-        #Creates a formula for the model approximation
-        aprx_mdl_fmla <- reactive({             #Spline terms 
-          as.formula(paste(paste0(input$variableY , "~"),   
-                           paste(mdl_vnms(), collapse= "+")))
-        })
         
-        #Runs the approximated model using the linear predictor as the outcome
-        apprx_fit1 <- reactive({
-          if(input$updy == "Yes") {
-              ols(as.formula(input$up_fmla), sigma=1, data=apprx_df()) 
-            } else {
-              ols(mdl_fmla(), sigma=1, data=apprx_df())}
-  })
+      }
+      
+#      if (input$MI_for_aprx == "Yes") {
         
+#        if(input$updy == "Yes") {
+#          ols(as.formula(input$up_fmla), sigma=1, data=apprx_df_si()) 
+#        } else {
+#          ols(mdl_fmla(), sigma=1, data=apprx_df_si())
+#        }
+        
+#      }
+      
+    })
+    
+    #Single imputed data
+    apprx_fit1_si <- reactive({
+      
+            if (input$MI_for_aprx == "Yes") {
+      
+              if(input$updy == "Yes") {
+                ols(as.formula(input$up_fmla), sigma=1, data=apprx_df_si()) 
+              } else {
+                ols(mdl_fmla(), sigma=1, data=apprx_df_si())
+              }
+      
+            }
+      
+    })
+    
+    
         #Function that approximates the models between the actual and approximated predicted scores  
         ############        
         aprx_mdl_fnc <- function(a, f, lp) {
@@ -424,7 +449,12 @@ shinyServer(
         
         #Runs the aprx_mdl_fnc function above        
         apx_mdl <- reactive({
-          aprx_mdl_fnc(a=apprx_fit1(), f=fit1(), lp=predict(fit1()))
+          if (input$MI_for_aprx == "No") {
+            aprx_mdl_fnc(a=apprx_fit1(), f=fit1(), lp=predict(fit1()))
+          } else {
+            aprx_mdl_fnc(a=apprx_fit1_si(), f=fit.si(), lp=predict(fit.si()))
+          }
+          
         })
         
         #Function that plots the model approximation
@@ -482,11 +512,24 @@ shinyServer(
         
         #Runs the approximated model using the linear predictor as the outcome
         apprx_fit2 <- reactive({
+          if (input$MI_for_aprx == "Yes") {
+          
           if(input$AprxMdlYes == "Yes") {
-            ols(as.formula(input$aprx_up_fmla), sigma=1, data=apprx_df()) 
+            ols(as.formula(input$aprx_up_fmla), sigma=1, data=apprx_df_si()) 
           } else {
-            ols(as.formula(input$up_fmla), sigma=1, data=apprx_df())
+            ols(as.formula(input$up_fmla), sigma=1, data=apprx_df_si())
+          }  
+            
+          }  
+          else {
+            if(input$AprxMdlYes == "Yes") {
+              ols(as.formula(input$aprx_up_fmla), sigma=1, data=apprx_df_og()) 
+            } else {
+              ols(as.formula(input$up_fmla), sigma=1, data=apprx_df_og())
+            }
+            
           }
+          
         })
         
         #Output of the approximated model
@@ -1500,13 +1543,20 @@ mc_df_y2 <- reactive({
 cobweb_fnc <- function(df) {
   plot(1:ncol(df), seq(1, 100, length.out = ncol(df)), type="n",
        axes=F, xlab="Predictors", ylab="Percentiles")
-  if (input$topbottom == "Top 5%")  {
-    apply(df[df[, 1] < 96,], 1, lines, col="gray")
-    apply(df[df[, 1] >= 96,], 1, lines, col="red")
-  } else {
-    apply(df[df[, 1] >= 6,], 1, lines, col="gray")
+  apply(df[df[, 1] >= 1,], 1, lines, col="gray")
+  if ("Top 5%" %in% input$topbottom)  {
+    apply(df[df[, 1] >= 96,], 1, lines, col=colors()[505])
+  } 
+  if ("Bottom 5%" %in% input$topbottom )  {
     apply(df[df[, 1] < 6,], 1, lines, col="blue")
   }
+  if ("Top 1%" %in% input$topbottom)  {
+    apply(df[df[, 1] >= 99,], 1, lines, col=colors()[525]) #
+  } 
+  if ("Bottom 1%" %in% input$topbottom )  {
+    apply(df[df[, 1] <= 1,], 1, lines, col=colors()[69])
+  }
+  
   axis(1, at=1:ncol(df), labels=c("Outcome", vls2()[["cnm"]]))
   axis(2, labels=TRUE)
 }
@@ -1518,7 +1568,7 @@ cobweb_plot <- reactive({
 #Input box to ask for top or bottom 5%
 output$top_bottom_5 <- renderUI({
   selectInput("topbottom", "Do you want to look at the top or bottom 5%", 
-              choices = c("Top 5%", "Bottom 5%"), multiple=FALSE, selected="Top 5%")     
+              choices = c("Top 1%","Top 5%", "Bottom 1%", "Bottom 5%"), multiple=TRUE, selected="Top 5%")     
 })
 
 #Add in labels to binomial or categorical variables

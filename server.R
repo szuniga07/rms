@@ -1554,7 +1554,7 @@ cobweb_fnc <- function(df) {
     apply(df[df[, 1] >= 99,], 1, lines, col=colors()[69]) #525
   } 
   if ("Bottom 1%" %in% input$topbottom )  {
-    apply(df[df[, 1] <= 1,], 1, lines, col=colors()[525]) #69
+    apply(df[df[, 1] <= 1,], 1, lines, col=colors()[456]) #69
   }
   
   axis(1, at=1:ncol(df), labels=c("Outcome", vls2()[["cnm"]]))

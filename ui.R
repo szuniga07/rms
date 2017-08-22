@@ -262,11 +262,12 @@ tabPanel("Impute",
                   uiOutput("MIks")),
            column(6, 
                   uiOutput("MIn"),
-                  uiOutput("MI_Begin")),
-           h6("Select the number imputations equal to the percentage missing (e.g., 20% missing = 20)."),
+                  uiOutput("MI_Begin")
+                  )),
+           h6("Select the number imputations equal to the percentage missing (e.g., 20% missing = 20 imputations)."),
            h4("Multiple Imputation summary"),
            verbatimTextOutput("MI_smry")
-         )),
+         ),
 
           tabPanel("Modify", 
                    h4("Fast backwards step-down regression, AIC based suggestions"),

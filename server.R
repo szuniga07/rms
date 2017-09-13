@@ -1745,7 +1745,7 @@ ptrans <-   reactive({
   set.seed(1)
   transcan(cluster_anl_fmla(),
            imputed=TRUE, transformed=TRUE, trantab=TRUE, pl=FALSE,
-           show.na=TRUE, data=df(), nk= input$SIknots,
+           show.na=TRUE, data=df(), nk= input$SIknots, asis=input$asisx, 
            #frac=.1,  #This might be fracmiss...max amount of NAs to determine if I should keep. Might add this later if the default to keep all is not useful  
            pr=FALSE)
 })
@@ -1771,12 +1771,18 @@ imputed <- reactive({
 
 #Indicate if you want the transformation/imputed values
 output$SIks <- renderUI({                                 #Same idea as output$vy
-  numericInput("SIknots", "1. Select the number of knots.", value = 4, min=0, step=1)     #Will make choices based on my reactive function.
+  numericInput("SIknots", "1. Select the number of knots.", value = 4, min=3, step=1)     #Will make choices based on my reactive function.
+})
+
+#Selects variables that won't get transformed or imputed
+output$AsIs_x <- renderUI({                                 #Same idea as output$vy
+  selectInput("asisx", "2. Variables not transformed nor splined.", 
+              choices = predictor(), multiple=TRUE)     #Will make choices based on my reactive function.
 })
 
 #Indicate if you want the transformation/imputed values
 output$Transcan_Choice <- renderUI({ 
-  radioButtons("TransChoice", "2. Would you like to run the simultaneous transformation and imputation?",
+  radioButtons("TransChoice", "3. Would you like to run the simultaneous transformation and imputation?",
                choices = c("No", "Yes"),
                selected="No") 
 })
@@ -2669,7 +2675,8 @@ mi <- reactive({
 ptrans.si <-   reactive({
   if (input$MIbegin == "Yes") {
     set.seed(1)
-    transcan(mi_fmla(), imputed=TRUE, transformed=FALSE, trantab=TRUE, pl=FALSE, show.na=TRUE, data=df(), pr=FALSE, nk=input$MIknots)
+    transcan(mi_fmla(), imputed=TRUE, transformed=FALSE, trantab=TRUE, pl=FALSE, show.na=TRUE, data=df(), pr=FALSE, 
+             nk=input$SIknots, asis=input$asisx)
   }
 })
 

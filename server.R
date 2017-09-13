@@ -1776,7 +1776,7 @@ output$SIks <- renderUI({                                 #Same idea as output$v
 
 #Selects variables that won't get transformed or imputed
 output$AsIs_x <- renderUI({                                 #Same idea as output$vy
-  selectInput("asisx", "2. Variables not transformed nor splined.", 
+  selectInput("asisx", "2. Variables neither transformed nor splined.", 
               choices = predictor(), multiple=TRUE)     #Will make choices based on my reactive function.
 })
 

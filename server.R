@@ -1771,7 +1771,7 @@ imputed <- reactive({
 
 #Indicate if you want the transformation/imputed values
 output$SIks <- renderUI({                                 #Same idea as output$vy
-  numericInput("SIknots", "1. Select the number of knots.", value = 4, min=3, step=1)     #Will make choices based on my reactive function.
+  numericInput("SIknots", "1. Select the number of knots.", value = 4, min=0, step=1)     #Will make choices based on my reactive function.
 })
 
 #Indicate if you want the transformation/imputed values
@@ -2639,7 +2639,7 @@ output$MIn <- renderUI({                                 #Same idea as output$vy
 })
 #Select the number of knots for the continuous variables.
 output$MIks <- renderUI({                                 #Same idea as output$vy
-  numericInput("MIknots", "3. Select the number of knots.", value = 4, min=3, step=1)     #Will make choices based on my reactive function.
+  numericInput("MIknots", "3. Select the number of knots.", value = 4, min=0, step=1)     #Will make choices based on my reactive function.
 })
 #Determine if we should begin the multiple imputations.
 output$MI_Begin <- renderUI({  

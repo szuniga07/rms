@@ -222,6 +222,7 @@ tabPanel("PREDs",                                #Creates a new panel named "Tes
                    plotOutput("cluster_plot"),
                    h4("Transformation and Imputation of predictors."),
                    uiOutput("SIks"),
+                   h6("Set the number of knots = 0 for a linear fit or if there are < 5 unique values in continous variables."),
                    uiOutput("Transcan_Choice"),
                    h6("Summary of the trasnformation and imputation from the transcan() function."),
                    verbatimTextOutput("trans_smry"),
@@ -264,8 +265,9 @@ tabPanel("Impute",
                   uiOutput("MIn"),
                   uiOutput("MI_Begin")
                   )),
-           h6("Select the number imputations equal to the percentage missing (e.g., 20% missing = 20 imputations)."),
-           h4("Multiple Imputation summary"),
+         h6("Select the number imputations equal to the percentage missing (e.g., 20% missing = 20 imputations)."),
+         h6("Set the number of knots = 0 for a linear fit or if there are < 5 unique values in continous variables."),
+         h4("Multiple Imputation summary"),
            verbatimTextOutput("MI_smry")
          ),
 

@@ -6,6 +6,7 @@
 #install.packages("lm.beta")
 #install.packages("sensitivity")
 #install.packages("meta")
+#install.packages("rpart")
 
 library(shiny)
 library(jsonlite)
@@ -14,6 +15,7 @@ library(nlme)
 library(lm.beta)
 library(sensitivity)
 library(meta)
+library(rpart)
 data(lungcancer)
 options(shiny.maxRequestSize=1000*1024^2)    #This will increase the shiny file upload limit from current 5MB max
 
@@ -2747,6 +2749,136 @@ fit.si <<- reactive({
 #Multiple imputation results
 output$MI_smry <- renderPrint({ 
   (mi())
+})
+
+
+############################
+#       Describe           #
+############################
+#Render UIs to get variables
+#Summary plot
+#Select the outcome
+output$desc_y <- renderUI({                                
+  selectInput("describeY", "1. Select the target variable",        
+              choices = var(), multiple=FALSE, selected=var()[1] ) 
+})
+#Select the predictors.
+output$desc_x <- renderUI({                                 #Same idea as output$vy
+  selectInput("describeX", "2. Select the predictors", 
+              choices = setdiff(var(), desc_outcome()), multiple=TRUE, selected=var()[2]) 
+})
+output$desc_choice <- renderUI({  
+  selectInput("DescChoice", "3. Run the summary now?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")     
+})
+## Reactive functions ##
+#Formula for describe section
+desc_outcome <- reactive({                  #Outcome is my reactive function name I will use below. 
+  input$describeY                      #variableY comes from the UI file drop down box.
+})
+
+desc_predictor <- reactive({             #Same idea as "outcome" 
+  input$describeX  
+})
+desc_fmla <- reactive({             #Spline terms 
+  as.formula(paste(paste0(desc_outcome() , "~"),   
+                   paste(desc_predictor(), collapse= "+")))
+})
+#Summary plot for outcome by predictors
+desc_smry <- reactive({             #Spline terms 
+  if (input$DescChoice == "Yes") {
+    summary(desc_fmla(), data=df())
+  }
+})
+#This renders the summary plot
+output$DescSmryPlt <- renderPlot({ 
+  if (input$DescChoice == "Yes") {
+    plot(desc_smry())
+  }
+} )
+
+## Missing variable plots
+#Select the outcome
+output$miss_y <- renderUI({                                
+  selectInput("missY", "1. Select the target variable",        
+              choices = var(), multiple=FALSE, selected=var()[1] ) 
+})
+#Select the predictors.
+output$miss_x <- renderUI({                                 #Same idea as output$vy
+  selectInput("missX", "2. Select the predictors", 
+              choices = setdiff(var(), miss_outcome()), multiple=TRUE, selected=var()[2]) 
+})
+output$miss_choice <- renderUI({  
+  selectInput("MissChoice", "3. Run the summary now?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")     
+})
+## Reactive functions ##
+#Formula for describe section
+miss_outcome <- reactive({                  #Outcome is my reactive function name I will use below. 
+  input$missY                      #variableY comes from the UI file drop down box.
+})
+
+miss_predictor <- reactive({             #Same idea as "outcome" 
+  input$missX  
+})
+miss_fmla <- reactive({             #Spline terms 
+  as.formula(paste(paste0("is.na(", miss_outcome(),")" , "~"),   
+                   paste(miss_predictor(), collapse= "+")))
+})
+#Summary plot for outcome by predictors
+miss_smry <- reactive({             #Spline terms 
+  if (input$MissChoice == "Yes") {
+    summary(miss_fmla(), data=df())
+  }
+})
+#This renders the summary plot for missing values
+output$MissSmryPlt <- renderPlot({ 
+  if (input$MissChoice == "Yes") {
+    plot(miss_smry(), main="Proportion missing")
+  }
+} )
+#
+na.patterns <- reactive({             #Spline terms 
+  naclus(df())
+})
+#This renders the wire plot for missing values
+output$naPlt <- renderPlot({ 
+  if (input$MissChoice == "Yes") {
+    naplot(na.patterns(), 'na per var')
+  }
+} )
+#This renders the dendogram for missing values
+output$naDendo <- renderPlot({ 
+  if (input$MissChoice == "Yes") {
+    plot(na.patterns())
+  }
+} )
+#This does the recursive partitioning of the 
+who.na <- reactive({             #Spline terms 
+  if (input$MissChoice == "Yes") {
+    rpart(miss_fmla(), data=df(), minbucket=15)
+  }
+})
+#This renders the tree diagram for missing values
+output$naTree <- renderPlot({ 
+  if (input$MissChoice == "Yes") {
+    plot(who.na(), margin= .1)
+    text(who.na())
+  }
+} )
+#Logistic regression to predict missingness .
+lrm_miss <- reactive({             #Spline terms 
+  if (input$MissChoice == "Yes") {
+    lrm(miss_fmla(), data=df(), tol=1e-100)
+  }
+})
+#Print regression output
+output$smry_lrm_miss <- renderPrint({
+  lrm_miss()
+})
+#Print the anova summary table of the regression above 
+output$anova_lrm_miss <- renderPrint({
+  anova(lrm_miss())
 })
 
 

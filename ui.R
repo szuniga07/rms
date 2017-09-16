@@ -202,6 +202,47 @@ tabPanel("PREDs",                                #Creates a new panel named "Tes
          )),
 
 ############## End PREDs #############################
+tabPanel("Describe",
+         fluidRow(   
+           h4("Plot the target variable means and missingness, stratifying by predictors"),
+           br(),
+           h5("Explore the mean values of a variable by factor levels."),
+           column(3, 
+                uiOutput("desc_y")),
+           column(3, offset=1,
+                  uiOutput("desc_x")),
+           column(3, offset=1,
+                  uiOutput("desc_choice")),
+           plotOutput("DescSmryPlt"),          
+           br(),
+           br(),
+           br(),
+           br(),
+           column(3, 
+                  uiOutput("miss_y")),
+           column(3, offset=1,
+                  uiOutput("miss_x")),
+           column(3, offset=1,
+                  uiOutput("miss_choice"))
+           ),
+         h5("Explore the missingness of a variable by factor levels."),
+         h6("Proportion of missngs stratified by factors."),
+         plotOutput("MissSmryPlt"), 
+         h6("Total proportion of missngs for each factor."),
+         plotOutput("naPlt"), 
+         h6("Missngs clustered by factors."),
+         plotOutput("naDendo"), 
+         h6("Recursive partitioning to predict missing values."),
+         plotOutput("naTree"),
+         h6("Logistic regression to predict missing values."),
+         verbatimTextOutput("smry_lrm_miss"),
+         h6("ANOVA summary table of the logistic regression."),
+         br(),
+         verbatimTextOutput("anova_lrm_miss"),
+         br()                   
+),    
+
+############## Describe and Missing #############################
 
           tabPanel("Reduce", 
                    h4("Data reduction: Redundancy, Cluster, and Principal Components Analysis"),
@@ -251,7 +292,7 @@ tabPanel("PREDs",                                #Creates a new panel named "Tes
                    h5("Summary of the Factor(s) (e.g., \"PC1\" = \"factor1\")."),
                    verbatimTextOutput("factor_score_output")
           ),    #Creates a new panel named "Summary"
-          
+
 tabPanel("Impute",  
          fluidRow(   
            h4("Modeling with Multiple Imputation (MI)."),

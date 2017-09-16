@@ -208,7 +208,7 @@ tabPanel("Describe",
          fluidRow(   
            h4("Descriptives on means and missing values. Plot the target variable, stratifying by facctors."),
            br(),
-           h4("Explore the mean values of a variable by factor levels."),
+           h4("Explore the mean values of an outcome variable by factor levels."),
            column(3, 
                 uiOutput("desc_y")),
            column(3, offset=1,

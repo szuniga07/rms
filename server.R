@@ -2795,7 +2795,7 @@ output$DescSmryPlt <- renderPlot({
   if (input$DescChoice == "Yes") {
     plot(desc_smry())
   }
-} )
+}, height = 700, width = 1000  )
 
 ## Missing variable plots
 #Select the outcome
@@ -2817,10 +2817,11 @@ output$miss_choice <- renderUI({
 miss_outcome <- reactive({                  #Outcome is my reactive function name I will use below. 
   input$missY                      #variableY comes from the UI file drop down box.
 })
-
-miss_predictor <- reactive({             #Same idea as "outcome" 
+#Predictors for missing section
+miss_predictor <- reactive({ 
   input$missX  
 })
+#Formula for missing section
 miss_fmla <- reactive({             #Spline terms 
   as.formula(paste(paste0("is.na(", miss_outcome(),")" , "~"),   
                    paste(miss_predictor(), collapse= "+")))
@@ -2836,23 +2837,24 @@ output$MissSmryPlt <- renderPlot({
   if (input$MissChoice == "Yes") {
     plot(miss_smry(), main="Proportion missing")
   }
-} )
+}, height = 700, width = 1000  )
 #
-na.patterns <- reactive({             #Spline terms 
-  naclus(df())
+na.patterns <- reactive({             
+  #naclus(df()[, c(miss_outcome(), miss_predictor())]) #Recusive and summary impacted, easier to use df() only
+    naclus(df())
 })
 #This renders the wire plot for missing values
 output$naPlt <- renderPlot({ 
   if (input$MissChoice == "Yes") {
     naplot(na.patterns(), 'na per var')
   }
-} )
+}, height = 400, width = 800)
 #This renders the dendogram for missing values
 output$naDendo <- renderPlot({ 
   if (input$MissChoice == "Yes") {
     plot(na.patterns())
   }
-} )
+}, height = 400, width = 800 )
 #This does the recursive partitioning of the 
 who.na <- reactive({             #Spline terms 
   if (input$MissChoice == "Yes") {
@@ -2865,7 +2867,7 @@ output$naTree <- renderPlot({
     plot(who.na(), margin= .1)
     text(who.na())
   }
-} )
+}, height = 400, width = 800)
 #Logistic regression to predict missingness .
 lrm_miss <- reactive({             #Spline terms 
   if (input$MissChoice == "Yes") {

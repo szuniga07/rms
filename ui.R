@@ -206,7 +206,7 @@ tabPanel("PREDs",                                #Creates a new panel named "Tes
 ############## Describe and Missing #############################
 tabPanel("Describe",
          fluidRow(   
-           h4("Descriptives on means and missing values. Plot the target variable, stratifying by facctors."),
+           h4("Descriptives on means and missing values. Plot the target variable, stratifying by factors."),
            br(),
            h4("Explore the mean values of an outcome variable by factor levels."),
            column(3, 

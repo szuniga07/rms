@@ -342,13 +342,43 @@ shinyServer(
     
 
     output$outcome_hist <- renderPlot({
-      if (class(df()[,outcome()]) %in%  c("numeric","integer")) {
+      if (class(df()[,outcome()]) %in%  c("numeric","integer","labelled")) {
         hist(df()[,outcome()], main="Histogram of the outcome variable",
              xlab=paste0(input$variableY))
       }
     })
+
+##
+    #Function to convert predicted scores to scores on raw scale or as proportions or leave as the same
+    yhat_hist_plot_fnc <- function(yhat, reg_yhat) {
+      switch(reg_yhat,                
+             "Linear"   = plot_yhat <- yhat, 
+             "Logistic" = plot_yhat <- 1/(1+exp(-yhat)),
+#             "Ordinal Logistic"          = plot_yhat <- 1/(1+exp(-yhat)),
+             "Ordinal Logistic"          = plot_yhat <- yhat,
+             "Poisson"  = plot_yhat <- exp(yhat),
+             "Quantile" = plot_yhat <- yhat,
+#             "Cox PH"   = plot_yhat <- 1/(1+exp(-yhat)),
+             "Cox PH"   = plot_yhat <- yhat,
+#"Cox PH with censoring"     = plot_yhat <- 1/(1+exp(-yhat)),
+             "Cox PH with censoring"     = plot_yhat <- yhat,
+             "Generalized Least Squares" = plot_yhat <- yhat )
+      return(plot_yhat)
+    }
     
-        
+    #This reactive function runs the yhat_plot_fnc function above  
+    yhat_hist_rslt <- reactive ({
+      yhat_hist_plot_fnc(yhat=predict(fit1()), reg_yhat=input$regress_type)
+    })
+    
+    
+    output$y_hat_hist <- renderPlot({
+#        hist(predict(fit1()), main="Histogram of the predicted Y values",
+#             xlab=paste0(input$variableY))
+      hist(yhat_hist_rslt(), main="Histogram of the predicted Y values",
+                        xlab=paste0(input$variableY, " (range: ", round(min(yhat_hist_rslt(), na.rm=T),3), " to ", round(max(yhat_hist_rslt(), na.rm=T), 3), ")" ))
+    })
+    
     ########### Model approximation section ###########        
     output$MIForAprx <- renderUI({  
       selectInput("MI_for_aprx", "1. Did you do Multiple Imputation?", 
@@ -768,10 +798,15 @@ shinyServer(
 #      }
 #    })
     
-    #Output that gets used in input of UI.R.
+    #Regression results.
     output$regress <- renderPrint({                                                 
       atch()
       print(fit1())  #Summary of model fit.
+    })
+    #Model predicted Y regression equation
+    output$regress_equation <- renderPrint({                                                 
+      options(scipen=20)
+      print(Function(fit1()))
     })
     
     

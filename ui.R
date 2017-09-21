@@ -127,6 +127,9 @@ library(jsonlite)
                    h4("Regression results"),
                    verbatimTextOutput("regress"),  #"regress" calls output$regress from server.r 
                    br(),
+                   h4("Regression equation"),
+                   verbatimTextOutput("regress_equation"),  #"Regression formula 
+                   br(),
                    h4("Model specs"),
                    verbatimTextOutput("specifications"),  #"regress" calls output$regress from server.r 
                    h6("Specs gives these values:"),
@@ -136,7 +139,9 @@ library(jsonlite)
                    h4("Describe the outcome variable"),
                    verbatimTextOutput("desc_Y"),  #"regress" calls output$regress from server.r
                    plotOutput("outcome_hist"),
-                   h5("Histogram of numeric variables (i.e., not factors)")
+                   h5("Histogram of numeric variables (i.e., not factors)"),
+                   plotOutput("y_hat_hist"),
+                   h5("Linear predicted values (logit, exp(logit), or response level) and probabilities (Logistic regression).")
                    ),    
 
 ############## PREDs SECTION #############################
@@ -395,7 +400,8 @@ tabPanel("Impute",
                    uiOutput("calibrate_B_arg_n"),
                    uiOutput("BeginCalibrate")
                    )),
-                   h6("Note: Confirm the single imputed or original dataframe is loaded in the 'Model builder' tab, depending on your purpose."),
+                   h5("Note: Prior to validation, create the single imputed data under 'Transformation and Imputation of predictors' in the 'Reduce' tab for multiple imputation purposes."),
+                   #h6("Note: Confirm the single imputed or original dataframe is loaded in the 'Model builder' tab, depending on your purpose."),
                    br(),
                    h4("Model calibration (e.g, bootstrapped, cross-validated--repeated 100 times)"),
                    h4("The reliability of a model, meaning the ability of the model to predict future observations as well as it appeared to predict the responses at hand."),
@@ -412,7 +418,8 @@ tabPanel("Impute",
                             uiOutput("validate_B_arg_n"),
                             uiOutput("BeginValidate")
                      )),
-                   h6("Note: Confirm the single imputed or original dataframe is loaded in the 'Model builder' tab, depending on your purpose."),
+                   h5("Note: Prior to validation, create the single imputed data under 'Transformation and Imputation of predictors' in the 'Reduce' tab for multiple imputation purposes."),
+                   #h6("Note: Confirm the single imputed or original dataframe is loaded in the 'Model builder' tab, depending on your purpose."),
                    br(),
                    h4("Calibration and discrimination indexes (from bootstrapped methods, cross-validated--100 repeats)"),
                    h4("The worth of a model can be judged by how far it goes out on a limb while 

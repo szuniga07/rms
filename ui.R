@@ -140,6 +140,7 @@ library(jsonlite)
                    verbatimTextOutput("desc_Y"),  #"regress" calls output$regress from server.r
                    plotOutput("outcome_hist"),
                    h5("Histogram of numeric variables (i.e., not factors)"),
+                   br(),
                    plotOutput("y_hat_hist"),
                    h5("Linear predicted values (logit, exp(logit), or response level) and probabilities (Logistic regression).")
                    ),    

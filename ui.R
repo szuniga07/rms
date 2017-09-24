@@ -435,6 +435,7 @@ tabPanel("Cost",
          h4("Cost and continuous outcomes"),
          h4("The Cox PH and Ordinal Logistic models can be used on continuous Y. This section is primarily for cost models but can be used for any continuous Y. Includes stratification for treatments."),
          h5("The following 3 questions will set up the types of plots and tabled results."),                   
+         h6("Note: If using the Cox PH model with censoring, censor a non-event (e.g., death = 0)."),                   
          fluidRow(
            column(3, 
                   uiOutput("dens_plt1_typ")),
@@ -447,9 +448,6 @@ tabPanel("Cost",
          h5("Partial effects plots: Plot the mean or various quantile effects."),
          plotOutput("cox_prt_prd"),
          br(),
-#           uiOutput("dens_plt1_typ"),  #stratified or unstratified results
-#         uiOutput("dens_plt1_x"),    #Grouping factor
-#         uiOutput("run_dens_plt1"),  #Question to begin running
 fluidRow(
   h5("The following questions are to modify the partial effects plots above."),
   column(3, 

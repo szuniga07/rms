@@ -431,6 +431,51 @@ tabPanel("Impute",
                    h6("Note: Use the \"boot\" method to view the \"Factors Retained in Backwards Elimination\". These are factors found statistically significant in random draws. First 50 bootstrapped results shown."), 
                    verbatimTextOutput("vali_date")),    #Creates a new panel named "Summary"
 
+tabPanel("Cost", 
+         h4("Cost and continuous outcomes"),
+         h4("The Cox PH and Ordinal Logistic models can be used on continuous Y. This section is primarily for cost models but can be used for any continuous Y. Includes stratification for treatments."),
+         h5("The following 3 questions will set up the types of plots and tabled results."),                   
+         fluidRow(
+           column(3, 
+                  uiOutput("dens_plt1_typ")),
+           column(3, offset=1,
+                  uiOutput("dens_plt1_x")),
+           column(3, offset=1,
+                  uiOutput("run_dens_plt1"))
+         ),
+         br(),
+         h5("Partial effects plots: Plot the mean or various quantile effects."),
+         plotOutput("cox_prt_prd"),
+         br(),
+#           uiOutput("dens_plt1_typ"),  #stratified or unstratified results
+#         uiOutput("dens_plt1_x"),    #Grouping factor
+#         uiOutput("run_dens_plt1"),  #Question to begin running
+fluidRow(
+  h5("The following questions are to modify the partial effects plots above."),
+  column(3, 
+         uiOutput("CoxMnMed"),
+         uiOutput("OneCoxXYes")
+         ),
+  column(3, offset=1,
+         uiOutput("cox_pct_lvl"),
+         uiOutput("prt_one_cox_x"))
+  ),
+         h5("Density plot on the outcome, with or without stratification."),
+         plotOutput("plot_dens_plt1"),
+         br(),
+         h4("The two plots and table below are for stratified results."),
+         br(),
+         h5("Point estimates and confidence intervals of the 10th/25th/50th/75th/95th percentiles."),
+         br(),
+         h5("We often estimate effects for the 'middle' of the data (e.g., mean), we can also estimate other parts of the data."),
+         h5("These are 5 effects at various quantiles for the stratified variable (e.g., we estimate for most and least expensive costing patients)."),
+         plotOutput("plot_quant_plt1"),
+         br(),
+         h5("Values of the point estimates and confidence intervals."),
+         tableOutput("quant_out1")
+),    #Creates a new panel named "Summary"
+
+
 
 tabPanel("Monte Carlo",                                #Creates a new panel named "Test"
          fluidRow(                           #Wrapping them in a fluidRow provides easy control over  

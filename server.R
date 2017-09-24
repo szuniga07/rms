@@ -2920,6 +2920,289 @@ output$anova_lrm_miss <- renderPrint({
 
 
 ################################################################################
+##                       Cost analysis with the Cox PH model                  ##
+################################################################################
+
+########################################################
+#   Plot 1: Density plots on cost by intervention type #
+########################################################
+#Homemade functions
+#This plots the outcome for all patients
+cost_plot1 <- function(y, x, df) {
+  #####Color codes#####
+  c_red <- 2; c_blue <- 4
+  red_trnspt  <- adjustcolor(c_red, alpha.f = 0.4)                                #Set red color transparency.
+  blue_trnspt <- adjustcolor(c_blue, alpha.f = 0.4)                               #Set blue color transparency.
+
+  d_ctl <- density(df[, y], na.rm=T)                       #Controls
+  cst_tbl <- c(mean(df[, y], na.rm=T),
+               median(df[, y], na.rm=T))
+  names(cst_tbl) <- c("Mean", "Median" )
+  
+  plot(d_ctl, main=paste0("Density plot of ", y), 
+       xlab=y, axes=F)
+  polygon(d_ctl, col=blue_trnspt, border=blue_trnspt) 
+  
+  abline(v=median(df[, y], na.rm=T),
+         col="blue")
+  abline(v=mean(df[, y], na.rm=T),
+         col="blue", lty=3)
+  axis(1)
+  legend("top", legend=c("Mean", "Median"), 
+         col=c(4,4), lty=c(3,1),
+         lwd=2, cex=1)
+  box()
+}
+
+#This plots the outcome by a binary grouping variable
+cost_plot1_grp <- function(y, x, df) {
+  #####Color codes#####
+  c_red <- 2; c_blue <- 4
+  red_trnspt  <- adjustcolor(c_red, alpha.f = 0.4)                                #Set red color transparency.
+  blue_trnspt <- adjustcolor(c_blue, alpha.f = 0.4)                               #Set blue color transparency.
+  
+  d_ctl <- density(df[, y][df[, x] == 0], na.rm=T)                       #Controls
+  d_trt <- density(df[, y][df[, x] == 1], na.rm=T)                       #x
+  cst_tbl <- rbind(c(mean(df[, y][df[, x] == 1], na.rm=T),
+                     median(df[, y][df[, x] == 1], na.rm=T)),
+                   c(mean(df[, y][df[, x] == 0], na.rm=T),
+                     median(df[, y][df[, x] == 0], na.rm=T)))
+  colnames(cst_tbl) <- c("Mean", "Median" )
+  rownames(cst_tbl) <- c("Treatment", "Control")
+  
+  plot(d_trt, main=paste0("Density plot of ", y, " by ", x), 
+       xlab=y, axes=F)
+  lines(d_ctl)
+  polygon(d_ctl, col=red_trnspt, border=red_trnspt) 
+  polygon(d_trt, col=blue_trnspt, border=blue_trnspt) 
+  
+  abline(v=median(df[, y][df[, x] == 0], na.rm=T),
+         col="red")
+  abline(v=median(df[, y][df[, x] == 1], na.rm=T),
+         col="blue")
+  abline(v=mean(df[, y][df[, x] == 0], na.rm=T),
+         col="red", lty=3)
+  abline(v=mean(df[, y][df[, x] == 1], na.rm=T),
+         col="blue", lty=3)
+  axis(1)
+  legend("top", legend=c("Treatment: Mean", "Treatment: Median", 
+                         "Control: Mean", "Control: Median"), 
+         col=c(4,4,2,2), lty=c(3,1,3,1),
+         lwd=2, cex=1)
+  box()
+}
+
+#Select the type of density plot to run (full sample or by a group)
+output$dens_plt1_typ <- renderUI({
+  selectInput("DensPlt1Typ", "1. Choose the type of analysis.", 
+              choices = c("Unstratified", "Stratified"), multiple=FALSE, selected="Unstratified")     
+})
+#Select the grouping variable for the density plot with 2 plots--value of 1=treatment group
+output$dens_plt1_x <- renderUI({
+  selectInput("DensPlt1X", "2. Select a binary stratified variable (optional).", 
+              choices = predictor())     
+})
+#Create yes/no box to plot the density plot
+output$run_dens_plt1 <- renderUI({ 
+  selectInput("RunDensPlt1", "3. Do you want to run the plots?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")     
+})
+
+#This runs the cost_plot1() function above
+dens_plt1 <- reactive({
+  if(input$RunDensPlt1 == "Yes") {
+    
+    if(input$DensPlt1Typ == "Stratified") {
+      cost_plot1_grp(y= outcome(), x= input$DensPlt1X , df= df())
+    } else {
+      cost_plot1(y= outcome(), df= df())
+    }
+  }  
+})
+#This plots the density plot    
+output$plot_dens_plt1 <- renderPlot({
+    dens_plt1() 
+})
+
+#Creates mean function for the fit
+mn <- reactive({
+  if(input$RunDensPlt1 == "Yes") {
+    Mean(fit1())       # Creates function to compute the mean
+  }  
+})
+#Creates median function for the fit
+med <- reactive({
+  if(input$RunDensPlt1 == "Yes") {
+    Quantile(fit1())       # Creates function to compute quantiles
+  }  
+})
+
+############################################
+#   Plot 2: Estimated cost over quantiles  #
+############################################
+quant_ests_fnc <- function(fit, Y, X, reg) {
+  #Creates function that will make correct value 
+  MED_cox <<- Quantile(fit)                                                       #Creates function to compute quantiles
+
+  #5. Cost--get predicted values at different quantiles
+  if (reg %in% c("Cox PH", "Cox PH with censoring")) {
+  p1.50 <- Predict(fit, fun=function(x) MED_cox(lp=x))                           #MED_coxian
+  p1.10 <- Predict(fit, fun=function(x) MED_cox(q=.90, lp=x))                    #10th percentile
+  p1.25 <- Predict(fit, fun=function(x) MED_cox(q=.75, lp=x))                    #25th percentile
+  p1.75 <- Predict(fit, fun=function(x) MED_cox(q=.25, lp=x))                    #75th percentile
+  p1.90 <- Predict(fit, fun=function(x) MED_cox(q=.10, lp=x))                    #90th percentile
+  }
+  if (reg == "Ordinal Logistic") {
+    p1.50 <- Predict(fit, fun=function(x) MED_cox(lp=x))                           #MED_coxian
+    p1.10 <- Predict(fit, fun=function(x) MED_cox(q=.10, lp=x))                    #10th percentile
+    p1.25 <- Predict(fit, fun=function(x) MED_cox(q=.25, lp=x))                    #25th percentile
+    p1.75 <- Predict(fit, fun=function(x) MED_cox(q=.75, lp=x))                    #75th percentile
+    p1.90 <- Predict(fit, fun=function(x) MED_cox(q=.90, lp=x))                    #90th percentile
+  }
+  
+  #This gets predicted intervention scores for different percentiles
+  int_pnm <- c(paste0(X,".1"), paste0(X,".2")) #Only place I use X argument
+  est1.10 <- p1.10[which(row.names(p1.10) %in% int_pnm), c("yhat", "lower", "upper")]
+  est1.25 <- p1.25[which(row.names(p1.25) %in% int_pnm), c("yhat", "lower", "upper")]
+  est1.50 <- p1.50[which(row.names(p1.50) %in% int_pnm), c("yhat", "lower", "upper")]
+  est1.75 <- p1.75[which(row.names(p1.75) %in% int_pnm), c("yhat", "lower", "upper")]
+  est1.90 <- p1.90[which(row.names(p1.90) %in% int_pnm), c("yhat", "lower", "upper")]
+  #This changes it to a data.frame class from an RMS class
+  class(est1.10) <- "data.frame"
+  class(est1.25) <- "data.frame"
+  class(est1.50) <- "data.frame"
+  class(est1.75) <- "data.frame"
+  class(est1.90) <- "data.frame"
+  est1 <- data.frame(rbind(unlist(est1.10), unlist(est1.25), unlist(est1.50),     #Merge the results
+                           unlist(est1.75), unlist(est1.90)))
+  
+  #Re-arrange order to get values set up for display in the plot
+  est2 <- est1[, c(2,6,4,1,5,3)]
+  colnames(est2) <- c("TREATMENT", "L95", "U95","Control", "L95", "U95")
+  rownames(est2) <- c("p10", "p25", "p50","p75", "p90")
+  #Add cost difference beteen Treatment and controls 
+  est2$Diff. <- abs(round(est2$Control) - round(est2$TREATMENT))
+  return(list(est1=est1, est2=est2))
+}  
+
+#This runs the quant_plt1_fnc() function above
+quant_ests <- reactive({
+  if(input$RunDensPlt1 == "Yes") {
+    
+    if(input$DensPlt1Typ == "Stratified") {
+      quant_ests_fnc(fit=fit1(), Y= outcome(), X= input$DensPlt1X, reg=input$regress_type)
+    } 
+  }  
+})
+
+  #Graph on differences between intervention groups on expected costs over percentiles 
+quant_plt1_fnc <- function(ests, Y) {
+  est1 <- quant_ests()[["est1"]]
+  est2 <- quant_ests()[["est2"]]
+  #Later shades for second plot
+  c_red <- 2; c_blue <- 4
+  red_trnspt2  <- adjustcolor(c_red, alpha.f = 0.2)                               #Set red color transparency.
+  blue_trnspt2 <- adjustcolor(c_blue, alpha.f = 0.2)                              #Set blue color transparency.
+  plot(1:5, est1[, 1], type="n",
+       ylab=Y, xlab="Percentiles",
+       ylim=c(0, max(est1, na.rm=T)*.9), xlim=c(1, 5),
+       axes=F, main=paste0("Estimated ", Y, " over quantiles"))
+  lines(1:5, est1[, 1], col="red", lwd=3)
+  lines(1:5, est1[, 2], col="blue", lwd=3)
+  #Set up coordinates for polygon function, NOTE: UPPER AND LOWER MEAN THE OPPOSITE 
+  #BECAUSE A COX MODEL VIEWS COST IN THE OPPOSITE DIRECTION.
+  axis(2)
+  axis(1, at=1:5, tick=F, pos=3, labels= c("p10", "p25", "p50", "p75", "p90"))
+  xxt <- c(1:5,5:1)
+  yya <- c(est1$lower2, rev(est1$upper2))  #Treatment
+  yyc <- c(est1$lower1, rev(est1$upper1))  #Control
+  #plot(xx,yyd, type="n", ylim=c(0,1))
+  polygon(xxt, yya, col = blue_trnspt2, border=blue_trnspt2)
+  polygon(xxt, yyc, col = red_trnspt2, border=red_trnspt2)
+  legend("topleft", legend=c("Treatment","Control"), 
+         col=c(4,2), lty=1,
+         lwd=2, cex=1)
+  box()
+}
+
+#This runs the quant_plt1_fnc() function above
+quant_plt1 <- reactive({
+  if(input$RunDensPlt1 == "Yes") {
+    
+    if(input$DensPlt1Typ == "Stratified") {
+      quant_plt1_fnc(ests=quant_ests(), Y= outcome())
+    } 
+  }  
+})
+#This plots the quantile plot    
+output$plot_quant_plt1 <- renderPlot({
+  quant_plt1() 
+})
+
+output$quant_out1 <- renderTable({
+  quant_ests()[["est2"]]
+}, rownames = TRUE)
+
+##################################################
+#Create yes/no box to determine plot single partial effect
+output$CoxMnMed <- renderUI({                                 #Same idea as output$vy
+  selectInput("cox_mn_med", "1. Do you want to plot the mean or quantile effect?", 
+              choices = c("Mean", "Quantile"), multiple=FALSE, selected="Mean")     #Will make choices based on my reactive function.
+})
+#Select the percentile level
+output$cox_pct_lvl <- renderUI({                                 #Same idea as output$vy
+  numericInput("CoxPctLvl", "2. Enter the percentile/quantile.",
+               value = .50, min=.01, max = .99, step = .01)
+})
+#Reactive function that stores the chosen percentile level
+cox_pctl <- reactive({
+  if(input$RunDensPlt1 == "Yes") {
+    if (input$regress_type %in% c("Cox PH", "Cox PH with censoring")) {
+      1 - input$CoxPctLvl
+          } else {
+      input$CoxPctLvl
+    }
+  }  
+})
+
+#This plots the predicted values    
+output$cox_prt_prd <- renderPlot({
+  if(input$RunDensPlt1 == "Yes") {
+    
+    if(input$cox_mn_med == "Quantile") {
+      
+      if(input$one_cox_x_yes == "Yes") {
+        plot(  do.call("Predict", list(fit1(), pe_cox_x_var(), fun=function(x) med()(q=cox_pctl(), lp=x)) )) 
+      } else {
+        plot(  do.call("Predict", list(fit1(),  fun=function(x) med()(q=cox_pctl(), lp=x)) )) 
+      }
+    } else {
+      if(input$one_cox_x_yes == "Yes") {
+        plot(  do.call("Predict", list(fit1(), pe_cox_x_var(), fun=function(x) mn()(lp=x)) )) 
+      } else {
+        plot(  do.call("Predict", list(fit1(),  fun=function(x) mn()(lp=x)) )) 
+      }
+    }
+  }
+})
+
+#Create yes/no box to determine plot single partial effect
+output$OneCoxXYes <- renderUI({                                 
+  selectInput("one_cox_x_yes", "3. Do you want to plot a single partial effect?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")     
+})
+#Select the variables that will get only get plotted
+output$prt_one_cox_x <- renderUI({
+  selectInput("cox_X", "4. Select a single predictor.", 
+               choices = predictor(), multiple=FALSE, selected=predictor()[1])
+})
+#The single partial effect variable to plot
+pe_cox_x_var <- reactive({         
+  input$cox_X
+})
+##################################################
+
+################################################################################
 ## Testing section: Begin  ##
 ################################################################################
 ##output$testplot1 <- renderPlot({ 

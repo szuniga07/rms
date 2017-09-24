@@ -463,7 +463,7 @@ fluidRow(
          h5("Density plot on the outcome, with or without stratification."),
          plotOutput("plot_dens_plt1"),
          br(),
-         h4("The two plots and table below are for stratified results."),
+         h4("The plot and table below are for stratified results."),
          br(),
          h5("Point estimates and confidence intervals of the 10th/25th/50th/75th/95th percentiles."),
          br(),

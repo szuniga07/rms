@@ -461,16 +461,19 @@ fluidRow(
          h5("Density plot on the outcome, with or without stratification."),
          plotOutput("plot_dens_plt1"),
          br(),
-         h4("The plot and table below are for stratified results."),
+         h4("The plot and tables below are for stratified results."),
          br(),
-         h5("Point estimates and confidence intervals of the 10th/25th/50th/75th/95th percentiles."),
+         h5("Point estimates and confidence intervals of the effects from the 10th/25th/50th/75th/95th percentiles."),
          br(),
          h5("We often estimate effects for the 'middle' of the data (e.g., mean), we can also estimate other parts of the data."),
          h5("These are 5 effects at various quantiles for the stratified variable (e.g., we estimate for most and least expensive costing patients)."),
          plotOutput("plot_quant_plt1"),
          br(),
-         h5("Values of the point estimates and confidence intervals."),
-         tableOutput("quant_out1")
+         h5("Quantiles: Point estimates and confidence intervals."),
+         tableOutput("quant_out1"),
+         br(),
+         h5("Mean: Point estimates and confidence intervals for the mean effect."),
+         tableOutput("mean_out1")    
 ),    #Creates a new panel named "Summary"
 
 

@@ -3139,9 +3139,56 @@ output$plot_quant_plt1 <- renderPlot({
   quant_plt1() 
 })
 
+#This prints the point estimates and confidence intervals
 output$quant_out1 <- renderTable({
   quant_ests()[["est2"]]
 }, rownames = TRUE)
+
+##########################
+### Get mean estimates ###
+##########################
+mean_ests_fnc <- function(fit, Y, X, reg) {
+  #Creates function that will make correct value 
+  MN_cox <<- Mean(fit)                                                       #Creates function to compute quantiles
+  
+  #5. Cost--get predicted values at different quantiles
+  if (reg %in% c("Cox PH", "Cox PH with censoring")) {
+    p1.mean <- Predict(fit, fun=function(x) MN_cox(lp=x))                           #MN_coxian
+  }
+  if (reg == "Ordinal Logistic") {
+    p1.mean <- Predict(fit, fun=function(x) MN_cox(lp=x))                           #MN_coxian
+  }
+  
+  #This gets predicted intervention scores for different percentiles
+  int_pnm <- c(paste0(X,".1"), paste0(X,".2")) #Only place I use X argument
+  est1.mean <- p1.mean[which(row.names(p1.mean) %in% int_pnm), c("yhat", "lower", "upper")]
+  #This changes it to a data.frame class from an RMS class
+  class(est1.mean) <- "data.frame"
+  est1 <- data.frame(rbind(unlist(est1.mean)))
+  
+  #Re-arrange order to get values set up for display in the plot
+  est2 <- est1[, c(2,6,4,1,5,3)]
+  colnames(est2) <- c("TREATMENT", "L95", "U95","Control", "L95", "U95")
+  rownames(est2) <- "Mean"
+  #Add cost difference beteen Treatment and controls 
+  est2$Diff. <- abs(round(est2$Control) - round(est2$TREATMENT))
+  return(list(est1=est1, est2=est2))
+}  
+
+#This runs the quant_plt1_fnc() function above
+mean_ests <- reactive({
+  if(input$RunDensPlt1 == "Yes") {
+    
+    if(input$DensPlt1Typ == "Stratified") {
+      mean_ests_fnc(fit=fit1(), Y= outcome(), X= input$DensPlt1X, reg=input$regress_type)
+    } 
+  }  
+})
+#This prints the point estimates and confidence intervals
+output$mean_out1 <- renderTable({
+  mean_ests()[["est2"]]
+}, rownames = TRUE)
+
 
 ##################################################
 #Create yes/no box to determine plot single partial effect
@@ -3165,7 +3212,7 @@ cox_pctl <- reactive({
   }  
 })
 
-#This plots the predicted values    
+#This plots the predicted values  for the partial effects plots  
 output$cox_prt_prd <- renderPlot({
   if(input$RunDensPlt1 == "Yes") {
     

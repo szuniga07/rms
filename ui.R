@@ -142,7 +142,17 @@ library(jsonlite)
                    h5("Histogram of numeric variables (i.e., not factors)"),
                    br(),
                    plotOutput("y_hat_hist"),
-                   h5("Linear predicted values (logit, exp(logit), or response level) and probabilities (Logistic regression).")
+                   h5("Linear predicted values (logit, exp(logit), or response level) and probabilities (Logistic regression)."),
+br(),
+h4("Schoenfeld residuals"),
+h5("Assess the Cox model's proportional hazards assumption."),
+br(),
+h5("Schoenfeld residuals test."),
+tableOutput("schoenfeld_test"),
+h5("Schoenfeld residuals plot."),
+uiOutput("Schoenfeld_X"),
+plotOutput("schoenfeld_plt")
+
                    ),    
 
 ############## PREDs SECTION #############################

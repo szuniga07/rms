@@ -2057,7 +2057,7 @@ pca_fac_df <- reactive({
 ##}
 
 
-#1. Select predcitors that go into a factor
+#1. Select predicitors that go into a factor
 #3. Way to identify factors that I create
 #4. Way to Cbind the factors that I create
 #5, Way to cbind my factors with the main data
@@ -3248,6 +3248,36 @@ pe_cox_x_var <- reactive({
   input$cox_X
 })
 ##################################################
+
+################################################################################
+## Schoenfeld residuals  ##
+################################################################################
+#Select the variable for the Schoenfeld residuals
+output$Schoenfeld_X <- renderUI({
+  selectInput("schoenfeldx", "1. Select a single Schoenfeld residual.", 
+              choices = predictor(), multiple=FALSE, selected=predictor()[1])
+})
+
+#This gives a number for the variable for the Schoenfeld residual
+schoenfeld_e <- reactive({
+  if (input$regress_type %in% c("Cox PH", "Cox PH with censoring")) {
+    cox.zph(fit1())
+  }  
+})
+
+#This prints the point estimates and confidence intervals
+output$schoenfeld_test <- renderTable({
+  if (input$regress_type %in% c("Cox PH", "Cox PH with censoring")) {
+    schoenfeld_e()[[1]]
+  }
+}, rownames = TRUE)
+
+#This plots the Schoenfeld residuals    
+output$schoenfeld_plt <- renderPlot({
+  if (input$regress_type %in% c("Cox PH", "Cox PH with censoring")) {
+    plot(schoenfeld_e()[which(predictor() == input$schoenfeldx)])
+  }
+})
 
 ################################################################################
 ## Testing section: Begin  ##

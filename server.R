@@ -2542,7 +2542,7 @@ ftconf <- function(x, y, z, dataf, conf_lev) {
   agr_m <- aggregate(dataf[, y] ~ dataf[, x]+ dataf[, z], FUN="mean", data= dataf)
   agr_sd <- aggregate(dataf[, y] ~ dataf[, x]+ dataf[, z], FUN="sd", data= dataf)
   agr_n <- aggregate(dataf[, y] ~ dataf[, x]+ dataf[, z], FUN="length", data= dataf)
-  agr_df <- data.frame(x_lev=agr_m[, 1], agr_m=agr_m[, 3], agr_sd=agr_sd[, 3], agr_n=agr_n[, 3])
+  agr_df <- data.frame(x_lev=agr_m[, 1], z_lev=agr_m[, 2], agr_m=agr_m[, 3], agr_sd=agr_sd[, 3], agr_n=agr_n[, 3])
   #Calculates confidence intervals
   MOE <- qt((conf_lev/2)+.5, df=agr_df$agr_n - 1) * agr_df$agr_sd/sqrt(agr_df$agr_n)
   Lower <- agr_df$agr_m - MOE
@@ -2557,11 +2557,11 @@ fpconf <- function(x, y, z, dataf, conf_lev) {
   #Aggregates outcome by factor 
   agr_sum <- aggregate(dataf[, y] ~ dataf[, x]+ dataf[, z], FUN="sum", data= dataf)
   agr_n <- aggregate(dataf[, y] ~ dataf[, x]+ dataf[, z], FUN="length", data= dataf)
-  agr_df <- data.frame(x_lev=agr_sum[, 1], agr_sum=agr_sum[, 3], agr_n=agr_n[, 3])
+  agr_df <- data.frame(x_lev=agr_sum[, 1], z_lev=agr_sum[, 2], agr_sum=agr_sum[, 3], agr_n=agr_n[, 3])
   #Calculates confidence intervals
   adf_alpha <- matrix(ncol= 3, nrow= nrow(agr_df), byrow = TRUE)
   for (i in 1:nrow(agr_df)) {
-    adf_alpha[i, ] <- unlist(poisson.test(x=agr_df[i,2], T=agr_df[i,3], conf.level= .95)[c("estimate","conf.int")])
+    adf_alpha[i, ] <- unlist(poisson.test(x=agr_df[i,3], T=agr_df[i,4], conf.level= conf_lev)[c("estimate","conf.int")])
   }
   adf_alpha <- data.frame(adf_alpha)
   colnames(adf_alpha) <- c("PointEst", "Lower", "Upper")
@@ -2569,11 +2569,9 @@ fpconf <- function(x, y, z, dataf, conf_lev) {
   return(agr_df=agr_df ) 
 }
 
-ci_type <- "Proportion (binomial)"
 fconf <- function(x=xcivar, y=ycivar, z=zcivar, dataf, conf_lev=ciconf_lev) {
   #fconf <- function(x=xcivar, y=ycivar, z=zcivar, dataf=df(), conf_lev=ciconf_lev) {
-  switch(ci_type,                #"var" and can be used anywhere in server.r.
-         #switch(input$ci_type,                #"var" and can be used anywhere in server.r.
+  switch(input$fci_type,                #"var" and can be used anywhere in server.r.
          "Mean (t)" =  ftconf(x, y, z, dataf, conf_lev), 
          "Proportion (binomial)" =  fbconf(x, y, z, dataf, conf_lev), 
          "Poisson (exact)" =  fpconf(x, y, z, dataf, conf_lev) 
@@ -2683,7 +2681,7 @@ plot_fci_fnc <- function(x, y, z, xcivar, ycivar, zcivar, dataf, ci_p, ci_l, ci_
     xx_t[[i]] <- c(ci_time[[i]], rev(ci_time[[i]]))
     yy_t[[i]] <- c(l95[[i]], rev(u95[[i]]))
     polygon(unlist(xx_t[[i]]), unlist(yy_t[[i]]), col = adjustcolor(colors()[my_clr[i]], alpha.f = 0.1), 
-            border=adjustcolor(colors()[my_clr[i]], alpha.f = 0.2))
+            border=adjustcolor(colors()[my_clr[i]], alpha.f = 0.1))
   }
   #return(list(ci_p=ci_p, ci_l=ci_l, ci_u=ci_u, l95=l95, u95=u95, xx_t=xx_t, yy_t=yy_t))
   }

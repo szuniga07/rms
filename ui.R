@@ -721,8 +721,36 @@ tabPanel("95% CIs",
          plotOutput("Plot_Ci_output"),
          h6("Note: You can sort alphabetically by the factor level name or numerically by the point estimate. Left side = factor level, right side = point estimate."),
          verbatimTextOutput("Cidf_output"),
-         h6("Note: The values above are point estimates and confidence limits that are sorted alphabetically and numerically.")
-)    
+         h6("Note: The values above are point estimates and confidence limits that are sorted alphabetically and numerically."),
+         br(),
+         h4("Performance of groups over time (need >= 6 time points)"),
+         h5("This plot has smoothed spline trajectories, with or without confidence bands. \"Trend\" lines may not have cooridnate values that equal rates."),
+         br(),
+         fluidRow(
+           column(3, 
+                  uiOutput("FCIy"),
+                  br(),                                                 
+                  uiOutput("FCi_Choice_Type")
+                  ),
+           column(3, 
+                  uiOutput("FCIx"),
+                  br(),                                                 
+                  uiOutput("FCi_Conf_Lev")
+           ),
+           column(3, 
+                  uiOutput("FCIz"),
+                  br(),                                                 
+                  uiOutput("FCi_create")
+           ),
+           column(3, 
+                  uiOutput("FCI_bands")
+           )),
+         h6("Hint: To zoom in on the lines only, select a lower confidence level (e.g., .01) and don't use confidence bands."),
+         br(),
+         plotOutput("Plot_Fci_output", height = 800, width="100%"),
+         h5("These are point estimates and confidence intervals. These may not match up with smoothed lines."),
+         tableOutput("time_ci_out1")
+)
 ###
 
 # , #THIS COMMA IS COMMENTED OUT IN CASE I EVER NEED THE TEST FUNCTION BELOW    

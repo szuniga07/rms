@@ -3578,9 +3578,12 @@ output$SurvPltRun <- renderUI({
 #This plots the predicted values  for the partial effects plots  
 output$surv_plot1 <- renderPlot({
   if(input$surv_plt_run == "Yes") {
-    (  do.call("survplot", list(fit1(), input$SrvPltX, conf.int=input$SrvPltLvl, conf=input$surv_plt_band,
+    (  do.call("survplot", list(fit1(), input$SrvPltX, conf.int=input$SrvPltLvl, conf=input$surv_plt_band, 
                                 xlim=c(input$sp_Xlim1, input$sp_Xlim2), ylim=c(input$sp_Ylim1,input$sp_Ylim2),
                                     xlab=paste0("Survival time by ", input$SrvPltX)) )) 
+  } 
+  if(input$surv_plt_run == "Yes") {
+    axis(1)
   } 
   if(input$surv_plt_run == "Yes") {
     box()

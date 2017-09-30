@@ -142,16 +142,7 @@ library(jsonlite)
                    h5("Histogram of numeric variables (i.e., not factors)"),
                    br(),
                    plotOutput("y_hat_hist"),
-                   h5("Linear predicted values (logit, exp(logit), or response level) and probabilities (Logistic regression)."),
-br(),
-h4("Schoenfeld residuals"),
-h5("Assess the Cox model's proportional hazards assumption."),
-br(),
-h5("Schoenfeld residuals test."),
-tableOutput("schoenfeld_test"),
-h5("Schoenfeld residuals plot."),
-uiOutput("Schoenfeld_X"),
-plotOutput("schoenfeld_plt")
+                   h5("Linear predicted values (logit, exp(logit), or response level) and probabilities (Logistic regression).")
 
                    ),    
 
@@ -441,6 +432,34 @@ tabPanel("Impute",
                    h6("Note: Use the \"boot\" method to view the \"Factors Retained in Backwards Elimination\". These are factors found statistically significant in random draws. First 50 bootstrapped results shown."), 
                    verbatimTextOutput("vali_date")),    #Creates a new panel named "Summary"
 
+#############
+tabPanel("Survival", 
+         h4("Survival analysis plots and residuals"),
+         br(),
+         h4("Survival plots"),                   
+
+         fluidRow(
+           column(4, 
+                  uiOutput("srv_plt_one_x"),
+                  uiOutput("srv_plt_lvl")),
+           column(4, offset=1,
+                  uiOutput("SurvPltBands"),
+                  uiOutput("SurvPltRun"))
+         ),
+         br(),
+         plotOutput("surv_plot1", height = 800, width="100%"),
+         br(),
+         h4("Schoenfeld residuals"),
+         h5("Assess the Cox model's proportional hazards assumption."),
+         br(),
+         h5("Schoenfeld residuals test."),
+         tableOutput("schoenfeld_test"),
+         h5("Schoenfeld residuals plot."),
+         uiOutput("Schoenfeld_X"),
+         plotOutput("schoenfeld_plt")
+),    
+
+#############
 tabPanel("Cost", 
          h4("Cost and continuous outcomes"),
          h4("The Cox PH and Ordinal Logistic models can be used on continuous Y. This section is primarily for cost models but can be used for any continuous Y. Includes stratification for treatments."),

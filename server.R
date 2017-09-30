@@ -3493,7 +3493,7 @@ pe_cox_x_var <- reactive({
 ##################################################
 
 ################################################################################
-## Schoenfeld residuals  ##
+##  Survival analysis stuff: Schoenfeld residuals  and survival plots   ##
 ################################################################################
 #Select the variable for the Schoenfeld residuals
 output$Schoenfeld_X <- renderUI({
@@ -3520,7 +3520,38 @@ output$schoenfeld_plt <- renderPlot({
   if (input$regress_type %in% c("Cox PH", "Cox PH with censoring")) {
     plot(schoenfeld_e()[which(predictor() == input$schoenfeldx)])
   }
+}, height = 800)
+
+## Survival plots ##
+#Select predictors
+output$srv_plt_one_x <- renderUI({
+  selectInput("SrvPltX", "1. Select a single predictor.", 
+              choices = predictor(), multiple=FALSE, selected=predictor()[1])
 })
+#Select confidence interval level
+output$srv_plt_lvl <- renderUI({                                 #Same idea as output$vy
+  numericInput("SrvPltLvl", "2. Enter the confidence level.",
+               value = .95, min=0, max = .99, step = .01)
+})
+#Do you want confidence bands or bars?
+output$SurvPltBands <- renderUI({                                 
+  selectInput("surv_plt_band", "3. Do you want confidence bands or bars?", 
+              choices = c("bands","bars"), multiple=FALSE, selected="bands")     
+})
+#Create yes/no box to run survival plot
+output$SurvPltRun <- renderUI({                                 
+  selectInput("surv_plt_run", "4. Do you want to create the survival plot?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")     
+})
+
+#This plots the predicted values  for the partial effects plots  
+output$surv_plot1 <- renderPlot({
+  if(input$surv_plt_run == "Yes") {
+    (  do.call("survplot", list(fit1(), input$SrvPltX, conf.int=input$SrvPltLvl, conf=input$surv_plt_band, 
+                                    xlab=paste0("Survival time by ", input$SrvPltX)) )) 
+  } 
+})
+
 
 ################################################################################
 ## Testing section: Begin  ##

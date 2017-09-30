@@ -16,6 +16,7 @@ library(lm.beta)
 library(sensitivity)
 library(meta)
 library(rpart)
+library(coxme)
 data(lungcancer)
 options(shiny.maxRequestSize=1000*1024^2)    #This will increase the shiny file upload limit from current 5MB max
 
@@ -3538,20 +3539,120 @@ output$SurvPltBands <- renderUI({
   selectInput("surv_plt_band", "3. Do you want confidence bands or bars?", 
               choices = c("bands","bars"), multiple=FALSE, selected="bands")     
 })
+#Minimum value of Cox survival time
+cox_min_time <- reactive({ 
+  min(as.numeric(df()[, input$variableY], na.rm=TRUE) )  
+})
+#Maximum value of Cox survival time
+cox_max_time <- reactive({ 
+  max(as.numeric(df()[, input$variableY], na.rm=TRUE) )
+})
+#Indicate lower limit of x-axis
+output$SurvPltXlim1 <- renderUI({
+  numericInput("sp_Xlim1", "4. Lower X-axis limit.",
+               value = cox_min_time(), step = 1)
+})
+#Indicate upper limit of x-axis
+output$SurvPltXlim2 <- renderUI({
+  numericInput("sp_Xlim2", "5. Upper X-axis limit.",
+               value = cox_max_time(), step = 1)
+})
+#Indicate lower limit of y-axis
+output$SurvPltYlim1 <- renderUI({
+  numericInput("sp_Ylim1", "6. Lower Y-axis limit.",
+               value = 0, step = .01)
+})
+#Indicate upper limit of x-axis
+output$SurvPltYlim2 <- renderUI({
+  numericInput("sp_Ylim2", "7. Upper Y-axis limit.",
+               value = 1, step = .01)
+})
+
 #Create yes/no box to run survival plot
 output$SurvPltRun <- renderUI({                                 
-  selectInput("surv_plt_run", "4. Do you want to create the survival plot?", 
+  selectInput("surv_plt_run", "8. Do you want to create the survival plot?", 
               choices = c("No", "Yes"), multiple=FALSE, selected="No")     
 })
+
 
 #This plots the predicted values  for the partial effects plots  
 output$surv_plot1 <- renderPlot({
   if(input$surv_plt_run == "Yes") {
-    (  do.call("survplot", list(fit1(), input$SrvPltX, conf.int=input$SrvPltLvl, conf=input$surv_plt_band, 
+    (  do.call("survplot", list(fit1(), input$SrvPltX, conf.int=input$SrvPltLvl, conf=input$surv_plt_band,
+                                xlim=c(input$sp_Xlim1, input$sp_Xlim2), ylim=c(input$sp_Ylim1,input$sp_Ylim2),
                                     xlab=paste0("Survival time by ", input$SrvPltX)) )) 
   } 
+  if(input$surv_plt_run == "Yes") {
+    box()
+    } 
+  
+})
+#Multilevel modeling 
+#Selects a level 2 covariate
+output$CoxLev2 <- renderUI({
+  selectInput("cox_lev2", "1. Select a level 2 (between-group) covariate.", 
+              choices = other_cov(), multiple=FALSE, selected=other_cov()[1])
+})
+#Indicate if you should run the multilevel model.
+output$coxme_yes <- renderUI({ 
+  selectInput("CoxmeYes", "2. Run the mixed effects Cox PH model?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")
+})
+#This sets up the level 2 correlation structure
+mlv_cor <- reactive({
+  paste0("(1|", input$cox_lev2,")")
+})
+#Create the Cox model (no censoring)
+cme_fmla1 <- reactive({
+  as.formula(paste(paste0("Surv(",input$variableY,")" , "~"),   
+                   paste(c(mdl_vnms(), mlv_cor()), collapse= "+")))
+})
+#Create the Cox model with censoring
+cme_fmla2 <- reactive({
+  as.formula(paste(paste0("Surv(", input$variableY, ",", censor1(), ")", "~"),   
+                   paste(c(mdl_vnms(), mlv_cor()), collapse= "+")))
+})
+#Run the multilevel Cox model
+efit1 <- reactive({                  
+  if (input$CoxmeYes == "Yes") {
+    switch(input$regress_type, 
+           "Cox PH"                =  coxme(cme_fmla1(), x=TRUE, y=TRUE),
+           "Cox PH with censoring" =  coxme(cme_fmla2(), x=TRUE, y=TRUE))
+  }
+})
+#Print up the model output
+output$efit1_out <- renderPrint({ 
+  efit1()
 })
 
+#####################
+# Save model output #
+#####################
+output$SaveModelFitCme <- renderUI({  
+  selectInput("save_mdl_cme", "1. Save the model fit?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")     #Will make choices based on my reactive function.
+})
+
+#Model fit object
+cmemdlfit <- reactive({
+  if(input$save_mdl_cme == "Yes") {
+    efit1()
+  }
+})
+
+#The new data frame name for the model fit
+output$cme_mdl_fit_name <- renderUI({ 
+  textInput("CmeMdlFitName", "2. Enter the model fit name.", 
+            value= "model_fit")     
+})
+
+output$cme_model <- downloadHandler(
+  filename = "cme_model_fit.RData",
+  content = function(con) {
+    assign(input$CmeMdlFitName, cmemdlfit())
+    save(list=input$CmeMdlFitName, file=con)
+  }
+)
 
 ################################################################################
 ## Testing section: Begin  ##

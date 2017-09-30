@@ -439,14 +439,20 @@ tabPanel("Survival",
          h4("Survival plots"),                   
 
          fluidRow(
-           column(4, 
+           column(3, 
                   uiOutput("srv_plt_one_x"),
-                  uiOutput("srv_plt_lvl")),
-           column(4, offset=1,
+                  uiOutput("SurvPltXlim2")),
+           column(3,
+                  uiOutput("srv_plt_lvl"),
+                  uiOutput("SurvPltYlim1")), 
+           column(3,
                   uiOutput("SurvPltBands"),
-                  uiOutput("SurvPltRun"))
-         ),
-         br(),
+                  uiOutput("SurvPltYlim2")),
+         column(3,
+                uiOutput("SurvPltXlim1"),
+                uiOutput("SurvPltRun"))
+),
+br(),
          plotOutput("surv_plot1", height = 800, width="100%"),
          br(),
          h4("Schoenfeld residuals"),
@@ -456,7 +462,32 @@ tabPanel("Survival",
          tableOutput("schoenfeld_test"),
          h5("Schoenfeld residuals plot."),
          uiOutput("Schoenfeld_X"),
-         plotOutput("schoenfeld_plt")
+         plotOutput("schoenfeld_plt", height = 800, width="100%"),
+         br(),
+         h4("Mixed effects Cox proportional hazards model"),
+         fluidRow(
+           column(5, 
+                  uiOutput("CoxLev2")),
+           column(5, offset=1,
+                  uiOutput("coxme_yes"))
+         ),
+         verbatimTextOutput("efit1_out"),
+         br(),
+         fluidRow(                           #Wrapping them in a fluidRow provides easy control over  
+           h4("Download mixed effects cox model fit"),
+           h5("Note: Save ANY file name with '.RData' at the end."),
+           column(3,
+                  uiOutput("SaveModelFitCme")
+           ),
+           column(3, offset=1,
+                  uiOutput("cme_mdl_fit_name")
+           ),
+           column(4, 
+                  downloadLink('cme_model', '3. Click to download the model.')
+           )),
+         br(),
+         br(),
+         br()
 ),    
 
 #############

@@ -3759,7 +3759,7 @@ frail_plot_fnc <- function(fit, x, REvar) {
   f_o <- order(fdf1[,1])
   fdf2 <- fdf1[f_o, 1, drop=F] 
   #Plot
-  xx <- barplot(fdf2[,1], names.arg=rownames(fdf2), main = paste0("Random effects frailities by ", x), 
+  xx <- barplot(fdf2[,1], names.arg=rownames(fdf2), main = paste0("Random effects frailties by ", x), 
                 col="blue", cex.names=.6, ylim=c(min(fdf2[,1])*1.2, max(fdf2[,1]))*1.2)
   text(x=xx, y=fdf2[,1]*1.1, rownames(fdf2), cex=.75)
   abline(h=RESD, lty=2, lwd=2, col="grey")

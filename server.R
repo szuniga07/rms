@@ -7,6 +7,7 @@
 #install.packages("sensitivity")
 #install.packages("meta")
 #install.packages("rpart")
+#install.packages("coxme")
 
 library(shiny)
 library(jsonlite)
@@ -3539,6 +3540,11 @@ output$SurvPltBands <- renderUI({
   selectInput("surv_plt_band", "3. Do you want confidence bands or bars?", 
               choices = c("bands","bars"), multiple=FALSE, selected="bands")     
 })
+#Create yes/no box to run survival plot
+output$SurvPltRun <- renderUI({                                 
+  selectInput("surv_plt_run", "4. Do you want to create the survival plot?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")     
+})
 #Minimum value of Cox survival time
 cox_min_time <- reactive({ 
   min(as.numeric(df()[, input$variableY], na.rm=TRUE) )  
@@ -3549,42 +3555,43 @@ cox_max_time <- reactive({
 })
 #Indicate lower limit of x-axis
 output$SurvPltXlim1 <- renderUI({
-  numericInput("sp_Xlim1", "4. Lower X-axis limit.",
-               value = cox_min_time(), step = 1)
+  numericInput("sp_Xlim1", "5. Lower X-axis limit.",
+               #value = cox_min_time(), step = 1)
+               value = 0, step = 1)
 })
 #Indicate upper limit of x-axis
 output$SurvPltXlim2 <- renderUI({
-  numericInput("sp_Xlim2", "5. Upper X-axis limit.",
+  numericInput("sp_Xlim2", "6. Upper X-axis limit.",
                value = cox_max_time(), step = 1)
 })
 #Indicate lower limit of y-axis
 output$SurvPltYlim1 <- renderUI({
-  numericInput("sp_Ylim1", "6. Lower Y-axis limit.",
+  numericInput("sp_Ylim1", "7. Lower Y-axis limit.",
                value = 0, step = .01)
 })
 #Indicate upper limit of x-axis
 output$SurvPltYlim2 <- renderUI({
-  numericInput("sp_Ylim2", "7. Upper Y-axis limit.",
+  numericInput("sp_Ylim2", "8. Upper Y-axis limit.",
                value = 1, step = .01)
 })
 
 #Create yes/no box to run survival plot
-output$SurvPltRun <- renderUI({                                 
-  selectInput("surv_plt_run", "8. Do you want to create the survival plot?", 
-              choices = c("No", "Yes"), multiple=FALSE, selected="No")     
+output$SpTimeInc <- renderUI({                                 
+  numericInput("sp_timeinc", "9. Indicate the X-axis time increment.", 
+               value = round((input$sp_Xlim2/5), 0), step = 1, min=0)     
 })
 
 
 #This plots the predicted values  for the partial effects plots  
 output$surv_plot1 <- renderPlot({
   if(input$surv_plt_run == "Yes") {
-    (  do.call("survplot", list(fit1(), input$SrvPltX, conf.int=input$SrvPltLvl, conf=input$surv_plt_band, 
+    (do.call("survplot", list(fit1(), input$SrvPltX, conf.int=input$SrvPltLvl, conf=input$surv_plt_band, 
                                 xlim=c(input$sp_Xlim1, input$sp_Xlim2), ylim=c(input$sp_Ylim1,input$sp_Ylim2),
-                                    xlab=paste0("Survival time by ", input$SrvPltX)) )) 
+                                    xlab=paste0("Survival time by ", input$SrvPltX), time.inc=input$sp_timeinc) )) 
   } 
-  if(input$surv_plt_run == "Yes") {
-    axis(1)
-  } 
+#  if(input$need_plt_xaxis == "Yes") {
+#    axis(1)
+#  } 
   if(input$surv_plt_run == "Yes") {
     box()
     } 
@@ -3593,7 +3600,7 @@ output$surv_plot1 <- renderPlot({
 #Multilevel modeling 
 #Selects a level 2 covariate
 output$CoxLev2 <- renderUI({
-  selectInput("cox_lev2", "1. Select a level 2 (between-group) covariate.", 
+  selectInput("cox_lev2", "1. Select a level 2 (between-group) cluster variable.", 
               choices = other_cov(), multiple=FALSE, selected=other_cov()[1])
 })
 #Indicate if you should run the multilevel model.
@@ -3625,7 +3632,117 @@ efit1 <- reactive({
 })
 #Print up the model output
 output$efit1_out <- renderPrint({ 
+  if (input$CoxmeYes == "Yes") {
   efit1()
+  }
+})
+
+#################################################
+## Multilevel model tests and model assessment ##
+#################################################
+#Likelihood ratio test
+reLRT <- reactive({
+  if (input$CoxmeYes == "Yes") {
+  paste0("X2= ", round(2*(logLik(efit1()) - logLik(fit1())), 2), ", P-value= ", 
+         round(1-pchisq(as.vector(2*(logLik(efit1()) - logLik(fit1()))), 1), 5) )
+  }
+})
+
+#########################
+# Cox & Snell pseudo R2 #
+#########################
+#This function calculates the Cox & Snell pseudo R2
+R2_coxme_fnc <- function(fit) {
+  n <- fit$n[2]
+  lr <- -2 * (fit$loglik[1] - fit$loglik[2])  #Likelihood ratio statistic
+  ll0 <- -2 * fit$loglik[1]                      #Using log-likelihood from null model
+  R2.max <- 1 - exp(-ll0/n)                         #R2 max formula
+  R2 <- as.vector((1 - exp(-lr/n))/R2.max)                     #R2 formula
+  return(R2)
+}
+
+R2_coxme <- reactive({
+  if (input$CoxmeYes == "Yes") {
+    R2_coxme_fnc(efit1())
+  }
+})
+
+##################
+## R2 reduction ##
+##################
+#Create the Cox model (no censoring)
+cme_fmla_null1 <- reactive({
+  if (input$CoxmeYes == "Yes") {
+    as.formula(paste(paste0("Surv(",input$variableY,")" , "~"),   
+                   paste(mlv_cor(), collapse= "+")))
+  }
+})
+#Create the Cox model with censoring
+cme_fmla_null2 <- reactive({
+  if (input$CoxmeYes == "Yes") {
+    as.formula(paste(paste0("Surv(", input$variableY, ",", censor1(), ")", "~"),   
+                   paste(mlv_cor(), collapse= "+")))
+  }
+})
+#Run the multilevel Cox model
+efitnull <- reactive({                  
+  if (input$CoxmeYes == "Yes") {
+    switch(input$regress_type, 
+           "Cox PH"                =  coxme(cme_fmla_null1(), x=TRUE, y=TRUE,  
+                                            data=df()[complete.cases(df()[, c(predictor(), outcome(), input$SrvPltX)]), ]),
+           "Cox PH with censoring" =  coxme(cme_fmla_null2(), x=TRUE, y=TRUE,
+                                            data=df()[complete.cases(df()[, c(predictor(), outcome(), input$SrvPltX)]), ]))
+  }
+})
+
+##########################
+# Intraclass correlation #
+##########################
+#ICC
+rho_1 <- reactive({
+  if (input$CoxmeYes == "Yes") {
+  bw1_var()/(bw1_var() + (pi^2/6))
+  }
+})
+
+########################
+# Median hazards ratio #
+########################
+mhr_1 <- reactive({
+  if (input$CoxmeYes == "Yes") {
+  exp(sqrt(2 * bw1_var()) * qnorm(3/4))
+  }
+})
+########################
+
+# Random effects variance of the full model
+bw1_var <- reactive({
+  if (input$CoxmeYes == "Yes") {
+  as.vector(VarCorr(efit1())[[input$cox_lev2]])
+  }
+})
+#Random effects variance of the Null model
+bw01_var <- reactive({
+  if (input$CoxmeYes == "Yes") {
+    as.vector(VarCorr(efitnull())[[input$cox_lev2]])
+  }
+})
+#Random effects reduction in variance of the Null model
+bw01_reduc <- reactive({
+  if (input$CoxmeYes == "Yes") {
+  (bw01_var() - bw1_var())/bw01_var()
+  }
+})
+
+#Model assessment results
+output$efit1_tests <- renderPrint({ 
+  if (input$CoxmeYes == "Yes") {
+    list("Random effects likelihood ratio test"=c("LRT"=noquote(reLRT())),
+         "Cox & Snell pseudo R2"= c("R2"=R2_coxme()),
+         "Intraclass correlation"=c("ICC"= rho_1()),
+         "Median hazard ratio" = c("MHR"= mhr_1()), 
+       "Reduction in between group variance"=c("1. Reduction"=bw01_reduc(), "2. Null model variance"=bw01_var()))
+  }
 })
 
 #####################

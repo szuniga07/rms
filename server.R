@@ -3589,20 +3589,24 @@ output$surv_plot1 <- renderPlot({
                                 xlim=c(input$sp_Xlim1, input$sp_Xlim2), ylim=c(input$sp_Ylim1,input$sp_Ylim2),
                                     xlab=paste0("Survival time by ", input$SrvPltX), time.inc=input$sp_timeinc) )) 
   } 
-#  if(input$need_plt_xaxis == "Yes") {
-#    axis(1)
-#  } 
   if(input$surv_plt_run == "Yes") {
     box()
     } 
-  
-})
+}, height = 800)
+
 #Multilevel modeling 
 #Selects a level 2 covariate
 output$CoxLev2 <- renderUI({
   selectInput("cox_lev2", "1. Select a level 2 (between-group) cluster variable.", 
               choices = other_cov(), multiple=FALSE, selected=other_cov()[1])
 })
+
+cox_lev2 <- reactive({
+  if (input$CoxmeYes == "Yes") {
+    input$cox_lev2
+  }
+})
+
 #Indicate if you should run the multilevel model.
 output$coxme_yes <- renderUI({ 
   selectInput("CoxmeYes", "2. Run the mixed effects Cox PH model?", 
@@ -3610,7 +3614,7 @@ output$coxme_yes <- renderUI({
 })
 #This sets up the level 2 correlation structure
 mlv_cor <- reactive({
-  paste0("(1|", input$cox_lev2,")")
+  paste0("(1|", cox_lev2(),")")
 })
 #Create the Cox model (no censoring)
 cme_fmla1 <- reactive({
@@ -3718,13 +3722,13 @@ mhr_1 <- reactive({
 # Random effects variance of the full model
 bw1_var <- reactive({
   if (input$CoxmeYes == "Yes") {
-  as.vector(VarCorr(efit1())[[input$cox_lev2]])
+  as.vector(VarCorr(efit1())[[cox_lev2()]])
   }
 })
 #Random effects variance of the Null model
 bw01_var <- reactive({
   if (input$CoxmeYes == "Yes") {
-    as.vector(VarCorr(efitnull())[[input$cox_lev2]])
+    as.vector(VarCorr(efitnull())[[cox_lev2()]])
   }
 })
 #Random effects reduction in variance of the Null model
@@ -3742,6 +3746,46 @@ output$efit1_tests <- renderPrint({
          "Intraclass correlation"=c("ICC"= rho_1()),
          "Median hazard ratio" = c("MHR"= mhr_1()), 
        "Reduction in between group variance"=c("1. Reduction"=bw01_reduc(), "2. Null model variance"=bw01_var()))
+  }
+})
+
+##################
+## Frailty plot ##
+##################
+#Function that creates plot of frailties and returns alphabetical/numerical sorted values
+frail_plot_fnc <- function(fit, x, REvar) {
+  RESD <- sqrt(REvar)
+  fdf1 <- data.frame(fit$frail)
+  f_o <- order(fdf1[,1])
+  fdf2 <- fdf1[f_o, 1, drop=F] 
+  #Plot
+  xx <- barplot(fdf2[,1], names.arg=rownames(fdf2), main = paste0("Random effects frailities by ", x), 
+                col="blue", cex.names=.6, ylim=c(min(fdf2[,1])*1.2, max(fdf2[,1]))*1.2)
+  text(x=xx, y=fdf2[,1]*1.1, rownames(fdf2), cex=.75)
+  abline(h=RESD, lty=2, lwd=2, col="grey")
+  abline(h=RESD*-1, lty=2, lwd=3, col="grey")
+  legend(x="bottomright", legend=paste0("Random effects SD = ", round(sqrt(REvar), 3)), 
+         lty=2, lwd=2, col="grey", bty= "n", cex=1.5)
+  return(list("Alphabetical"=fdf1, "Numerical"=fdf2))
+}
+
+frail_run <- reactive({
+  if (input$CoxmeYes == "Yes") {
+    frail_plot_fnc(fit=efit1(), x=cox_lev2(), REvar=bw1_var())
+  }
+})
+
+#This plots the predicted values  for the partial effects plots  
+output$frail_plot1 <- renderPlot({
+  if (input$CoxmeYes == "Yes") {
+    frail_run()
+  } 
+}, height = 700)
+
+#Frailties sorted alphabetically by group and numerically by score
+output$frail_output <- renderPrint({ 
+  if (input$CoxmeYes == "Yes") {
+    list("Alphabetical"=frail_run()$Alphabetical, "Numerical"=frail_run()$Numerical)
   }
 })
 

@@ -485,7 +485,6 @@ br(),
 br(),
 h4("Assess model performance and between-group variance"),
 verbatimTextOutput("efit1_tests"),
-
 h6("1. Random effects LRT: This tests the significance of adding a between-group term to the fixed effects model."),
 h6("2. Cox & Snell pseudo R2: A discrimination index."),
 h6("3. Intraclass correlation: The level of similarity within groups or the level of differences between groups."),
@@ -510,8 +509,10 @@ h6("Note: The reduction in variance can be negative if the impact of level 1 pre
                   downloadLink('cme_model', '3. Click to download the model.')
            )),
          br(),
-         br(),
-         br()
+h4("Random effects frailties"),
+plotOutput("frail_plot1", height = 700, width="100%"),
+h5("Random effects frailties sorted alphabetically by cluster name and numerically by frailty value."),
+verbatimTextOutput("frail_output")
 ),    
 
 #############

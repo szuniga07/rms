@@ -3221,20 +3221,30 @@ cost_plot1_grp <- function(y, x, df) {
   polygon(d_ctl, col=red_trnspt, border=red_trnspt) 
   polygon(d_trt, col=blue_trnspt, border=blue_trnspt) 
   
-  abline(v=median(df[, y][df[, x] == 0], na.rm=T),
-         col="red")
-  abline(v=median(df[, y][df[, x] == 1], na.rm=T),
-         col="blue")
-  abline(v=mean(df[, y][df[, x] == 0], na.rm=T),
-         col="red", lty=3)
-  abline(v=mean(df[, y][df[, x] == 1], na.rm=T),
-         col="blue", lty=3)
+  #Treatment/control group means/medians
+  ctl_med <- median(df[, y][df[, x] == 0], na.rm=T)
+  trt_med <- median(df[, y][df[, x] == 1], na.rm=T)
+  ctl_mn <- mean(df[, y][df[, x] == 0], na.rm=T)
+  trt_mn <- mean(df[, y][df[, x] == 1], na.rm=T)
+#### Get quantiles and bind with means. Partially used in the legend and the observed table in a later section
+  qt1 <- quantile(df[, y][df[, x] == 0], probs=c(.1, .25, .5, .75, .9), na.rm=T)
+  qt2 <- quantile(df[, y][df[, x] == 1], probs=c(.1, .25, .5, .75, .9), na.rm=T)
+  odf_mqt <- as.data.frame(rbind(cbind(round(qt2, 2), round(qt1 ,2)),
+                                 cbind(round(trt_mn, 2), round(ctl_mn, 2)) ))
+  rownames(odf_mqt) <- c("p10", "p25", "p50", "p75", "p90", "Mean")
+  colnames(odf_mqt) <- c("Treatment", "Control")  #Observed data.frame of the means and quantiles
+###  
+  abline(v=ctl_med, col="red")
+  abline(v=trt_med, col="blue")
+  abline(v=ctl_mn, col="red", lty=3)
+  abline(v=trt_mn, col="blue", lty=3)
   axis(1)
-  legend("top", legend=c("Treatment: Mean", "Treatment: Median", 
-                         "Control: Mean", "Control: Median"), 
+  legend("top", legend=c(paste0("Treatment: Mean= ",round(trt_mn, 0)), paste0("Treatment: Median= ", round(trt_med, 0)), 
+                         paste0("Control: Mean= ", round(ctl_mn, 0)), paste0("Control: Median= ", round(ctl_med, 0))), 
          col=c(4,4,2,2), lty=c(3,1,3,1),
-         lwd=2, cex=1)
+         lwd=2, cex=1.25)
   box()
+  return(list("odf_mqt"=odf_mqt))
 }
 
 #Select the type of density plot to run (full sample or by a group)
@@ -3267,7 +3277,7 @@ dens_plt1 <- reactive({
 #This plots the density plot    
 output$plot_dens_plt1 <- renderPlot({
     dens_plt1() 
-})
+}, height = 500)
 
 #Creates mean function for the fit
 mn <- reactive({
@@ -3281,6 +3291,7 @@ med <- reactive({
     Quantile(fit1())       # Creates function to compute quantiles
   }  
 })
+
 
 ############################################
 #   Plot 2: Estimated cost over quantiles  #
@@ -3366,7 +3377,7 @@ quant_plt1_fnc <- function(ests, Y) {
   polygon(xxt, yyc, col = red_trnspt2, border=red_trnspt2)
   legend("topleft", legend=c("Treatment","Control"), 
          col=c(4,2), lty=1,
-         lwd=2, cex=1)
+         lwd=2, cex=1.25)
   box()
 }
 
@@ -3382,12 +3393,13 @@ quant_plt1 <- reactive({
 #This plots the quantile plot    
 output$plot_quant_plt1 <- renderPlot({
   quant_plt1() 
-})
+}, height = 500)
 
 #This prints the point estimates and confidence intervals
 output$quant_out1 <- renderTable({
   quant_ests()[["est2"]]
 }, rownames = TRUE)
+
 
 ##########################
 ### Get mean estimates ###
@@ -3434,6 +3446,19 @@ output$mean_out1 <- renderTable({
   mean_ests()[["est2"]]
 }, rownames = TRUE)
 
+## This extracts the observed data.frame means and quantiles from the reactive function below ##
+obs_df_mqt <- reactive({
+  if(input$RunDensPlt1 == "Yes") {
+    
+    if(input$DensPlt1Typ == "Stratified") {
+      dens_plt1()$odf_mqt
+    } 
+  }  
+})
+#This prints the means and quantiles
+output$obsdfmqt_out1 <- renderTable({
+  obs_df_mqt()
+}, rownames = TRUE)
 
 ##################################################
 #Create yes/no box to determine plot single partial effect

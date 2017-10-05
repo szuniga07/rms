@@ -3977,9 +3977,9 @@ frail_plot_fnc <- function(fit, x, REvar) {
 }
 
 frail_run <- reactive({
-  if (input$CoxmeYes == "Yes") {
+#  if (input$CoxmeYes == "Yes") {
     frail_plot_fnc(fit=efit1(), x=cox_lev2(), REvar=bw1_var())
-  }
+#  }
 })
 
 #This plots the predicted values  for the partial effects plots  

@@ -519,10 +519,13 @@ verbatimTextOutput("frail_output")
 #############
 tabPanel("Cost", 
          h4("Cost and continuous outcomes"),
-         h4("The Cox PH and Ordinal Logistic models can be used on continuous Y. This section is primarily for cost models but can be used for any continuous Y. Includes stratification for treatments."),
+         h4("The Cox PH, Ordinal Logistic, and Quantile regression models can be used on continuous Y. This section is primarily for cost models but can be used for any continuous Y. Includes stratification for treatments."),
+         br(),
          h5("Dudley, R. & Harrell, F. (1993). 'Comparison of analytic models for estimating the effect of clinical factors on the cost of coronary artery bypass graft surgery'. Journal of Clinical Epidemiology, 46(3)."),
+         br(),
          h5("The following 3 questions will set up the types of plots and tabled results."),                   
          h6("Note: If using the Cox PH model with censoring, censor a non-event (e.g., death = 0)."),                   
+         h6("Note: Not all tables and plots are applicable to a quantile regression (e.g., means)."), 
          fluidRow(
            column(3, 
                   uiOutput("dens_plt1_typ")),
@@ -532,7 +535,7 @@ tabPanel("Cost",
                   uiOutput("run_dens_plt1"))
          ),
          br(),
-         h5("Partial effects plots: Plot the mean or various quantile effects."),
+         h5("Partial effects plots: Plot the mean or various quantile effects. For quantile regression, get individual plots in the 'Partial PREDs' tab."),
          plotOutput("cox_prt_prd"),
          br(),
 fluidRow(

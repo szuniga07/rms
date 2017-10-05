@@ -3390,16 +3390,24 @@ quant_plt1 <- reactive({
     } 
   }  
 })
+
 #This plots the quantile plot    
 output$plot_quant_plt1 <- renderPlot({
-  quant_plt1() 
+  if(input$regress_type == "Quantile") {
+    qr_plt1()
+  } else {
+    quant_plt1()
+  }
 }, height = 500)
 
 #This prints the point estimates and confidence intervals
 output$quant_out1 <- renderTable({
-  quant_ests()[["est2"]]
+  if(input$regress_type == "Quantile") {
+    qr_ests()[["est2"]]
+  } else {
+    quant_ests()[["est2"]]
+  }
 }, rownames = TRUE)
-
 
 ##########################
 ### Get mean estimates ###
@@ -3518,7 +3526,181 @@ pe_cox_x_var <- reactive({
   input$cox_X
 })
 ##################################################
+#########################
+## Quantile regression ##
+#########################
+######
+#10th percentile
+quant_reg.10 <- reactive({                  
+  if (input$begin_mdl == "Yes") {
+    switch(input$regress_type,                #"var" and can be used anywhere in server.r.
+           "Quantile" = if(input$updy == "Yes") {
+             Rq(as.formula(input$up_fmla), x=TRUE, y=TRUE, tau=.1) 
+           } else {
+             Rq(mdl_fmla(), x=TRUE, y=TRUE,  tau=.1)}
+    )
+  } else {
+    switch(input$regress_type,    
+           "Quantile" = if(input$updy == "Yes") {
+             fit.mult.impute(as.formula(input$up_fmla), Rq, mi(), data=df(), pr=FALSE, tau=.1) 
+           } else {
+             fit.mult.impute(mdl_fmla(), Rq, mi(), data=df(), pr=FALSE, tau=.1)} 
+    )
+  }
+})
+#25th percentile
+quant_reg.25 <- reactive({                  
+  if (input$begin_mdl == "Yes") {
+    switch(input$regress_type,                #"var" and can be used anywhere in server.r.
+           "Quantile" = if(input$updy == "Yes") {
+             Rq(as.formula(input$up_fmla), x=TRUE, y=TRUE, tau=.25) 
+           } else {
+             Rq(mdl_fmla(), x=TRUE, y=TRUE,  tau=.25)}
+    )
+  } else {
+    switch(input$regress_type,    
+           "Quantile" = if(input$updy == "Yes") {
+             fit.mult.impute(as.formula(input$up_fmla), Rq, mi(), data=df(), pr=FALSE, tau=.25) 
+           } else {
+             fit.mult.impute(mdl_fmla(), Rq, mi(), data=df(), pr=FALSE, tau=.25)} 
+    )
+  }
+})
+#50th percentile
+quant_reg.50 <- reactive({                  
+  if (input$begin_mdl == "Yes") {
+    switch(input$regress_type,                #"var" and can be used anywhere in server.r.
+           "Quantile" = if(input$updy == "Yes") {
+             Rq(as.formula(input$up_fmla), x=TRUE, y=TRUE, tau=.5) 
+           } else {
+             Rq(mdl_fmla(), x=TRUE, y=TRUE,  tau=.5)}
+    )
+  } else {
+    switch(input$regress_type,    
+           "Quantile" = if(input$updy == "Yes") {
+             fit.mult.impute(as.formula(input$up_fmla), Rq, mi(), data=df(), pr=FALSE, tau=.5) 
+           } else {
+             fit.mult.impute(mdl_fmla(), Rq, mi(), data=df(), pr=FALSE, tau=.5)} 
+    )
+  }
+})
+#75th percentile
+quant_reg.75 <- reactive({                  
+  if (input$begin_mdl == "Yes") {
+    switch(input$regress_type,                #"var" and can be used anywhere in server.r.
+           "Quantile" = if(input$updy == "Yes") {
+             Rq(as.formula(input$up_fmla), x=TRUE, y=TRUE, tau=.75) 
+           } else {
+             Rq(mdl_fmla(), x=TRUE, y=TRUE,  tau=.75)}
+    )
+  } else {
+    switch(input$regress_type,    
+           "Quantile" = if(input$updy == "Yes") {
+             fit.mult.impute(as.formula(input$up_fmla), Rq, mi(), data=df(), pr=FALSE, tau=.75) 
+           } else {
+             fit.mult.impute(mdl_fmla(), Rq, mi(), data=df(), pr=FALSE, tau=.75)}
+    )
+  }
+})
+#90th percentile
+quant_reg.90 <- reactive({                  
+  if (input$begin_mdl == "Yes") {
+    switch(input$regress_type,                #"var" and can be used anywhere in server.r.
+           "Quantile" = if(input$updy == "Yes") {
+             Rq(as.formula(input$up_fmla), x=TRUE, y=TRUE, tau=.9) 
+           } else {
+             Rq(mdl_fmla(), x=TRUE, y=TRUE,  tau=.9)}
+    )
+  } else {
+    switch(input$regress_type,    
+           "Quantile" = if(input$updy == "Yes") {
+             fit.mult.impute(as.formula(input$up_fmla), Rq, mi(), data=df(), pr=FALSE, tau=.9) 
+           } else {
+             fit.mult.impute(mdl_fmla(), Rq, mi(), data=df(), pr=FALSE, tau=.9)}
+    )
+  }
+})
 
+
+#Function to get quantile estimates from quantile regression
+pred_qnt_reg5_fnc <- function(qr.10, qr.25, qr.50, qr.75, qr.90, Dens1X) {
+  #Get predicted scores
+  pq10 <- do.call("Predict", list(qr.10, Dens1X))
+  pq25 <- do.call("Predict", list(qr.25, Dens1X))
+  pq50 <- do.call("Predict", list(qr.50, Dens1X))
+  pq75 <- do.call("Predict", list(qr.75, Dens1X))
+  pq90 <- do.call("Predict", list(qr.90, Dens1X))
+  #Get estimated intervention values
+  est1.10 <- unlist(pq10[ which(names(pq10) %in% c("yhat", "lower", "upper"))])
+  est1.25 <- unlist(pq25[ which(names(pq25) %in% c("yhat", "lower", "upper"))])
+  est1.50 <- unlist(pq50[ which(names(pq50) %in% c("yhat", "lower", "upper"))])
+  est1.75 <- unlist(pq75[ which(names(pq75) %in% c("yhat", "lower", "upper"))])
+  est1.90 <- unlist(pq90[ which(names(pq90) %in% c("yhat", "lower", "upper"))])
+  #Rbind the point estimates and confidence intervals
+  est1 <- data.frame(rbind(est1.10, est1.25, est1.50,     
+                           est1.75, est1.90))
+  #Re-arrange order to get values set up for display in the plot
+  est2 <- est1[, c(2,4,6,1,3,5)]
+  colnames(est2) <- c("TREATMENT", "L95", "U95","Control", "L95", "U95")
+  rownames(est2) <- c("p10", "p25", "p50","p75", "p90")
+  #Add cost difference beteen Treatment and controls 
+  est2$Diff. <- abs(round(est2$Control) - round(est2$TREATMENT))
+  return(list(est1=est1, est2=est2))
+}
+#pred_qnt_reg5_fnc(qr.10=qr1, qr.25=qr1, qr.50=qr1, qr.75=qr1, qr.90=qr1, Dens1X="intervention")
+
+#This runs the pred_qnt_reg5_fnc() function above
+qr_ests <- reactive({
+  if(input$RunDensPlt1 == "Yes") {
+    
+    if(input$DensPlt1Typ == "Stratified") {
+      pred_qnt_reg5_fnc(qr.10=quant_reg.10(), qr.25=quant_reg.25(), qr.50=quant_reg.50(), 
+                        qr.75=quant_reg.75(), qr.90=quant_reg.90(), Dens1X=input$DensPlt1X)
+    } 
+  }  
+})
+      
+      ##############
+      #Graph on differences between intervention groups on expected costs over percentiles 
+      qr_plt1_fnc <- function(ests, Y) {
+        est1 <- ests[["est1"]]
+        est2 <- ests[["est2"]]
+        #Later shades for second plot
+        c_red <- 2; c_blue <- 4
+        red_trnspt2  <- adjustcolor(c_red, alpha.f = 0.2)                               #Set red color transparency.
+        blue_trnspt2 <- adjustcolor(c_blue, alpha.f = 0.2)                              #Set blue color transparency.
+        plot(1:5, est1[, 1], type="n",
+             ylab=Y, xlab="Percentiles",
+             ylim=c(0, max(est1, na.rm=T)*.9), xlim=c(1, 5),
+             axes=F, main=paste0("Estimated ", Y, " over quantiles"))
+        lines(1:5, est1[, 1], col="red", lwd=3)
+        lines(1:5, est1[, 2], col="blue", lwd=3)
+        #Set up coordinates for polygon function, NOTE: UPPER AND LOWER MEAN THE OPPOSITE 
+        #BECAUSE A COX MODEL VIEWS COST IN THE OPPOSITE DIRECTION.
+        axis(2)
+        axis(1, at=1:5, tick=F, pos=3, labels= c("p10", "p25", "p50", "p75", "p90"))
+        xxt <- c(1:5,5:1)
+        yya <- c(est1$lower2, rev(est1$upper2))  #Treatment
+        yyc <- c(est1$lower1, rev(est1$upper1))  #Control
+        #plot(xx,yyd, type="n", ylim=c(0,1))
+        polygon(xxt, yya, col = blue_trnspt2, border=blue_trnspt2)
+        polygon(xxt, yyc, col = red_trnspt2, border=red_trnspt2)
+        legend("topleft", legend=c("Treatment","Control"), 
+               col=c(4,2), lty=1,
+               lwd=2, cex=1.25)
+        box()
+      }
+      
+      #This runs the qr_plt1_fnc() function above
+      qr_plt1 <- reactive({
+        if(input$RunDensPlt1 == "Yes") {
+          
+          if(input$DensPlt1Typ == "Stratified") {
+            qr_plt1_fnc(ests=qr_ests(), Y= outcome())
+          } 
+        }  
+      })
+      
 ################################################################################
 ##  Survival analysis stuff: Schoenfeld residuals  and survival plots   ##
 ################################################################################

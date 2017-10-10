@@ -2504,7 +2504,7 @@ output$Plot_Ci_output <- renderPlot({
   if(input$CiCreate == "Yes") {
   plot_ci()
   }
-  })
+  }, height = 700)
 
 #Confidence interval values
 output$Cidf_output <- renderPrint({ 
@@ -3128,13 +3128,13 @@ output$naPlt <- renderPlot({
   if (input$MissChoice == "Yes") {
     naplot(na.patterns(), 'na per var')
   }
-}, height = 400, width = 800)
+}, height = 700, width = 1000)
 #This renders the dendogram for missing values
 output$naDendo <- renderPlot({ 
   if (input$MissChoice == "Yes") {
     plot(na.patterns())
   }
-}, height = 400, width = 800 )
+}, height = 700, width = 1000 )
 #This does the recursive partitioning of the 
 who.na <- reactive({             #Spline terms 
   if (input$MissChoice == "Yes") {
@@ -3147,7 +3147,7 @@ output$naTree <- renderPlot({
     plot(who.na(), margin= .1)
     text(who.na())
   }
-}, height = 400, width = 800)
+}, height = 700, width = 1000)
 #Logistic regression to predict missingness .
 lrm_miss <- reactive({             #Spline terms 
   if (input$MissChoice == "Yes") {
@@ -3977,9 +3977,7 @@ frail_plot_fnc <- function(fit, x, REvar) {
 }
 
 frail_run <- reactive({
-#  if (input$CoxmeYes == "Yes") {
     frail_plot_fnc(fit=efit1(), x=cox_lev2(), REvar=bw1_var())
-#  }
 })
 
 #This plots the predicted values  for the partial effects plots  

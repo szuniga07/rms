@@ -354,7 +354,7 @@ tabPanel("Impute",
           tabPanel("Summary",                       
                    h4("Interpret effects"),
                    h4("Shows changes between the 25th and 75th percentiles, 0-to-1, or mode to other categories."  ),
-                   plotOutput("dis"),                  #Creates a new panel named "Summary"
+                   plotOutput("dis", height=600),                  #Creates a new panel named "Summary"
                    br(),
                    h6("Warning: Factors with 4 or more categories can't be plotted in a single plot."),
                    h6("Consider using \"Partial PREDS\" tab to assess factors with many levels."),
@@ -366,7 +366,7 @@ tabPanel("Impute",
           
           tabPanel("Importance", 
                    h4("Plot of predictor importance"),
-                   plotOutput("p_anova"),
+                   plotOutput("p_anova", height=600),
                    br(),
                    h4("ANOVA summary of model"),
                    verbatimTextOutput("anova_smry")
@@ -374,7 +374,7 @@ tabPanel("Impute",
           tabPanel("Partial PREDS", 
                    h4("Partial predictions plot"),
                    h4("The model can be described using partial effect plots by plotting each X against Y holding other predictions constant (e.g., Median)."),                   
-                   plotOutput("prt_prd"),
+                   plotOutput("prt_prd", height=600),
                    br(),
                    uiOutput("prt_one_yes"),  #vx is the created drop down box coming from renderUI in server.r.
                    br(),
@@ -384,7 +384,7 @@ tabPanel("Impute",
           tabPanel("Nomogram",
                    h4("Hand calculate probabilities with a nomogram"),
                    h4("We use a nomogram that converts each effect in the model to a 0 to 100 scale."),
-                   plotOutput("nomo_gram"),
+                   plotOutput("nomo_gram", height = 600),
                    br(),
                    uiOutput("nomo_one_yes"),  #vx is the created drop down box coming from renderUI in server.r.
                    br(),
@@ -407,7 +407,7 @@ tabPanel("Impute",
                    br(),
                    h4("Model calibration (e.g, bootstrapped, cross-validated--repeated 100 times)"),
                    h4("The reliability of a model, meaning the ability of the model to predict future observations as well as it appeared to predict the responses at hand."),
-                   plotOutput("cali_brate")
+                   plotOutput("cali_brate", height = 600)
                    ),    #Creates a new panel named "Summary"
                        
           tabPanel("Validation", 
@@ -614,7 +614,7 @@ tabPanel("OAT M/SD plot",                                #Creates a new panel na
            h4("Morris One-at-a-Time plot of Yhat means by Yhat SDs for each predictor (holding other predictors constant)"),
            h5("High means indicate high Elementary Effects. High SDs may indicate non-linearity and/or interactions."),
            h5("Red line= sample mean; Blue line= sample median. Lines not always visible."),
-           plotOutput("oat_mn_sd")   
+           plotOutput("oat_mn_sd", height = 600)   
          )),              
 
 tabPanel("Tornado plot",                                #Creates a new panel named "Test Plot"
@@ -643,7 +643,7 @@ tabPanel("Cobweb plot",                                #Creates a new panel name
            h5("Shows responses of predictors with best predicted outcome values. Narrower spread indicates greater predictor importance."),
            h6("Note: Requires at least 2 predictors, 1 of which needs to be continuous. If not, produces error message."),
            uiOutput("top_bottom_5"),
-           plotOutput("cobwebplot"),
+           plotOutput("cobwebplot", height=600),
            h5("Response level names and \"approximate\" associated percentiles for binomial and categorical factors (in order)."),
            h5("Binomial and categorical percentiles are 1/N *100 (e.g., 3 levels= 1/3, 2/3, 3/3= 33, 68, 100)."),
            verbatimTextOutput("cobweb_lev_nm")

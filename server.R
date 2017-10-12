@@ -894,7 +894,7 @@ nm_x_var <- reactive({
       } else {
         plot(summary(fit1()))
       }
-    })
+    }, height = 600)
 #################################################
 #    fncPltSmr <- function(sum_yes, fit1, sm_x_var, df) {
     #      lv <- unique(df[, sm_x_var])[1]
@@ -934,7 +934,7 @@ output$mod_ify <- renderPrint({
 #This Plot ANOVA to show variable importance.  
 output$p_anova <- renderPlot({
   plot(anova(fit1()))
-})
+}, height = 600)
 
 #This Plot ANOVA to show variable importance.  
 output$anova_smry <- renderPrint({
@@ -948,7 +948,7 @@ output$anova_smry <- renderPrint({
       } else {
         plot(Predict(fit1()))
       }
-    })
+    }, height = 600)
     #Create yes/no box to determine plot single partial effect
     output$prt_one_yes <- renderUI({                                 #Same idea as output$vy
       selectInput("pe_yes", "1. Do you want to plot a single partial effect?", 
@@ -967,7 +967,7 @@ output$nomo_gram <- renderPlot({
   } else {
     plot(nomogram(fit1()))
   }
-})
+}, height = 600)
 #Create yes/no box to determine plot single partial effect
 output$nomo_one_yes <- renderUI({                                 #Same idea as output$vy
   selectInput("nomo_yes", "1. Do you want to plot a single or multiple predictor scores?", 
@@ -1047,7 +1047,7 @@ output$cali_brate <- renderPlot({
     }
   }
   
-})
+}, height = 600)
 
 
 #Select the validation method, "boot" is slow
@@ -2320,7 +2320,7 @@ output$oat_mn_sd <- renderPlot({
   abline(v=mean(as.numeric(df()[, input$variableY], na.rm=TRUE)), col="red")
   abline(v=median(as.numeric(df()[, input$variableY], na.rm=TRUE)), col="blue")
   text(yhat_input_mn(), yhat_input_sd(), labels=vls2()[["cnm"]])
-})
+}, height = 600)
 
 output$tornadoplot <- renderPlot({ 
   src_plot_rslt()
@@ -2333,9 +2333,7 @@ output$cutoffplot <- renderPlot({
 
 output$cobwebplot <- renderPlot({ 
   cobweb_plot()
-}
-#, height = 400, width = 800 
-)
+}, height = 600 )
 
 output$cobweb_lev_nm <- renderPrint({ 
   cobweb_fctr_rslt()

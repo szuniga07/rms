@@ -378,7 +378,7 @@ shinyServer(
 #        hist(predict(fit1()), main="Histogram of the predicted Y values",
 #             xlab=paste0(input$variableY))
       hist(yhat_hist_rslt(), main="Histogram of the predicted Y values",
-                        xlab=paste0(input$variableY, " (range: ", round(min(yhat_hist_rslt(), na.rm=T),3), " to ", round(max(yhat_hist_rslt(), na.rm=T), 3), ")" ))
+                        xlab=paste0(input$variableY, " (range: ", round(min(yhat_hist_rslt(), na.rm=T),3), " to ", round(max(yhat_hist_rslt(), na.rm=T), 3), ". Unique values= ", length(unique(yhat_hist_rslt())) ,".)" ))
     })
     
     ########### Model approximation section ###########        

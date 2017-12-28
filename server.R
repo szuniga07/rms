@@ -2293,6 +2293,44 @@ output$power_summary <- renderPrint({
   
   })
 
+###################
+## Effect size   ##
+###################
+## Effect sizes for proportions ##
+as1 <- reactive({                  
+  (asin(sign(input$p1Bin) * sqrt(abs(input$p1Bin))))*2  #Arcsine tranformation for treatment group
+})
+as2 <- reactive({                  
+  (asin(sign(input$p2Bin) * sqrt(abs(input$p2Bin))))*2  #Arcsine tranformation for control group
+})
+#Effect size
+ES_prop <- reactive({ 
+  abs(as1() - as2())
+})
+
+## Effect size for means ##
+ES_mean <- reactive({ 
+  input$deltaCon/input$sdCon
+})
+
+## Summary ##
+output$effect_size_summary <- renderPrint({ 
+  list("Binary Outcome"= if (!is.null(c(input$p1Bin, input$p2Bin))) {
+    ES_prop()
+  }  else {
+    NULL
+  },
+  "Continuous Outcome"= if (!is.null(c(input$deltaCon, input$sdCon))) {
+    ES_mean()
+  }  else {
+    NULL
+  }
+  
+  )
+  
+})
+
+
 ###############################
 ## Output FOR TABS ##
 output$name_dist_type <- renderPrint({ 

@@ -778,7 +778,15 @@ tabPanel("Power" ,
          ),
          
          h4("Power analysis summary"),
-         verbatimTextOutput("power_summary")
+         verbatimTextOutput("power_summary"),
+         h5("'Delta' represents the difference between the two group's mean."),
+         h5("The pooled standard deviation (SD) is calculated as the average of each group's SD (Cohen, 1988)."),
+         br(),
+         h4("Effect size summary"),
+         verbatimTextOutput("effect_size_summary"),
+         h5("Effect sizes are standardized values that represent the magnitude of differences between the groups."),
+         h5("Binary outcomes: Values of 0.20, 0.50, and 0.80 represent small, medium, and large effects (Cohen, 1988)."),
+         h5("Continuous outcomes: Values of 0.20, 0.50, and 0.80 represent small, medium, and large effects. Consult Cohen, 1988, about paired t-tests.")
 ), 
 
 ###

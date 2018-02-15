@@ -2383,10 +2383,14 @@ output$cobweb_lev_nm <- renderPrint({
 #Continuous outcomes
 tconf <- function(x, y, dataf, conf_lev) {
   #Aggregates outcome by factor 
-  agr_m <- aggregate(dataf[, y] ~ dataf[, x], FUN="mean", data= dataf)
-  agr_sd <- aggregate(dataf[, y] ~ dataf[, x], FUN="sd", data= dataf)
-  agr_n <- aggregate(dataf[, y] ~ dataf[, x], FUN="length", data= dataf)
+  #agr_m <- aggregate(dataf[, y] ~ dataf[, x], FUN="mean", data= dataf)
+  #agr_sd <- aggregate(dataf[, y] ~ dataf[, x], FUN="sd", data= dataf)
+  #agr_n <- aggregate(dataf[, y] ~ dataf[, x], FUN="length", data= dataf)
+  agr_m <- aggregate(dataf[, y], list(dataf[, x]), FUN="mean")
+  agr_sd <- aggregate(dataf[, y], list(dataf[, x]), FUN="sd")
+  agr_n <- aggregate(dataf[, y], list(dataf[, x]), FUN="length")
   agr_df <- data.frame(x_lev=agr_m[, 1], agr_m=agr_m[, 2], agr_sd=agr_sd[, 2], agr_n=agr_n[, 2])
+  
   #Calculates confidence intervals
   MOE <- qt((conf_lev/2)+.5, df=agr_df$agr_n - 1) * agr_df$agr_sd/sqrt(agr_df$agr_n)
   Lower <- agr_df$agr_m - MOE
@@ -2405,8 +2409,10 @@ tconf <- function(x, y, dataf, conf_lev) {
 #Binary outcomes
 bconf <- function(x, y, dataf, conf_lev) {
   #Aggregates outcome by factor 
-  agr_sum <- aggregate(dataf[, y] ~ dataf[, x], FUN="sum", data= dataf)
-  agr_n <- aggregate(dataf[, y] ~ dataf[, x], FUN="length", data= dataf)
+#  agr_sum <- aggregate(dataf[, y] ~ dataf[, x], FUN="sum", data= dataf)
+#  agr_n <- aggregate(dataf[, y] ~ dataf[, x], FUN="length", data= dataf)
+  agr_sum <- aggregate(dataf[, y], list(dataf[, x]),  FUN="sum")
+  agr_n <- aggregate(dataf[, y], list(dataf[, x]), FUN="length")
   agr_df <- data.frame(x_lev=agr_sum[, 1], agr_sum=agr_sum[, 2], agr_n=agr_n[, 2])
   #Calculates confidence intervals
   adf_alpha <- binconf(x=agr_df[,2], n=agr_df[,3], alpha=1 - conf_lev)
@@ -2424,8 +2430,10 @@ bconf <- function(x, y, dataf, conf_lev) {
 #Exact Poisson
 pconf <- function(x, y, dataf, conf_lev) {
   #Aggregates outcome by factor 
-  agr_sum <- aggregate(dataf[, y] ~ dataf[, x], FUN="sum", data= dataf)
-  agr_n <- aggregate(dataf[, y] ~ dataf[, x], FUN="length", data= dataf)
+#  agr_sum <- aggregate(dataf[, y] ~ dataf[, x], FUN="sum", data= dataf)
+#  agr_n <- aggregate(dataf[, y] ~ dataf[, x], FUN="length", data= dataf)
+  agr_sum <- aggregate(dataf[, y], list(dataf[, x]), FUN="sum")
+  agr_n <- aggregate(dataf[, y], list(dataf[, x]), FUN="length")
   agr_df <- data.frame(x_lev=agr_sum[, 1], agr_sum=agr_sum[, 2], agr_n=agr_n[, 2])
   #Calculates confidence intervals
   adf_alpha <- matrix(ncol= 3, nrow= nrow(agr_df), byrow = TRUE)
@@ -2566,8 +2574,10 @@ output$Ci_create <- renderUI({                                #Creates a UI func
 #Binomial
 fbconf <- function(x, y, z, dataf, conf_lev) {
   #Aggregates outcome by factor 
-  agr_sum <- aggregate(dataf[, y] ~ dataf[, x] + dataf[, z], FUN="sum", data= dataf)
-  agr_n <- aggregate(dataf[, y] ~ dataf[, x] + dataf[, z], FUN="length", data= dataf)
+#  agr_sum <- aggregate(dataf[, y] ~ dataf[, x] + dataf[, z], FUN="sum", data= dataf)
+#  agr_n <- aggregate(dataf[, y] ~ dataf[, x] + dataf[, z], FUN="length", data= dataf)
+  agr_sum <- aggregate(dataf[, y], list(dataf[, x] , dataf[, z]), FUN="sum")
+  agr_n <- aggregate(dataf[, y], list(dataf[, x] , dataf[, z]), FUN="length")
   agr_df <- data.frame(x_lev=agr_sum[, 1], z_lev=agr_sum[, 2], agr_sum=agr_sum[, 3], agr_n=agr_n[, 3])
   #Calculates confidence intervals
   agr_df <- cbind(agr_df, binconf(x=agr_df[,3], n=agr_df[,4], alpha=1 - conf_lev))
@@ -2577,9 +2587,12 @@ fbconf <- function(x, y, z, dataf, conf_lev) {
 #Continuous outcomes
 ftconf <- function(x, y, z, dataf, conf_lev) {
   #Aggregates outcome by factor 
-  agr_m <- aggregate(dataf[, y] ~ dataf[, x]+ dataf[, z], FUN="mean", data= dataf)
-  agr_sd <- aggregate(dataf[, y] ~ dataf[, x]+ dataf[, z], FUN="sd", data= dataf)
-  agr_n <- aggregate(dataf[, y] ~ dataf[, x]+ dataf[, z], FUN="length", data= dataf)
+#  agr_m <- aggregate(dataf[, y] ~ dataf[, x]+ dataf[, z], FUN="mean", data= dataf)
+#  agr_sd <- aggregate(dataf[, y] ~ dataf[, x]+ dataf[, z], FUN="sd", data= dataf)
+#  agr_n <- aggregate(dataf[, y] ~ dataf[, x]+ dataf[, z], FUN="length", data= dataf)
+  agr_m <- aggregate(dataf[, y], list(dataf[, x] , dataf[, z]), FUN="mean")
+  agr_sd <- aggregate(dataf[, y], list(dataf[, x] , dataf[, z]), FUN="sd")
+  agr_n <- aggregate(dataf[, y], list(dataf[, x] , dataf[, z]), FUN="length")
   agr_df <- data.frame(x_lev=agr_m[, 1], z_lev=agr_m[, 2], agr_m=agr_m[, 3], agr_sd=agr_sd[, 3], agr_n=agr_n[, 3])
   #Calculates confidence intervals
   MOE <- qt((conf_lev/2)+.5, df=agr_df$agr_n - 1) * agr_df$agr_sd/sqrt(agr_df$agr_n)
@@ -2593,8 +2606,10 @@ ftconf <- function(x, y, z, dataf, conf_lev) {
 #Exact Poisson
 fpconf <- function(x, y, z, dataf, conf_lev) {
   #Aggregates outcome by factor 
-  agr_sum <- aggregate(dataf[, y] ~ dataf[, x]+ dataf[, z], FUN="sum", data= dataf)
-  agr_n <- aggregate(dataf[, y] ~ dataf[, x]+ dataf[, z], FUN="length", data= dataf)
+#  agr_sum <- aggregate(dataf[, y] ~ dataf[, x]+ dataf[, z], FUN="sum", data= dataf)
+#  agr_n <- aggregate(dataf[, y] ~ dataf[, x]+ dataf[, z], FUN="length", data= dataf)
+  agr_sum <- aggregate(dataf[, y] ~ dataf[, x]+ dataf[, z], FUN="sum")
+  agr_n <- aggregate(dataf[, y] ~ dataf[, x]+ dataf[, z], FUN="length")
   agr_df <- data.frame(x_lev=agr_sum[, 1], z_lev=agr_sum[, 2], agr_sum=agr_sum[, 3], agr_n=agr_n[, 3])
   #Calculates confidence intervals
   adf_alpha <- matrix(ncol= 3, nrow= nrow(agr_df), byrow = TRUE)

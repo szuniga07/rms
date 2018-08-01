@@ -2386,8 +2386,8 @@ tconf <- function(x, y, dataf, conf_lev) {
   #agr_m <- aggregate(dataf[, y] ~ dataf[, x], FUN="mean", data= dataf)
   #agr_sd <- aggregate(dataf[, y] ~ dataf[, x], FUN="sd", data= dataf)
   #agr_n <- aggregate(dataf[, y] ~ dataf[, x], FUN="length", data= dataf)
-  agr_m <- aggregate(dataf[, y], list(dataf[, x]), FUN="mean")
-  agr_sd <- aggregate(dataf[, y], list(dataf[, x]), FUN="sd")
+  agr_m <- aggregate(dataf[, y], list(dataf[, x]), FUN="mean", na.rm=T)
+  agr_sd <- aggregate(dataf[, y], list(dataf[, x]), FUN="sd", na.rm=T)
   agr_n <- aggregate(dataf[, y], list(dataf[, x]), FUN="length")
   agr_df <- data.frame(x_lev=agr_m[, 1], agr_m=agr_m[, 2], agr_sd=agr_sd[, 2], agr_n=agr_n[, 2])
   
@@ -2411,7 +2411,7 @@ bconf <- function(x, y, dataf, conf_lev) {
   #Aggregates outcome by factor 
 #  agr_sum <- aggregate(dataf[, y] ~ dataf[, x], FUN="sum", data= dataf)
 #  agr_n <- aggregate(dataf[, y] ~ dataf[, x], FUN="length", data= dataf)
-  agr_sum <- aggregate(dataf[, y], list(dataf[, x]),  FUN="sum")
+  agr_sum <- aggregate(dataf[, y], list(dataf[, x]),  FUN="sum", na.rm=T)
   agr_n <- aggregate(dataf[, y], list(dataf[, x]), FUN="length")
   agr_df <- data.frame(x_lev=agr_sum[, 1], agr_sum=agr_sum[, 2], agr_n=agr_n[, 2])
   #Calculates confidence intervals
@@ -2432,7 +2432,7 @@ pconf <- function(x, y, dataf, conf_lev) {
   #Aggregates outcome by factor 
 #  agr_sum <- aggregate(dataf[, y] ~ dataf[, x], FUN="sum", data= dataf)
 #  agr_n <- aggregate(dataf[, y] ~ dataf[, x], FUN="length", data= dataf)
-  agr_sum <- aggregate(dataf[, y], list(dataf[, x]), FUN="sum")
+  agr_sum <- aggregate(dataf[, y], list(dataf[, x]), FUN="sum", na.rm=T)
   agr_n <- aggregate(dataf[, y], list(dataf[, x]), FUN="length")
   agr_df <- data.frame(x_lev=agr_sum[, 1], agr_sum=agr_sum[, 2], agr_n=agr_n[, 2])
   #Calculates confidence intervals

@@ -223,7 +223,8 @@ tabPanel("Describe",
            column(3, offset=1,
                   uiOutput("desc_choice"))
          ),
-           plotOutput("DescSmryPlt", height = 700),          
+         plotOutput("DescSmryPlt", height = 800, width = 1200),          
+         #plotOutput("DescSmryPlt", height = 700),          
            br(),
          fluidRow(   
            column(3, 

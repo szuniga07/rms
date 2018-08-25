@@ -3123,10 +3123,14 @@ desc_smry <- reactive({             #Spline terms
 })
 #This renders the summary plot
 output$DescSmryPlt <- renderPlot({ 
+  par(mar=c(2, 6, 1.5, 6))
   if (input$DescChoice == "Yes") {
-    plot(desc_smry())
+    plot(desc_smry(), 
+         cex.lab=.95
+         )
   }
-}, height = 700, width = 1000  )
+#}, height = 700, width = 1000  )
+}, height = 800, width = 1200  )
 
 ## Missing variable plots
 #Select the outcome

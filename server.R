@@ -595,9 +595,9 @@ shinyServer(
              } else {
                ols(mdl_fmla(), x=TRUE, y=TRUE)}, 
              "Logistic" = if(input$updy == "Yes") {
-               lrm(as.formula(input$up_fmla), x=TRUE, y=TRUE, tol=1e-100) #I added tol value so it can handle time predictor (YYMM)
-             } else {
-               lrm(mdl_fmla(), x=TRUE, y=TRUE, tol=1e-100)},  #I added tol value so it can handle time predictor that causes "singularity"
+               lrm(as.formula(input$up_fmla), x=TRUE, y=TRUE, tol=1e-100, maxit=20) #I added tol value so it can handle time predictor (YYMM)
+             } else {                                                               #Added maxit to handle small samples. See https://stat.ethz.ch/pipermail/r-help/2017-September/449115.html
+               lrm(mdl_fmla(), x=TRUE, y=TRUE, tol=1e-100, maxit=20)},  #I added tol value so it can handle time predictor that causes "singularity"
              "Ordinal Logistic" = if(input$updy == "Yes") {
                orm(as.formula(input$up_fmla), x=TRUE, y=TRUE) 
              } else {
@@ -931,14 +931,16 @@ output$mod_ify <- renderPrint({
   print(fastbw(fit1()))
 })
 
-#This Plot ANOVA to show variable importance.  
+#This Plot ANOVA to show variable importance. 
+#I set a higher tolerance based on Harrell's website
+#https://stat.ethz.ch/pipermail/r-help/2007-September/141709.html
 output$p_anova <- renderPlot({
-  plot(anova(fit1()))
+  plot(anova(fit1(), tol=1e-13))
 }, height = 600)
 
 #This Plot ANOVA to show variable importance.  
 output$anova_smry <- renderPrint({
-  anova(fit1(), digits=4)
+  anova(fit1(), digits=4, tol=1e-13)
 })
 
 #This plots the predicted values    
@@ -3046,9 +3048,9 @@ fit.si <<- reactive({
            } else {
              ols(mdl_fmla(), x=TRUE, y=TRUE)}, 
            "Logistic" = if(input$updy == "Yes") {
-             lrm(as.formula(input$up_fmla), x=TRUE, y=TRUE, tol=1e-100) #I added tol value so it can handle time predictor (YYMM)
-           } else {
-             lrm(mdl_fmla(), x=TRUE, y=TRUE, tol=1e-100)},  #I added tol value so it can handle time predictor that causes "singularity"
+             lrm(as.formula(input$up_fmla), x=TRUE, y=TRUE, tol=1e-100, maxit=20) #I added tol value so it can handle time predictor (YYMM)
+           } else {                                                               #Added maxit to handle small samples. See https://stat.ethz.ch/pipermail/r-help/2017-September/449115.html
+             lrm(mdl_fmla(), x=TRUE, y=TRUE, tol=1e-100, maxit=20)},  #I added tol value so it can handle time predictor that causes "singularity"
            "Ordinal Logistic" = if(input$updy == "Yes") {
              orm(as.formula(input$up_fmla), x=TRUE, y=TRUE) 
            } else {
@@ -3206,9 +3208,9 @@ output$naTree <- renderPlot({
 #Logistic regression to predict missingness .
 lrm_miss <- reactive({             #Spline terms 
   if (input$MissChoice == "Yes") {
-    lrm(miss_fmla(), data=df(), tol=1e-100)
-  }
-})
+    lrm(miss_fmla(), data=df(), tol=1e-100, maxit=20)  #added "tol" to handle fitting issues
+  }                                                    #Added maxit to handle small samples. 
+})                                                     #See https://stat.ethz.ch/pipermail/r-help/2017-September/449115.html
 #Print regression output
 output$smry_lrm_miss <- renderPrint({
   lrm_miss()

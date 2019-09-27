@@ -226,7 +226,8 @@ tabPanel("Describe",
          plotOutput("DescSmryPlt", height = 800, width = 1200),          
          #plotOutput("DescSmryPlt", height = 700),          
            br(),
-         fluidRow(   
+         fluidRow(
+           h4("Explore the missingness of a variable by factor levels."),
            column(3, 
                   uiOutput("miss_y")),
            column(3, offset=1,
@@ -235,7 +236,6 @@ tabPanel("Describe",
                   uiOutput("miss_choice"))
            ),
          br(),
-         h4("Explore the missingness of a variable by factor levels."),
          br(),
          h5("Proportion of missng values stratified by factors."),
          plotOutput("MissSmryPlt", height = 700), 

@@ -931,6 +931,11 @@ output$mod_ify <- renderPrint({
   print(fastbw(fit1()))
 })
 
+#This prints the summary of predictor coefficients.  
+output$predictor_smry <- renderPrint({
+  summary(fit1())
+})
+
 #This Plot ANOVA to show variable importance. 
 #I set a higher tolerance based on Harrell's website
 #https://stat.ethz.ch/pipermail/r-help/2007-September/141709.html
@@ -938,7 +943,7 @@ output$p_anova <- renderPlot({
   plot(anova(fit1(), tol=1e-13))
 }, height = 600)
 
-#This Plot ANOVA to show variable importance.  
+#This prints ANOVA to show variable importance.  
 output$anova_smry <- renderPrint({
   anova(fit1(), digits=4, tol=1e-13)
 })
@@ -3236,7 +3241,7 @@ cost_plot1 <- function(y, x, df) {
   red_trnspt  <- adjustcolor(c_red, alpha.f = 0.4)                                #Set red color transparency.
   blue_trnspt <- adjustcolor(c_blue, alpha.f = 0.4)                               #Set blue color transparency.
 
-  d_ctl <- density(df[, y], na.rm=T)                       #Controls
+  d_ctl <- density(df[, y], na.rm=T, adjust=2)                       #Controls
   cst_tbl <- c(mean(df[, y], na.rm=T),
                median(df[, y], na.rm=T))
   names(cst_tbl) <- c("Mean", "Median" )
@@ -3253,9 +3258,16 @@ cost_plot1 <- function(y, x, df) {
   legend("top", legend=c("Mean", "Median"), 
          col=c(4,4), lty=c(3,1),
          lwd=2, cex=1)
+  legend("top", legend=c(paste0("Mean= ",round(cst_tbl["Mean"], 0)), paste0("Median= ", round(cst_tbl["Median"], 0))), 
+         col=c(4,4), lty=c(3,1),
+         lwd=2, cex=1.25)
+  
   box()
 }
 
+##################
+# UPDATE START HERE #
+##################
 #This plots the outcome by a binary grouping variable
 cost_plot1_grp <- function(y, x, df) {
   #####Color codes#####
@@ -3263,14 +3275,13 @@ cost_plot1_grp <- function(y, x, df) {
   red_trnspt  <- adjustcolor(c_red, alpha.f = 0.4)                                #Set red color transparency.
   blue_trnspt <- adjustcolor(c_blue, alpha.f = 0.4)                               #Set blue color transparency.
   
-  d_ctl <- density(df[, y][df[, x] == 0], na.rm=T)                       #Controls
-  d_trt <- density(df[, y][df[, x] == 1], na.rm=T)                       #x
-  cst_tbl <- rbind(c(mean(df[, y][df[, x] == 1], na.rm=T),
-                     median(df[, y][df[, x] == 1], na.rm=T)),
-                   c(mean(df[, y][df[, x] == 0], na.rm=T),
-                     median(df[, y][df[, x] == 0], na.rm=T)))
-  colnames(cst_tbl) <- c("Mean", "Median" )
-  rownames(cst_tbl) <- c("Treatment", "Control")
+  d_ctl <- density(df[, y][as.numeric(df[, x]) == min(as.numeric(df[, x]))], na.rm=T, adjust=2) #Controls
+  d_trt <- density(df[, y][as.numeric(df[, x]) == max(as.numeric(df[, x]))], na.rm=T, adjust=2) #x
+  #Treatment/control group means/medians
+  ctl_med <- median(df[, y][as.numeric(df[, x]) == min(as.numeric(df[, x]))], na.rm=T)
+  trt_med <- median(df[, y][as.numeric(df[, x]) == max(as.numeric(df[, x]))], na.rm=T)
+  ctl_mn <- mean(df[, y][as.numeric(df[, x]) == min(as.numeric(df[, x]))], na.rm=T)
+  trt_mn <- mean(df[, y][as.numeric(df[, x]) == max(as.numeric(df[, x]))], na.rm=T)
   
   plot(d_trt, main=paste0("Density plot of ", y, " by ", x), 
        xlab=y, axes=F)
@@ -3278,19 +3289,7 @@ cost_plot1_grp <- function(y, x, df) {
   polygon(d_ctl, col=red_trnspt, border=red_trnspt) 
   polygon(d_trt, col=blue_trnspt, border=blue_trnspt) 
   
-  #Treatment/control group means/medians
-  ctl_med <- median(df[, y][df[, x] == 0], na.rm=T)
-  trt_med <- median(df[, y][df[, x] == 1], na.rm=T)
-  ctl_mn <- mean(df[, y][df[, x] == 0], na.rm=T)
-  trt_mn <- mean(df[, y][df[, x] == 1], na.rm=T)
-#### Get quantiles and bind with means. Partially used in the legend and the observed table in a later section
-  qt1 <- quantile(df[, y][df[, x] == 0], probs=c(.1, .25, .5, .75, .9), na.rm=T)
-  qt2 <- quantile(df[, y][df[, x] == 1], probs=c(.1, .25, .5, .75, .9), na.rm=T)
-  odf_mqt <- as.data.frame(rbind(cbind(round(qt2, 2), round(qt1 ,2)),
-                                 cbind(round(trt_mn, 2), round(ctl_mn, 2)) ))
-  rownames(odf_mqt) <- c("p10", "p25", "p50", "p75", "p90", "Mean")
-  colnames(odf_mqt) <- c("Treatment", "Control")  #Observed data.frame of the means and quantiles
-###  
+  ###  
   abline(v=ctl_med, col="red")
   abline(v=trt_med, col="blue")
   abline(v=ctl_mn, col="red", lty=3)
@@ -3301,8 +3300,32 @@ cost_plot1_grp <- function(y, x, df) {
          col=c(4,4,2,2), lty=c(3,1,3,1),
          lwd=2, cex=1.25)
   box()
+}
+
+
+################################################################
+cost_quant <- function(y, x, df) {
+  
+  #Treatment/control group means/medians
+  ctl_med <- median(df[, y][as.numeric(df[, x]) == min(as.numeric(df[, x]))], na.rm=T)
+  trt_med <- median(df[, y][as.numeric(df[, x]) == max(as.numeric(df[, x]))], na.rm=T)
+  ctl_mn <- mean(df[, y][as.numeric(df[, x]) == min(as.numeric(df[, x]))], na.rm=T)
+  trt_mn <- mean(df[, y][as.numeric(df[, x]) == max(as.numeric(df[, x]))], na.rm=T)
+  #### Get quantiles and bind with means. Partially used in the legend and the observed table in a later section
+  qt1 <- quantile(df[, y][as.numeric(df[, x]) == min(as.numeric(df[, x]))], probs=c(.1, .25, .5, .75, .9), na.rm=T)
+  qt2 <- quantile(df[, y][as.numeric(df[, x]) == max(as.numeric(df[, x]))], probs=c(.1, .25, .5, .75, .9), na.rm=T)
+  odf_mqt <- as.data.frame(rbind(cbind(round(qt2, 2), round(qt1 ,2)),
+                                 cbind(round(trt_mn, 2), round(ctl_mn, 2)) ))
+  rownames(odf_mqt) <- c("p10", "p25", "p50", "p75", "p90", "Mean")
+  colnames(odf_mqt) <- c("Treatment", "Control")  #Observed data.frame of the means and quantiles
+  ###  
   return(list("odf_mqt"=odf_mqt))
 }
+
+
+##################
+# UPDATE ENDS HERE #
+##################
 
 #Select the type of density plot to run (full sample or by a group)
 output$dens_plt1_typ <- renderUI({
@@ -3314,6 +3337,12 @@ output$dens_plt1_x <- renderUI({
   selectInput("DensPlt1X", "2. Select a binary stratified variable (optional).", 
               choices = predictor())     
 })
+
+#Create a reactive function for the stratified variable in the Cost density plot
+dens_stratified <- reactive({                  #Outcome is my reactive function name I will use below. 
+  input$DensPlt1X                      #DensPlt1X comes from the UI file drop down box.
+})
+
 #Create yes/no box to plot the density plot
 output$run_dens_plt1 <- renderUI({ 
   selectInput("RunDensPlt1", "3. Do you want to run the plots?", 
@@ -3325,7 +3354,7 @@ dens_plt1 <- reactive({
   if(input$RunDensPlt1 == "Yes") {
     
     if(input$DensPlt1Typ == "Stratified") {
-      cost_plot1_grp(y= outcome(), x= input$DensPlt1X , df= df())
+      cost_plot1_grp(y= outcome(), x= dens_stratified() , df= df())
     } else {
       cost_plot1(y= outcome(), df= df())
     }
@@ -3334,7 +3363,17 @@ dens_plt1 <- reactive({
 #This plots the density plot    
 output$plot_dens_plt1 <- renderPlot({
     dens_plt1() 
-}, height = 500)
+}, height = 700)
+
+#This gets quantiles and means
+cost_quant_run <- reactive({
+  if(input$RunDensPlt1 == "Yes") {
+    
+    if(input$DensPlt1Typ == "Stratified") {
+      cost_quant(y= outcome(), x= dens_stratified() , df= df())
+    } 
+  }  
+})
 
 #Creates mean function for the fit
 mn <- reactive({
@@ -3403,7 +3442,8 @@ quant_ests <- reactive({
   if(input$RunDensPlt1 == "Yes") {
     
     if(input$DensPlt1Typ == "Stratified") {
-      quant_ests_fnc(fit=fit1(), Y= outcome(), X= input$DensPlt1X, reg=input$regress_type)
+    #  quant_ests_fnc(fit=fit1(), Y= outcome(), X= input$DensPlt1X, reg=input$regress_type)
+      quant_ests_fnc(fit=fit1(), Y= outcome(), X= dens_stratified(), reg=input$regress_type)
     } 
   }  
 })
@@ -3425,7 +3465,7 @@ quant_plt1_fnc <- function(ests, Y) {
   #Set up coordinates for polygon function, NOTE: UPPER AND LOWER MEAN THE OPPOSITE 
   #BECAUSE A COX MODEL VIEWS COST IN THE OPPOSITE DIRECTION.
   axis(2)
-  axis(1, at=1:5, tick=F, pos=3, labels= c("p10", "p25", "p50", "p75", "p90"))
+  axis(1, at=1:5, tick=F,  labels= c("p10", "p25", "p50", "p75", "p90")) #pos=1,
   xxt <- c(1:5,5:1)
   yya <- c(est1$lower2, rev(est1$upper2))  #Treatment
   yyc <- c(est1$lower1, rev(est1$upper1))  #Control
@@ -3455,7 +3495,7 @@ output$plot_quant_plt1 <- renderPlot({
   } else {
     quant_plt1()
   }
-}, height = 500)
+}, height = 700)
 
 #This prints the point estimates and confidence intervals
 output$quant_out1 <- renderTable({
@@ -3502,7 +3542,8 @@ mean_ests <- reactive({
   if(input$RunDensPlt1 == "Yes") {
     
     if(input$DensPlt1Typ == "Stratified") {
-      mean_ests_fnc(fit=fit1(), Y= outcome(), X= input$DensPlt1X, reg=input$regress_type)
+      #mean_ests_fnc(fit=fit1(), Y= outcome(), X= input$DensPlt1X, reg=input$regress_type)
+      mean_ests_fnc(fit=fit1(), Y= outcome(), X= dens_stratified(), reg=input$regress_type)
     } 
   }  
 })
@@ -3516,7 +3557,7 @@ obs_df_mqt <- reactive({
   if(input$RunDensPlt1 == "Yes") {
     
     if(input$DensPlt1Typ == "Stratified") {
-      dens_plt1()$odf_mqt
+      cost_quant_run()$odf_mqt
     } 
   }  
 })
@@ -3566,7 +3607,7 @@ output$cox_prt_prd <- renderPlot({
       }
     }
   }
-})
+}, height = 700)
 
 #Create yes/no box to determine plot single partial effect
 output$OneCoxXYes <- renderUI({                                 
@@ -3712,7 +3753,8 @@ qr_ests <- reactive({
     
     if(input$DensPlt1Typ == "Stratified") {
       pred_qnt_reg5_fnc(qr.10=quant_reg.10(), qr.25=quant_reg.25(), qr.50=quant_reg.50(), 
-                        qr.75=quant_reg.75(), qr.90=quant_reg.90(), Dens1X=input$DensPlt1X)
+                        #qr.75=quant_reg.75(), qr.90=quant_reg.90(), Dens1X=input$DensPlt1X)
+      qr.75=quant_reg.75(), qr.90=quant_reg.90(), Dens1X=dens_stratified())
     } 
   }  
 })
@@ -3735,7 +3777,7 @@ qr_ests <- reactive({
         #Set up coordinates for polygon function, NOTE: UPPER AND LOWER MEAN THE OPPOSITE 
         #BECAUSE A COX MODEL VIEWS COST IN THE OPPOSITE DIRECTION.
         axis(2)
-        axis(1, at=1:5, tick=F, pos=3, labels= c("p10", "p25", "p50", "p75", "p90"))
+        axis(1, at=1:5, tick=F, labels= c("p10", "p25", "p50", "p75", "p90"))  # pos=1,
         xxt <- c(1:5,5:1)
         yya <- c(est1$lower2, rev(est1$upper2))  #Treatment
         yyc <- c(est1$lower1, rev(est1$upper1))  #Control
@@ -3811,11 +3853,11 @@ output$SurvPltRun <- renderUI({
 })
 #Minimum value of Cox survival time
 cox_min_time <- reactive({ 
-  min(as.numeric(df()[, input$variableY], na.rm=TRUE) )  
+  round(min(as.numeric(df()[, input$variableY]), na.rm=TRUE ))  
 })
 #Maximum value of Cox survival time
 cox_max_time <- reactive({ 
-  max(as.numeric(df()[, input$variableY], na.rm=TRUE) )
+  round(max(as.numeric(df()[, input$variableY]), na.rm=TRUE ))
 })
 #Indicate lower limit of x-axis
 output$SurvPltXlim1 <- renderUI({
@@ -4005,7 +4047,8 @@ bw01_reduc <- reactive({
 #Model assessment results
 output$efit1_tests <- renderPrint({ 
   if (input$CoxmeYes == "Yes") {
-    list("Random effects likelihood ratio test"=c("LRT"=noquote(reLRT())),
+    list("Random effects between-group SD"=c("1. SD"= sqrt(bw1_var()), "2. Added risk at 1 SD"= exp(sqrt(bw1_var()))),
+      "Random effects likelihood ratio test"=c("LRT"=noquote(reLRT())),
          "Cox & Snell pseudo R2"= c("R2"=R2_coxme()),
          "Intraclass correlation"=c("ICC"= rho_1()),
          "Median hazard ratio" = c("MHR"= mhr_1()), 
@@ -4016,39 +4059,99 @@ output$efit1_tests <- renderPrint({
 ##################
 ## Frailty plot ##
 ##################
-#Function that creates plot of frailties and returns alphabetical/numerical sorted values
-frail_plot_fnc <- function(fit, x, REvar) {
-  RESD <- sqrt(REvar)
+
+#Function to get multilevel frailties 
+frail_fnc <- function(fit, REvar) {
   fdf1 <- data.frame(fit$frail)
   f_o <- order(fdf1[,1])
   fdf2 <- fdf1[f_o, 1, drop=F] 
+  return(list("Alphabetical"=fdf1, "Numerical"=fdf2))
+}
+
+#Function to switch direction of multilevel frailties for cost purposes
+frail_cost_fnc <- function(fit, REvar) {
+  fdf1 <- data.frame(fit$frail) 
+  f_o <- order(fdf1[,1])
+  fdf2 <- fdf1[f_o, 1, drop=F]
+  #Cost inverted by -1 to give the correct order
+  fdf1 <- fdf1 * -1
+  fdf2 <- fdf2 * -1 
+  return(list("Alphabetical"=fdf1, "Numerical"=fdf2))
+}
+
+#Reactive function for getting survival frailties 
+frailfncResult <- reactive({ 
+  frail_fnc(fit=efit1(), REvar=bw1_var()) 
+})
+
+#Reactive function for getting survival frailties for cost 
+frailfncCostResult <- reactive({ 
+  frail_cost_fnc(fit=efit1(), REvar=bw1_var()) 
+})
+
+
+#Function that creates plot of frailties and returns alphabetical/numerical sorted values
+frail_plot_fnc <- function(df, x, REvar) {
+  RESD <- sqrt(REvar)
+  frail <- df[[2]]
   #Plot
-  xx <- barplot(fdf2[,1], names.arg=rownames(fdf2), main = paste0("Random effects frailties by ", x), 
-                col="blue", cex.names=.6, ylim=c(min(fdf2[,1])*1.2, max(fdf2[,1]))*1.2)
-  text(x=xx, y=fdf2[,1]*1.1, rownames(fdf2), cex=.75)
+  xx <- barplot(frail[,1], names.arg=rownames(frail), main = paste0("Random effects frailties by ", x), 
+                col="blue", cex.names=.6, ylim=c(min(frail[,1])*1.2, max(frail[,1]))*1.2)
+  text(x=xx, y=frail[,1]*1.1, rownames(frail), cex=.75)
   abline(h=RESD, lty=2, lwd=2, col="grey")
   abline(h=RESD*-1, lty=2, lwd=3, col="grey")
   legend(x="bottomright", legend=paste0("Random effects SD = ", round(sqrt(REvar), 3)), 
          lty=2, lwd=2, col="grey", bty= "n", cex=1.5)
-  return(list("Alphabetical"=fdf1, "Numerical"=fdf2))
 }
 
 frail_run <- reactive({
-    frail_plot_fnc(fit=efit1(), x=cox_lev2(), REvar=bw1_var())
+    if (cox_me_yes() == "Yes") {
+    
+    if (cox_me_cost_yes() == "No") {
+      frail_plot_fnc(df=frailfncResult(), x=cox_lev2(), REvar=bw1_var())
+    } #else {
+  if (cox_me_cost_yes() == "Yes") {
+    frail_plot_fnc(df=frailfncCostResult(), x=cox_lev2(), REvar=bw1_var())
+  }    
+  }
 })
 
-#This plots the predicted values  for the partial effects plots  
+
+#This plots the frailties by the cluster variable  
 output$frail_plot1 <- renderPlot({
-  if (input$CoxmeYes == "Yes") {
-    frail_run()
-  } 
+    if (cox_me_yes() == "Yes") {
+        frail_run()
+      } 
 }, height = 700)
+
 
 #Frailties sorted alphabetically by group and numerically by score
 output$frail_output <- renderPrint({ 
-  if (input$CoxmeYes == "Yes") {
-    list("Alphabetical"=frail_run()$Alphabetical, "Numerical"=frail_run()$Numerical)
+  if (cox_me_yes() == "Yes") {
+    if (cox_me_cost_yes() == "Yes") {
+      list("Alphabetical"=frailfncCostResult()$Alphabetical, "Numerical"=frailfncCostResult()$Numerical)
+    } else {
+      list("Alphabetical"=frailfncResult()$Alphabetical, "Numerical"=frailfncResult()$Numerical)
+    }
   }
+})
+
+
+#UI function for drop down questions#
+#Indicate if I am doing a cost analysis.
+output$coxme_cost_yes <- renderUI({  
+  selectInput("CoxmeCostYes", "3. Is this a cost analysis?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")     #Will make choices based on my reactive function.
+})
+
+#Reactive function for if I want a Cox mixed effects model 
+cox_me_yes <- reactive({ 
+  input$CoxmeYes
+})
+
+#Reactive function for if the Cox model is cost related 
+cox_me_cost_yes <- reactive({ 
+  input$CoxmeCostYes
 })
 
 #####################

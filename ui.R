@@ -508,7 +508,7 @@ h6("the same covariate values but in different hospitals are randomly sampled, t
 h6("with the larger hazard to the patient with the smaller hazard ratio will exceed 1.51 in 50% of the samples. If the"),
 h6("MHR has the biggest effect, that means the center is the most important thing in the model for understanding the outcome."),
 h6("6. Reduction in the between group variance: The proportion of the random effects variance from a null model (i.e., no covariates)"),
-h6("reduced after fitting full model (i.e., has covariates)."),
+h6("reduced after fitting full model (i.e., has covariates). Includes the null model variance and SD."),
 h6("Note: The reduction in variance can be negative if the impact of level 1 predictors was relatively higher than level 2 predictors."),
          br(),
          fluidRow(                           #Wrapping them in a fluidRow provides easy control over  
@@ -556,11 +556,11 @@ fluidRow(
   h5("The following questions are to modify the partial effects plots above."),
   column(3, 
          uiOutput("CoxMnMed"),
-         uiOutput("OneCoxXYes")
+         uiOutput("prt_one_cox_x")
          ),
   column(3, offset=1,
          uiOutput("cox_pct_lvl"),
-         uiOutput("prt_one_cox_x"))
+         uiOutput("OneCoxXYes"))
   ),
          h5("Density plot on the outcome, with or without stratification."),
          plotOutput("plot_dens_plt1", height = 700, width="100%"),

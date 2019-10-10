@@ -2501,7 +2501,8 @@ plot_ci_fnc <- function(xcivar, ycivar, ydf, cidf, ciconf_lev, alpha_num) {
   }
   abline(v=mainYmn, lwd=3, col="grey", lty=3)
   axis(1) 
-  axis(2,at=1:nrow(adf),labels=rownames(adf), las=1, cex.axis=1)
+  axis(2,at=1:nrow(adf),labels=substr(rownames(adf), 1, 10), las=1, cex.axis=1)
+#  axis(2,at=1:nrow(adf),labels=rownames(adf), las=1, cex.axis=1)
   axis(4,at=1:nrow(adf),labels=round(adf[, "PointEst"],2), las=1, cex.axis=1)
   box()
 }
@@ -3611,12 +3612,12 @@ output$cox_prt_prd <- renderPlot({
 
 #Create yes/no box to determine plot single partial effect
 output$OneCoxXYes <- renderUI({                                 
-  selectInput("one_cox_x_yes", "3. Do you want to plot a single partial effect?", 
+  selectInput("one_cox_x_yes", "4. Do you want to plot a single partial effect?", 
               choices = c("No", "Yes"), multiple=FALSE, selected="No")     
 })
 #Select the variables that will get only get plotted
 output$prt_one_cox_x <- renderUI({
-  selectInput("cox_X", "4. Select a single predictor.", 
+  selectInput("cox_X", "3. Select a single predictor.", 
                choices = predictor(), multiple=FALSE, selected=predictor()[1])
 })
 #The single partial effect variable to plot
@@ -4052,7 +4053,8 @@ output$efit1_tests <- renderPrint({
          "Cox & Snell pseudo R2"= c("R2"=R2_coxme()),
          "Intraclass correlation"=c("ICC"= rho_1()),
          "Median hazard ratio" = c("MHR"= mhr_1()), 
-       "Reduction in between group variance"=c("1. Reduction"=bw01_reduc(), "2. Null model variance"=bw01_var()))
+       "Reduction in between group variance"=c("1. Reduction"=bw01_reduc(), "2. Null model variance"=bw01_var(),
+                                               "3. Null model SD"= sqrt(bw01_var()) ))
   }
 })
 
@@ -4071,7 +4073,7 @@ frail_fnc <- function(fit, REvar) {
 #Function to switch direction of multilevel frailties for cost purposes
 frail_cost_fnc <- function(fit, REvar) {
   fdf1 <- data.frame(fit$frail) 
-  f_o <- order(fdf1[,1])
+  f_o <- order(fdf1[,1], decreasing =TRUE)
   fdf2 <- fdf1[f_o, 1, drop=F]
   #Cost inverted by -1 to give the correct order
   fdf1 <- fdf1 * -1
@@ -4089,15 +4091,16 @@ frailfncCostResult <- reactive({
   frail_cost_fnc(fit=efit1(), REvar=bw1_var()) 
 })
 
-
+abbreviate(state.name, 2, method = "both")
 #Function that creates plot of frailties and returns alphabetical/numerical sorted values
 frail_plot_fnc <- function(df, x, REvar) {
   RESD <- sqrt(REvar)
   frail <- df[[2]]
   #Plot
-  xx <- barplot(frail[,1], names.arg=rownames(frail), main = paste0("Random effects frailties by ", x), 
-                col="blue", cex.names=.6, ylim=c(min(frail[,1])*1.2, max(frail[,1]))*1.2)
-  text(x=xx, y=frail[,1]*1.1, rownames(frail), cex=.75)
+  xx <- barplot(frail[,1], names.arg= abbreviate(rownames(frail), 2, method = "both"), 
+                main = paste0("Random effects frailties by ", x), 
+                col="blue", cex.names=1, ylim=c(min(frail[,1])*1.2, max(frail[,1]))*1.2)
+  text(x=xx, y=frail[,1]*1.1, abbreviate(rownames(frail), 2, method = "both"), cex=1)
   abline(h=RESD, lty=2, lwd=2, col="grey")
   abline(h=RESD*-1, lty=2, lwd=3, col="grey")
   legend(x="bottomright", legend=paste0("Random effects SD = ", round(sqrt(REvar), 3)), 

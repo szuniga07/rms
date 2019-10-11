@@ -4091,16 +4091,15 @@ frailfncCostResult <- reactive({
   frail_cost_fnc(fit=efit1(), REvar=bw1_var()) 
 })
 
-abbreviate(state.name, 2, method = "both")
 #Function that creates plot of frailties and returns alphabetical/numerical sorted values
 frail_plot_fnc <- function(df, x, REvar) {
   RESD <- sqrt(REvar)
   frail <- df[[2]]
   #Plot
-  xx <- barplot(frail[,1], names.arg= abbreviate(rownames(frail), 2, method = "both"), 
+  xx <- barplot(frail[,1], names.arg= abbreviate(rownames(frail), 2, method = "left.kept"), 
                 main = paste0("Random effects frailties by ", x), 
                 col="blue", cex.names=1, ylim=c(min(frail[,1])*1.2, max(frail[,1]))*1.2)
-  text(x=xx, y=frail[,1]*1.1, abbreviate(rownames(frail), 2, method = "both"), cex=1)
+  text(x=xx, y=frail[,1]*1.1, abbreviate(rownames(frail), 2, method = "left.kept"), cex=1)
   abline(h=RESD, lty=2, lwd=2, col="grey")
   abline(h=RESD*-1, lty=2, lwd=3, col="grey")
   legend(x="bottomright", legend=paste0("Random effects SD = ", round(sqrt(REvar), 3)), 

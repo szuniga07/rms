@@ -372,7 +372,7 @@ tabPanel("Impute",
           
           tabPanel("Importance", 
                    h4("Plot of predictor importance"),
-                   plotOutput("p_anova", height=600),
+                   plotOutput("p_anova", height=700, width="100%"),
                    br(),
                    h4("ANOVA summary of model"),
                    verbatimTextOutput("anova_smry")

@@ -940,8 +940,8 @@ output$predictor_smry <- renderPrint({
 #I set a higher tolerance based on Harrell's website
 #https://stat.ethz.ch/pipermail/r-help/2007-September/141709.html
 output$p_anova <- renderPlot({
-  plot(anova(fit1(), tol=1e-13))
-}, height = 600)
+  plot(anova(fit1(), tol=1e-13), cex=1.25, cex.lab=1.25, pch=19)
+}, height=700)
 
 #This prints ANOVA to show variable importance.  
 output$anova_smry <- renderPrint({
@@ -2497,7 +2497,7 @@ plot_ci_fnc <- function(xcivar, ycivar, ydf, cidf, ciconf_lev, alpha_num) {
        main=main_ttl, axes=F ) 
     for (i in 1:nrow(adf)) {
     lines(c(adf[,'Lower'][i], adf[,'Upper'][i]), c(i,i), lwd=4, col=4) 
-    points(adf[,'PointEst'][i],i, pch=24, col=2, lwd=1, bg=7, cex=1) 
+    points(adf[,'PointEst'][i],i, pch=24, col=2, lwd=1, bg=7, cex=1.75) 
   }
   abline(v=mainYmn, lwd=3, col="grey", lty=3)
   axis(1) 
@@ -3134,7 +3134,7 @@ output$DescSmryPlt <- renderPlot({
   par(mar=c(2, 6, 1.5, 6))
   if (input$DescChoice == "Yes") {
     plot(desc_smry(), 
-         cex.lab=.95
+         cex.lab=.95, cex=1.25, col=2
          )
   }
 #}, height = 700, width = 1000  )

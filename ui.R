@@ -526,6 +526,11 @@ h6("Note: The reduction in variance can be negative if the impact of level 1 pre
          br(),
 h4("Random effects frailties"),
 plotOutput("frail_plot1", height = 700, width="100%"),
+#This gives the option of selecting abbrviation length
+fluidRow(                           
+  column(10, 
+       uiOutput("abbr_length")
+)),
 h5("Random effects frailties sorted alphabetically by cluster name and numerically by frailty value."),
 verbatimTextOutput("frail_output")
 ),    

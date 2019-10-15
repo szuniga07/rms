@@ -4092,14 +4092,14 @@ frailfncCostResult <- reactive({
 })
 
 #Function that creates plot of frailties and returns alphabetical/numerical sorted values
-frail_plot_fnc <- function(df, x, REvar) {
+frail_plot_fnc <- function(df, x, REvar, abbrLength) {
   RESD <- sqrt(REvar)
   frail <- df[[2]]
   #Plot
-  xx <- barplot(frail[,1], names.arg= abbreviate(rownames(frail), 2, method = "left.kept"), 
+  xx <- barplot(frail[,1], names.arg= abbreviate(rownames(frail), abbrLength, method = "left.kept"), 
                 main = paste0("Random effects frailties by ", x), 
                 col="blue", cex.names=1, ylim=c(min(frail[,1])*1.2, max(frail[,1]))*1.2)
-  text(x=xx, y=frail[,1]*1.1, abbreviate(rownames(frail), 2, method = "left.kept"), cex=1)
+  text(x=xx, y=frail[,1]*1.1, abbreviate(rownames(frail), abbrLength, method = "left.kept"), cex=1)
   abline(h=RESD, lty=2, lwd=2, col="grey")
   abline(h=RESD*-1, lty=2, lwd=3, col="grey")
   legend(x="bottomright", legend=paste0("Random effects SD = ", round(sqrt(REvar), 3)), 
@@ -4110,10 +4110,10 @@ frail_run <- reactive({
     if (cox_me_yes() == "Yes") {
     
     if (cox_me_cost_yes() == "No") {
-      frail_plot_fnc(df=frailfncResult(), x=cox_lev2(), REvar=bw1_var())
+      frail_plot_fnc(df=frailfncResult(), x=cox_lev2(), REvar=bw1_var(), abbrLength=abbrLength())
     } #else {
   if (cox_me_cost_yes() == "Yes") {
-    frail_plot_fnc(df=frailfncCostResult(), x=cox_lev2(), REvar=bw1_var())
+    frail_plot_fnc(df=frailfncCostResult(), x=cox_lev2(), REvar=bw1_var(), abbrLength=abbrLength())
   }    
   }
 })
@@ -4126,6 +4126,16 @@ output$frail_plot1 <- renderPlot({
       } 
 }, height = 700)
 
+#Indicates how long the abbrviation should be in the frailty plot
+output$abbr_length <- renderUI({  
+  numericInput("abbrLen", "1. Enter the above plot's minimum abbreviation length for labels.",
+               value=3, min=1, max=10, step=1)     #Abbreviation shouldn't be long because of high cluster N
+})
+
+#Abbreviation length
+abbrLength <- reactive({
+  input$abbrLen 
+})
 
 #Frailties sorted alphabetically by group and numerically by score
 output$frail_output <- renderPrint({ 

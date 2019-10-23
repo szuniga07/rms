@@ -175,7 +175,7 @@ tabPanel("PREDs",                                #Creates a new panel named "Tes
            column(3,
                   uiOutput("curr_fit_df"),
                   br(),
-                  h5("Get predicitions using an existing model.")
+                  h5("Get predicitions using a previous model.")
                   ), #1
            column(3,
                   uiOutput("fit_curr_mdl")

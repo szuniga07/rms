@@ -3175,10 +3175,10 @@ miss_smry <- reactive({             #Spline terms
     summary(miss_fmla(), data=df())
   }
 })
-#This renders the summary plot for missing values
+#This renders the summary plot for missing values. Tried , pch=19 but didn't work
 output$MissSmryPlt <- renderPlot({ 
   if (input$MissChoice == "Yes") {
-    plot(miss_smry(), main="Proportion missing")
+    plot(miss_smry(), main="Proportion missing", col=2)
   }
 }, height = 700, width = 1000  )
 #
@@ -3186,10 +3186,10 @@ na.patterns <- reactive({
   #naclus(df()[, c(miss_outcome(), miss_predictor())]) #Recusive and summary impacted, easier to use df() only
     naclus(df())
 })
-#This renders the wire plot for missing values
+#This renders the wire plot for missing values. Tried , pch=19 but didn't work
 output$naPlt <- renderPlot({ 
   if (input$MissChoice == "Yes") {
-    naplot(na.patterns(), 'na per var')
+    naplot(na.patterns(), 'na per var', col=2)
   }
 }, height = 700, width = 1000)
 #This renders the dendogram for missing values
@@ -3804,10 +3804,15 @@ qr_ests <- reactive({
 ################################################################################
 ##  Survival analysis stuff: Schoenfeld residuals  and survival plots   ##
 ################################################################################
+#This gets the residual names
+      schoenfeld_X_names <- reactive({
+        rownames(schoenfeld_e()[[1]])
+      })
+      
 #Select the variable for the Schoenfeld residuals
 output$Schoenfeld_X <- renderUI({
   selectInput("schoenfeldx", "1. Select a single Schoenfeld residual.", 
-              choices = predictor(), multiple=FALSE, selected=predictor()[1])
+  choices = schoenfeld_X_names()[-length(schoenfeld_X_names())] , multiple=FALSE, selected=schoenfeld_X_names()[1])
 })
 
 #This gives a number for the variable for the Schoenfeld residual
@@ -3827,7 +3832,8 @@ output$schoenfeld_test <- renderTable({
 #This plots the Schoenfeld residuals    
 output$schoenfeld_plt <- renderPlot({
   if (input$regress_type %in% c("Cox PH", "Cox PH with censoring")) {
-    plot(schoenfeld_e()[which(predictor() == input$schoenfeldx)])
+    plot(schoenfeld_e()[input$schoenfeldx], col=2)
+    abline(h=0, lty=3, col=4, lwd=2)
   }
 }, height = 800)
 

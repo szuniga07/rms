@@ -786,7 +786,7 @@ shinyServer(
     
     #Update the model formula.
     output$uf <- renderUI({                                 #Same idea as output$vy
-      textInput("up_fmla", "12. Update the formula (Interactions: Change \"+\" to \'*\')", 
+      textInput("up_fmla", "12. Update formula (Interactions: Change \"+\" to \'*\', strat(X) to stratify CPH)", 
                 value= deparse(mdl_fmla(), width.cutoff=500 ))     #Will make choices based on my reactive function.
     })
     
@@ -3808,11 +3808,17 @@ qr_ests <- reactive({
       schoenfeld_X_names <- reactive({
         rownames(schoenfeld_e()[[1]])
       })
+
+#Identifies the number of residuals that should be used in the drop down box below.
+#Indicates if we drop the "Global" value when >1 or use the first if ==1.
+      schoenfeld_X_num <- reactive({
+        ifelse( length(schoenfeld_X_names()) > 1, length(schoenfeld_X_names()) * -1, 1)
+      })
       
 #Select the variable for the Schoenfeld residuals
 output$Schoenfeld_X <- renderUI({
   selectInput("schoenfeldx", "1. Select a single Schoenfeld residual.", 
-  choices = schoenfeld_X_names()[-length(schoenfeld_X_names())] , multiple=FALSE, selected=schoenfeld_X_names()[1])
+              choices = schoenfeld_X_names()[schoenfeld_X_num()] , multiple=FALSE, selected=schoenfeld_X_names()[1])
 })
 
 #This gives a number for the variable for the Schoenfeld residual
@@ -3832,7 +3838,7 @@ output$schoenfeld_test <- renderTable({
 #This plots the Schoenfeld residuals    
 output$schoenfeld_plt <- renderPlot({
   if (input$regress_type %in% c("Cox PH", "Cox PH with censoring")) {
-    plot(schoenfeld_e()[input$schoenfeldx], col=2)
+    plot(schoenfeld_e()[input$schoenfeldx], col=2, lwd=2)
     abline(h=0, lty=3, col=4, lwd=2)
   }
 }, height = 800)
@@ -3893,19 +3899,80 @@ output$SpTimeInc <- renderUI({
   numericInput("sp_timeinc", "9. Indicate the X-axis time increment.", 
                value = round((input$sp_Xlim2/5), 0), step = 1, min=0)     
 })
+#Indicate if you want the hazard function
+output$HazardPlot <- renderUI({                                 
+  selectInput("hazard_plot", "10. Do you want the hazard function?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")     
+})
+#Indicate if you want the log-minus-log plot
+output$SrvLogLog <- renderUI({                                 
+  selectInput("srv_log_log", "11. Want a log-minus-log plot (assess PH)?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")     
+})
+#This will go into the "fun" argument based on if I want a survival or Hazard function
+SrvHzr <- reactive({ 
+  if (input$hazard_plot == "No") {
+    function(x) {x}
+  } else {
+    function(x) {1 - x}
+  }
+})
+#"Survival" or "Hazard" to be used for labels
+SrvHzrLbl <- reactive({ 
+  if (input$hazard_plot == "No") {
+    "Survival"
+  } else {
+    "Hazard"
+  }
+})
+#"Survival" or "Hazard" to be used to indicate a log-minus-log plot
+SrvLogLog <- reactive({ 
+  if (input$srv_log_log == "No") {
+    FALSE
+  } else {
+    TRUE
+  }
+})
 
+#Survival fit object
+srvft1 <- reactive({ 
+  if (input$regress_type %in% c("Cox PH", "Cox PH with censoring")) {
+    survfit(fit1(), conf.int=input$SrvPltLvl)
+  }
+})
 
 #This plots the predicted values  for the partial effects plots  
 output$surv_plot1 <- renderPlot({
-  if(input$surv_plt_run == "Yes") {
-    (do.call("survplot", list(fit1(), input$SrvPltX, conf.int=input$SrvPltLvl, conf=input$surv_plt_band, 
-                                xlim=c(input$sp_Xlim1, input$sp_Xlim2), ylim=c(input$sp_Ylim1,input$sp_Ylim2),
-                                    xlab=paste0("Survival time by ", input$SrvPltX), time.inc=input$sp_timeinc) )) 
-  } 
-  if(input$surv_plt_run == "Yes") {
-    box()
+  
+  if(input$surv_plt_run == "No") {
+    
+    if ("strata" %in% names(srvft1()) ) {
+      plot(srvft1(), 
+           xlim=c(input$sp_Xlim1, input$sp_Xlim2), ylim=c(input$sp_Ylim1,input$sp_Ylim2),
+           ylab= paste0(SrvHzrLbl(), " Probability"), fun=SrvHzr(),
+           xlab=paste0(SrvHzrLbl()," functions of time stratified by ", strsplit(names(srvft1()$strata)[1], "=")[[1]][1], 
+                       " with ", input$SrvPltLvl*100, "% confidence intervals"), 
+           mark.time=T, pch=LETTERS[1:length(names(srvft1()$strata))])
     } 
-}, height = 800)
+          if ( !"strata" %in% names(srvft1()) ) {
+      plot(srvft1(), fun=SrvHzr(),
+           xlim=c(input$sp_Xlim1, input$sp_Xlim2), ylim=c(input$sp_Ylim1,input$sp_Ylim2),
+           ylab=paste0(SrvHzrLbl()," Probability"),
+           xlab=paste0(SrvHzrLbl(), " function of time with ", input$SrvPltLvl*100, "% confidence intervals"))
+    }
+  } else {
+    
+    if(input$surv_plt_run == "Yes") {
+      (do.call("survplot", list(fit1(), input$SrvPltX, conf.int=input$SrvPltLvl, conf=input$surv_plt_band, 
+                                xlim=c(input$sp_Xlim1, input$sp_Xlim2), ylim=c(input$sp_Ylim1,input$sp_Ylim2),
+                                xlab=paste0(SrvHzrLbl(), " time by ", input$SrvPltX), time.inc=input$sp_timeinc, 
+                                fun=SrvHzr(), loglog= SrvLogLog() ))) 
+    } 
+    if(input$surv_plt_run == "Yes") {
+      box()
+    }
+  }
+  }, height = 800)
 
 #Multilevel modeling 
 #Selects a level 2 covariate

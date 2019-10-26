@@ -443,6 +443,9 @@ tabPanel("Survival",
          h4("Survival analysis plots and residuals"),
          br(),
          h4("Survival plots"),                   
+         h5("Note: Stratified survival function plots don't include time increment and confidence bands/bars arguments."),
+         h5("The log-minus-log plot is not applicable to the survival and hazard function plots. The log-minus-log plot can have negative values, adjust y limit values accordingly."),
+         br(),
          h5("Set up the survival plot."),
          fluidRow(
            column(3, 
@@ -465,7 +468,14 @@ fluidRow(
   column(3,
          uiOutput("SurvPltYlim2"))
 ),
-uiOutput("SpTimeInc"),
+fluidRow(
+  column(3, 
+         uiOutput("SpTimeInc")),
+  column(3,
+         uiOutput("HazardPlot")),
+  column(3,
+         uiOutput("SrvLogLog"))
+),
 ###
 
 br(),

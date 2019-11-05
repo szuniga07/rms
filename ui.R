@@ -441,6 +441,7 @@ tabPanel("Impute",
 #############
 tabPanel("Survival", 
          h4("Survival analysis plots and residuals"),
+         h5("Note: Use splines fits and interactions to test linearity and additivity. Use splines in place of Martingales when considering continuous X tranfsormations."),                   
          br(),
          h4("Survival plots"),                   
          h5("Note: Stratified survival function plots don't include time increment and confidence bands/bars arguments."),
@@ -490,6 +491,30 @@ br(),
          uiOutput("Schoenfeld_X"),
          plotOutput("schoenfeld_plt", height = 800, width="100%"),
          br(),
+h4("DFBETAS residuals"),
+br(),
+h5("DFBETAS allows us to identify influential observations. The cutoff level is an absolute value and indicates a change in the coefficient by standard error (e.g., 0.2)."),
+fluidRow(
+  column(5, 
+         uiOutput("U_Cutoff_Lvl")),
+  column(5,
+         uiOutput("DFBETASYesNo"))
+),
+         uiOutput("dfbetas_influence"),
+         br(),
+         h5("These are the observations that have any influential values. * indicates influential values."),
+
+         verbatimTextOutput("InfluenceDFBETAS"), 
+         br(),
+fluidRow(
+  column(3, 
+         uiOutput("SaveDFBETAS")),
+  column(3, offset=1,
+         uiOutput("dfbetas_fit_name")),
+  column(3, offset=1,
+  downloadLink('dfbetas_influential_residuals', '3. Click to download residuals.'))
+),
+br(),
          h4("Mixed effects Cox proportional hazards model"),
          h5("Answer 'Yes' for the cost analysis to get the frailties and graph in the correct direction."),
 

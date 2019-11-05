@@ -3974,6 +3974,75 @@ output$surv_plot1 <- renderPlot({
   }
   }, height = 800)
 
+#########################
+## UI function for DFBETAS U level
+#Select confidence interval level
+output$U_Cutoff_Lvl <- renderUI({                                 #Same idea as output$vy
+  numericInput("UCutoffLvl", "1. DFBETAS cutoff U level.",
+               value = .2, min=0, step = .01)
+})
+#Create yes/no box to run the DFBETAS residuals
+output$DFBETASYesNo <- renderUI({                                 
+  selectInput("DFBETAS_Yes_No", "2. Want DFBETAS influential cases?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")     
+})
+
+## Download residuals button
+#####################
+# Save DFBETAS output #
+#####################
+output$SaveDFBETAS <- renderUI({  
+  selectInput("save_dfbetas", "1. Save the DFBETAS?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")     #Will make choices based on my reactive function.
+})
+dfbetasFit <- reactive({
+  if(input$save_dfbetas == "Yes") {
+    list("DFBETAS"=dfbetas_res(),
+         "Influential"=w_influ(),
+         "InfluentialData"=w_influ_df() )
+  }
+})
+output$dfbetas_fit_name <- renderUI({ 
+  textInput("DFBETASFitName", "2. Enter the DFBETAS name.", 
+            value= "DFBETASres")     
+})
+output$dfbetas_influential_residuals <- downloadHandler(
+  filename = "dfbetas_residuals.RData",
+  content = function(con) {
+    assign(input$DFBETASFitName, dfbetasFit())
+    save(list=input$DFBETASFitName, file=con)
+  }
+)
+#####################
+
+## Gets dfbetas residuals
+dfbetas_res <- reactive({ 
+  if (input$regress_type %in% c("Cox PH", "Cox PH with censoring")) {
+    residuals(fit1(), type="dfbetas")
+  }
+})
+#Gets influential observations by predictors
+w_influ <- reactive({ 
+  if (input$regress_type %in% c("Cox PH", "Cox PH with censoring")) {
+    which.influence(fit1(), cutoff=input$UCutoffLvl)
+  }
+})
+#Gets the data frame of the influential observations
+w_influ_df <- reactive({ 
+  if (input$regress_type %in% c("Cox PH", "Cox PH with censoring")) {
+    if (input$DFBETAS_Yes_No =="Yes") { 
+    show.influence(w_influ(), dframe=df())
+    }
+  }
+})
+
+output$InfluenceDFBETAS <- renderPrint({
+  if (input$regress_type %in% c("Cox PH", "Cox PH with censoring")) {
+    w_influ_df()
+    }
+  })
+  
+#########################
 #Multilevel modeling 
 #Selects a level 2 covariate
 output$CoxLev2 <- renderUI({

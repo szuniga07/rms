@@ -490,9 +490,39 @@ br(),
          h5("Schoenfeld residuals plot."),
          uiOutput("Schoenfeld_X"),
          plotOutput("schoenfeld_plt", height = 800, width="100%"),
-         br(),
-h4("DFBETAS residuals"),
+############################################### BEGIN HERE
 br(),
+h4("Time-dependent dataset"),
+br(),
+h5("This creates a time-dependent dataset and interaction term (X*Time) to model the proportional hazard assumption."),
+h5("When specifying the time-dependent model later in the 'Model builder' tab, use Outcome=tstart, Censor= tstop,event."),
+h5("The default time period cutoff is 1 unit periods, 1:max(Y), e.g., 1:365. Enter interval periods as a vector, e.g., c(30,60)."),
+fluidRow(
+         column(3, 
+                uiOutput("time_dependent_predictors")) ,
+         column(3,
+                uiOutput("td_cut_lev")) ,
+         column(3,
+                uiOutput("time_dependent_var")) ,
+         column(3, 
+                uiOutput("td_log_increment")) 
+), 
+br(),
+fluidRow(
+  column(3, 
+         uiOutput("td_data_yes_no")) ,
+  column(3, offset=1,
+         uiOutput("td_data_download_name")) ,
+    column(3, offset=1,
+         downloadLink('td_data_download', '7. Click to download data.'))
+),
+br(),
+h5("Remember to save R data frames with the extension '.RData'."),
+
+############################################### END HERE
+
+br(),
+h4("DFBETAS residuals"),
 h5("DFBETAS allows us to identify influential observations. The cutoff level is an absolute value and indicates a change in the coefficient by standard error (e.g., 0.2)."),
 fluidRow(
   column(5, 
@@ -514,6 +544,7 @@ fluidRow(
   column(3, offset=1,
   downloadLink('dfbetas_influential_residuals', '3. Click to download residuals.'))
 ),
+h5("Remember to save R data frames with the extension '.RData'."),
 br(),
          h4("Mixed effects Cox proportional hazards model"),
          h5("Answer 'Yes' for the cost analysis to get the frailties and graph in the correct direction."),
@@ -896,24 +927,16 @@ tabPanel("95% CIs",
 )
 ###
 
-# , #THIS COMMA IS COMMENTED OUT IN CASE I EVER NEED THE TEST FUNCTION BELOW    
 
 ############## TEST SECTION #############################
-##tabPanel("Test it",                                #Creates a new panel named "Test"
-         ##         fluidRow(                           #Wrapping them in a fluidRow provides easy control over  
-##           h4("Download, Upload, Save and make Predictions from model fits."),
-##           verbatimTextOutput("test1")
+ , #THIS COMMA IS COMMENTED OUT IN CASE I EVER NEED THE TEST FUNCTION BELOW    
+
+tabPanel("Test it",                                #Creates a new panel named "Test"
+         fluidRow(                           #Wrapping them in a fluidRow provides easy control over  
+           verbatimTextOutput("test1")
 ##           plotOutput("testplot1")
-##           h4("Modeling with Multiple Imputation."),
-##           column(6, 
 ##uiOutput("MIx"),
-##uiOutput("MIks")),
-##column(6, 
-##uiOutput("MIn"),
-##uiOutput("MI_Begin")),
-##h5("Evaluation of Multiple Imputation"),
-##verbatimTextOutput("test1")
-##         ))
+         ))
 ############## TEST SECTION #############################
 
 

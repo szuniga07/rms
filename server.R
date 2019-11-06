@@ -3303,8 +3303,7 @@ cost_plot1_grp <- function(y, x, df) {
   box()
 }
 
-
-################################################################
+#Function that gets cost value quantiles between the treatment and control groups 
 cost_quant <- function(y, x, df) {
   
   #Treatment/control group means/medians
@@ -3322,11 +3321,6 @@ cost_quant <- function(y, x, df) {
   ###  
   return(list("odf_mqt"=odf_mqt))
 }
-
-
-##################
-# UPDATE ENDS HERE #
-##################
 
 #Select the type of density plot to run (full sample or by a group)
 output$dens_plt1_typ <- renderUI({
@@ -3975,6 +3969,101 @@ output$surv_plot1 <- renderPlot({
   }, height = 800)
 
 #########################
+#########################  BEGIN HERE
+## UI input boxes ##
+#Select the predictors.
+output$time_dependent_predictors <- renderUI({
+  selectInput("TDPredX", "1. Select the variables",
+              choices = var(), multiple=TRUE, 
+              selected=var()[2])
+})
+
+#Text input for time-dependent cutoff level
+output$td_cut_lev <- renderUI({ 
+  textInput("TdCutLev", "2. Type in time period cutoffs.", value ="Default") 
+})
+#A select box for the variable that interacts with time
+output$time_dependent_var <- renderUI({                                
+  selectInput("TimeDepVar", "3. Select the interaction variable",       
+              choices = predictor(), multiple=FALSE, 
+              selected= predictor()[1])   #Will make choices based on my reactive function.
+})
+
+output$td_log_increment <- renderUI({ 
+  numericInput("TdLogIncrement", "4. Select a value to add to log(time).",
+               value=0, min=0, step=1) 
+})
+
+#Yes/No if I want to create the time-dependent file
+output$td_data_yes_no <- renderUI({ 
+  selectInput("TdDataYesNo", "5. Want a time-dependent data file?",
+              choices = c("No", "Yes"), multiple=FALSE, selected="No") 
+})
+#Download time dependent data file
+output$td_data_download_name <- renderUI({ 
+  textInput("TdDataDownloadName", "6. Enter the data name.", 
+            value= "td_df")     
+})
+output$td_data_download <- downloadHandler(
+  filename = "time_dependent.RData",
+  content = function(con) {
+    assign(input$TdDataDownloadName, TdDataFrame())
+    save(list=input$TdDataDownloadName, file=con)
+  }
+)
+
+#Function that gets the cutoff values for survplot with the default being each unique time point
+tdcutFnc <- function(Y, TdCutLev, df) {
+  if(TdCutLev == "Default") {
+    #if(is.null(TdCutLev)) {
+    tout <-  eval(parse(text = "1:max(df[, Y])"))
+  } else {
+    tout <- eval(parse(text = TdCutLev))
+  }
+  return(tout)
+}
+
+#Reactive function that runs tdcutFnc() 
+tdcut1 <-  reactive({
+  tdcutFnc(Y= outcome(), TdCutLev=input$TdCutLev, df=df() )
+})
+
+#Function that creates a time dependent data file
+timeDepDfFnc <- function(X, Y, Z, censor, reg, df, tdcut1, AddLog) {
+  #No censoring
+  if (reg == "Cox PH") {
+    cph_fmla <- as.formula(paste(paste0("Surv(", Y,")" , "~"),
+                                 paste(X, collapse= "+")))
+    timeDepDF <- survSplit(formula= cph_fmla, data=df, cut=tdcut1,
+                           start="tstart", id= "id.obs", episode= 
+                             "tgroup",
+                           end="tstop", event="event")
+  }
+  #Censoring
+  if (reg == "Cox PH with censoring") {
+    ccph_fmla <- as.formula(paste(paste0("Surv(", Y, ",", censor, ")", "~"),
+                                  paste(X, collapse= "+")))
+    timeDepDF <- survSplit(formula=ccph_fmla , data=df, cut=tdcut1,
+                           start="tstart", id= "id.obs", episode= "tgroup",
+                           end="tstop", event="event")
+  }
+  #INTERACTION  
+  timeDepDF[,paste0(Z, ".log.", Y)] <- 
+    timeDepDF[, Z]*log(timeDepDF[,"tgroup"] + AddLog)      
+  return(timeDepDF)
+}
+
+#Reactive function that runs tdcutFnc() and creates the time-dependent file 
+TdDataFrame <-  reactive({
+  if (input$TdDataYesNo == "Yes") { 
+    timeDepDfFnc(X=input$TDPredX, Y=outcome(), Z=input$TimeDepVar, censor=censor1(), 
+                 reg=input$regress_type, df=df(), tdcut1=tdcut1(), 
+                 AddLog= input$TdLogIncrement)
+  }
+})
+
+#########################  END HERE
+
 ## UI function for DFBETAS U level
 #Select confidence interval level
 output$U_Cutoff_Lvl <- renderUI({                                 #Same idea as output$vy
@@ -4042,7 +4131,7 @@ output$InfluenceDFBETAS <- renderPrint({
     }
   })
   
-#########################
+
 #Multilevel modeling 
 #Selects a level 2 covariate
 output$CoxLev2 <- renderUI({
@@ -4343,6 +4432,11 @@ output$cme_model <- downloadHandler(
 ##output$testplot1 <- renderPlot({ 
 ##  plot(values$a, values$b)
 ##} )
+output$test1 <- renderPrint({
+str(TdDataFrame())
+  })
+
+
 ################################################################################
 ## Testing section: End ##
 ################################################################################

@@ -803,7 +803,11 @@ shinyServer(
     #Regression results.
     output$regress <- renderPrint({                                                 
       atch()
-      print(fit1())  #Summary of model fit.
+      if( input$regress_type %in% c("Logistic", "Ordinal Logistic", "Poisson", "Cox PH", "Cox PH with censoring")) {
+        print( list("Model"=fit1(), "Exponentiated Coefficients"= exp(fit1()[["coefficients"]])) )
+      } else {
+        print(fit1())  #Summary of model fit.
+      }
     })
     #Model predicted Y regression equation
     output$regress_equation <- renderPrint({                                                 

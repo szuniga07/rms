@@ -492,7 +492,7 @@ br(),
          plotOutput("schoenfeld_plt", height = 800, width="100%"),
 ############################################### BEGIN HERE
 br(),
-h4("Time-dependent dataset creation for a time-varying coefficient model."),
+h4("Time-dependent dataset creation for a time-dependent coefficient model."),
 br(),
 h5("This creates a time-dependent dataset and interaction term (X*Time) to model the proportional hazard assumption."),
 h5("When specifying the time-dependent model later in the 'Model builder' tab, use Outcome=tstart, Censor= tstop,event."),

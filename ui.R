@@ -444,7 +444,7 @@ tabPanel("Survival",
          h5("Note: Use splines fits and interactions to test linearity and additivity. Use splines in place of Martingales when considering continuous X tranfsormations."),                   
          br(),
          h4("Survival plots"),                   
-         h5("Note: Stratified survival function plots don't include time increment and confidence bands/bars arguments."),
+         h5("Note: Stratified survival function curves don't include time increment and confidence bands/bars options."),
          h5("The log-minus-log plot is not applicable to the survival and hazard function plots. The log-minus-log plot can have negative values, adjust y limit values accordingly."),
          br(),
          h5("Set up the survival plot."),
@@ -492,11 +492,12 @@ br(),
          plotOutput("schoenfeld_plt", height = 800, width="100%"),
 ############################################### BEGIN HERE
 br(),
-h4("Time-dependent dataset"),
+h4("Time-dependent dataset creation for a time-varying coefficient model."),
 br(),
 h5("This creates a time-dependent dataset and interaction term (X*Time) to model the proportional hazard assumption."),
 h5("When specifying the time-dependent model later in the 'Model builder' tab, use Outcome=tstart, Censor= tstop,event."),
-h5("The default time period cutoff is 1 unit periods, 1:max(Y), e.g., 1:365. Enter interval periods as a vector, e.g., c(30,60)."),
+h5("The default time period cutoff is 1 unit periods, 1:max(Y), e.g., 1:365. Enter interval/step periods as a vector, e.g., c(30,60)."),
+h5("We may want to add a value to the time value to emphasize parts of the period (e.g., log(time+20) ). If so, set the value below."),
 fluidRow(
          column(3, 
                 uiOutput("time_dependent_predictors")) ,
@@ -536,6 +537,7 @@ fluidRow(
 
          verbatimTextOutput("InfluenceDFBETAS"), 
          br(),
+h5("The DFBETAS, influential cases, Schoenfeld and Martingale residuals are saved in the download."),
 fluidRow(
   column(3, 
          uiOutput("SaveDFBETAS")),
@@ -929,14 +931,14 @@ tabPanel("95% CIs",
 
 
 ############## TEST SECTION #############################
- , #THIS COMMA IS COMMENTED OUT IN CASE I EVER NEED THE TEST FUNCTION BELOW    
+# , #THIS COMMA IS COMMENTED OUT IN CASE I EVER NEED THE TEST FUNCTION BELOW    
 
-tabPanel("Test it",                                #Creates a new panel named "Test"
-         fluidRow(                           #Wrapping them in a fluidRow provides easy control over  
-           verbatimTextOutput("test1")
+##tabPanel("Test it",                                #Creates a new panel named "Test"
+##         fluidRow(                           #Wrapping them in a fluidRow provides easy control over  
+##           verbatimTextOutput("test1")
 ##           plotOutput("testplot1")
 ##uiOutput("MIx"),
-         ))
+##         ))
 ############## TEST SECTION #############################
 
 

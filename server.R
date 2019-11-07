@@ -3895,7 +3895,7 @@ output$SpTimeInc <- renderUI({
 })
 #Indicate if you want the hazard function
 output$HazardPlot <- renderUI({                                 
-  selectInput("hazard_plot", "10. Do you want the hazard function?", 
+  selectInput("hazard_plot", "10. Do you want the hazard curve?", 
               choices = c("No", "Yes"), multiple=FALSE, selected="No")     
 })
 #Indicate if you want the log-minus-log plot
@@ -4063,6 +4063,57 @@ TdDataFrame <-  reactive({
 })
 
 #########################  END HERE
+#This function corrects a problem with Harrell's which.influence() that doesn't work with 1 predictor.
+which.influence2 <- function (fit, cutoff = 0.2) 
+{
+  cox <- inherits(fit, "cph")
+  stats <- resid(fit, "dfbetas")
+  stats <- matrix(stats, ncol=1)   #SZ: This corrects the problem with just 1 predictor
+  rnam <- which(!is.na(stats[, 1]))
+  stats <- stats[rnam, , drop = FALSE]
+  d <- dimnames(stats)[[1]]
+  if (length(d)) 
+    rnam <- d
+  at <- fit$Design
+  w <- list()
+  namw <- NULL
+  k <- 0
+  oldopt <- options("warn")
+  options(warn = -1)
+  on.exit(options(oldopt))
+  if (!cox) {
+    ww <- rnam[abs(stats[, 1]) >= cutoff]
+    if (length(ww)) {
+      k <- k + 1
+      w[[k]] <- ww
+      namw <- "Intercept"
+    }
+  }
+  Assign <- fit$assign
+  nm <- names(Assign)[1]
+  if (nm == "Intercept" | nm == "(Intercept)") 
+    Assign[[1]] <- NULL
+  j <- 0
+  for (i in (1:length(at$name))[at$assume.code != 8]) {
+    j <- j + 1
+    as <- Assign[[j]]
+    if (length(as) == 1) 
+      ww <- rnam[abs(stats[, as]) >= cutoff]
+    else {
+      z <- rep(FALSE, length(rnam))
+      for (r in as) z <- z | abs(stats[, r]) >= cutoff
+      ww <- rnam[z]
+    }
+    if (length(ww)) {
+      k <- k + 1
+      w[[k]] <- ww
+      namw <- c(namw, at$name[i])
+    }
+  }
+  if (length(w)) 
+    names(w) <- namw
+  w
+}
 
 ## UI function for DFBETAS U level
 #Select confidence interval level
@@ -4088,7 +4139,9 @@ dfbetasFit <- reactive({
   if(input$save_dfbetas == "Yes") {
     list("DFBETAS"=dfbetas_res(),
          "Influential"=w_influ(),
-         "InfluentialData"=w_influ_df() )
+         "InfluentialData"=w_influ_df(),
+         "Schoenfeld"= Schoenfeld_res(),
+         "Martingale"=Martingale_res())
   }
 })
 output$dfbetas_fit_name <- renderUI({ 
@@ -4103,7 +4156,18 @@ output$dfbetas_influential_residuals <- downloadHandler(
   }
 )
 #####################
-
+## Gets Martingale residuals
+Schoenfeld_res <- reactive({ 
+  if (input$regress_type %in% c("Cox PH", "Cox PH with censoring")) {
+    residuals(fit1(), type= "schoenfeld")
+  }
+})
+## Gets Martingale residuals
+Martingale_res <- reactive({ 
+  if (input$regress_type %in% c("Cox PH", "Cox PH with censoring")) {
+    residuals(fit1(), type="martingale")
+  }
+})
 ## Gets dfbetas residuals
 dfbetas_res <- reactive({ 
   if (input$regress_type %in% c("Cox PH", "Cox PH with censoring")) {
@@ -4113,7 +4177,11 @@ dfbetas_res <- reactive({
 #Gets influential observations by predictors
 w_influ <- reactive({ 
   if (input$regress_type %in% c("Cox PH", "Cox PH with censoring")) {
-    which.influence(fit1(), cutoff=input$UCutoffLvl)
+    if (length(predictor()) ==1) {
+      which.influence2(fit1(), cutoff=input$UCutoffLvl)
+    } else {
+      which.influence(fit1(), cutoff=input$UCutoffLvl)
+    }
   }
 })
 #Gets the data frame of the influential observations
@@ -4432,9 +4500,10 @@ output$cme_model <- downloadHandler(
 ##output$testplot1 <- renderPlot({ 
 ##  plot(values$a, values$b)
 ##} )
-output$test1 <- renderPrint({
-str(TdDataFrame())
-  })
+##output$test1 <- renderPrint({
+#str(TdDataFrame())
+##  print(w_influ_df())
+##  })
 
 
 ################################################################################

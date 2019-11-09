@@ -967,8 +967,8 @@ output$anova_smry <- renderPrint({
     })
     #Select the variables that will get 
     output$prt_one_x <- renderUI({
-      radioButtons("pe_X", "2. Select a single predictor.", 
-                  choices = predictor(), selected=predictor()[1])     #Will make choices based on my reactive function.
+      selectInput("pe_X", "2. Select a single predictor.", 
+                  choices = predictor(), multiple=FALSE, selected=predictor()[1])     #Will make choices based on my reactive function.
     })
 
 ######################### Begin here 
@@ -1011,22 +1011,24 @@ output$anova_smry <- renderPrint({
     output$xYplot_interaction <- renderPlot({
       if(input$XyplotYesNo == "Yes") {
         if(input$XyplotBands == "Yes") {
-          xYplot( Cbind(xyplotData()[[3]], xyplotData()[[4]], xyplotData()[[5]]) ~ xyplotData()[[1]] ,  groups=xyplotData()[[2]],
+          xYplot( Cbind(xyplotData()[[which(names(xyplotData()) =="yhat")]], 
+                        xyplotData()[[which(names(xyplotData()) =="lower")]], 
+                        xyplotData()[[which(names(xyplotData()) =="upper")]]) ~ xyplotData()[[which(names(xyplotData()) ==XyplotX1())]],  
+                  groups=xyplotData()[[which(names(xyplotData()) ==XyplotZ1())]],
                method='filled bands', type='l', 
                col.fill=adjustcolor(1:length(unique(df()[, XyplotZ1() ])), alpha.f = 0.2),
-               #col.fill= gray(seq(.9,.99, length.out=length(unique( df()[, XyplotZ1() ] )) )),
-               #col.fill= gray(.95),
                lty=1:length(unique(df()[, XyplotZ1() ])),
                lcol=1:length(unique(df()[, XyplotZ1() ])), 
-                lwd=2, ylab="Yhat", xlab=XyplotX1(), 
-               main=paste0("Partial prediction plot of ", XyplotX1(), " by ", XyplotZ1()) )
+                lwd=2, ylab="Yhat", xlab=XyplotX1(), cex=1.75,
+               main=paste0("Partial prediction plot of ", XyplotX1(), " by levels of ", XyplotZ1()) )
         } else {
-          xYplot(xyplotData()[[3]] ~ xyplotData()[[1]] ,  groups=xyplotData()[[2]],
+          xYplot(xyplotData()[[which(names(xyplotData()) =="yhat")]] ~ xyplotData()[[which(names(xyplotData()) ==XyplotX1())]] ,  
+                 groups=xyplotData()[[which(names(xyplotData()) ==XyplotZ1())]],
                  type='l',
                  lty=1:length(unique(df()[, XyplotZ1() ])),
                  lcol=1:length(unique(df()[, XyplotZ1() ])), 
-                 lwd=2, ylab="Yhat", xlab=XyplotX1(), 
-                 main=paste0("Partial prediction plot of ", XyplotX1(), " by ", XyplotZ1()) )
+                 lwd=2, ylab="Yhat", xlab=XyplotX1(), cex=1.75, 
+                 main=paste0("Partial prediction plot of ", XyplotX1(), " by levels of ", XyplotZ1()) )
         }
       } 
     }, height = 600)

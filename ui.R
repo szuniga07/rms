@@ -382,12 +382,20 @@ tabPanel("Impute",
                    h4("The model can be described using partial effect plots by plotting each X against Y holding other predictions constant (e.g., Median)."),                   
                    plotOutput("prt_prd", height=600),
                    br(),
-                   uiOutput("prt_one_yes"),  #vx is the created drop down box coming from renderUI in server.r.
+                   
+                   fluidRow(
+                     column(3, 
+                            uiOutput("prt_one_yes")),
+                     column(3, offset=1, 
+                            uiOutput("prt_one_x"))
+                   ),
+#                   uiOutput("prt_one_yes"),  #vx is the created drop down box coming from renderUI in server.r.
+#                   br(),
+#                   uiOutput("prt_one_x"),  #vx is the created drop down box coming from renderUI in server.r.
                    br(),
-                   uiOutput("prt_one_x"),  #vx is the created drop down box coming from renderUI in server.r.
-                   br(),
+                   
                    h4("Partial prediction of a continuous predictor by a factor."),
-                    h5("This plot will show the expected trend line by multiple levels. Especially helpful in seeing the interaction effect and where lines intersect."),  
+                    h5("This plot shows the expected trend line by multiple levels. Especially helpful in seeing the interaction effect and where lines intersect or diverge."),  
                    br(),
                    fluidRow(
                      column(3, 

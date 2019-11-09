@@ -970,6 +970,68 @@ output$anova_smry <- renderPrint({
       radioButtons("pe_X", "2. Select a single predictor.", 
                   choices = predictor(), selected=predictor()[1])     #Will make choices based on my reactive function.
     })
+
+######################### Begin here 
+## Creates a plot for an interaction of continuous X by a factor ##
+#Select the continuous predictor
+    output$xyplot_x <- renderUI({
+      selectInput("XyplotX", "1. Select a continuous predictor.", 
+                   choices = predictor(), selected=predictor()[1], multiple=FALSE)     
+    })
+    #Select the factor for grouping
+    output$xyplot_z <- renderUI({
+      selectInput("XyplotZ", "2. Select a factor.", 
+                  choices = setdiff(predictor(), input$XyplotX),  multiple=FALSE)     
+    })
+    #Make confidence bands for the plot
+    output$xyplot_bands <- renderUI({                                 
+      selectInput("XyplotBands", "3. Do you want confidence bands?", 
+                  choices = c("No", "Yes"), multiple=FALSE, selected="No")
+    })
+    #Create yes/no box to make the XY plot
+    output$xyplot_yes_no <- renderUI({                                 
+      selectInput("XyplotYesNo", "4. Do you want to create the plot?", 
+                  choices = c("No", "Yes"), multiple=FALSE, selected="No")     
+    })
+    
+    #Continuous predictor
+    XyplotX1 <- reactive({                  
+      input$XyplotX
+    })
+    #Factor
+    XyplotZ1 <- reactive({                  
+      input$XyplotZ
+    })
+    #Get the Predicted values needed for the plot
+    xyplotData <- reactive({                 
+      do.call("Predict", list(fit1(), XyplotX1(), XyplotZ1() )   ) 
+    })
+
+#This creates the plot
+    output$xYplot_interaction <- renderPlot({
+      if(input$XyplotYesNo == "Yes") {
+        if(input$XyplotBands == "Yes") {
+          xYplot( Cbind(xyplotData()[[3]], xyplotData()[[4]], xyplotData()[[5]]) ~ xyplotData()[[1]] ,  groups=xyplotData()[[2]],
+               method='filled bands', type='l', 
+               col.fill=adjustcolor(1:length(unique(df()[, XyplotZ1() ])), alpha.f = 0.2),
+               #col.fill= gray(seq(.9,.99, length.out=length(unique( df()[, XyplotZ1() ] )) )),
+               #col.fill= gray(.95),
+               lty=1:length(unique(df()[, XyplotZ1() ])),
+               lcol=1:length(unique(df()[, XyplotZ1() ])), 
+                lwd=2, ylab="Yhat", xlab=XyplotX1(), 
+               main=paste0("Partial prediction plot of ", XyplotX1(), " by ", XyplotZ1()) )
+        } else {
+          xYplot(xyplotData()[[3]] ~ xyplotData()[[1]] ,  groups=xyplotData()[[2]],
+                 type='l',
+                 lty=1:length(unique(df()[, XyplotZ1() ])),
+                 lcol=1:length(unique(df()[, XyplotZ1() ])), 
+                 lwd=2, ylab="Yhat", xlab=XyplotX1(), 
+                 main=paste0("Partial prediction plot of ", XyplotX1(), " by ", XyplotZ1()) )
+        }
+      } 
+    }, height = 600)
+    
+######################### End here        
     
 #This plots the predicted values as a nomogram    
 output$nomo_gram <- renderPlot({
@@ -4501,12 +4563,11 @@ output$cme_model <- downloadHandler(
 ################################################################################
 ## Testing section: Begin  ##
 ################################################################################
-##output$testplot1 <- renderPlot({ 
+#output$testplot1 <- renderPlot({ 
 ##  plot(values$a, values$b)
 ##} )
 ##output$test1 <- renderPrint({
-#str(TdDataFrame())
-##  print(w_influ_df())
+##  print(xyplotData())
 ##  })
 
 

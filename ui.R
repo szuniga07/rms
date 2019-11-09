@@ -385,7 +385,23 @@ tabPanel("Impute",
                    uiOutput("prt_one_yes"),  #vx is the created drop down box coming from renderUI in server.r.
                    br(),
                    uiOutput("prt_one_x"),  #vx is the created drop down box coming from renderUI in server.r.
-                   br()                   
+                   br(),
+                   h4("Partial prediction of a continuous predictor by a factor."),
+                    h5("This plot will show the expected trend line by multiple levels. Especially helpful in seeing the interaction effect and where lines intersect."),  
+                   br(),
+                   fluidRow(
+                     column(3, 
+                            uiOutput("xyplot_x")),
+                     column(3, 
+                            uiOutput("xyplot_z")),
+                     column(3, 
+                            uiOutput("xyplot_bands")),
+                     column(3, 
+                            uiOutput("xyplot_yes_no"))
+                   ),
+                   br(),
+                   plotOutput("xYplot_interaction", height=600, width="100%"),
+                   br()
                    ),    #Creates a new panel named "Summary"
           tabPanel("Nomogram",
                    h4("Hand calculate probabilities with a nomogram"),
@@ -931,7 +947,7 @@ tabPanel("95% CIs",
 
 
 ############## TEST SECTION #############################
-# , #THIS COMMA IS COMMENTED OUT IN CASE I EVER NEED THE TEST FUNCTION BELOW    
+## , #THIS COMMA IS COMMENTED OUT IN CASE I EVER NEED THE TEST FUNCTION BELOW    
 
 ##tabPanel("Test it",                                #Creates a new panel named "Test"
 ##         fluidRow(                           #Wrapping them in a fluidRow provides easy control over  

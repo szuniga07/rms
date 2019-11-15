@@ -42,7 +42,43 @@ library(jsonlite)
           downloadLink('downloadSave', 'Download RData file'),
           h6("Newly created data summary"),
           verbatimTextOutput("new_smry_df"),
-          
+br(),
+  ############### Begin here
+h4("Modify the Data Frame"),
+br(),
+h5("Change the data type"),
+h6("Convert a variable to a character, factor, or numeric type."),
+
+fluidRow(
+  column(3,
+         uiOutput("modify_character")),  
+  column(3, offset=1,
+         uiOutput("modify_factor")),  
+  column(3, offset=1,
+         uiOutput("modify_numeric"))  
+  ),
+br(),
+h6("Subset the data you need. In #5, 'subset' indicates rows, 'select' indicates columns (e.g., subset= gender==male, select= 1:7)."),
+fluidRow(
+  column(3,
+         uiOutput("subset_df_yes_no")),  
+  column(3, offset=1,
+         uiOutput("subset_args")),
+  column(3, offset=1,
+         uiOutput("modify_df_yes_no")) 
+),
+br(),
+fluidRow(
+  column(3,
+         uiOutput("modified_df_save")),  
+  column(3, offset=1,
+         uiOutput("modified_df_name")),  
+  column(3, offset=1,
+         downloadLink('download_modified_df', '9. Click to download data.'))
+),
+
+################# End here
+
           ## Transformed/Imputed ##
           br(),
           br(),
@@ -409,7 +445,28 @@ tabPanel("Impute",
                    ),
                    br(),
                    plotOutput("xYplot_interaction", height=600, width="100%"),
-                   br()
+                   br(),
+h4("Contrast plots"),
+h5("This graph shows differences between groups (linear differences, odds ratios, hazard ratios). Compare 2 groups on predicted values, especially useful for interactions."),                   
+h5("This plot compliments the partial prediction plot above. It is required to run the plot directly above first."),                   
+fluidRow(
+  column(3,
+         uiOutput("xyplot_con_lev1")),
+  column(3,
+         uiOutput("xyplot_con_lev2"))
+),
+fluidRow(
+  column(3,
+         uiOutput("xyplot_con_ylim0")),
+  column(3,
+         uiOutput("xyplot_con_ylim1")),
+  column(3,
+         uiOutput("xyp_yes_no"))
+),
+h5("Contrasts require 'factor' data types for groups. Convert variables into factors in the \"Data\" tab."),                   
+br(),
+plotOutput("xyplot_contrast_plot", height=600, width="100%"),
+br()
                    ),    #Creates a new panel named "Summary"
           tabPanel("Nomogram",
                    h4("Hand calculate probabilities with a nomogram"),
@@ -961,7 +1018,6 @@ tabPanel("95% CIs",
 ##         fluidRow(                           #Wrapping them in a fluidRow provides easy control over  
 ##           verbatimTextOutput("test1")
 ##           plotOutput("testplot1")
-##uiOutput("MIx"),
 ##         ))
 ############## TEST SECTION #############################
 

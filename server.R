@@ -90,6 +90,140 @@ shinyServer(
       textInput("NewDfNameAllFs", "1. Enter the new name for transformed/imputed/factor data", 
                 value= "factor")     
     })
+
+    ############### Begin here
+#Modify the dataset
+    #Change the data type
+    #Character
+    output$modify_character <- renderUI({                                 #Same idea as output$vy
+      selectInput("ModifyCharacter", "1. Select variables to convert to a 'character'.", 
+                  choices = var(), multiple=TRUE)
+    })
+    #Factor
+    output$modify_factor <- renderUI({                                 #Same idea as output$vy
+      selectInput("ModifyFactor", "2. Select variables to convert to a 'factor'.", 
+                  choices = var(), multiple=TRUE)
+    })
+    #Numeric
+    output$modify_numeric <- renderUI({                                 
+      selectInput("ModifyNumeric", "3. Select variables to convert to a 'character'.", 
+                  choices = var(), multiple=TRUE)
+    })
+
+    ## Modify the dataset ##
+    #Subset the dataset
+    output$subset_df_yes_no <- renderUI({                                 
+      selectInput("SubsetYesNo", "4. Want to subset the data?", 
+                  choices = c("No", "Yes"), multiple=FALSE, selected="No")
+    })
+    #Formula for the subset
+    output$subset_args <- renderUI({ 
+      textInput("SubsetArgs", "5. Enter the formula to subset data.", 
+                value= "subset= , select=")     
+    })
+    #Modify the dataset
+    output$modify_df_yes_no <- renderUI({                                 
+      selectInput("ModifyDfYesNo", "6. Want to create the modified dataset?", 
+                  choices = c("No", "Yes"), multiple=FALSE, selected="No")
+    })
+
+    #####################
+    # Save modified data #
+    #####################
+    output$modified_df_save <- renderUI({  
+      selectInput("ModifiedDfSave", "7. Save the modified data?", 
+                  choices = c("No", "Yes"), multiple=FALSE, selected="No")     #Will make choices based on my reactive function.
+    })
+    
+    ## Subset the dataset ##
+    modifySubsetFnc <- function(df, ModifyDfYesNo, SubsetArgs, SubsetYesNo) {
+        if (SubsetYesNo == "Yes") {
+          df_mod <- eval(parse(text=paste0("subset(df,", SubsetArgs, ")" )))
+        } else {
+          df_mod <- df
+      }
+      return(df_mod)
+    }
+    #Runs the function above
+    modifySubsetDf <- reactive({
+      if(input$ModifyDfYesNo == "Yes") {
+        modifySubsetFnc(df=df(), ModifyDfYesNo=input$ModifyDfYesNo, 
+                      SubsetArgs=input$SubsetArgs, SubsetYesNo=input$SubsetYesNo)
+      }
+    })
+## Modify the variable type of data   
+    #Character
+    modifiedCharFnc <- function(df, ModifyCharacter) {
+      df_mod <- df
+        if (!is.null(ModifyCharacter)) {
+          df_mod[, which(colnames(df_mod) %in% ModifyCharacter)] <- sapply(df_mod[which(colnames(df_mod) %in% ModifyCharacter)], as.character)
+      }
+      return(df_mod[, which(colnames(df_mod) %in% ModifyCharacter), drop = FALSE])
+    }
+    #Runs the function above
+    modifiedCharDf <- reactive({
+      if(input$ModifyDfYesNo == "Yes") {
+        modifiedCharFnc(df=modifySubsetDf(), ModifyCharacter=input$ModifyCharacter)
+      }
+    })
+    #Factor
+    modifiedFacFnc <- function(df, ModifyFactor) {
+      df_mod <- df
+        if (!is.null(ModifyFactor)) {
+        df_mod[, which(colnames(df_mod) %in% ModifyFactor)] <- sapply(df_mod[which(colnames(df_mod) %in% ModifyFactor)], as.character)
+      }
+      if (!is.null(ModifyFactor)) {
+        df_mod[, which(colnames(df_mod) %in% ModifyFactor)] <- lapply(df_mod[which(colnames(df_mod) %in% ModifyFactor)], as.factor)
+      }
+      return(df_mod[, which(colnames(df_mod) %in% ModifyFactor), drop = FALSE])
+    }
+    #Runs the function above
+    modifiedFacDf <- reactive({
+      if(input$ModifyDfYesNo == "Yes") {
+        modifiedFacFnc(df=modifySubsetDf(), ModifyFactor=input$ModifyFactor)
+      }
+    })
+    #Numeric
+    modifiedNumFnc <- function(df, ModifyNumeric) {
+      df_mod <- df
+        if (!is.null(ModifyNumeric)) {
+        df_mod[, which(colnames(df_mod) %in% ModifyNumeric),drop = FALSE] <- sapply(df_mod[which(colnames(df_mod) %in% ModifyNumeric)], as.numeric)
+      }
+      return(df_mod[, which(colnames(df_mod) %in% ModifyNumeric) ,drop = FALSE])
+    }
+    #Runs the function above
+    modifiedNumDf <- reactive({
+      if(input$ModifyDfYesNo == "Yes") {
+      modifiedNumFnc(df=modifySubsetDf(), ModifyNumeric=input$ModifyNumeric)
+      }
+    })
+    
+    #Variables that are not modified
+    non_modified_vars <- reactive({
+      setdiff(var(),  c(input$ModifyCharacter,input$ModifyFactor, input$ModifyNumeric))
+    })
+    
+    #Create modified dataset
+    modifiedDf <- reactive({
+      if(input$ModifiedDfSave == "Yes") {
+        cbind(modifySubsetDf()[, which(colnames(modifySubsetDf()) %in% non_modified_vars()), drop = FALSE], 
+              modifiedCharDf(), modifiedFacDf(), modifiedNumDf()) 
+      }
+    })
+
+    output$modified_df_name <- renderUI({ 
+      textInput("ModifiedDfName", "8. Enter the data frame name.", 
+                value= "mod_df")     
+    })
+    output$download_modified_df <- downloadHandler(
+      filename = "modified_df.RData",
+      content = function(con) {
+        assign(input$ModifiedDfName, modifiedDf())
+        save(list=input$ModifiedDfName, file=con)
+      }
+    )
+    
+    ################# End here
     
     #################################################
     #New data from the text file
@@ -971,7 +1105,6 @@ output$anova_smry <- renderPrint({
                   choices = predictor(), multiple=FALSE, selected=predictor()[1])     #Will make choices based on my reactive function.
     })
 
-######################### Begin here 
 ## Creates a plot for an interaction of continuous X by a factor ##
 #Select the continuous predictor
     output$xyplot_x <- renderUI({
@@ -1033,7 +1166,136 @@ output$anova_smry <- renderPrint({
       } 
     }, height = 600)
     
-######################### End here        
+    ##########################################
+    # Contrast plots for partial predictions #
+    ##########################################
+    ## UI functions
+    #Create the levels for the XY plot group argument
+    #Level 1
+    output$xyplot_con_lev1 <- renderUI({
+      selectInput("xyplotConLev1", "1. Select the primary level",
+                  choices = xy_contrast_levs() , multiple=FALSE, selected= xy_contrast_levs()[1])
+    })
+    #Level 2
+    output$xyplot_con_lev2 <- renderUI({
+      selectInput("xyplotConLev2", "2. Select the reference level",
+                  choices = xy_contrast_levs() , multiple=FALSE,
+                  selected= setdiff(xy_contrast_levs(), input$xyplotConLev1)[1] )
+    })
+    #Create the y-asix limits for the XY plot group argument
+    #Lower
+    output$xyplot_con_ylim0 <- renderUI({
+      if (input$XyplotYesNo=="Yes") {
+        numericInput("xyplotConYlim0", "3. Select the lower y-axis limit",
+                     #value=0, step=1)
+                     value=con_xy_data()[["ylim0"]], step=1)
+      }
+    })
+    #Upper
+    output$xyplot_con_ylim1 <- renderUI({
+      if (input$XyplotYesNo=="Yes") {
+        numericInput("xyplotConYlim1", "4. Select the upper y-axis limit",
+                     #value=1, step=1)
+                     value=con_xy_data()[["ylim1"]], step=1)
+      }
+    })
+    #Yes/No on running the plots
+    output$xyp_yes_no <- renderUI({ #Same idea as output$vy
+      selectInput("XypYesNo", "5. Do you want to run the contrast plot?",
+                  choices = c("No", "Yes"), multiple=FALSE,
+                  selected="No")     #Will make choices based on my reactive function.
+    })
+    ## Create the contrast xyplot
+    output$xyplot_contrast_plot <- renderPlot({
+      if (input$XypYesNo=="Yes") {
+        xyp_contrast()
+      }
+    }, height = 600)
+    
+    
+    #Reactive functions
+    #Creates unique levels for the grouping factor in the xyplot
+    xy_contrast_levs <- reactive({
+      unique(df()[, XyplotZ1()])
+    })
+    
+    #Function to make contrast data
+    contrastXyDataFnc <- function(model, X, group, lev1, lev2, reg) {
+      #Specs to get min and max limit for X
+      spcs <- specs(model, long=TRUE)
+      x_min <- spcs[[ "limits"]][rownames(spcs[[ "limits"]]) == "Low", which(colnames(spcs[[ "limits"]]) == X )]
+      x_max <- spcs[[ "limits"]][rownames(spcs[[ "limits"]]) == "High", which(colnames(spcs[[ "limits"]]) == X )]
+      #y label
+      if(reg %in% c("Cox PH", "Cox PH with censoring")) {
+        xyplot_ylab <- paste0("Hazard Ratio (",lev1, ":", lev2,")")
+      }
+      if(reg %in% c("Logistic", "Ordinal Logistic") ) {
+        xyplot_ylab <- paste0("Odds Ratio (",lev1, ":", lev2,")")
+      }
+      if(reg %in% c("Linear","Poisson","Quantile","Generalized Least
+                    Squares")) {
+        xyplot_ylab <- paste0("Contrast (",lev1, ":", lev2,")")
+    }
+      ## Determine if it is an abline at 0 or 1 ##
+      if(reg %in% c("Cox PH", "Cox PH with censoring","Logistic", "Ordinal Logistic") ) {
+        abline_01 <- 1
+      }
+      if(reg %in% c("Linear","Poisson","Quantile","Generalized Least
+                    Squares")) {
+        abline_01 <- 0
+    }
+      #Put elements int a list
+      a <- list(lev1, seq(x_min, x_max, length.out=250))
+      names(a) <- c(group, X)
+      b <- list(lev2, seq(x_min, x_max, length.out=250))
+      names(b) <- c(group, X)
+      #w <- do.call("contrast", list( fit=model, a=a, b=b) )
+      w <- contrast( fit=model, a=a, b=b)
+      
+      ## Exponentiate the data if needed ##
+      #Contrast
+      if(reg %in% c("Cox PH", "Cox PH with censoring","Logistic", "Ordinal Logistic","Poisson")) {
+        w[["Contrast"]] <- exp(w[["Contrast"]])
+      }
+      #Lower
+      if(reg %in% c("Cox PH", "Cox PH with censoring","Logistic", "Ordinal Logistic","Poisson")) {
+        w[["Lower"]] <- exp(w[["Lower"]])
+      }
+      #Upper
+      if(reg %in% c("Cox PH", "Cox PH with censoring","Logistic", "Ordinal Logistic","Poisson")) {
+        w[["Upper"]] <- exp(w[["Upper"]])
+      }
+      
+      #Get the upper and lower limits of the Y-axis
+      ylim0 <- min(w[["Lower"]])
+      ylim1 <- max(w[["Upper"]])
+      return(list(w=w, xyplot_ylab=xyplot_ylab, abline_01=abline_01,ylim0=ylim0, ylim1=ylim1))
+      }
+    ## Get the data
+    con_xy_data <- reactive({
+      if (input$XyplotYesNo=="Yes") {
+        contrastXyDataFnc(model=fit1(), X= XyplotX1(), group=XyplotZ1(),
+                          lev1=input$xyplotConLev1, lev2=input$xyplotConLev2, reg=input$regress_type )
+      }
+    })
+    ## Function to run contrast xyplot
+    xypContrastFnc <- function(data, ylim0, ylim1, X) {
+      xYplot(Cbind(data[["w"]][["Contrast"]], data[["w"]][["Lower"]],
+                   data[["w"]][["Upper"]]) ~ data[["w"]][[1]] ,
+             ylab=data[["xyplot_ylab"]], type='l', method='filled bands', abline=list(h=data[["abline_01"]], col=2,lwd=2),
+             col.fill=gray(.95), ylim=c(ylim0, ylim1), xlab=X, lwd=2,
+             main=paste0("Partial prediction plot of ", XyplotX1(), " contrasting ", XyplotZ1(),  
+                         " levels of ", input$xyplotConLev1, " to ", input$xyplotConLev2 ))
+    }
+    
+    #Run the plot
+    xyp_contrast <- reactive({
+      if (input$XypYesNo=="Yes") {
+        xypContrastFnc(data=con_xy_data(), ylim0=input$xyplotConYlim0, ylim1=input$xyplotConYlim1, X=XyplotX1())
+      }
+    })
+    
+    #########################  END HERE
     
 #This plots the predicted values as a nomogram    
 output$nomo_gram <- renderPlot({
@@ -4569,7 +4831,8 @@ output$cme_model <- downloadHandler(
 ##  plot(values$a, values$b)
 ##} )
 ##output$test1 <- renderPrint({
-##  print(xyplotData())
+## str(modifiedFacDf())
+  #  non_modified_vars()
 ##  })
 
 

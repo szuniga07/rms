@@ -1300,21 +1300,21 @@ output$anova_smry <- renderPrint({
     
     ## Table of contrast at percentiles to show where the interaction occurs ##
     #Function that gets contrasts quantiles
-    contrastQuantFnc <- function(w, sp1) {
-      p10 <- which(abs(w[[1]] - sp1[["limits"]][[1]][rownames(sp1$limits) == "Low:prediction"]) == min(abs(w[[1]] - sp1[["limits"]][[1]][rownames(sp1$limits) == "Low:prediction"])))
-      p25 <- which(abs(w[[1]] - sp1[["limits"]][[1]][rownames(sp1$limits) == "Low:effect"]) == min(abs(w[[1]] - sp1[["limits"]][[1]][rownames(sp1$limits) == "Low:effect"])))
-      p50 <- which(abs(w[[1]] - sp1[["limits"]][[1]][rownames(sp1$limits) == "Adjust to"]) == min(abs(w[[1]] - sp1[["limits"]][[1]][rownames(sp1$limits) == "Adjust to"])))
-      p75 <- which(abs(w[[1]] - sp1[["limits"]][[1]][rownames(sp1$limits) == "High:effect"]) == min(abs(w[[1]] - sp1[["limits"]][[1]][rownames(sp1$limits) == "High:effect"])))
-      p90 <- which(abs(w[[1]] - sp1[["limits"]][[1]][rownames(sp1$limits) == "High:prediction"]) == min(abs(w[[1]] - sp1[["limits"]][[1]][rownames(sp1$limits) == "High:prediction"])))
+    contrastQuantFnc <- function(w, sp1, X) {
+      p10 <- which(abs(w[[1]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "Low:prediction"]) == min(abs(w[[1]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "Low:prediction"])))
+      p25 <- which(abs(w[[1]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "Low:effect"]) == min(abs(w[[1]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "Low:effect"])))
+      p50 <- which(abs(w[[1]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "Adjust to"]) == min(abs(w[[1]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "Adjust to"])))
+      p75 <- which(abs(w[[1]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "High:effect"]) == min(abs(w[[1]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "High:effect"])))
+      p90 <- which(abs(w[[1]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "High:prediction"]) == min(abs(w[[1]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "High:prediction"])))
       #Put the values in a vector
       contrast_quant <- c(p10,p25,p50,p75,p90)
-      #Bind the rows of data I need
-      con_quan_df <- cbind( round(w[[1]][contrast_quant], 2), round(w[[2]][contrast_quant], 2),
-                            round(w[[3]][contrast_quant], 2), round(w[[4]][contrast_quant], 2),
-                            round(w[[5]][contrast_quant], 2), round(w[[6]][contrast_quant], 2),
-                            round(w[[7]][contrast_quant], 4))
+      #Bind the rows of data I need "Contrast"	 "SE"	 "Lower"	 "Upper"	 "Z"	 "Pvalue"
+      con_quan_df <- cbind( round(w[[X]][contrast_quant], 2), round(w[["Contrast"]][contrast_quant], 2),
+                            round(w[["SE"]][contrast_quant], 2), round(w[["Lower"]][contrast_quant], 2),
+                            round(w[["Upper"]][contrast_quant], 2), round(w[["Z"]][contrast_quant], 2),
+                            round(w[["Pvalue"]][contrast_quant], 4))
       #Column names
-      colnames(con_quan_df) <- names(w)[1:7]
+      colnames(con_quan_df) <- c(X,"Contrast","SE","Lower","Upper","Z","Pvalue")
       #Row names
       rownames(con_quan_df) <- c("10th","25th","50th","75th","90th")
       return(con_quan_df)
@@ -1323,7 +1323,7 @@ output$anova_smry <- renderPrint({
     #Function that runs the function above
     contrastQuantTbl <- reactive({
       if (input$XypYesNo=="Yes") {
-        contrastQuantFnc(w=con_xy_data()[["w"]], sp1=specs(fit1(), long=TRUE))
+        contrastQuantFnc(w=con_xy_data()[["w"]], sp1=specs(fit1(), long=TRUE), X=XyplotX1())
       }
     })
     #Run function for the Quantile table for contrasts

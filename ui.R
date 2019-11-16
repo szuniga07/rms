@@ -431,7 +431,7 @@ tabPanel("Impute",
                    br(),
                    
                    h4("Partial prediction of a continuous predictor by a factor."),
-                    h5("This plot shows the expected trend line by multiple levels. Especially helpful in seeing the interaction effect and where lines intersect or diverge."),  
+                    h5("This plot shows the expected trend line by multiple levels with 95% confidence intervals. Especially helpful in seeing the interaction effect and where lines intersect or diverge."),  
                    br(),
                    fluidRow(
                      column(3, 
@@ -447,8 +447,8 @@ tabPanel("Impute",
                    plotOutput("xYplot_interaction", height=600, width="100%"),
                    br(),
 h4("Contrast plots"),
-h5("This graph shows differences between groups (linear differences, odds ratios, hazard ratios). Compare 2 groups on predicted values, especially useful for interactions."),                   
-h5("This plot compliments the partial prediction plot above. It is required to run the plot directly above first."),                   
+h5("This graph shows differences between groups (linear differences, odds ratios, hazard ratios) with 95% confidence intervals. Compare 2 groups on predicted values, especially useful for interactions."),                   
+h5("This plot compliments the partial prediction plot above. You must run the plot directly above first."),                   
 fluidRow(
   column(3,
          uiOutput("xyplot_con_lev1")),
@@ -466,6 +466,11 @@ fluidRow(
 h5("Contrasts require 'factor' data types for groups. Convert variables into factors in the \"Data\" tab."),                   
 br(),
 plotOutput("xyplot_contrast_plot", height=600, width="100%"),
+h6("The portions of the red horizontal line (e.g., at 0 for linear regression, at 1 for logistic regression and Cox PH) corresponds to no significant predictor effect when contained within the 95% CI."),
+h6("For example, women may have higher rates of death before age 58, equal with men from 58-88, and have lower rates after 88 years."),
+br(),
+h5("Contrasts from the plot above at various percentiles of the continuous predictor. Non-interaction contrasts will be constant."),
+tableOutput("contrast_quant_table"),
 br()
                    ),    #Creates a new panel named "Summary"
           tabPanel("Nomogram",

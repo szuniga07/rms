@@ -200,7 +200,9 @@ shinyServer(
     
     #Variables that are not modified
     non_modified_vars <- reactive({
-      setdiff(var(),  c(input$ModifyCharacter,input$ModifyFactor, input$ModifyNumeric))
+      if(input$ModifyDfYesNo == "Yes") {
+        setdiff(var(),  c(input$ModifyCharacter,input$ModifyFactor, input$ModifyNumeric))
+      }
     })
     
     #Create modified dataset
@@ -1271,7 +1273,7 @@ output$anova_smry <- renderPrint({
       ylim1 <- max(w[["Upper"]])
       return(list(w=w, xyplot_ylab=xyplot_ylab, abline_01=abline_01,ylim0=ylim0, ylim1=ylim1))
       }
-    ## Get the data
+    ## Get the contrast data
     con_xy_data <- reactive({
       if (input$XyplotYesNo=="Yes") {
         contrastXyDataFnc(model=fit1(), X= XyplotX1(), group=XyplotZ1(),
@@ -1285,7 +1287,8 @@ output$anova_smry <- renderPrint({
              ylab=data[["xyplot_ylab"]], type='l', method='filled bands', abline=list(h=data[["abline_01"]], col=2,lwd=2),
              col.fill=gray(.95), ylim=c(ylim0, ylim1), xlab=X, lwd=2,
              main=paste0("Partial prediction plot of ", XyplotX1(), " contrasting ", XyplotZ1(),  
-                         " levels of ", input$xyplotConLev1, " to ", input$xyplotConLev2 ))
+                         " levels of ", input$xyplotConLev1, " to ", input$xyplotConLev2 ),
+             sub=paste0(XyplotZ1()," effect: ",input$xyplotConLev1))
     }
     
     #Run the plot
@@ -1294,6 +1297,42 @@ output$anova_smry <- renderPrint({
         xypContrastFnc(data=con_xy_data(), ylim0=input$xyplotConYlim0, ylim1=input$xyplotConYlim1, X=XyplotX1())
       }
     })
+    
+    ## Table of contrast at percentiles to show where the interaction occurs ##
+    #Function that gets contrasts quantiles
+    contrastQuantFnc <- function(w, sp1) {
+      p10 <- which(abs(w[[1]] - sp1[["limits"]][[1]][rownames(sp1$limits) == "Low:prediction"]) == min(abs(w[[1]] - sp1[["limits"]][[1]][rownames(sp1$limits) == "Low:prediction"])))
+      p25 <- which(abs(w[[1]] - sp1[["limits"]][[1]][rownames(sp1$limits) == "Low:effect"]) == min(abs(w[[1]] - sp1[["limits"]][[1]][rownames(sp1$limits) == "Low:effect"])))
+      p50 <- which(abs(w[[1]] - sp1[["limits"]][[1]][rownames(sp1$limits) == "Adjust to"]) == min(abs(w[[1]] - sp1[["limits"]][[1]][rownames(sp1$limits) == "Adjust to"])))
+      p75 <- which(abs(w[[1]] - sp1[["limits"]][[1]][rownames(sp1$limits) == "High:effect"]) == min(abs(w[[1]] - sp1[["limits"]][[1]][rownames(sp1$limits) == "High:effect"])))
+      p90 <- which(abs(w[[1]] - sp1[["limits"]][[1]][rownames(sp1$limits) == "High:prediction"]) == min(abs(w[[1]] - sp1[["limits"]][[1]][rownames(sp1$limits) == "High:prediction"])))
+      #Put the values in a vector
+      contrast_quant <- c(p10,p25,p50,p75,p90)
+      #Bind the rows of data I need
+      con_quan_df <- cbind( round(w[[1]][contrast_quant], 2), round(w[[2]][contrast_quant], 2),
+                            round(w[[3]][contrast_quant], 2), round(w[[4]][contrast_quant], 2),
+                            round(w[[5]][contrast_quant], 2), round(w[[6]][contrast_quant], 2),
+                            round(w[[7]][contrast_quant], 4))
+      #Column names
+      colnames(con_quan_df) <- names(w)[1:7]
+      #Row names
+      rownames(con_quan_df) <- c("10th","25th","50th","75th","90th")
+      return(con_quan_df)
+    }
+    
+    #Function that runs the function above
+    contrastQuantTbl <- reactive({
+      if (input$XypYesNo=="Yes") {
+        contrastQuantFnc(w=con_xy_data()[["w"]], sp1=specs(fit1(), long=TRUE))
+      }
+    })
+    #Run function for the Quantile table for contrasts
+    output$contrast_quant_table <- renderTable({
+      if (input$XypYesNo=="Yes") {
+        contrastQuantTbl()
+      }
+    }, rownames = TRUE)
+    
     
     #########################  END HERE
     

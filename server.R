@@ -91,7 +91,6 @@ shinyServer(
                 value= "factor")     
     })
 
-    ############### Begin here
 #Modify the dataset
     #Change the data type
     #Character
@@ -224,8 +223,6 @@ shinyServer(
         save(list=input$ModifiedDfName, file=con)
       }
     )
-    
-    ################# End here
     
     #################################################
     #New data from the text file
@@ -1281,31 +1278,32 @@ output$anova_smry <- renderPrint({
       }
     })
     ## Function to run contrast xyplot
-    xypContrastFnc <- function(data, ylim0, ylim1, X) {
+    xypContrastFnc <- function(data, ylim0, ylim1, X, Z, Lev1, Lev2) {
       xYplot(Cbind(data[["w"]][["Contrast"]], data[["w"]][["Lower"]],
-                   data[["w"]][["Upper"]]) ~ data[["w"]][[1]] ,
+                   data[["w"]][["Upper"]]) ~ data[["w"]][[X]] ,
              ylab=data[["xyplot_ylab"]], type='l', method='filled bands', abline=list(h=data[["abline_01"]], col=2,lwd=2),
              col.fill=gray(.95), ylim=c(ylim0, ylim1), xlab=X, lwd=2,
-             main=paste0("Partial prediction plot of ", XyplotX1(), " contrasting ", XyplotZ1(),  
-                         " levels of ", input$xyplotConLev1, " to ", input$xyplotConLev2 ),
-             sub=paste0(XyplotZ1()," effect: ",input$xyplotConLev1))
+             main=paste0("Partial prediction plot of ", X, " contrasting ", Z,  
+                         " levels of ", Lev1, " to ", Lev2 ),
+             sub=paste0(Z," effect: ",Lev1))
     }
     
     #Run the plot
     xyp_contrast <- reactive({
       if (input$XypYesNo=="Yes") {
-        xypContrastFnc(data=con_xy_data(), ylim0=input$xyplotConYlim0, ylim1=input$xyplotConYlim1, X=XyplotX1())
+        xypContrastFnc(data=con_xy_data(), ylim0=input$xyplotConYlim0, ylim1=input$xyplotConYlim1, X=XyplotX1(),
+                       Z=XyplotZ1() , Lev1=input$xyplotConLev1, Lev2=input$xyplotConLev2)
       }
     })
     
     ## Table of contrast at percentiles to show where the interaction occurs ##
     #Function that gets contrasts quantiles
     contrastQuantFnc <- function(w, sp1, X) {
-      p10 <- which(abs(w[[1]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "Low:prediction"]) == min(abs(w[[1]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "Low:prediction"])))
-      p25 <- which(abs(w[[1]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "Low:effect"]) == min(abs(w[[1]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "Low:effect"])))
-      p50 <- which(abs(w[[1]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "Adjust to"]) == min(abs(w[[1]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "Adjust to"])))
-      p75 <- which(abs(w[[1]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "High:effect"]) == min(abs(w[[1]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "High:effect"])))
-      p90 <- which(abs(w[[1]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "High:prediction"]) == min(abs(w[[1]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "High:prediction"])))
+      p10 <- which(abs(w[[X]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "Low:prediction"]) == min(abs(w[[X]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "Low:prediction"])))
+      p25 <- which(abs(w[[X]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "Low:effect"]) == min(abs(w[[X]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "Low:effect"])))
+      p50 <- which(abs(w[[X]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "Adjust to"]) == min(abs(w[[X]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "Adjust to"])))
+      p75 <- which(abs(w[[X]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "High:effect"]) == min(abs(w[[X]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "High:effect"])))
+      p90 <- which(abs(w[[X]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "High:prediction"]) == min(abs(w[[X]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "High:prediction"])))
       #Put the values in a vector
       contrast_quant <- c(p10,p25,p50,p75,p90)
       #Bind the rows of data I need "Contrast"	 "SE"	 "Lower"	 "Upper"	 "Z"	 "Pvalue"
@@ -1333,8 +1331,6 @@ output$anova_smry <- renderPrint({
       }
     }, rownames = TRUE)
     
-    
-    #########################  END HERE
     
 #This plots the predicted values as a nomogram    
 output$nomo_gram <- renderPlot({
@@ -3930,6 +3926,249 @@ output$obsdfmqt_out1 <- renderTable({
   obs_df_mqt()
 }, rownames = TRUE)
 
+#################################### Begin here
+## Creates a plot for an interaction of continuous X by a factor ##
+#Select the continuous predictor
+output$Cxyplot_x <- renderUI({
+  selectInput("CXyplotX", "1. Select a continuous predictor.", 
+              choices = predictor(), selected=predictor()[1], multiple=FALSE)     
+})
+#Select the factor for grouping
+output$Cxyplot_z <- renderUI({
+  selectInput("CXyplotZ", "2. Select a factor.", 
+              choices = setdiff(predictor(), input$CXyplotX),  multiple=FALSE)     
+})
+#Make confidence bands for the plot
+output$Cxyplot_bands <- renderUI({                                 
+  selectInput("CXyplotBands", "3. Do you want confidence bands?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")
+})
+#Create yes/no box to make the XY plot
+output$Cxyplot_yes_no <- renderUI({                                 
+  selectInput("CXyplotYesNo", "4. Do you want to create the plot?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")     
+})
+
+#Continuous predictor
+CXyplotX1 <- reactive({                  
+  input$CXyplotX
+})
+#Factor
+CXyplotZ1 <- reactive({                  
+  input$CXyplotZ
+})
+#Get the Predicted values needed for the plot
+CxyplotData <- reactive({                 
+  do.call("Predict", list(fit1(), CXyplotX1(), CXyplotZ1(), fun= function(x)x*-1) )    
+})
+#Function that calculates CxyplotData by -1
+#CxyplotData_1Fnc <- function(p1) {
+#  p1[[which(names(p1) == "yhat")]]  <- p1[[which(names(p1) == "yhat")]] 
+#  p1[[which(names(p1) == "lower")]] <- p1[[which(names(p1) == "lower")]] 
+#  p1[[which(names(p1) == "upper")]] <- p1[[which(names(p1) == "upper")]] 
+#}
+#Run the CxyplotData_1Fnc function above
+#CxyplotData <- reactive({
+#  CxyplotData_1Fnc(p1=CxyplotData1())
+#})
+
+
+#This creates the plot
+output$CxYplot_interaction <- renderPlot({
+  if(input$CXyplotYesNo == "Yes") {
+    if(input$CXyplotBands == "Yes") {
+      xYplot( Cbind(CxyplotData()[[which(names(CxyplotData()) =="yhat")]], 
+                    CxyplotData()[[which(names(CxyplotData()) =="lower")]], 
+                    CxyplotData()[[which(names(CxyplotData()) =="upper")]]) ~ CxyplotData()[[which(names(CxyplotData()) ==CXyplotX1())]],  
+              groups=CxyplotData()[[which(names(CxyplotData()) == CXyplotZ1())]],
+              method='filled bands', type='l', 
+              col.fill=adjustcolor(1:length(unique(df()[, CXyplotZ1() ])), alpha.f = 0.2),
+              lty=1:length(unique(df()[, CXyplotZ1() ])),
+              lcol=1:length(unique(df()[, CXyplotZ1() ])), 
+              lwd=2, ylab="Yhat", xlab=CXyplotX1(), cex=1.75,
+              main=paste0("Partial prediction plot of ", XyplotX1(), " by levels of ", CXyplotZ1()) )
+    } else {
+      xYplot(CxyplotData()[[which(names(CxyplotData()) =="yhat")]] ~ CxyplotData()[[which(names(CxyplotData()) == CXyplotX1())]] ,  
+              groups=CxyplotData()[[which(names(CxyplotData()) == CXyplotZ1())]],
+              type='l',
+              lty=1:length(unique(df()[, CXyplotZ1() ])),
+              lcol=1:length(unique(df()[, CXyplotZ1() ])), 
+              lwd=2, ylab="Yhat", xlab=CXyplotX1(), cex=1.75, 
+              main=paste0("Partial prediction plot of ", CXyplotX1(), " by levels of ", CXyplotZ1()) )
+    }
+  } 
+}, height = 600)
+
+##########################################
+# Contrast plots for partial predictions #
+##########################################
+## UI functions
+#Create the levels for the XY plot group argument
+#Level 1
+output$Cxyplot_con_lev1 <- renderUI({
+  selectInput("CxyplotConLev1", "1. Select the primary level",
+              choices = Cxy_contrast_levs() , multiple=FALSE, selected= Cxy_contrast_levs()[1])
+})
+#Level 2
+output$Cxyplot_con_lev2 <- renderUI({
+  selectInput("CxyplotConLev2", "2. Select the reference level",
+              choices = Cxy_contrast_levs() , multiple=FALSE,
+              selected= setdiff(Cxy_contrast_levs(), input$CxyplotConLev1)[1] )
+})
+#Create the y-asix limits for the XY plot group argument
+#Lower
+output$Cxyplot_con_ylim0 <- renderUI({
+  if (input$CXyplotYesNo=="Yes") {
+    numericInput("CxyplotConYlim0", "3. Select the lower y-axis limit",
+                 #value=0, step=1)
+                 value=Ccon_xy_data()[["ylim0"]], step=1)
+  }
+})
+#Upper
+output$Cxyplot_con_ylim1 <- renderUI({
+  if (input$CXyplotYesNo=="Yes") {
+    numericInput("CxyplotConYlim1", "4. Select the upper y-axis limit",
+                 #value=1, step=1)
+                 value=Ccon_xy_data()[["ylim1"]], step=1)
+  }
+})
+#Yes/No on running the plots
+output$Cxyp_yes_no <- renderUI({ #Same idea as output$vy
+  selectInput("CXypYesNo", "5. Do you want to run the contrast plot?",
+              choices = c("No", "Yes"), multiple=FALSE,
+              selected="No")     #Will make choices based on my reactive function.
+})
+## Create the contrast xyplot
+output$Cxyplot_contrast_plot <- renderPlot({
+  if (input$CXypYesNo=="Yes") {
+    Cxyp_contrast()
+  }
+}, height = 600)
+
+
+#Reactive functions
+#Creates unique levels for the grouping factor in the xyplot
+Cxy_contrast_levs <- reactive({
+  unique(df()[, CXyplotZ1()])
+})
+
+#Function to make contrast data
+CcontrastXyDataFnc <- function(model, X, group, lev1, lev2, reg) {
+  #Specs to get min and max limit for X
+  spcs <- specs(model, long=TRUE)
+  x_min <- spcs[[ "limits"]][rownames(spcs[[ "limits"]]) == "Low", which(colnames(spcs[[ "limits"]]) == X )]
+  x_max <- spcs[[ "limits"]][rownames(spcs[[ "limits"]]) == "High", which(colnames(spcs[[ "limits"]]) == X )]
+  #y label
+  if(reg %in% c("Cox PH", "Cox PH with censoring")) {
+    xyplot_ylab <- paste0("Hazard Ratio (",lev1, ":", lev2,")")
+  }
+  if(reg %in% c("Logistic", "Ordinal Logistic") ) {
+    xyplot_ylab <- paste0("Odds Ratio (",lev1, ":", lev2,")")
+  }
+  if(reg %in% c("Linear","Poisson","Quantile","Generalized Least
+                Squares")) {
+    xyplot_ylab <- paste0("Contrast (",lev1, ":", lev2,")")
+}
+  ## Determine if it is an abline at 0 or 1 ##
+  if(reg %in% c("Cox PH", "Cox PH with censoring","Logistic", "Ordinal Logistic") ) {
+    abline_01 <- 1
+  }
+  if(reg %in% c("Linear","Poisson","Quantile","Generalized Least
+                Squares")) {
+    abline_01 <- 0
+}
+  #Put elements int a list
+  a <- list(lev1, seq(x_min, x_max, length.out=250))
+  names(a) <- c(group, X)
+  b <- list(lev2, seq(x_min, x_max, length.out=250))
+  names(b) <- c(group, X)
+  #w <- do.call("contrast", list( fit=model, a=a, b=b) )
+  w <- contrast( fit=model, a=a, b=b)
+  
+  ## Exponentiate the data if needed ##
+  #Contrast
+  if(reg %in% c("Cox PH", "Cox PH with censoring","Logistic", "Ordinal Logistic","Poisson")) {
+    w[["Contrast"]] <- exp(-w[["Contrast"]])
+  }
+  #Lower
+  if(reg %in% c("Cox PH", "Cox PH with censoring","Logistic", "Ordinal Logistic","Poisson")) {
+    #w[["Lower"]] <- exp(-w[["Lower"]])
+    w[["Upper"]] <- exp(-w[["Lower"]])
+  }
+  #Upper
+  if(reg %in% c("Cox PH", "Cox PH with censoring","Logistic", "Ordinal Logistic","Poisson")) {
+    #w[["Upper"]] <- exp(-w[["Upper"]])
+    w[["Lower"]] <- exp(-w[["Upper"]])
+  }
+  
+  #Get the upper and lower limits of the Y-axis
+  ylim0 <- min(w[["Lower"]])
+  ylim1 <- max(w[["Upper"]])
+  return(list(w=w, xyplot_ylab=xyplot_ylab, abline_01=abline_01,ylim0=ylim0, ylim1=ylim1))
+  }
+## Get the contrast data
+Ccon_xy_data <- reactive({
+  if (input$CXyplotYesNo=="Yes") {
+    CcontrastXyDataFnc(model=fit1(), X= CXyplotX1(), group=CXyplotZ1(),
+                       lev1=input$CxyplotConLev1, lev2=input$CxyplotConLev2, reg=input$regress_type )
+  }
+})
+## Function to run contrast xyplot
+CxypContrastFnc <- function(data, ylim0, ylim1, X, Z, Lev1, Lev2) {
+  xYplot(Cbind(data[["w"]][["Contrast"]], data[["w"]][["Lower"]],
+               data[["w"]][["Upper"]]) ~ data[["w"]][[X]] ,
+         ylab=data[["xyplot_ylab"]], type='l', method='filled bands', abline=list(h=data[["abline_01"]], col=2,lwd=2),
+         col.fill=gray(.95), ylim=c(ylim0, ylim1), xlab=X, lwd=2,
+         main=paste0("Partial prediction plot of ", X, " contrasting ", Z,  
+                     " levels of ", Lev1, " to ", Lev2 ),
+         sub=paste0(Z," effect: ",Lev1))
+}
+
+#Run the plot
+Cxyp_contrast <- reactive({
+  if (input$CXypYesNo=="Yes") {
+    CxypContrastFnc(data=Ccon_xy_data(), ylim0=input$CxyplotConYlim0, ylim1=input$CxyplotConYlim1, X=CXyplotX1(),
+                    Z=CXyplotZ1() , Lev1=input$CxyplotConLev1, Lev2=input$CxyplotConLev2)
+  }
+})
+
+## Table of contrast at percentiles to show where the interaction occurs ##
+#Function that gets contrasts quantiles
+CcontrastQuantFnc <- function(w, sp1, X) {
+  p10 <- which(abs(w[[X]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "Low:prediction"]) == min(abs(w[[X]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "Low:prediction"])))
+  p25 <- which(abs(w[[X]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "Low:effect"]) == min(abs(w[[X]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "Low:effect"])))
+  p50 <- which(abs(w[[X]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "Adjust to"]) == min(abs(w[[X]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "Adjust to"])))
+  p75 <- which(abs(w[[X]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "High:effect"]) == min(abs(w[[X]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "High:effect"])))
+  p90 <- which(abs(w[[X]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "High:prediction"]) == min(abs(w[[X]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "High:prediction"])))
+  #Put the values in a vector
+  contrast_quant <- c(p10,p25,p50,p75,p90)
+  #Bind the rows of data I need "Contrast"	 "SE"	 "Lower"	 "Upper"	 "Z"	 "Pvalue"
+  con_quan_df <- cbind( round(w[[X]][contrast_quant], 2), round(w[["Contrast"]][contrast_quant], 2),
+                        round(w[["SE"]][contrast_quant], 2), round(w[["Lower"]][contrast_quant], 2),
+                        round(w[["Upper"]][contrast_quant], 2), round(w[["Z"]][contrast_quant], 2),
+                        round(w[["Pvalue"]][contrast_quant], 4))
+  #Column names
+  colnames(con_quan_df) <- c(X,"Contrast","SE","Lower","Upper","Z","Pvalue")
+  #Row names
+  rownames(con_quan_df) <- c("10th","25th","50th","75th","90th")
+  return(con_quan_df)
+}
+
+#Function that runs the function above
+CcontrastQuantTbl <- reactive({
+  if (input$CXypYesNo=="Yes") {
+    CcontrastQuantFnc(w=Ccon_xy_data()[["w"]], sp1=specs(fit1(), long=TRUE), X=CXyplotX1())
+  }
+})
+#Run function for the Quantile table for contrasts
+output$Ccontrast_quant_table <- renderTable({
+  if (input$CXypYesNo=="Yes") {
+    CcontrastQuantTbl()
+  }
+}, rownames = TRUE)
+
+#################################### End here
+
 ##################################################
 #Create yes/no box to determine plot single partial effect
 output$CoxMnMed <- renderUI({                                 #Same idea as output$vy
@@ -4338,7 +4577,6 @@ output$surv_plot1 <- renderPlot({
   }, height = 800)
 
 #########################
-#########################  BEGIN HERE
 ## UI input boxes ##
 #Select the predictors.
 output$time_dependent_predictors <- renderUI({
@@ -4431,7 +4669,6 @@ TdDataFrame <-  reactive({
   }
 })
 
-#########################  END HERE
 #This function corrects a problem with Harrell's which.influence() that doesn't work with 1 predictor.
 which.influence2 <- function (fit, cutoff = 0.2) 
 {

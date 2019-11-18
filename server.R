@@ -1308,11 +1308,12 @@ output$anova_smry <- renderPrint({
       contrast_quant <- c(p10,p25,p50,p75,p90)
       #Bind the rows of data I need "Contrast"	 "SE"	 "Lower"	 "Upper"	 "Z"	 "Pvalue"
       con_quan_df <- cbind( round(w[[X]][contrast_quant], 2), round(w[["Contrast"]][contrast_quant], 2),
-                            round(w[["SE"]][contrast_quant], 2), round(w[["Lower"]][contrast_quant], 2),
+                            #round(w[["SE"]][contrast_quant], 2), #Dropping this inappropriate exp(SE)
+                            round(w[["Lower"]][contrast_quant], 2),
                             round(w[["Upper"]][contrast_quant], 2), round(w[["Z"]][contrast_quant], 2),
                             round(w[["Pvalue"]][contrast_quant], 4))
       #Column names
-      colnames(con_quan_df) <- c(X,"Contrast","SE","Lower","Upper","Z","Pvalue")
+      colnames(con_quan_df) <- c(X,"Contrast","Lower","Upper","Z","Pvalue")
       #Row names
       rownames(con_quan_df) <- c("10th","25th","50th","75th","90th")
       return(con_quan_df)
@@ -4084,21 +4085,41 @@ CcontrastXyDataFnc <- function(model, X, group, lev1, lev2, reg) {
   names(b) <- c(group, X)
   #w <- do.call("contrast", list( fit=model, a=a, b=b) )
   w <- contrast( fit=model, a=a, b=b)
-  
   ## Exponentiate the data if needed ##
   #Contrast
-  if(reg %in% c("Cox PH", "Cox PH with censoring","Logistic", "Ordinal Logistic","Poisson")) {
+  if(reg %in% c("Cox PH", "Cox PH with censoring")) {
     w[["Contrast"]] <- exp(-w[["Contrast"]])
   }
   #Lower
-  if(reg %in% c("Cox PH", "Cox PH with censoring","Logistic", "Ordinal Logistic","Poisson")) {
+  if(reg %in% c("Cox PH", "Cox PH with censoring")) {
     #w[["Lower"]] <- exp(-w[["Lower"]])
     w[["Upper"]] <- exp(-w[["Lower"]])
   }
   #Upper
-  if(reg %in% c("Cox PH", "Cox PH with censoring","Logistic", "Ordinal Logistic","Poisson")) {
+  if(reg %in% c("Cox PH", "Cox PH with censoring")) {
     #w[["Upper"]] <- exp(-w[["Upper"]])
     w[["Lower"]] <- exp(-w[["Upper"]])
+  }
+  #S.E.
+  if(reg %in% c("Cox PH", "Cox PH with censoring")) {
+    w[["SE"]] <- exp(w[["SE"]])
+  }
+  #"Ordinal Logistic"  
+  #Contrast
+  if(reg %in% c("Ordinal Logistic")) {
+    w[["Contrast"]] <- exp(w[["Contrast"]])
+  }
+  #Lower
+  if(reg %in% c("Ordinal Logistic")) {
+    w[["Upper"]] <- exp(w[["Lower"]])
+  }
+  #Upper
+  if(reg %in% c("Ordinal Logistic")) {
+    w[["Lower"]] <- exp(w[["Upper"]])
+  }
+  #S.E.
+  if(reg %in% c("Ordinal Logistic")) {
+    w[["S.E."]] <- exp(w[["S.E."]])
   }
   
   #Get the upper and lower limits of the Y-axis
@@ -4144,11 +4165,12 @@ CcontrastQuantFnc <- function(w, sp1, X) {
   contrast_quant <- c(p10,p25,p50,p75,p90)
   #Bind the rows of data I need "Contrast"	 "SE"	 "Lower"	 "Upper"	 "Z"	 "Pvalue"
   con_quan_df <- cbind( round(w[[X]][contrast_quant], 2), round(w[["Contrast"]][contrast_quant], 2),
-                        round(w[["SE"]][contrast_quant], 2), round(w[["Lower"]][contrast_quant], 2),
+                        #round(w[["SE"]][contrast_quant], 2),  #Dropping this because it may be inapproriate to report a exp(SE)
+                        round(w[["Lower"]][contrast_quant], 2),
                         round(w[["Upper"]][contrast_quant], 2), round(w[["Z"]][contrast_quant], 2),
                         round(w[["Pvalue"]][contrast_quant], 4))
   #Column names
-  colnames(con_quan_df) <- c(X,"Contrast","SE","Lower","Upper","Z","Pvalue")
+  colnames(con_quan_df) <- c(X,"Contrast","Lower","Upper","Z","Pvalue")
   #Row names
   rownames(con_quan_df) <- c("10th","25th","50th","75th","90th")
   return(con_quan_df)

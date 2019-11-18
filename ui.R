@@ -466,7 +466,7 @@ fluidRow(
 h5("Contrasts require 'factor' data types for groups. Convert variables into factors in the \"Data\" tab."),                   
 br(),
 plotOutput("xyplot_contrast_plot", height=600, width="100%"),
-h6("The portions of the red horizontal line (e.g., at 0 for linear regression, at 1 for logistic regression and Cox PH) corresponds to no significant predictor effect when contained within the 95% CI."),
+h6("The portions of the red horizontal line at 1 corresponds to no significant predictor effect when contained within the 95% CI."),
 h6("For example, women may have higher rates of death before age 58, equal with men from 58-88, and have lower rates after 88 years."),
 br(),
 h5("Contrasts and 95% confidence intervals from the plot above at various percentiles of the continuous predictor. Non-interaction contrasts will be constant."),

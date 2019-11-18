@@ -4061,7 +4061,7 @@ CcontrastXyDataFnc <- function(model, X, group, lev1, lev2, reg) {
   x_max <- spcs[[ "limits"]][rownames(spcs[[ "limits"]]) == "High", which(colnames(spcs[[ "limits"]]) == X )]
   #y label
   if(reg %in% c("Cox PH", "Cox PH with censoring")) {
-    xyplot_ylab <- paste0("Hazard Ratio (",lev1, ":", lev2,")")
+    xyplot_ylab <- paste0("Cost Ratio (",lev1, ":", lev2,")")
   }
   if(reg %in% c("Logistic", "Ordinal Logistic") ) {
     xyplot_ylab <- paste0("Odds Ratio (",lev1, ":", lev2,")")
@@ -4085,6 +4085,9 @@ CcontrastXyDataFnc <- function(model, X, group, lev1, lev2, reg) {
   names(b) <- c(group, X)
   #w <- do.call("contrast", list( fit=model, a=a, b=b) )
   w <- contrast( fit=model, a=a, b=b)
+  Upper2 <- exp(-w[["Lower"]])
+  Lower2 <- exp(-w[["Upper"]])
+  
   ## Exponentiate the data if needed ##
   #Contrast
   if(reg %in% c("Cox PH", "Cox PH with censoring")) {
@@ -4093,12 +4096,12 @@ CcontrastXyDataFnc <- function(model, X, group, lev1, lev2, reg) {
   #Lower
   if(reg %in% c("Cox PH", "Cox PH with censoring")) {
     #w[["Lower"]] <- exp(-w[["Lower"]])
-    w[["Upper"]] <- exp(-w[["Lower"]])
+    w[["Upper"]] <- Upper2
   }
   #Upper
   if(reg %in% c("Cox PH", "Cox PH with censoring")) {
     #w[["Upper"]] <- exp(-w[["Upper"]])
-    w[["Lower"]] <- exp(-w[["Upper"]])
+    w[["Lower"]] <- Lower2
   }
   #S.E.
   if(reg %in% c("Cox PH", "Cox PH with censoring")) {

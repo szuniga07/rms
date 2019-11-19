@@ -425,9 +425,6 @@ tabPanel("Impute",
                      column(3, offset=1, 
                             uiOutput("prt_one_x"))
                    ),
-#                   uiOutput("prt_one_yes"),  #vx is the created drop down box coming from renderUI in server.r.
-#                   br(),
-#                   uiOutput("prt_one_x"),  #vx is the created drop down box coming from renderUI in server.r.
                    br(),
                    
                    h4("Partial prediction of a continuous predictor by a factor."),
@@ -466,7 +463,7 @@ fluidRow(
 h5("Contrasts require 'factor' data types for groups. Convert variables into factors in the \"Data\" tab."),                   
 br(),
 plotOutput("xyplot_contrast_plot", height=600, width="100%"),
-h6("The portions of the red horizontal line at 1 corresponds to no significant predictor effect when contained within the 95% CI."),
+h6("The portions of the red horizontal line (e.g., at 0 for linear regression, at 1 for logistic regression and Cox PH) corresponds to no significant predictor effect when contained within the 95% CI."),
 h6("For example, women may have higher rates of death before age 58, equal with men from 58-88, and have lower rates after 88 years."),
 br(),
 h5("Contrasts and 95% confidence intervals from the plot above at various percentiles of the continuous predictor. Non-interaction contrasts will be constant."),
@@ -741,6 +738,7 @@ fluidRow(
 ###################################### Begin here
 #Cost plots for contrasts and interactions: 
 #The letter C is added to the beginning of everything used in the partial PREDs tab
+br(),
 h4("Partial prediction of a continuous predictor by a factor."),
 h5("This plot shows the expected trend line by multiple levels with 95% confidence intervals. Especially helpful in seeing the interaction effect and where lines intersect or diverge."),  
 br(),
@@ -777,7 +775,7 @@ fluidRow(
 h5("Contrasts require 'factor' data types for groups. Convert variables into factors in the \"Data\" tab."),                   
 br(),
 plotOutput("Cxyplot_contrast_plot", height=600, width="100%"),
-h6("The portions of the red horizontal line (e.g., at 0 for linear regression, at 1 for logistic regression and Cox PH) corresponds to no significant predictor effect when contained within the 95% CI."),
+h6("The portions of the red horizontal line at 1 corresponds to no significant predictor effect when contained within the 95% CI."),
 h6("For example, women may have higher rates of death before age 58, equal with men from 58-88, and have lower rates after 88 years."),
 br(),
 h5("Contrasts and 95% confidence intervals from the plot above at various percentiles of the continuous predictor. Non-interaction contrasts will be constant."),

@@ -3962,17 +3962,6 @@ CXyplotZ1 <- reactive({
 CxyplotData <- reactive({                 
   do.call("Predict", list(fit1(), CXyplotX1(), CXyplotZ1(), fun= function(x)x*-1) )    
 })
-#Function that calculates CxyplotData by -1
-#CxyplotData_1Fnc <- function(p1) {
-#  p1[[which(names(p1) == "yhat")]]  <- p1[[which(names(p1) == "yhat")]] 
-#  p1[[which(names(p1) == "lower")]] <- p1[[which(names(p1) == "lower")]] 
-#  p1[[which(names(p1) == "upper")]] <- p1[[which(names(p1) == "upper")]] 
-#}
-#Run the CxyplotData_1Fnc function above
-#CxyplotData <- reactive({
-#  CxyplotData_1Fnc(p1=CxyplotData1())
-#})
-
 
 #This creates the plot
 output$CxYplot_interaction <- renderPlot({
@@ -3987,7 +3976,7 @@ output$CxYplot_interaction <- renderPlot({
               lty=1:length(unique(df()[, CXyplotZ1() ])),
               lcol=1:length(unique(df()[, CXyplotZ1() ])), 
               lwd=2, ylab="Yhat", xlab=CXyplotX1(), cex=1.75,
-              main=paste0("Partial prediction plot of ", XyplotX1(), " by levels of ", CXyplotZ1()) )
+              main=paste0("Partial prediction plot of ", CXyplotX1(), " by levels of ", CXyplotZ1()) )
     } else {
       xYplot(CxyplotData()[[which(names(CxyplotData()) =="yhat")]] ~ CxyplotData()[[which(names(CxyplotData()) == CXyplotX1())]] ,  
               groups=CxyplotData()[[which(names(CxyplotData()) == CXyplotZ1())]],

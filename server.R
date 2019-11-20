@@ -4590,6 +4590,104 @@ output$surv_plot1 <- renderPlot({
   }
   }, height = 800)
 
+############################################ Begin here
+## Survival plots ##
+#Select predictors
+output$km_srv_plt_one_x <- renderUI({
+  selectInput("KMSrvPltX", "1. Select a single predictor.", 
+              choices = predictor(), multiple=FALSE, selected=predictor()[1])
+})
+#Indicate if you want the hazard function
+output$KMHazardPlot <- renderUI({                                 
+  selectInput("km_hazard_plot", "2. Do you want the hazard curve?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")     
+})
+#Create yes/no box to run survival plot
+output$KMSurvPltRun <- renderUI({                                 
+  selectInput("km_surv_plt_run", "3. Do you want to create the KM plot?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")     
+})
+#Indicate lower limit of x-axis
+output$KMSurvPltXlim1 <- renderUI({
+  numericInput("km_sp_Xlim1", "4. Lower X-axis limit.",
+               value = 0, step = 1)
+})
+#Indicate upper limit of x-axis
+output$KMSurvPltXlim2 <- renderUI({
+  numericInput("km_sp_Xlim2", "5. Upper X-axis limit.",
+               value = km_cox_max_time(), step = 1)
+})
+#Indicate lower limit of y-axis
+output$KMSurvPltYlim1 <- renderUI({
+  numericInput("km_sp_Ylim1", "6. Lower Y-axis limit.",
+               value = 0, step = .01)
+})
+#Indicate upper limit of x-axis
+output$KMSurvPltYlim2 <- renderUI({
+  numericInput("km_sp_Ylim2", "7. Upper Y-axis limit.",
+               value = 1, step = .01)
+})
+
+#Maximum value of Cox survival time
+km_cox_max_time <- reactive({ 
+  round(max(as.numeric(df()[, input$variableY]), na.rm=TRUE ))
+})
+#"Survival" or "Hazard" to be used for labels
+KMSrvHzrLbl <- reactive({ 
+  if (input$km_hazard_plot == "No") {
+    "Survival"
+  } else {
+    "Hazard"
+  }
+})
+
+#Survival fit object
+KMsrvftFmla <- reactive({ 
+  if (input$regress_type %in% c("Cox PH", "Cox PH with censoring")) {
+    as.formula(paste(paste0("Surv(", outcome(), ",", censor1(), ")", "~", input$KMSrvPltX)))
+  }
+})
+
+#KM legend
+KMLgnd <- reactive({ 
+  if (input$km_hazard_plot == "Yes") {
+   "bottom"
+  } else {
+    "top"
+  }
+})
+
+#Kaplan-Meier survival or hazard plots
+kmSurvPltFnc <- function(KMsrvftFmla, df, Y, km_hazard_plot, KMSrvHzrLbl, km_sp_Xlim1, km_sp_Xlim2,
+                         km_sp_Ylim1, km_sp_Ylim2, KMSrvPltX, lgnd) {
+  pltType <- ifelse(km_hazard_plot == "No", "S", "F")
+  plot(survfit(KMsrvftFmla, data= df), 
+       xlim=c(km_sp_Xlim1, km_sp_Xlim2), ylim=c(km_sp_Ylim1, km_sp_Ylim2),
+       ylab= paste0(KMSrvHzrLbl, " Probability"), 
+       xlab=paste0(KMSrvHzrLbl," function of ", Y), 
+       mark.time=F, fun=pltType , lwd=2,
+       pch=LETTERS[1:length(unique(df[, KMSrvPltX]))],
+       col=1:length(unique(df[, KMSrvPltX] )), lty= 1:length(unique( df[, KMSrvPltX])))
+  legend(lgnd, legend=unique( df[, KMSrvPltX]), col=1:length(unique(df[, KMSrvPltX] )), 
+         lty=1:length(unique(df[, KMSrvPltX] )), bty="n", lwd=2, cex=1.5)
+} 
+
+#Survival fit object
+KMsrvftPlot <- reactive({ 
+  if (input$km_surv_plt_run == "Yes") {
+    kmSurvPltFnc(KMsrvftFmla=KMsrvftFmla(), df=df(), Y=outcome(), km_hazard_plot=input$km_hazard_plot, 
+                 KMSrvHzrLbl=KMSrvHzrLbl(), km_sp_Xlim1=input$km_sp_Xlim1, 
+                 km_sp_Xlim2=input$km_sp_Xlim2, km_sp_Ylim1=input$km_sp_Ylim1, 
+                 km_sp_Ylim2=input$km_sp_Ylim2, KMSrvPltX=input$KMSrvPltX, lgnd=KMLgnd()) 
+  }
+})
+output$km_plot <- renderPlot({
+  if (input$km_surv_plt_run == "Yes") {
+    KMsrvftPlot()
+  }
+})
+############################################ End here
+
 #########################
 ## UI input boxes ##
 #Select the predictors.

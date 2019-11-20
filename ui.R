@@ -560,11 +560,38 @@ fluidRow(
   column(3,
          uiOutput("SrvLogLog"))
 ),
-###
-
 br(),
          plotOutput("surv_plot1", height = 800, width="100%"),
          br(),
+############################## Begin here
+h4("Kaplan-Meier survival and hazard plots"),                   
+br(),
+h5("Set up the Kaplan-Meier plot."),
+fluidRow(
+  column(3, 
+         uiOutput("km_srv_plt_one_x")),
+  column(3,
+         uiOutput("KMHazardPlot")),
+  column(3,
+         uiOutput("KMSurvPltRun"))
+),
+h5("Modify the plot display."),
+fluidRow(
+  column(3, 
+         uiOutput("KMSurvPltXlim1")),
+  column(3,
+         uiOutput("KMSurvPltXlim2"))
+),
+fluidRow(
+  column(3, 
+         uiOutput("KMSurvPltYlim1")),
+  column(3,
+         uiOutput("KMSurvPltYlim2"))
+),
+br(),
+plotOutput("km_plot", height = 600, width="100%"),
+br(),
+############################## End here
          h4("Schoenfeld residuals"),
          h5("Assess the Cox model's proportional hazards assumption."),
          br(),

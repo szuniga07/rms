@@ -1163,7 +1163,7 @@ output$anova_smry <- renderPrint({
                  main=paste0("Partial prediction plot of ", XyplotX1(), " by levels of ", XyplotZ1()) )
         }
       } 
-    }, height = 600)
+    }, height = 700)
     
     ##########################################
     # Contrast plots for partial predictions #
@@ -1209,7 +1209,7 @@ output$anova_smry <- renderPrint({
       if (input$XypYesNo=="Yes") {
         xyp_contrast()
       }
-    }, height = 600)
+    }, height = 700)
     
     
     #Reactive functions
@@ -4640,12 +4640,23 @@ KMSrvHzrLbl <- reactive({
     "Hazard"
   }
 })
+#Function to get the right KM formula
+
+kmSrvftFmlaFnc <- function (regress_type,Y,cens,KMSrvPltX) {
+  if (regress_type == "Cox PH") {
+    fmla <- as.formula(paste(paste0("Surv(", Y, ")", "~", KMSrvPltX)))
+  }
+  if (regress_type == "Cox PH with censoring") {
+    fmla <- as.formula(paste(paste0("Surv(", Y, ",", cens, ")", "~", KMSrvPltX)))
+  }
+  return(fmla)
+} 
 
 #Survival fit object
-KMsrvftFmla <- reactive({ 
-  if (input$regress_type %in% c("Cox PH", "Cox PH with censoring")) {
-    as.formula(paste(paste0("Surv(", outcome(), ",", censor1(), ")", "~", input$KMSrvPltX)))
-  }
+KMsrvftFmla <- reactive({
+  if (input$km_surv_plt_run == "Yes") {
+    kmSrvftFmlaFnc(regress_type=input$regress_type, Y=outcome(), cens=censor1(), KMSrvPltX=input$KMSrvPltX)
+ }
 })
 
 #KM legend
@@ -4686,7 +4697,7 @@ output$km_plot <- renderPlot({
   if (input$km_surv_plt_run == "Yes") {
     KMsrvftPlot()
   }
-})
+}, height = 700)
 ############################################ End here
 
 #########################

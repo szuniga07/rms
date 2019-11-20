@@ -4599,7 +4599,7 @@ output$km_srv_plt_one_x <- renderUI({
 })
 #Indicate if you want the hazard function
 output$KMHazardPlot <- renderUI({                                 
-  selectInput("km_hazard_plot", "2. Do you want the hazard curve?", 
+  selectInput("km_hazard_plot", "2. Do you want hazard curves?", 
               choices = c("No", "Yes"), multiple=FALSE, selected="No")     
 })
 #Create yes/no box to run survival plot
@@ -4664,12 +4664,13 @@ kmSurvPltFnc <- function(KMsrvftFmla, df, Y, km_hazard_plot, KMSrvHzrLbl, km_sp_
   plot(survfit(KMsrvftFmla, data= df), 
        xlim=c(km_sp_Xlim1, km_sp_Xlim2), ylim=c(km_sp_Ylim1, km_sp_Ylim2),
        ylab= paste0(KMSrvHzrLbl, " Probability"), 
-       xlab=paste0(KMSrvHzrLbl," function of ", Y), 
-       mark.time=F, fun=pltType , lwd=2,
+       xlab=Y, mark.time=F, fun=pltType , lwd=2, 
+       main= paste0("Kaplan-Meier plot of ", tolower(KMSrvHzrLbl), " by ", KMSrvPltX),
        pch=LETTERS[1:length(unique(df[, KMSrvPltX]))],
        col=1:length(unique(df[, KMSrvPltX] )), lty= 1:length(unique( df[, KMSrvPltX])))
   legend(lgnd, legend=unique( df[, KMSrvPltX]), col=1:length(unique(df[, KMSrvPltX] )), 
-         lty=1:length(unique(df[, KMSrvPltX] )), bty="n", lwd=2, cex=1.5)
+         lty=1:length(unique(df[, KMSrvPltX] )), bty="n", lwd=2, cex=1.5,
+         title=KMSrvPltX)
 } 
 
 #Survival fit object

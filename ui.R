@@ -566,7 +566,7 @@ br(),
 ############################## Begin here
 h4("Kaplan-Meier survival and hazard plots"),                   
 br(),
-h5("Set up the Kaplan-Meier plot."),
+h5("Set up the Kaplan-Meier plot. Default is survival, select hazard option below."),
 fluidRow(
   column(3, 
          uiOutput("km_srv_plt_one_x")),

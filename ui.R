@@ -564,7 +564,7 @@ br(),
          plotOutput("surv_plot1", height = 800, width="100%"),
          br(),
 ############################## Begin here
-h4("Kaplan-Meier survival and hazard plots"),                   
+h4("Kaplan-Meier survival and hazard plots (cumulative probability)"),                   
 br(),
 h5("Set up the Kaplan-Meier plot. Default is survival, select hazard option below."),
 fluidRow(
@@ -598,10 +598,11 @@ br(),
          h5("Schoenfeld residuals test."),
          tableOutput("schoenfeld_test"),
          h5("Schoenfeld residuals plot."),
-         uiOutput("Schoenfeld_X"),
+h6("Check for a pattern in time. An upwards line may suggest an increasing effect in X over time. For binary predictors (with no interaction term), the top band is failures when X=1, lower band is X=0"),
+uiOutput("Schoenfeld_X"),
          plotOutput("schoenfeld_plt", height = 800, width="100%"),
-############################################### BEGIN HERE
 br(),
+## Creating time-dependent datasets ##
 h4("Time-dependent dataset creation for a time-dependent coefficient model."),
 br(),
 h5("This creates a time-dependent dataset and interaction term (X*Time) to model the proportional hazard assumption."),

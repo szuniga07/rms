@@ -661,6 +661,7 @@ h5("Remember to save R data frames with the extension '.RData'."),
 br(),
          h4("Mixed effects Cox proportional hazards model"),
          h5("Answer 'Yes' for the cost analysis to get the frailties and graph in the correct direction."),
+         h5("Note: If you updated the model formula, the mixed effects model won't run when there are spline terms (e.g., rcs(X,5))."),
 
          fluidRow(
            column(5, 

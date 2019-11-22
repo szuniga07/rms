@@ -4952,16 +4952,37 @@ output$coxme_yes <- renderUI({
 mlv_cor <- reactive({
   paste0("(1|", cox_lev2(),")")
 })
+
 #Create the Cox model (no censoring)
+#cme_fmla1 <- reactive({
+#  as.formula(paste(paste0("Surv(",input$variableY,")" , "~"),   
+#                   paste(c(mdl_vnms(), mlv_cor()), collapse= "+")))
+#})
+#Create the Cox model with censoring
+#cme_fmla2 <- reactive({
+#  as.formula(paste(paste0("Surv(", input$variableY, ",", censor1(), ")", "~"),   
+#                   paste(c(mdl_vnms(), mlv_cor()), collapse= "+")))
+#})
 cme_fmla1 <- reactive({
-  as.formula(paste(paste0("Surv(",input$variableY,")" , "~"),   
-                   paste(c(mdl_vnms(), mlv_cor()), collapse= "+")))
+  if(input$updy =="Yes") {
+    as.formula(paste(paste0("Surv(",input$variableY,")" , "~"),   
+                     paste( c( strsplit(input$up_fmla, "~")[[1]][2], mlv_cor()), collapse= "+")))
+  } else {
+    as.formula(paste(paste0("Surv(",input$variableY,")" , "~"),   
+                     paste(c(mdl_vnms(), mlv_cor()), collapse= "+")))
+  }
 })
 #Create the Cox model with censoring
 cme_fmla2 <- reactive({
-  as.formula(paste(paste0("Surv(", input$variableY, ",", censor1(), ")", "~"),   
-                   paste(c(mdl_vnms(), mlv_cor()), collapse= "+")))
+  if(input$updy =="Yes") {
+    as.formula(paste(paste0("Surv(",input$variableY,  ",", censor1(), ")" , "~"),   
+                     paste(c(strsplit(input$up_fmla, "~")[[1]][2], mlv_cor()), collapse= "+")))
+  } else {
+    as.formula(paste(paste0("Surv(", input$variableY, ",", censor1(), ")", "~"),   
+                     paste(c(mdl_vnms(), mlv_cor()), collapse= "+")))
+  }
 })
+
 #Run the multilevel Cox model
 efit1 <- reactive({                  
   if (input$CoxmeYes == "Yes") {

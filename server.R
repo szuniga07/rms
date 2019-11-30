@@ -946,7 +946,7 @@ shinyServer(
     #Indicates if the SINGLEpredictor is stratified, needed to print regression results output$regress
     MsStrat0 <- reactive({
       if( length(input$variableX) < 2) {
-        if(input$updy == "Yes") {
+       # if(input$updy == "Yes") {
           length(grep("strat", strsplit(input$up_fmla, "~")[[1]][2]))
         } else {
         0
@@ -955,7 +955,7 @@ shinyServer(
 #        if(input$updy == "Yes") {
 #          0
 #        }
-      } 
+#      } 
     }) 
     #Regression results.
     output$regress <- renderPrint({                                                 

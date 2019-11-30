@@ -164,6 +164,7 @@ fluidRow(
                    verbatimTextOutput("regress"),  #"regress" calls output$regress from server.r 
                    br(),
                    h4("Regression equation"),
+                   h6("Note: No equation given for a null multistate model (e.g., time ~ strat(transition)."),
                    verbatimTextOutput("regress_equation"),  #"Regression formula 
                    br(),
                    h4("Model specs"),
@@ -1092,13 +1093,13 @@ tabPanel("95% CIs",
 
 
 ############## TEST SECTION #############################
-## , #THIS COMMA IS COMMENTED OUT IN CASE I EVER NEED THE TEST FUNCTION BELOW    
+ , #THIS COMMA IS COMMENTED OUT IN CASE I EVER NEED THE TEST FUNCTION BELOW    
 
-##tabPanel("Test it",                                #Creates a new panel named "Test"
-##         fluidRow(                           #Wrapping them in a fluidRow provides easy control over  
-##           verbatimTextOutput("test1")
+tabPanel("Test it",                                #Creates a new panel named "Test"
+         fluidRow(                           #Wrapping them in a fluidRow provides easy control over  
+           verbatimTextOutput("test1")
 ##           plotOutput("testplot1")
-##         ))
+         ))
 ############## TEST SECTION #############################
 
 

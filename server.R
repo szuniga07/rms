@@ -461,9 +461,19 @@ shinyServer(
                        paste(mdl_vnms(), collapse= "+")))
     })
 
+#    cox_mdl_fmla2u <- reactive({             #Spline terms 
+#      as.formula(paste(paste0("Surv(",input$variableY, ",", censor1(), ")", "~"),   
+#                       paste(strsplit(input$up_fmla, "~")[[1]][2], collapse= "+")))
+#    })
+
     cox_mdl_fmla2u <- reactive({             #Spline terms 
-      as.formula(paste(paste0("Surv(",input$variableY, ",", censor1(), ")", "~"),   
-                       paste(strsplit(input$up_fmla, "~")[[1]][2], collapse= "+")))
+      if (length(input$variableX) ==1) {
+        as.formula(paste(paste0("Surv(",input$variableY, ",", censor1(), ")", "~"),   
+                         paste(strsplit(input$up_fmla, "~")[[1]][2])))
+      } else {
+        as.formula(paste(paste0("Surv(",input$variableY, ",", censor1(), ")", "~"),   
+                         paste(strsplit(input$up_fmla, "~")[[1]][2], collapse= "+")))
+      }
     })
     
     gls_cor <- reactive({
@@ -932,16 +942,45 @@ shinyServer(
 #        sink()
 #      }
 #    })
-    
+
+    #Indicates if the SINGLEpredictor is stratified, needed to print regression results output$regress
+    MsStrat0 <- reactive({
+      if( length(input$variableX) < 2) {
+        if(input$updy == "Yes") {
+          length(grep("strat", strsplit(input$up_fmla, "~")[[1]][2]))
+        } else {
+        0
+        } 
+#      } else {
+#        if(input$updy == "Yes") {
+#          0
+#        }
+      } 
+    }) 
     #Regression results.
     output$regress <- renderPrint({                                                 
       atch()
-      if( input$regress_type %in% c("Logistic", "Ordinal Logistic", "Poisson", "Cox PH", "Cox PH with censoring")) {
-        print( list("Model"=fit1(), "Exponentiated Coefficients"= exp(fit1()[["coefficients"]])) )
+      if(MsStrat0() ==1) {
+        print( fit1() )
       } else {
-        print(fit1())  #Summary of model fit.
+        
+        if( input$regress_type %in% c("Logistic", "Ordinal Logistic", "Poisson", "Cox PH", "Cox PH with censoring")) {
+          print( list("Model"=fit1(), "Exponentiated Coefficients"= exp(fit1()[["coefficients"]])) )
+        } else {
+          print(fit1())  #Summary of model fit.
+        }
       }
     })
+    #Regression results.
+#    output$regress <- renderPrint({                                                 
+    #      atch()
+    #      if( input$regress_type %in% c("Logistic", "Ordinal Logistic", "Poisson", "Cox PH", "Cox PH with censoring")) {
+    #    print( list("Model"=fit1(), "Exponentiated Coefficients"= exp(fit1()[["coefficients"]])) )
+    #  } else {
+    #    print(fit1())  #Summary of model fit.
+    #  }
+    #})
+    
     #Model predicted Y regression equation
     output$regress_equation <- renderPrint({                                                 
       options(scipen=20)
@@ -5251,10 +5290,9 @@ output$cme_model <- downloadHandler(
 #output$testplot1 <- renderPlot({ 
 ##  plot(values$a, values$b)
 ##} )
-##output$test1 <- renderPrint({
-## str(modifiedFacDf())
-  #  non_modified_vars()
-##  })
+output$test1 <- renderPrint({
+MsStrat0()
+  })
 
 
 ################################################################################

@@ -1565,8 +1565,7 @@ vlfnc <- function(xdf) {
                                        #to change it to names(), didn't help. I get MC data ok, but 
                                        #it gives it the name as the command
     v_ls$typ[[i]]  <- typeof(xdf[,i])  #This is used to work with 'labelled' class in RMS data
-    v_ls$pdf_lbl[[i]]  <- as.character(unique(xdf[,i]))  #This will give me the correct PDF value labels
-    names(v_ls$mn)[[i]] <- colnames(xdf)[i]
+    v_ls$pdf_lbl[[i]]  <- as.character(unique(xdf[,i]))[!is.na(as.character(unique(xdf[,i])))]  #Gives me the correct PDF value labels, removes "NA"    names(v_ls$mn)[[i]] <- colnames(xdf)[i]
     names(v_ls$sd)[[i]] <- colnames(xdf)[i]
     names(v_ls$pdf)[i] <- colnames(xdf)[i]
     v_ls$cdf[[i]]  <- as.vector(cumsum(table(xdf[, i])/sum(table(xdf[, i]))))
@@ -5290,9 +5289,9 @@ output$cme_model <- downloadHandler(
 #output$testplot1 <- renderPlot({ 
 ##  plot(values$a, values$b)
 ##} )
-output$test1 <- renderPrint({
-MsStrat0()
-  })
+#output$test1 <- renderPrint({
+#MsStrat0()
+#  })
 
 
 ################################################################################

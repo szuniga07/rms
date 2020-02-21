@@ -824,37 +824,6 @@ shinyServer(
       input$gls_clst
     })
     
-    dfx1 <- reactive({                  #This stores simulated data for one predictor.
-      set.seed(input$set_seed)
-      switch(input$dist_type,                #"var" and can be used anywhere in server.r.
-             "Binomial"  = mean(do.call("rbinom", list(n=input$n_sim, size=input$trials_x, prob=input$prob_x))),
-             "Normal"    = mean(do.call("rnorm", list(n=input$n_sim, mean=input$mean_x, sd=input$std_x))),
-             "Poisson"   = mean(do.call("rpois", list(n=input$n_sim, mean=input$mean_x))),
-#             "Triangle"  = mean(do.call("rpois", list(n=input$n_sim, mean=input$mean_x))),
-             "Uniform"   = mean(do.call("runif", list(n=input$n_sim, min=round(input$std_x), max=round(input$mean_x)))))  
-    })     
-
-    #Function to download predicted scores (yhat) and row names from a model based on the type of regression
-    #REMOVING THIS BECAUSE I NOW HAVE THE PRED TAB
-#    dyhat_fnc <- function(fit1, reg_yhat) {
-#      switch(reg_yhat,                
-#             "Linear"   = row_yhat_df <- data.frame(rowName=as.numeric(as.character(names(fit1[["linear.predictors"]]))), yhat=fit1[["linear.predictors"]]), 
-#             "Logistic" = row_yhat_df <- data.frame(rowName=as.numeric(as.character(names(fit1[["linear.predictors"]]))), yhat=fit1[["linear.predictors"]]),
-#             "Ordinal Logistic"          = row_yhat_df <- data.frame(rowName=as.numeric(as.character(names(fit1[["linear.predictors"]]))), yhat=fit1[["linear.predictors"]]),
-#             "Poisson"  = row_yhat_df <- data.frame(rowName=as.numeric(as.character(names(fit1[["linear.predictors"]]))), yhat=fit1[["linear.predictors"]]),
-#             "Quantile" = row_yhat_df <- data.frame(rowName=as.numeric(as.character(rownames(fit1$fitted.values))), yhat=fit1$fitted.values),
-#             "Cox PH"   = row_yhat_df <- data.frame(rowName=as.numeric(as.character(names(fit1[["linear.predictors"]]))), yhat=fit1[["linear.predictors"]]),
-#             "Cox PH with censoring"     = row_yhat_df <- data.frame(rowName=as.numeric(as.character(names(fit1[["linear.predictors"]]))), yhat=fit1[["linear.predictors"]]),
-#             "Generalized Least Squares" = row_yhat_df <- data.frame(rowName=as.numeric(as.character(names(fit1[["fitted"]]))), yhat=fit1[["fitted"]])) 
-#      return(row_yhat_df)
-#    }
-    
-    #Reactive function that runs the dyhat_fnc function above
-    #REMOVING THIS BECAUSE I NOW HAVE THE PRED TAB
-#    dyhat_df <- reactive({
-#      dyhat_fnc(fit1(), input$regress_type)
-#    })     
-    
 
     #  Model  builder tab  #
     ## Outputs that will show up in UI.R file and in GUI ##
@@ -1027,12 +996,17 @@ nm_x_var <- reactive({
       print(describeY())
     })
     
-    ####  DO I NEED THIS CODE (DFX1)?????? ###
-    #Test for simulated data
-    output$test <- renderPrint({
-      dfx1()      
+    ## Summary of predicted variable values ##
+    describeYhatHistRslt <- reactive({ 
+      print(describe(yhat_hist_rslt(), descript=paste0("Predicted values of ",input$variableY) )) #Summary of predicted Y variable.)
+#            descript="Predicted values" )  
+           #descript=paste0("Summary of ",input$variableY) )  
     })
-    
+output$desc_YhatHistRslt <- renderPrint({                                                 
+  print(describeYhatHistRslt())
+})    
+
+
     #Monte Carlo tab
     output$s_seed <- renderUI({                                 #Same idea as output$vy
       numericInput("set_seed", "Set the seed value", value = 1, min=1)

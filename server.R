@@ -4432,21 +4432,23 @@ qr_ests <- reactive({
 ################################################################################
 ##  Survival analysis stuff: Schoenfeld residuals  and survival plots   ##
 ################################################################################
+## Delete the next 10 lines June 1, 2020 if it causes no issues in Schoenfeld residuals
 #This gets the residual names
-      schoenfeld_X_names <- reactive({
-        rownames(schoenfeld_e()[[1]])
-      })
+#      schoenfeld_X_names <- reactive({
+#        rownames(schoenfeld_e()[[1]])
+#      })
 
 #Identifies the number of residuals that should be used in the drop down box below.
 #Indicates if we drop the "Global" value when >1 or use the first if ==1.
-      schoenfeld_X_num <- reactive({
-        ifelse( length(schoenfeld_X_names()) > 1, length(schoenfeld_X_names()) * -1, 1)
-      })
+#      schoenfeld_X_num <- reactive({
+#        ifelse( length(schoenfeld_X_names()) > 1, length(schoenfeld_X_names()) * -1, 1)
+#      })
       
 #Select the variable for the Schoenfeld residuals
 output$Schoenfeld_X <- renderUI({
   selectInput("schoenfeldx", "1. Select a single Schoenfeld residual.", 
-              choices = schoenfeld_X_names()[schoenfeld_X_num()] , multiple=FALSE, selected=schoenfeld_X_names()[1])
+  #DELETE 6/1/2020  #choices = schoenfeld_X_names()[schoenfeld_X_num()] , multiple=FALSE, selected=schoenfeld_X_names()[1])
+  choices = schoenfeld_X_names_plot() , multiple=FALSE, selected=schoenfeld_X_names_plot()[1])
 })
 
 #This gives a number for the variable for the Schoenfeld residual
@@ -4463,10 +4465,16 @@ output$schoenfeld_test <- renderTable({
   }
 }, rownames = TRUE)
 
+#This gets the residual names for plots
+schoenfeld_X_names_plot <- reactive({
+  rownames(schoenfeld_e()[[1]])[-length(rownames(schoenfeld_e()[[1]]))]
+})
+
 #This plots the Schoenfeld residuals    
 output$schoenfeld_plt <- renderPlot({
   if (input$regress_type %in% c("Cox PH", "Cox PH with censoring")) {
-    plot(schoenfeld_e()[input$schoenfeldx], col=2, lwd=2)
+    #DELETE 6/1/2020  #plot(schoenfeld_e()[input$schoenfeldx], col=2, lwd=2)
+    plot(schoenfeld_e()[which(schoenfeld_X_names_plot()== input$schoenfeldx)], col=2, lwd=2)
     abline(h=0, lty=3, col=4, lwd=2)
   }
 }, height = 800)

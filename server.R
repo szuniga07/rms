@@ -1161,18 +1161,21 @@ output$anova_smry <- renderPrint({
                         xyplotData()[[which(names(xyplotData()) =="upper")]]) ~ xyplotData()[[which(names(xyplotData()) ==XyplotX1())]],  
                   groups=xyplotData()[[which(names(xyplotData()) ==XyplotZ1())]],
                method='filled bands', type='l', 
-               col.fill=adjustcolor(1:length(unique(df()[, XyplotZ1() ])), alpha.f = 0.2),
+               #col.fill=adjustcolor(1:length(unique(df()[, XyplotZ1() ])), alpha.f = 0.2),
+               col.fill=adjustcolor(colors()[c(175, 33, 26, 254, 499,653, 310, 368, 69,16,489,97,66,120,400,373)], alpha.f = 0.2),
                lty=1:length(unique(df()[, XyplotZ1() ])),
-               lcol=1:length(unique(df()[, XyplotZ1() ])), 
-                lwd=2, ylab="Yhat", xlab=XyplotX1(), cex=1.75,
+#               lcol=1:length(unique(df()[, XyplotZ1() ])), 
+col=colors()[c(175, 33, 26, 254, 499,653, 310, 368, 69,16,489,97,66,120,400,373)], 
+lwd=3, ylab="Yhat", xlab=XyplotX1(), cex=1.75,
                main=paste0("Partial prediction plot of ", XyplotX1(), " by levels of ", XyplotZ1()) )
         } else {
           xYplot(xyplotData()[[which(names(xyplotData()) =="yhat")]] ~ xyplotData()[[which(names(xyplotData()) ==XyplotX1())]] ,  
                  groups=xyplotData()[[which(names(xyplotData()) ==XyplotZ1())]],
                  type='l',
                  lty=1:length(unique(df()[, XyplotZ1() ])),
-                 lcol=1:length(unique(df()[, XyplotZ1() ])), 
-                 lwd=2, ylab="Yhat", xlab=XyplotX1(), cex=1.75, 
+#                 lcol=1:length(unique(df()[, XyplotZ1() ])), 
+col=colors()[c(175, 33, 26, 254, 499,653, 310, 368, 69,16,489,97,66,120,400,373)], 
+lwd=3, ylab="Yhat", xlab=XyplotX1(), cex=1.75, 
                  main=paste0("Partial prediction plot of ", XyplotX1(), " by levels of ", XyplotZ1()) )
         }
       } 
@@ -1540,6 +1543,7 @@ vlfnc <- function(xdf) {
                                        #it gives it the name as the command
     v_ls$typ[[i]]  <- typeof(xdf[,i])  #This is used to work with 'labelled' class in RMS data
     v_ls$pdf_lbl[[i]]  <- as.character(unique(xdf[,i]))[!is.na(as.character(unique(xdf[,i])))]  #Gives me the correct PDF value labels, removes "NA"    names(v_ls$mn)[[i]] <- colnames(xdf)[i]
+    names(v_ls$mn)[[i]] <- colnames(xdf)[i]
     names(v_ls$sd)[[i]] <- colnames(xdf)[i]
     names(v_ls$pdf)[i] <- colnames(xdf)[i]
     v_ls$cdf[[i]]  <- as.vector(cumsum(table(xdf[, i])/sum(table(xdf[, i]))))
@@ -3984,18 +3988,21 @@ output$CxYplot_interaction <- renderPlot({
                     CxyplotData()[[which(names(CxyplotData()) =="upper")]]) ~ CxyplotData()[[which(names(CxyplotData()) ==CXyplotX1())]],  
               groups=CxyplotData()[[which(names(CxyplotData()) == CXyplotZ1())]],
               method='filled bands', type='l', 
-              col.fill=adjustcolor(1:length(unique(df()[, CXyplotZ1() ])), alpha.f = 0.2),
+              #col.fill=adjustcolor(1:length(unique(df()[, CXyplotZ1() ])), alpha.f = 0.2),
+              col.fill=adjustcolor(colors()[c(175, 33, 26, 254, 499,653, 310, 368, 69,16,489,97,66,120,400,373)], alpha.f = 0.2),
               lty=1:length(unique(df()[, CXyplotZ1() ])),
-              lcol=1:length(unique(df()[, CXyplotZ1() ])), 
-              lwd=2, ylab="Yhat", xlab=CXyplotX1(), cex=1.75,
+#              lcol=1:length(unique(df()[, CXyplotZ1() ])), 
+              col=colors()[c(175, 33, 26, 254, 499,653, 310, 368, 69,16,489,97,66,120,400,373)], 
+              lwd=3, ylab="Yhat", xlab=CXyplotX1(), cex=1.75,
               main=paste0("Partial prediction plot of ", CXyplotX1(), " by levels of ", CXyplotZ1()) )
     } else {
       xYplot(CxyplotData()[[which(names(CxyplotData()) =="yhat")]] ~ CxyplotData()[[which(names(CxyplotData()) == CXyplotX1())]] ,  
               groups=CxyplotData()[[which(names(CxyplotData()) == CXyplotZ1())]],
               type='l',
               lty=1:length(unique(df()[, CXyplotZ1() ])),
-              lcol=1:length(unique(df()[, CXyplotZ1() ])), 
-              lwd=2, ylab="Yhat", xlab=CXyplotX1(), cex=1.75, 
+             col=colors()[c(175, 33, 26, 254, 499,653, 310, 368, 69,16,489,97,66,120,400,373)], 
+             #lcol=1:length(unique(df()[, CXyplotZ1() ])), 
+              lwd=3, ylab="Yhat", xlab=CXyplotX1(), cex=1.75, 
               main=paste0("Partial prediction plot of ", CXyplotX1(), " by levels of ", CXyplotZ1()) )
     }
   } 

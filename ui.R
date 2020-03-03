@@ -811,7 +811,7 @@ h6("The portions of the red horizontal line at 1 corresponds to no significant p
 h6("For example, women may have higher rates of death before age 58, equal with men from 58-88, and have lower rates after 88 years."),
 br(),
 h5("Contrasts and 95% confidence intervals from the plot above at various percentiles of the continuous predictor. Non-interaction contrasts will be constant."),
-tableOutput("Ccontrast_quant_table"),
+tableOutput("Ccontrast_quant_table"), 
 br()
 
 ###################################### End here

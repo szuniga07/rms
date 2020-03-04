@@ -885,7 +885,9 @@ tabPanel("Cutoff plot",
                 uiOutput("cutoff_val")
                 )),
          plotOutput("cutoffplot"),
-         verbatimTextOutput("cutoff_smry")
+         verbatimTextOutput("cutoff_smry"),
+         h5("Descibe the simulated values"),
+         verbatimTextOutput("desc_YhatPlotRslt")
 ),    
 
 tabPanel("Cobweb plot",                                #Creates a new panel named "Test Plot"

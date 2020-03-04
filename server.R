@@ -1162,10 +1162,10 @@ output$anova_smry <- renderPrint({
                   groups=xyplotData()[[which(names(xyplotData()) ==XyplotZ1())]],
                method='filled bands', type='l', 
                #col.fill=adjustcolor(1:length(unique(df()[, XyplotZ1() ])), alpha.f = 0.2),
-               col.fill=adjustcolor(colors()[c(175, 33, 26, 254, 499,653, 310, 368, 69,16,489,97,66,120,400,373)], alpha.f = 0.2),
+               col.fill=adjustcolor(colors()[c(175, 33, 26, 254, 499,653, 310, 368, 16, 69,489,97,66,120,400,373)], alpha.f = 0.2),
                lty=1:length(unique(df()[, XyplotZ1() ])),
 #               lcol=1:length(unique(df()[, XyplotZ1() ])), 
-col=colors()[c(175, 33, 26, 254, 499,653, 310, 368, 69,16,489,97,66,120,400,373)], 
+col=colors()[c(175, 33, 26, 254, 499,653, 310, 368, 16, 69,489,97,66,120,400,373)], 
 lwd=3, ylab="Yhat", xlab=XyplotX1(), cex=1.75,
                main=paste0("Partial prediction plot of ", XyplotX1(), " by levels of ", XyplotZ1()) )
         } else {
@@ -1174,7 +1174,7 @@ lwd=3, ylab="Yhat", xlab=XyplotX1(), cex=1.75,
                  type='l',
                  lty=1:length(unique(df()[, XyplotZ1() ])),
 #                 lcol=1:length(unique(df()[, XyplotZ1() ])), 
-col=colors()[c(175, 33, 26, 254, 499,653, 310, 368, 69,16,489,97,66,120,400,373)], 
+col=colors()[c(175, 33, 26, 254, 499,653, 310, 368, 16, 69,489,97,66,120,400,373)], 
 lwd=3, ylab="Yhat", xlab=XyplotX1(), cex=1.75, 
                  main=paste0("Partial prediction plot of ", XyplotX1(), " by levels of ", XyplotZ1()) )
         }
@@ -1737,7 +1737,8 @@ vls_up_fnc <- function(x_ls,  UPDY,  PRED,  UMN,  VAL,
                               SUPDY,        SUMN, SVAL, 
                               PUPDY,        PUMN, PVAL) {
   if(UPDY == "Yes") { 
-    x_ls$mn[which(PRED %in% UMN)]   <- unique(na.omit(as.numeric(unlist(strsplit(unlist((as.character(VAL))), "[^0.0-9.9]+")))))
+    #x_ls$mn[which(PRED %in% UMN)]   <- unique(na.omit(as.numeric(unlist(strsplit(unlist((as.character(VAL))), "[^0.0-9.9]+")))))
+    x_ls$mn[which(PRED %in% UMN)]   <- unique(na.omit(as.numeric(unlist(strsplit(unlist((as.character(VAL))), "[^-0.0-9.9]+")))))
   }
   if(SUPDY == "Yes") { 
     x_ls$sd[which(PRED %in% SUMN)]  <- unique(na.omit(as.numeric(unlist(strsplit(unlist((as.character(SVAL))), "[^0.0-9.9]+")))))
@@ -1808,7 +1809,7 @@ output$up_mn_var <- renderUI({
 #Update the actual means values.
 output$up_mn_val <- renderUI({
   textInput("umnval", "2. Update the means (see \".Names\" below for predictor order)" , 
-              value= deparse((vls2()[["mn"]][which(predictor() %in% input$umn)]), width.cutoff=500 ))
+              value= deparse(vls2()[["mn"]][which(predictor() %in% input$umn)], width.cutoff=500 ))
               #value= deparse((vls2()[["mn"]][input$umn]), width.cutoff=500 ))
 })
 #Indicate if you should update the mean used in determining the Monte Carlo distribution.
@@ -1942,6 +1943,16 @@ output$cutoff_smry <- renderPrint({
     #"Above cutoff when lower is better"=(1 - (length(yhat_plot_rslt()[yhat_plot_rslt() <= input$cutval ])/ length(yhat_plot_rslt())))
   )
   }
+})
+
+## Summary of Simulated values from Cut-off plot tab ##
+describeYhatPlotRslt <- reactive({ 
+  print(describe(yhat_plot_rslt(), 
+        descript=paste0("Simulated values of ",input$variableY) )) #Summary of predicted Y variable.)
+})
+#Describe Yhat from simulation
+output$desc_YhatPlotRslt <- renderPrint({                                                 
+  print(describeYhatPlotRslt())
 })
 
 ## Cobweb plot ##
@@ -3989,10 +4000,10 @@ output$CxYplot_interaction <- renderPlot({
               groups=CxyplotData()[[which(names(CxyplotData()) == CXyplotZ1())]],
               method='filled bands', type='l', 
               #col.fill=adjustcolor(1:length(unique(df()[, CXyplotZ1() ])), alpha.f = 0.2),
-              col.fill=adjustcolor(colors()[c(175, 33, 26, 254, 499,653, 310, 368, 69,16,489,97,66,120,400,373)], alpha.f = 0.2),
+              col.fill=adjustcolor(colors()[c(175, 33, 26, 254, 499,653, 310, 368, 16, 69,489,97,66,120,400,373)], alpha.f = 0.2),
               lty=1:length(unique(df()[, CXyplotZ1() ])),
 #              lcol=1:length(unique(df()[, CXyplotZ1() ])), 
-              col=colors()[c(175, 33, 26, 254, 499,653, 310, 368, 69,16,489,97,66,120,400,373)], 
+              col=colors()[c(175, 33, 26, 254, 499,653, 310, 368, 16, 69,489,97,66,120,400,373)], 
               lwd=3, ylab="Yhat", xlab=CXyplotX1(), cex=1.75,
               main=paste0("Partial prediction plot of ", CXyplotX1(), " by levels of ", CXyplotZ1()) )
     } else {
@@ -4000,7 +4011,7 @@ output$CxYplot_interaction <- renderPlot({
               groups=CxyplotData()[[which(names(CxyplotData()) == CXyplotZ1())]],
               type='l',
               lty=1:length(unique(df()[, CXyplotZ1() ])),
-             col=colors()[c(175, 33, 26, 254, 499,653, 310, 368, 69,16,489,97,66,120,400,373)], 
+             col=colors()[c(175, 33, 26, 254, 499,653, 310, 368, 16, 69,489,97,66,120,400,373)], 
              #lcol=1:length(unique(df()[, CXyplotZ1() ])), 
               lwd=3, ylab="Yhat", xlab=CXyplotX1(), cex=1.75, 
               main=paste0("Partial prediction plot of ", CXyplotX1(), " by levels of ", CXyplotZ1()) )
@@ -5279,6 +5290,7 @@ output$cme_model <- downloadHandler(
 ##  plot(values$a, values$b)
 ##} )
 #output$test1 <- renderPrint({
+#  vls2()
 #MsStrat0()
 #  })
 

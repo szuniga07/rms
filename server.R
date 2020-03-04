@@ -3041,7 +3041,8 @@ fcidf <- reactive({                  #This indicates the data frame I will use.
 
 ########################################
 #Put a function here for the point estimate, lower, upper bounds
-ci_fac_fnc <- function(x_lev, z_lev, agr_df) {
+ci_fac_fnc <- function(x_lev, z_lev, agr_df, NK) {
+  #ci_fac_fnc <- function(x_lev, z_lev, agr_df) {
   prmtrs <- c("PointEst", "Lower", "Upper")
   ctrs <- as.vector(unique(agr_df[, x_lev]))
   #Point est 
@@ -3049,7 +3050,7 @@ ci_fac_fnc <- function(x_lev, z_lev, agr_df) {
   for (i in 1:length(ctrs)) {
     x <- agr_df[agr_df[, x_lev] ==ctrs[i], z_lev]
     y <- agr_df[agr_df[, x_lev] ==ctrs[i], prmtrs[1]]
-    xx <- rcspline.eval(x, inclx=TRUE, nk=4)
+    xx <- rcspline.eval(x, inclx=TRUE, nk=NK)
     knots <- attr(xx, "knots")
     coef <- lsfit(xx, y)$coef
     w <- rcspline.restate(knots, coef[-1], x="{\\rm BP}")
@@ -3061,7 +3062,7 @@ ci_fac_fnc <- function(x_lev, z_lev, agr_df) {
   for (i in 1:length(ctrs)) {
     x <- agr_df[agr_df[, x_lev]==ctrs[i], z_lev]
     y <- agr_df[agr_df[, x_lev]==ctrs[i], prmtrs[2]]
-    xx <- rcspline.eval(x, inclx=TRUE, nk=4)
+    xx <- rcspline.eval(x, inclx=TRUE, nk=NK)
     knots <- attr(xx, "knots")
     coef <- lsfit(xx, y)$coef
     w <- rcspline.restate(knots, coef[-1], x="{\\rm BP}")
@@ -3073,7 +3074,7 @@ ci_fac_fnc <- function(x_lev, z_lev, agr_df) {
   for (i in 1:length(ctrs)) {
     x <- agr_df[agr_df[, x_lev]==ctrs[i], z_lev]
     y <- agr_df[agr_df[, x_lev]==ctrs[i], prmtrs[3]]
-    xx <- rcspline.eval(x, inclx=TRUE, nk=4)
+    xx <- rcspline.eval(x, inclx=TRUE, nk=NK)
     knots <- attr(xx, "knots")
     coef <- lsfit(xx, y)$coef
     w <- rcspline.restate(knots, coef[-1], x="{\\rm BP}")
@@ -3101,7 +3102,7 @@ ci_fac_fnc <- function(x_lev, z_lev, agr_df) {
 #Reactive function that runs ci_fac_fnc() above
 fci_fac <- reactive({                  #This indicates the data frame I will use.
   if(input$FCiCreate == "Yes") {
-  ci_fac_fnc(x_lev="x_lev", z_lev="z_lev", agr_df=fcidf())
+  ci_fac_fnc(x_lev="x_lev", z_lev="z_lev", agr_df=fcidf(), NK=input$FciNkKnots)
   }
 })
 
@@ -3193,6 +3194,11 @@ output$FCi_create <- renderUI({
   selectInput("FCiCreate", "7. Create the time plot?",
               choices = c("No", "Yes"),
               selected="No")
+})
+#Select how many knots I want
+output$FCI_nk_knots <- renderUI({                                
+      numericInput("FciNkKnots", "8. Select the number of spline knots.",
+       value = 3, min=3, max = 10, step = 1)
 })
 
 #Confidence interval plot for time

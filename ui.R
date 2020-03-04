@@ -1085,7 +1085,9 @@ tabPanel("95% CIs",
                   uiOutput("FCi_create")
            ),
            column(3, 
-                  uiOutput("FCI_bands")
+                  uiOutput("FCI_bands"),
+                  br(),                                                 
+                  uiOutput("FCI_nk_knots")
            )),
          h6("Hint: To zoom in on the lines only, select a lower confidence level (e.g., .01) and don't use confidence bands."),
          br(),

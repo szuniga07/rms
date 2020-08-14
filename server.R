@@ -4723,7 +4723,7 @@ kmSurvPltFnc <- function(KMsrvftFmla, df, Y, km_hazard_plot, KMSrvHzrLbl, km_sp_
        main= paste0("Kaplan-Meier plot of ", tolower(KMSrvHzrLbl), " by ", KMSrvPltX),
        pch=LETTERS[1:length(unique(df[, KMSrvPltX]))],
        col=1:length(unique(df[, KMSrvPltX] )), lty= 1:length(unique( df[, KMSrvPltX])))
-  legend(lgnd, legend=unique( df[, KMSrvPltX]), col=1:length(unique(df[, KMSrvPltX] )), 
+  legend(lgnd, legend=sort(unique( df[, KMSrvPltX])), col=1:length(unique(df[, KMSrvPltX] )), 
          lty=1:length(unique(df[, KMSrvPltX] )), bty="n", lwd=2, cex=1.5,
          title=KMSrvPltX)
 } 

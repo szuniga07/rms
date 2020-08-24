@@ -5318,14 +5318,14 @@ output$cme_model <- downloadHandler(
 #output$testplot1 <- renderPlot({ 
 ##  plot(values$a, values$b)
 ##} )
-output$test1 <- renderPrint({
+#output$test1 <- renderPrint({
   #summary(xdf())
   #mc_arg_fnc1()
   #str(mc_sim_fnc1())
   #input_mc_df1()
-  vls2()
+#  vls2()
 #MsStrat0()
-  })
+#  })
 
 
 ################################################################################

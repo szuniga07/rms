@@ -348,7 +348,7 @@ tabPanel("Impute",
            h6("Note: After starting the multiple imputation, all graphs and tables will include MI results."),
            h6("However, the 'Calibration' and 'Validation' tab results use single imputation."),
            h6("To calculate Calibration/Validation stats, first go to \"Reduce\" tab and answer #1 & #2 under \"Transformation and Imputation of predictors\"."),
-           h6("Single imputation is used because of the issue of random sampling of random sampling from multiple imputed datasets."),
+           h6("Single imputation is used because of the issue of random sampling of random sampling from multiple imputed datasets. Consider selecting all model X and Y when imputing."),
            h6("To update the 'Approximate' tab, answer 'Yes' to the '2. Begin modeling?' in the 'Model builder' after running the MI."),
            column(6, 
                   uiOutput("MIx"),
@@ -1101,13 +1101,13 @@ tabPanel("95% CIs",
 
 
 ############## TEST SECTION #############################
-# , #THIS COMMA IS COMMENTED OUT IN CASE I EVER NEED THE TEST FUNCTION BELOW    
+ , #THIS COMMA IS COMMENTED OUT IN CASE I EVER NEED THE TEST FUNCTION BELOW    
 
-#tabPanel("Test it",                                #Creates a new panel named "Test"
-#         fluidRow(                           #Wrapping them in a fluidRow provides easy control over  
-#           verbatimTextOutput("test1")
+tabPanel("Test it",                                #Creates a new panel named "Test"
+         fluidRow(                           #Wrapping them in a fluidRow provides easy control over  
+           verbatimTextOutput("test1")
 ##           plotOutput("testplot1")
-#         ))
+         ))
 ############## TEST SECTION #############################
 
 

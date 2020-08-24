@@ -726,91 +726,90 @@ shinyServer(
 #################
 ###########        
     
-    fit1 <<- reactive({                  #This stores my regression fit for use below. 
-      
-        dd_df <<- datadist(df()); options(datadist='dd_df');
-        
-      if (input$begin_mdl == "Yes") {
-        
-      switch(input$regress_type,                #"var" and can be used anywhere in server.r.
-             "Linear"   = if(input$updy == "Yes") {
-               ols(as.formula(input$up_fmla), x=TRUE, y=TRUE) 
-             } else {
-               ols(mdl_fmla(), x=TRUE, y=TRUE)}, 
-             "Logistic" = if(input$updy == "Yes") {
-               lrm(as.formula(input$up_fmla), x=TRUE, y=TRUE, tol=1e-100, maxit=20) #I added tol value so it can handle time predictor (YYMM)
-             } else {                                                               #Added maxit to handle small samples. See https://stat.ethz.ch/pipermail/r-help/2017-September/449115.html
-               lrm(mdl_fmla(), x=TRUE, y=TRUE, tol=1e-100, maxit=20)},  #I added tol value so it can handle time predictor that causes "singularity"
-             "Ordinal Logistic" = if(input$updy == "Yes") {
-               orm(as.formula(input$up_fmla), x=TRUE, y=TRUE) 
-             } else {
-               orm(mdl_fmla(), x=TRUE, y=TRUE)},
-             "Poisson" = if(input$updy == "Yes") {
-               Glm(as.formula(input$up_fmla), x=TRUE, y=TRUE, family=poisson()) 
-             } else {
-               Glm(mdl_fmla(), x=TRUE, y=TRUE, family=poisson())},
-             "Quantile" = if(input$updy == "Yes") {
-               Rq(as.formula(input$up_fmla), x=TRUE, y=TRUE, tau=as.numeric(rq_tau1())) 
-             } else {
-               Rq(mdl_fmla(), x=TRUE, y=TRUE,  tau=as.numeric(rq_tau1()))},
-             "Cox PH"   = if(input$updy == "Yes") {
-               cph(cox_mdl_fmla1u(), x=TRUE, y=TRUE, surv=TRUE) 
-             } else {
-               cph(cox_mdl_fmla1(), x=TRUE, y=TRUE, surv=TRUE)},
-             "Cox PH with censoring" = if(input$updy == "Yes") {
-               cph(cox_mdl_fmla2u(), x=TRUE, y=TRUE, surv=TRUE) 
-             } else {
-               cph(cox_mdl_fmla2(), x=TRUE, y=TRUE, surv=TRUE)},
-             "Generalized Least Squares" = if(input$updy == "Yes") {
-               Gls(as.formula(input$up_fmla), x=TRUE, correlation=corCAR1(form= gls_cor()))
-             } else {
-               Gls(mdl_fmla(), x=TRUE, 
-                   correlation=corCAR1(form= gls_cor()))}
-             #correlation= do.call("corCAR1", list(form=~week|uid)) )})
-             #as.formula(paste(paste0("~"), paste(gls_clst1(), collapse= "|")))
-      )
-      } else {
-        
-#        if (input$MIbegin == "Yes") {
-
-          switch(input$regress_type,    
-                 "Linear"   = if(input$updy == "Yes") {
-                   fit.mult.impute(as.formula(input$up_fmla), ols, mi(), data=df(), pr=FALSE) 
-                 } else {
-                   fit.mult.impute(mdl_fmla(), ols, mi(), data=df(), pr=FALSE)}, 
-                 "Logistic" = if(input$updy == "Yes") {
-                   fit.mult.impute(as.formula(input$up_fmla), lrm, mi(), data=df(), pr=FALSE, tol=1e-100) 
-                 } else {
-                   fit.mult.impute(mdl_fmla(), lrm, mi(), data=df(), pr=FALSE)}, 
-                 "Ordinal Logistic" = if(input$updy == "Yes") {
-                   fit.mult.impute(as.formula(input$up_fmla), orm, mi(), data=df(), pr=FALSE) 
-                 } else {
-                   fit.mult.impute(mdl_fmla(), orm, mi(), data=df(), pr=FALSE)}, 
-                 "Poisson" = if(input$updy == "Yes") {
-                   fit.mult.impute(as.formula(input$up_fmla), Glm, mi(), data=df(), pr=FALSE, family=poisson()) 
-                 } else {
-                   fit.mult.impute(mdl_fmla(), Glm, mi(), data=df(), pr=FALSE)}, 
-                 "Quantile" = if(input$updy == "Yes") {
-                   fit.mult.impute(as.formula(input$up_fmla), Rq, mi(), data=df(), pr=FALSE, tau=as.numeric(rq_tau1())) 
-                 } else {
-                   fit.mult.impute(mdl_fmla(), Rq, mi(), data=df(), pr=FALSE, tau=as.numeric(rq_tau1()))}, 
-                 "Cox PH"   = if(input$updy == "Yes") {
-                   fit.mult.impute(cox_mdl_fmla1u(), cph, mi(), data=df(), pr=FALSE) 
-                 } else {
-                   fit.mult.impute(cox_mdl_fmla1(), cph, mi(), data=df(), pr=FALSE)}, 
-                 "Cox PH with censoring" = if(input$updy == "Yes") {
-                   fit.mult.impute(cox_mdl_fmla2u(), cph, mi(), data=df(), pr=FALSE) 
-                 } else {
-                   fit.mult.impute(cox_mdl_fmla2(), cph, mi(), data=df(), pr=FALSE)}, 
-                 "Generalized Least Squares" = if(input$updy == "Yes") {
-                   fit.mult.impute(cox_mdl_fmla2u(), Gls, mi(), data=df(), pr=FALSE, correlation=corCAR1(form= gls_cor())) 
-                 } else {
-                   fit.mult.impute(cox_mdl_fmla2(), Gls, mi(), data=df(), pr=FALSE, correlation=corCAR1(form= gls_cor()))}
-          )
-        }
-        
-    })
-        
+        fit1 <<- reactive({                  #This stores my regression fit for use below.
+          
+          dd_df <<- datadist(df()); options(datadist='dd_df');
+          
+          if (input$begin_mdl == "Yes") {
+            
+            switch(input$regress_type,                #"var" and can be used anywhere in server.r.
+                   "Linear"   = if(input$updy == "Yes") {
+                     ols(as.formula(input$up_fmla), x=TRUE, y=TRUE, data=df())
+                   } else {
+                     ols(mdl_fmla(), x=TRUE, y=TRUE, data=df())},
+                   "Logistic" = if(input$updy == "Yes") {
+                     lrm(as.formula(input$up_fmla), x=TRUE, y=TRUE, data=df(), tol=1e-100, maxit=20) #I added tol value so it can handle time predictor (YYMM)
+                   } else { #Added maxit to handle small samples. See https://stat.ethz.ch/pipermail/r-help/2017-September/449115.html
+                     lrm(mdl_fmla(), x=TRUE, y=TRUE, data=df(), tol=1e-100, maxit=20)},  #I added tol value so it can handle time predictor that causes "singularity"
+                   "Ordinal Logistic" = if(input$updy == "Yes") {
+                     orm(as.formula(input$up_fmla), x=TRUE, y=TRUE, data=df())
+                   } else {
+                     orm(mdl_fmla(), x=TRUE, y=TRUE, data=df())},
+                   "Poisson" = if(input$updy == "Yes") {
+                     Glm(as.formula(input$up_fmla), x=TRUE, y=TRUE, data=df(), family=poisson())
+                   } else {
+                     Glm(mdl_fmla(), x=TRUE, y=TRUE, data=df(), family=poisson())},
+                   "Quantile" = if(input$updy == "Yes") {
+                     Rq(as.formula(input$up_fmla), x=TRUE, y=TRUE, data=df(), tau=as.numeric(rq_tau1()))
+                   } else {
+                     Rq(mdl_fmla(), x=TRUE, y=TRUE, data=df(), tau=as.numeric(rq_tau1()))},
+                   "Cox PH"   = if(input$updy == "Yes") {
+                     cph(cox_mdl_fmla1u(), x=TRUE, y=TRUE, data=df(), surv=TRUE)
+                   } else {
+                     cph(cox_mdl_fmla1(), x=TRUE, y=TRUE, data=df(), surv=TRUE)},
+                   "Cox PH with censoring" = if(input$updy == "Yes") {
+                     cph(cox_mdl_fmla2u(), x=TRUE, y=TRUE, data=df(), surv=TRUE)
+                   } else {
+                     cph(cox_mdl_fmla2(), x=TRUE, y=TRUE, data=df(), surv=TRUE)},
+                   "Generalized Least Squares" = if(input$updy == "Yes") {
+                     Gls(as.formula(input$up_fmla), x=TRUE, data=df(), correlation=corCAR1(form= gls_cor()))
+                   } else {
+                     Gls(mdl_fmla(), x=TRUE, data=df(),
+                         correlation=corCAR1(form= gls_cor()))}
+                   #correlation= do.call("corCAR1", list(form=~week|uid)) )})
+                   #as.formula(paste(paste0("~"), paste(gls_clst1(), collapse= "|")))
+            )
+          } else {
+            
+            #        if (input$MIbegin == "Yes") {
+            
+            switch(input$regress_type,
+                   "Linear"   = if(input$updy == "Yes") {
+                     fit.mult.impute(as.formula(input$up_fmla), ols, mi(), data=df(), pr=FALSE)
+                   } else {
+                     fit.mult.impute(mdl_fmla(), ols, mi(), data=df(), pr=FALSE)},
+                   "Logistic" = if(input$updy == "Yes") {
+                     fit.mult.impute(as.formula(input$up_fmla), lrm, mi(), data=df(), pr=FALSE, tol=1e-100)
+                   } else {
+                     fit.mult.impute(mdl_fmla(), lrm, mi(), data=df(), pr=FALSE)},
+                   "Ordinal Logistic" = if(input$updy == "Yes") {
+                     fit.mult.impute(as.formula(input$up_fmla), orm, mi(), data=df(), pr=FALSE)
+                   } else {
+                     fit.mult.impute(mdl_fmla(), orm, mi(), data=df(), pr=FALSE)},
+                   "Poisson" = if(input$updy == "Yes") {
+                     fit.mult.impute(as.formula(input$up_fmla), Glm, mi(), data=df(), pr=FALSE, family=poisson())
+                   } else {
+                     fit.mult.impute(mdl_fmla(), Glm, mi(), data=df(), pr=FALSE)},
+                   "Quantile" = if(input$updy == "Yes") {
+                     fit.mult.impute(as.formula(input$up_fmla), Rq, mi(), data=df(), pr=FALSE, tau=as.numeric(rq_tau1()))
+                   } else {
+                     fit.mult.impute(mdl_fmla(), Rq, mi(), data=df(), pr=FALSE, tau=as.numeric(rq_tau1()))},
+                   "Cox PH"   = if(input$updy == "Yes") {
+                     fit.mult.impute(cox_mdl_fmla1u(), cph, mi(), data=df(), pr=FALSE)
+                   } else {
+                     fit.mult.impute(cox_mdl_fmla1(), cph, mi(), data=df(), pr=FALSE)},
+                   "Cox PH with censoring" = if(input$updy == "Yes") {
+                     fit.mult.impute(cox_mdl_fmla2u(), cph, mi(), data=df(), pr=FALSE)
+                   } else {
+                     fit.mult.impute(cox_mdl_fmla2(), cph, mi(), data=df(), pr=FALSE)},
+                   "Generalized Least Squares" = if(input$updy == "Yes") {
+                     fit.mult.impute(cox_mdl_fmla2u(), Gls, mi(), data=df(), pr=FALSE, correlation=corCAR1(form= gls_cor()))
+                   } else {
+                     fit.mult.impute(cox_mdl_fmla2(), Gls, mi(), data=df(), pr=FALSE, correlation=corCAR1(form= gls_cor()))}
+            )
+          }
+          
+        })
 
     rq_tau1 <- reactive({                  #This stores the censoring variable. 
       input$tau1
@@ -1613,6 +1612,29 @@ mc_sim_fnc1 <- reactive({
              input_arg2=mc_arg_fnc1()[[2]], input_arg3=mc_arg_fnc1()[[3]])
 })
 
+#2B 
+#Removes unnecessary values to make sure there are only 4 columns in the data
+mc_sim_fix_fnc1 <- function(McSimDf) {
+  mc_sim_fnc1_arg2 <- vector(mode="list", length=nrow(McSimDf))
+  mc_sim_fnc1_arg3 <- vector(mode="list", length=nrow(McSimDf))
+  
+  for (i in 1:nrow(McSimDf)) {
+    mc_sim_fnc1_arg2[[i]] <- McSimDf[i, 2 + i]
+    mc_sim_fnc1_arg3[[i]] <- McSimDf[i, 2 + i + nrow(McSimDf)]
+  }
+  mcSimFixLs <-  cbind("arg2"=unlist(mc_sim_fnc1_arg2), "arg3"=unlist(mc_sim_fnc1_arg3))
+  return(mcSimFixLs)
+}
+
+#Reactive function to gets just the argument values I should use 
+McSimFix <- reactive({
+  mc_sim_fix_fnc1(McSimDf=mc_sim_fnc1())
+})
+
+mc_sim_fnc2 <-  reactive({
+  cbind(mc_sim_fnc1()[, 1:2], McSimFix())
+})
+
 #3
 #Function that creates data frame (as a list) of different MC simulated inputs
 input_mc_fnc1 <- function(mc_sim) {
@@ -1628,7 +1650,8 @@ input_mc_fnc1 <- function(mc_sim) {
 #3A
   #Reactive function that runs input_mc_fnc1() above
 input_mc_df1 <- reactive({
-  input_mc_fnc1(mc_sim=mc_sim_fnc1())
+#  input_mc_fnc1(mc_sim=mc_sim_fnc1())
+  input_mc_fnc1(mc_sim=mc_sim_fnc2()) #Uses the "fixed" data
 })
 
 
@@ -1650,12 +1673,12 @@ input_mc_fnc2 <- function(input_dist, input_mc_df, PDF, LBL) {
 #Reactive function that runs input_mc_fnc2() above
 input_mc_df2 <- reactive({
 #  input_mc_fnc1(input_dist=mc_sim_fnc()[["input_dist"]], input_mc_df=input_mc_df1(), PDF=vls1()[["pdf"]])
-  input_mc_fnc2(input_dist=mc_sim_fnc1()[[1]], input_mc_df=input_mc_df1(), 
+   input_mc_fnc2(input_dist=mc_sim_fnc1()[[1]], input_mc_df=input_mc_df1(), 
                 PDF=vls2()[[6]], LBL=vls2()[["pdf_lbl"]])
 })
 
 #5
-  #Function that converst the list object to a data frame
+  #Function that converts the list object to a data frame
 mc_df_fnc <- function(input_mc_df, CNM) {
   input_mc_df <- as.data.frame(input_mc_df)
   #Give column names to the data frame
@@ -3442,44 +3465,44 @@ atch.si <- reactive({
   } 
 })
 #This is the single imputation model fit for the calibration/validation/approximation tabs
-fit.si <<- reactive({  
+fit.si <<- reactive({
   atch.si()
   dd_df.si <<- datadist(new_imputed.si()); options(datadist='dd_df.si');
   if (input$MIbegin == "Yes") {
     
     switch(input$regress_type,                #"var" and can be used anywhere in server.r.
            "Linear"   = if(input$updy == "Yes") {
-             ols(as.formula(input$up_fmla), x=TRUE, y=TRUE) 
+             ols(as.formula(input$up_fmla), x=TRUE, y=TRUE, data=new_imputed.si())
            } else {
-             ols(mdl_fmla(), x=TRUE, y=TRUE)}, 
+             ols(mdl_fmla(), x=TRUE, y=TRUE, data=new_imputed.si())},
            "Logistic" = if(input$updy == "Yes") {
-             lrm(as.formula(input$up_fmla), x=TRUE, y=TRUE, tol=1e-100, maxit=20) #I added tol value so it can handle time predictor (YYMM)
-           } else {                                                               #Added maxit to handle small samples. See https://stat.ethz.ch/pipermail/r-help/2017-September/449115.html
-             lrm(mdl_fmla(), x=TRUE, y=TRUE, tol=1e-100, maxit=20)},  #I added tol value so it can handle time predictor that causes "singularity"
+             lrm(as.formula(input$up_fmla), x=TRUE, y=TRUE, data=new_imputed.si(), tol=1e-100, maxit=20) #I added tol value so it can handle time predictor (YYMM)
+           } else { #Added maxit to handle small samples. See https://stat.ethz.ch/pipermail/r-help/2017-September/449115.html
+             lrm(mdl_fmla(), x=TRUE, y=TRUE, data=new_imputed.si(), tol=1e-100, maxit=20)},  #I added tol value so it can handle time predictor that causes "singularity"
            "Ordinal Logistic" = if(input$updy == "Yes") {
-             orm(as.formula(input$up_fmla), x=TRUE, y=TRUE) 
+             orm(as.formula(input$up_fmla), x=TRUE, y=TRUE, data=new_imputed.si(), data=new_imputed.si())
            } else {
-             orm(mdl_fmla(), x=TRUE, y=TRUE)},
+             orm(mdl_fmla(), x=TRUE, y=TRUE, data=new_imputed.si())},
            "Poisson" = if(input$updy == "Yes") {
-             Glm(as.formula(input$up_fmla), x=TRUE, y=TRUE, family=poisson()) 
+             Glm(as.formula(input$up_fmla), x=TRUE, y=TRUE, data=new_imputed.si(), family=poisson())
            } else {
-             Glm(mdl_fmla(), x=TRUE, y=TRUE, family=poisson())},
+             Glm(mdl_fmla(), x=TRUE, y=TRUE, data=new_imputed.si(), family=poisson())},
            "Quantile" = if(input$updy == "Yes") {
-             Rq(as.formula(input$up_fmla), x=TRUE, y=TRUE, tau=as.numeric(rq_tau1())) 
+             Rq(as.formula(input$up_fmla), x=TRUE, y=TRUE, data=new_imputed.si(), tau=as.numeric(rq_tau1()))
            } else {
-             Rq(mdl_fmla(), x=TRUE, y=TRUE,  tau=as.numeric(rq_tau1()))},
+             Rq(mdl_fmla(), x=TRUE, y=TRUE, data=new_imputed.si(), tau=as.numeric(rq_tau1()))},
            "Cox PH"   = if(input$updy == "Yes") {
-             cph(cox_mdl_fmla1u(), x=TRUE, y=TRUE, surv=TRUE) 
+             cph(cox_mdl_fmla1u(), x=TRUE, y=TRUE, data=new_imputed.si(), surv=TRUE)
            } else {
-             cph(cox_mdl_fmla1(), x=TRUE, y=TRUE, surv=TRUE)},
+             cph(cox_mdl_fmla1(), x=TRUE, y=TRUE, data=new_imputed.si(), surv=TRUE)},
            "Cox PH with censoring" = if(input$updy == "Yes") {
-             cph(cox_mdl_fmla2u(), x=TRUE, y=TRUE, surv=TRUE) 
+             cph(cox_mdl_fmla2u(), x=TRUE, y=TRUE, data=new_imputed.si(), surv=TRUE)
            } else {
-             cph(cox_mdl_fmla2(), x=TRUE, y=TRUE, surv=TRUE)},
+             cph(cox_mdl_fmla2(), x=TRUE, y=TRUE, data=new_imputed.si(), surv=TRUE)},
            "Generalized Least Squares" = if(input$updy == "Yes") {
-             Gls(as.formula(input$up_fmla), x=TRUE, correlation=corCAR1(form= gls_cor()))
+             Gls(as.formula(input$up_fmla), x=TRUE, data=new_imputed.si(), correlation=corCAR1(form= gls_cor()))
            } else {
-             Gls(mdl_fmla(), x=TRUE, 
+             Gls(mdl_fmla(), x=TRUE, data=new_imputed.si(),
                  correlation=corCAR1(form= gls_cor()))}
     )
   }
@@ -5295,10 +5318,14 @@ output$cme_model <- downloadHandler(
 #output$testplot1 <- renderPlot({ 
 ##  plot(values$a, values$b)
 ##} )
-#output$test1 <- renderPrint({
-#  vls2()
+output$test1 <- renderPrint({
+  #summary(xdf())
+  #mc_arg_fnc1()
+  #str(mc_sim_fnc1())
+  #input_mc_df1()
+  vls2()
 #MsStrat0()
-#  })
+  })
 
 
 ################################################################################

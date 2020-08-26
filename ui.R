@@ -577,7 +577,9 @@ fluidRow(
   column(3,
          uiOutput("KMHazardPlot")),
   column(3,
-         uiOutput("KMSurvPltRun"))
+         uiOutput("KMSurvPltRun")),
+  column(3,
+         uiOutput("KmRestrictMean"))
 ),
 h5("Modify the plot display."),
 fluidRow(
@@ -595,7 +597,14 @@ fluidRow(
 br(),
 plotOutput("km_plot", height = 700, width="100%"),
 br(),
+h5("Unconditional survival function. Associated with default survival plot, first plot at the top. Modify restricted mean with KM button #4 directly above."),
+verbatimTextOutput("KM_SF_Output_UC"), 
+br(),
+h5("Stratified survival function. Kaplan-Meier plot above. Modify restricted mean with KM button #4 directly above."),
+verbatimTextOutput("KM_SF_Output_C"), 
+br(),
 ############################## End here
+
          h4("Schoenfeld residuals"),
          h5("Assess the Cox model's proportional hazards assumption."),
          br(),

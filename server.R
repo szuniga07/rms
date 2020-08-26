@@ -4674,24 +4674,29 @@ output$KMSurvPltRun <- renderUI({
   selectInput("km_surv_plt_run", "3. Do you want to create the KM plot?", 
               choices = c("No", "Yes"), multiple=FALSE, selected="No")     
 })
+#Indicate the restricted mean
+output$KmRestrictMean <- renderUI({
+  numericInput("km_restrict_mean", "4. Select the restricted mean.",
+               value = km_cox_max_time(), step = 1)
+})
 #Indicate lower limit of x-axis
 output$KMSurvPltXlim1 <- renderUI({
-  numericInput("km_sp_Xlim1", "4. Lower X-axis limit.",
+  numericInput("km_sp_Xlim1", "5. Lower X-axis limit.",
                value = 0, step = 1)
 })
 #Indicate upper limit of x-axis
 output$KMSurvPltXlim2 <- renderUI({
-  numericInput("km_sp_Xlim2", "5. Upper X-axis limit.",
+  numericInput("km_sp_Xlim2", "6. Upper X-axis limit.",
                value = km_cox_max_time(), step = 1)
 })
 #Indicate lower limit of y-axis
 output$KMSurvPltYlim1 <- renderUI({
-  numericInput("km_sp_Ylim1", "6. Lower Y-axis limit.",
+  numericInput("km_sp_Ylim1", "7. Lower Y-axis limit.",
                value = 0, step = .01)
 })
 #Indicate upper limit of x-axis
 output$KMSurvPltYlim2 <- renderUI({
-  numericInput("km_sp_Ylim2", "7. Upper Y-axis limit.",
+  numericInput("km_sp_Ylim2", "8. Upper Y-axis limit.",
                value = 1, step = .01)
 })
 
@@ -4707,8 +4712,8 @@ KMSrvHzrLbl <- reactive({
     "Hazard"
   }
 })
-#Function to get the right KM formula
 
+#Function to get the right KM formula for groups
 kmSrvftFmlaFnc <- function (regress_type,Y,cens,KMSrvPltX) {
   if (regress_type == "Cox PH") {
     fmla <- as.formula(paste(paste0("Surv(", Y, ")", "~", KMSrvPltX)))
@@ -4718,12 +4723,28 @@ kmSrvftFmlaFnc <- function (regress_type,Y,cens,KMSrvPltX) {
   }
   return(fmla)
 } 
+#Function to get the right KM formula for the underline/unconditional survival function
+kmSrvftFmlaUnconFnc <- function (regress_type,Y,cens,KMSrvPltX) {
+  if (regress_type == "Cox PH") {
+    fmla <- as.formula(paste(paste0("Surv(", Y, ")", "~", 1 )))
+  }
+  if (regress_type == "Cox PH with censoring") {
+    fmla <- as.formula(paste(paste0("Surv(", Y, ",", cens, ")", "~", 1 )))
+  }
+  return(fmla)
+} 
 
-#Survival fit object
+#Survival fit object for the conditional model
 KMsrvftFmla <- reactive({
   if (input$km_surv_plt_run == "Yes") {
     kmSrvftFmlaFnc(regress_type=input$regress_type, Y=outcome(), cens=censor1(), KMSrvPltX=input$KMSrvPltX)
  }
+})
+#Survival fit object for the UNconditional model
+KMsrvftUnconFmla <- reactive({
+  if (input$km_surv_plt_run == "Yes") {
+    kmSrvftFmlaUnconFnc(regress_type=input$regress_type, Y=outcome(), cens=censor1() )
+  }
 })
 
 #KM legend
@@ -4765,6 +4786,61 @@ output$km_plot <- renderPlot({
     KMsrvftPlot()
   }
 }, height = 700)
+
+## Output for"baseline" KM  survival function ##
+#Survival function
+blSrvFitFnc1 <- function (FMLA, df) {
+  sf_rslt <-survfit(FMLA, data = df)
+  return(sf_rslt)
+} 
+#Print restricted mean and median
+blSrvFitFnc2 <- function (sf_rslt, KM_RESTRICT_MEAN) {
+  rslt <- do.call("print", list(sf_rslt, rmean=KM_RESTRICT_MEAN))
+#  rslt <- print( sf_rslt , print.rmean=TRUE, rmean=KM_RESTRICT_MEAN)
+  return(rslt)
+} 
+
+#Reactive function for baseline function above
+KM_SF_UC1 <- reactive({
+  if (input$km_surv_plt_run == "Yes") {
+    blSrvFitFnc1(FMLA=KMsrvftUnconFmla(), df=df() )
+  }
+})
+#Restricted mean and median
+KM_SF_UC2 <- reactive({
+  if (input$km_surv_plt_run == "Yes") {
+    blSrvFitFnc2(sf_rslt=KM_SF_UC1(), KM_RESTRICT_MEAN=input$km_restrict_mean)
+  }
+})
+
+#Reactive function for baseline function above
+KM_SF_C1 <- reactive({
+  if (input$km_surv_plt_run == "Yes") {
+    blSrvFitFnc1(FMLA=KMsrvftFmla(), df=df() )
+  }
+})
+#Restricted mean and median
+KM_SF_C2 <- reactive({
+  if (input$km_surv_plt_run == "Yes") {
+    blSrvFitFnc2(sf_rslt=KM_SF_C1(), KM_RESTRICT_MEAN=input$km_restrict_mean)
+  }
+})
+
+## Output for survival functions
+#Unconditional
+output$KM_SF_Output_UC <- renderPrint({
+  if (input$km_surv_plt_run == "Yes") {
+    KM_SF_UC2() 
+  }
+})
+#Conditional
+output$KM_SF_Output_C <- renderPrint({
+  if (input$km_surv_plt_run == "Yes") {
+    KM_SF_C2() 
+  }
+})
+
+
 ############################################ End here
 
 #########################

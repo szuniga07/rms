@@ -3849,8 +3849,19 @@ quant_ests_fnc <- function(fit, Y, X, reg) {
   est2 <- est1[, c(2,6,4,1,5,3)]
   colnames(est2) <- c("TREATMENT", "L95", "U95","Control", "L95", "U95")
   rownames(est2) <- c("p10", "p25", "p50","p75", "p90")
-  #Add cost difference beteen Treatment and controls 
+  #Add cost difference between Treatment and controls 
   est2$Diff. <- abs(round(est2$Control) - round(est2$TREATMENT))
+  ## Add in weighted average into the table
+  #Make row of data
+  wtot <- as.data.frame(matrix(nrow=1, ncol=7))
+  colnames(wtot) <- c("TREATMENT", "L95", "U95","Control", "L95", "U95", "Diff.")
+  rownames(wtot) <- "Weighted"
+  #Calculate weighted average
+  wtot[, "Diff."] <- ((.25 * est2[rownames(est2) =="p10", "Diff."]) + (.25 * est2[rownames(est2) =="p25", "Diff."]) + 
+           (.25 * est2[rownames(est2) =="p50", "Diff."]) + (.15 * est2[rownames(est2) =="p75", "Diff."]) + 
+           (.1 * est2[rownames(est2) =="p90", "Diff."]))
+  #Combine everything
+  est2 <- rbind(est2, wtot)
   return(list(est1=est1, est2=est2))
 }  
 
@@ -5395,6 +5406,7 @@ output$cme_model <- downloadHandler(
 ##  plot(values$a, values$b)
 ##} )
 #output$test1 <- renderPrint({
+#  quant_ests()
   #summary(xdf())
   #mc_arg_fnc1()
   #str(mc_sim_fnc1())

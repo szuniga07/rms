@@ -770,6 +770,7 @@ fluidRow(
          plotOutput("plot_quant_plt1", height = 700, width="100%"),
          br(),
          h5("Quantiles: Point estimates and confidence intervals of the effects from the 10th/25th/50th/75th/95th percentiles."),
+         h5("Weighted average = ((0.25 * p10 Diff) + (0.25 * p25 Diff) + (0.25 * p50 Diff) + (0.15 * p75 Diff) + (0.10 * p90 Diff))."),
          tableOutput("quant_out1"),
          br(),
          h5("Mean: Point estimates and confidence intervals for the mean effect."),
@@ -1115,7 +1116,7 @@ tabPanel("95% CIs",
 #tabPanel("Test it",                                #Creates a new panel named "Test"
 #         fluidRow(                           #Wrapping them in a fluidRow provides easy control over  
 #           verbatimTextOutput("test1")
-##           plotOutput("testplot1")
+#           plotOutput("testplot1")
 #         ))
 ############## TEST SECTION #############################
 

@@ -4774,7 +4774,7 @@ kmSurvPltFnc <- function(KMsrvftFmla, df, Y, km_hazard_plot, KMSrvHzrLbl, km_sp_
   plot(survfit(KMsrvftFmla, data= df), 
        xlim=c(km_sp_Xlim1, km_sp_Xlim2), ylim=c(km_sp_Ylim1, km_sp_Ylim2),
        ylab= paste0(KMSrvHzrLbl, " Probability"), 
-       xlab=Y, mark.time=T, fun=pltType , lwd=2, 
+       xlab=Y, mark.time=T, fun=pltType , lwd=3, 
        main= paste0("Kaplan-Meier plot of ", tolower(KMSrvHzrLbl), " by ", KMSrvPltX),
        pch=LETTERS[1:length(unique(df[, KMSrvPltX]))],
        col=1:length(unique(df[, KMSrvPltX] )), lty= 1:length(unique( df[, KMSrvPltX])))

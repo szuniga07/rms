@@ -1314,11 +1314,11 @@ lwd=3, ylab="Yhat", xlab=XyplotX1(), cex=1.75,
     ## Table of contrast at percentiles to show where the interaction occurs ##
     #Function that gets contrasts quantiles
     contrastQuantFnc <- function(w, sp1, X) {
-      p10 <- which(abs(w[[X]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "Low:prediction"]) == min(abs(w[[X]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "Low:prediction"])))
-      p25 <- which(abs(w[[X]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "Low:effect"]) == min(abs(w[[X]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "Low:effect"])))
-      p50 <- which(abs(w[[X]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "Adjust to"]) == min(abs(w[[X]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "Adjust to"])))
-      p75 <- which(abs(w[[X]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "High:effect"]) == min(abs(w[[X]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "High:effect"])))
-      p90 <- which(abs(w[[X]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "High:prediction"]) == min(abs(w[[X]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "High:prediction"])))
+      p10 <- which(abs(w[[X]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "Low:prediction"]) == min(abs(w[[X]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "Low:prediction"])))[1]
+      p25 <- which(abs(w[[X]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "Low:effect"]) == min(abs(w[[X]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "Low:effect"])))[1]
+      p50 <- which(abs(w[[X]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "Adjust to"]) == min(abs(w[[X]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "Adjust to"])))[1]
+      p75 <- which(abs(w[[X]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "High:effect"]) == min(abs(w[[X]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "High:effect"])))[1]
+      p90 <- which(abs(w[[X]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "High:prediction"]) == min(abs(w[[X]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "High:prediction"])))[1]
       #Put the values in a vector
       contrast_quant <- c(p10,p25,p50,p75,p90)
       #Bind the rows of data I need "Contrast"	 "SE"	 "Lower"	 "Upper"	 "Z"	 "Pvalue"
@@ -4218,11 +4218,11 @@ Cxyp_contrast <- reactive({
 ## Table of contrast at percentiles to show where the interaction occurs ##
 #Function that gets contrasts quantiles
 CcontrastQuantFnc <- function(w, sp1, X) {
-  p10 <- which(abs(w[[X]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "Low:prediction"]) == min(abs(w[[X]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "Low:prediction"])))
-  p25 <- which(abs(w[[X]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "Low:effect"]) == min(abs(w[[X]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "Low:effect"])))
-  p50 <- which(abs(w[[X]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "Adjust to"]) == min(abs(w[[X]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "Adjust to"])))
-  p75 <- which(abs(w[[X]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "High:effect"]) == min(abs(w[[X]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "High:effect"])))
-  p90 <- which(abs(w[[X]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "High:prediction"]) == min(abs(w[[X]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "High:prediction"])))
+  p10 <- which(abs(w[[X]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "Low:prediction"]) == min(abs(w[[X]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "Low:prediction"])))[1]
+  p25 <- which(abs(w[[X]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "Low:effect"]) == min(abs(w[[X]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "Low:effect"])))[1]
+  p50 <- which(abs(w[[X]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "Adjust to"]) == min(abs(w[[X]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "Adjust to"])))[1]
+  p75 <- which(abs(w[[X]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "High:effect"]) == min(abs(w[[X]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "High:effect"])))[1]
+  p90 <- which(abs(w[[X]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "High:prediction"]) == min(abs(w[[X]] - sp1[["limits"]][[X]][rownames(sp1$limits) == "High:prediction"])))[1]
   #Put the values in a vector
   contrast_quant <- c(p10,p25,p50,p75,p90)
   #Bind the rows of data I need "Contrast"	 "SE"	 "Lower"	 "Upper"	 "Z"	 "Pvalue"

@@ -20,6 +20,7 @@ library(rpart)
 library(coxme)
 data(lungcancer)
 options(shiny.maxRequestSize=1000*1024^2)    #This will increase the shiny file upload limit from current 5MB max
+options(scipen=10)                                                               #General option to see low decimals
 
 ####################################
 
@@ -739,7 +740,7 @@ shinyServer(
                      ols(mdl_fmla(), x=TRUE, y=TRUE, data=df())},
                    "Logistic" = if(input$updy == "Yes") {
                      lrm(as.formula(input$up_fmla), x=TRUE, y=TRUE, data=df(), tol=1e-100, maxit=20) #I added tol value so it can handle time predictor (YYMM)
-                   } else { #Added maxit to handle small samples. See https://stat.ethz.ch/pipermail/r-help/2017-September/449115.html
+                   } else { #Added maxit to handle small samples. See https://stat.ethz.ch/pipermail/r-help/2017-September/449115.html 
                      lrm(mdl_fmla(), x=TRUE, y=TRUE, data=df(), tol=1e-100, maxit=20)},  #I added tol value so it can handle time predictor that causes "singularity"
                    "Ordinal Logistic" = if(input$updy == "Yes") {
                      orm(as.formula(input$up_fmla), x=TRUE, y=TRUE, data=df())
@@ -1087,7 +1088,7 @@ output$predictor_smry <- renderPrint({
 
 #This Plot ANOVA to show variable importance. 
 #I set a higher tolerance based on Harrell's website
-#https://stat.ethz.ch/pipermail/r-help/2007-September/141709.html
+#https://stat.ethz.ch/pipermail/r-help/2007-September/141709.html 
 output$p_anova <- renderPlot({
   plot(anova(fit1(), tol=1e-13), cex=1.25, cex.lab=1.25, pch=19)
 }, height=700)
@@ -3477,7 +3478,7 @@ fit.si <<- reactive({
              ols(mdl_fmla(), x=TRUE, y=TRUE, data=new_imputed.si())},
            "Logistic" = if(input$updy == "Yes") {
              lrm(as.formula(input$up_fmla), x=TRUE, y=TRUE, data=new_imputed.si(), tol=1e-100, maxit=20) #I added tol value so it can handle time predictor (YYMM)
-           } else { #Added maxit to handle small samples. See https://stat.ethz.ch/pipermail/r-help/2017-September/449115.html
+           } else { #Added maxit to handle small samples. See https://stat.ethz.ch/pipermail/r-help/2017-September/449115.html 
              lrm(mdl_fmla(), x=TRUE, y=TRUE, data=new_imputed.si(), tol=1e-100, maxit=20)},  #I added tol value so it can handle time predictor that causes "singularity"
            "Ordinal Logistic" = if(input$updy == "Yes") {
              orm(as.formula(input$up_fmla), x=TRUE, y=TRUE, data=new_imputed.si(), data=new_imputed.si())
@@ -3638,7 +3639,7 @@ lrm_miss <- reactive({             #Spline terms
   if (input$MissChoice == "Yes") {
     lrm(miss_fmla(), data=df(), tol=1e-100, maxit=20)  #added "tol" to handle fitting issues
   }                                                    #Added maxit to handle small samples. 
-})                                                     #See https://stat.ethz.ch/pipermail/r-help/2017-September/449115.html
+})                                                     #See https://stat.ethz.ch/pipermail/r-help/2017-September/449115.html 
 #Print regression output
 output$smry_lrm_miss <- renderPrint({
   lrm_miss()
@@ -4509,7 +4510,7 @@ output$Schoenfeld_X <- renderUI({
   choices = schoenfeld_X_names_plot() , multiple=FALSE, selected=schoenfeld_X_names_plot()[1])
 })
 
-#This gives a number for the variable for the Schoenfeld residual
+#Creates the Schoenfeld residuals
 schoenfeld_e <- reactive({
   if (input$regress_type %in% c("Cox PH", "Cox PH with censoring")) {
     cox.zph(fit1())
@@ -5400,20 +5401,1562 @@ output$cme_model <- downloadHandler(
 )
 
 ################################################################################
+##                           Multi-state model                                ##
+################################################################################
+
+##################
+# Create MS data #
+##################
+#1. Select the transient state time variables
+output$st_Time_Trans <- renderUI({                                #Creates a UI function here but it will
+  selectInput("stTimeTran", "1. Select transient-state time variables",       #get called to the UI file.
+              choices = var(), multiple=TRUE )   #Will make choices based on my reactive function.
+})
+#1A. Object with just transient state time variables
+state_time_trans <- reactive({
+  input$stTimeTran
+})
+
+aprx_mdl_fmla2 <- reactive({ 
+  as.formula(input$up_fmla)
+})
+
+#2. Select the terminal state  binary variable
+output$st_Bin_Term <- renderUI({
+  selectInput("stBinTerm", "2. Select a terminal-state binary indicator",
+              choices = setdiff(var(), state_time_trans()), multiple=FALSE )
+})
+#2A. Object with just terminal state time indicator
+state_bin_term <- reactive({
+  input$stBinTerm
+})
+
+#3. Select the terminal state  time variables
+output$st_Time_Term <- renderUI({
+  selectInput("stTimeTerm", "3. Select terminal-state time variable",
+              choices = setdiff(var(), c(state_bin_term(), state_time_trans()) ), multiple=FALSE )
+})
+#3A. Object with just terminal state time variables
+state_time_term <- reactive({
+  input$stTimeTerm
+})
+
+########
+#4. Select the cumulative Prior and current events variables based on state time variables above 
+output$st_Prior_Event <- renderUI({
+  selectInput("stPrEvnt", "4. Select states to track events",
+              choices = state_time_trans(), multiple=TRUE)
+})
+#4A. Object with just transient state time variables
+state_prior_event <- reactive({
+  input$stPrEvnt
+})
+#5. Select the ID variable
+output$st_Time_ID <- renderUI({
+  selectInput("stTimeID", "5. Select the ID variable",
+              choices = setdiff(var(), c(state_time_trans(), state_bin_term(), state_time_term(),
+                                         state_prior_event()) ), multiple=FALSE)
+})
+#5A. ID variable
+state_time_id <- reactive({
+  input$stTimeID
+})
+#6. Select the time-independent variables to merge into data 
+output$st_Time_I_V <- renderUI({
+  selectInput("stTimeIV", "6. Select the time-independent variables",
+              choices = setdiff(var(), c(state_time_trans(), state_bin_term(), state_time_term(),
+                                         state_prior_event(), state_time_id()) ), multiple=TRUE)
+})
+#6A. Object with just time-independent variables
+state_time_independent_x <- reactive({
+  input$stTimeIV
+})
+
+#7. Make data frame
+output$make_multi_state_df <- renderUI({  
+  selectInput("makeMultiStateDF", "7. Create the multi-state dataframe?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")     
+})
+#8. Download time dependent data file
+output$ms_data_download_name <- renderUI({ 
+  textInput("MsDataDownloadName", "8. Enter the data framename.", 
+            value= "mdata")     
+})
+#9. Setup to download
+output$ms_data_download <- downloadHandler(
+  filename = "multi_state_df.RData",
+  content = function(con) {
+    assign(input$MsDataDownloadName, MsDataFrame())
+    save(list=input$MsDataDownloadName, file=con)
+  }
+)
+
+
+#######################################
+## Function to make multi-state data ##
+#######################################
+msDataFnc <- function(MSDF, input_dataframe, STATE_time_trans, STATE_bin_term, STATE_time_term,
+                      STATE_prior_event, STATE_time_id, STATE_time_independent_x) {
+  #Set up
+  msdf <- input_dataframe
+  #Data frames
+  Data2 <- paste( "data2 =", msdf)
+  D1 <- paste0( msdf, "[,", paste0("c(", paste0(which(colnames(MSDF) %in% c(STATE_time_independent_x, STATE_time_id)), collapse=","), ")", "]" ))
+  Data1 <- paste("data1=", D1)
+  #ID variable
+  ID <- paste("id=", STATE_time_id)
+  #Terminal variable
+  Terminal_variable <- paste(STATE_bin_term, "=",  "event(", STATE_time_term, ",", STATE_bin_term,")"  )
+  #Transient variables
+  state_time_trans_ls <- list()
+  #Loops through variable names, keeps the name since the wide format variables are removed in the call
+  for (i in 1:length(STATE_time_trans)) {
+    state_time_trans_ls[i] <- paste(STATE_time_trans[i], "=", "event(", STATE_time_trans[i],")")
+  }
+  state_time_trans_fmla <- paste(unlist(state_time_trans_ls), collapse=",")
+  #Prior variables and cumulative events
+  #Prior events
+  state_prior_event_ls <- list()
+  for (i in 1:length(STATE_prior_event)) {
+    state_prior_event_ls[i] <- paste0("pri_", STATE_prior_event[i], "=", "tdc(", STATE_prior_event[i],")")
+  }
+  state_prior_event_fmla <- paste(unlist(state_prior_event_ls), collapse=",")
+  #Cumulative events...uses same events as prior
+  state_cumul_event_ls <- list()
+  for (i in 1:length(STATE_prior_event)) {
+    state_cumul_event_ls[i] <- paste0("cml_", STATE_prior_event[i], "=", "cumevent(", STATE_prior_event[i],")")
+  }
+  state_cumul_event_fmla <- paste(unlist(state_cumul_event_ls), collapse=",")
+  #This gives me all of the arguments
+  tmerge_args <- paste(unlist(list(Data1, Data2, ID, Terminal_variable, state_time_trans_fmla, state_prior_event_fmla, state_cumul_event_fmla)), collapse=",")
+  #2nd tmerge call that calculates the cumulative number of events
+  tmerge_args2 <- paste("; multi_state_df <- tmerge(multi_state_df, multi_state_df,", ID, ",", "enum = cumtdc(tstart))")
+  #3rd tmerge call that makes a list of current events
+  all_events <- c(STATE_time_trans, STATE_bin_term)
+  level_by_state_ls <- list()
+  for (i in 1:length(all_events)) {
+    level_by_state_ls[i] <- paste0(i,"*",all_events[i])
+  }
+  tmerge_args3 <- paste("; temp <- with(multi_state_df,", paste(unlist(level_by_state_ls), collapse=" + "),")" )
+  #4th tmerge call creates a variable for the current events above
+  tmerge_args4 <- paste("; multi_state_df$event <- factor(temp, labels=", 
+                        paste0("c('", paste(c("none", all_events),collapse="','"), "')"), ")")
+  
+  #The pastes in tmerge and the dataframe name to create the full code
+  tmerge_formula <- paste("multi_state_df <- tmerge(", tmerge_args, ")", 
+                          tmerge_args2, tmerge_args3, tmerge_args4 )
+  return(tmerge_formula)
+}
+
+##################################
+# Function that runs tmerge code # 
+##################################
+msDfsourceFnc <- function(tsetup) {
+  #Create temporary file
+  tempfile("tp", fileext=".txt")
+  f <- tempfile()
+  #Begin to load temp file with tmerge setup code
+  sink(f)
+  #Remove quotes from setup code
+  cat(tsetup)
+  sink(NULL)
+  #Run code to create data frame
+  source(f)
+  #End connection
+  unlink(f)
+  rm(f)
+}
+
+############################################
+## Function that modifies multistate data ##
+############################################
+#Modify multi-state data, add in current state and time in each state
+modMSdfFnc <- function(MDATA, id_var) {
+  ## Add current state into the data
+  #Get list of events
+  events <- list()
+  for (i in 1:length(unique(MDATA[, id_var]))) {
+    events[[i]] <- MDATA[MDATA[, id_var] == i, "event"]
+  }
+  #Make current state
+  cstate <- lapply(events, function(x) x[-length(x)])
+  cstate <- lapply(cstate, function(x) c("none",as.character(x)))
+  #Make current state
+  cstatedf <- data.frame("cstate"=unlist(cstate) )
+  #Add cstate data in with main file
+  MDATA$cstate <- cstatedf$cstate
+  #Add state time
+  MDATA$stime <- MDATA$tstop - MDATA$tstart 
+  return(MDATA)
+}
+
+##############################################
+## Function that runs all 3 functions above ##
+##############################################
+makeMsDF3fnc <- function(MSDF, input_dataframe, STATE_time_trans,
+                         STATE_bin_term, STATE_time_term,
+                         STATE_prior_event, STATE_time_id,
+                         STATE_time_independent_x) {
+#Sets up script that is saved as a temp file  
+  tsetup <- msDataFnc(MSDF=MSDF, input_dataframe= input_dataframe, STATE_time_trans=STATE_time_trans,
+                      STATE_bin_term=STATE_bin_term, STATE_time_term=STATE_time_term,
+                      STATE_prior_event=STATE_prior_event, STATE_time_id=STATE_time_id,
+                      STATE_time_independent_x=STATE_time_independent_x)
+  #Sources the temp file to create the data
+  msDfsourceFnc(tsetup)
+  #Makes final modifications to data frame
+  multi_state_df <- modMSdfFnc(MDATA=multi_state_df, id_var=STATE_time_id)
+  return(multi_state_df)
+}
+#Reactive function that runs the multi-state data function above
+MsDataFrame <- reactive({
+  if (input$makeMultiStateDF=="Yes") {
+    makeMsDF3fnc(MSDF=df(), input_dataframe= input$dataframe, STATE_time_trans=state_time_trans(),
+                 STATE_bin_term=state_bin_term(), STATE_time_term=state_time_term(),
+                 STATE_prior_event=state_prior_event(), STATE_time_id=state_time_id(),
+                 STATE_time_independent_x=state_time_independent_x())
+  }
+})
+
+###########################
+## Load multi-state data ##
+###########################
+#1. Enter the multi-state data name
+output$ms_df_input_name <- renderUI({ 
+  textInput("msDfInputName", "1. Enter the multi-state data name", value="mgus1")     
+})
+#1A. Get the data
+df_MULTI_STATE <- reactive({                  #This indicates the data frame I will use.
+  get(input$msDfInputName)  
+})
+#1C. Get the variable names  
+var_ms_df <- reactive({                  #I use this to get the variable names from the data frame. 
+  names(df_MULTI_STATE())  
+})  
+
+#2. Select the time start variable
+output$st_Time_Start <- renderUI({                                
+  selectInput("stTimeStart", "2. Select 'time start' variable",
+              choices = var_ms_df(), multiple=FALSE )
+})
+#2A. Object with just start time 
+state_time_start <- reactive({
+  input$stTimeStart
+})
+#3. Select the time stop variable
+output$st_Time_Stop <- renderUI({                                
+  selectInput("stTimeStop", "3. Select 'time stop' variable",
+              choices = setdiff(var_ms_df(), state_time_start()), multiple=FALSE )
+})
+#3A. Object with just time stop indicator
+state_time_stop <- reactive({
+  input$stTimeStop
+})
+#4. Select the event variable
+output$st_Time_Event <- renderUI({                                
+  selectInput("stTimeEvent", "4. Select the event variable",
+              choices = setdiff(var_ms_df(), c(state_time_start(), state_time_stop()) ), multiple=FALSE )
+})
+#4A. Object with just event indicator
+state_time_event <- reactive({
+  input$stTimeEvent
+})
+#5. Select the ID variable
+output$st_Time_Srvchck_ID <- renderUI({                                
+  selectInput("stTimeSrvchckID", "5. Select the ID variable",
+              choices = setdiff(var_ms_df(), c(state_time_start(), state_time_stop(), state_time_event()) ), 
+              multiple=FALSE )
+}) 
+#5A. Object with just ID indicator
+state_time_Srvchck_ID <- reactive({
+  input$stTimeSrvchckID
+})
+#6. Check the survival pattern and construction of the dataset
+output$check_multi_state_df <- renderUI({  
+  selectInput("checkMultiStateDF", "6. Do you want to check the data build?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")     
+})
+#6A. Run the function that shows the survival check and data attributes
+Run_survival_check <- reactive({
+  if (input$checkMultiStateDF=="Yes") {
+    srvChckFnc(Data=df_MULTI_STATE(), ID=state_time_Srvchck_ID(), tstart=state_time_start(), 
+               tstop=state_time_stop(), event=state_time_event())
+  }
+})
+#6B. Show the output of the check
+output$survival_check_attr <- renderPrint({
+  Run_survival_check()
+})
+
+###############################################
+## Function to check data and transitions ##
+###############################################
+srvChckFnc <- function(Data, ID_variable, tstart, tstop, event) {
+  #Create formula for survival check
+  srvChckFmla <- as.formula(paste0("Surv(", tstart, ",", tstop, ",", event,  ")", "~ 1") )
+  
+  #Check the counts for various transitions and number of transitions per subject in each state
+  Survival_Check <- survcheck(srvChckFmla, data=Data, id= Data[, which(colnames(Data) == ID_variable) ])
+  
+  #Examine construction of the time dependent dataset
+  Attributes <-attr(Data, "tcount")
+  return(list(Survival_Check=Survival_Check, Attributes=Attributes))
+}  
+
+##############################################
+## Examine the current probability-in-state ##
+##############################################
+#Aalen-Johansen survival estimate
+#7. Choose stratified probabilities
+output$prob_in_state_strata <- renderUI({  
+  selectInput("ProbInStateStrata", "7. Want stratified probabilities?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")     
+})
+#7A. Object for stratified probabilities yes/no 
+Pr_in_St_Strata <- reactive({
+  input$ProbInStateStrata
+})
+#8. Select the time start variable
+output$prob_in_state_strata_factor <- renderUI({
+  selectInput("ProbInStateStrataFactor", "8. Select a strata factor",
+              choices = var_ms_df(), multiple=FALSE )
+})
+#8A. Object with just start time 
+Pr_in_St_Strata_Factor <- reactive({
+  if (Pr_in_St_Strata() =="Yes") {
+    input$ProbInStateStrataFactor
+  } else {
+    NULL
+  }
+})
+#8B. Max survival time restricted mean
+Pr_in_St_max_time <- reactive({
+  max(df_MULTI_STATE()[, state_time_stop()], na.rm=TRUE)
+})
+#9. Restricted mean 
+output$prob_in_state_rmean <- renderUI({  
+  numericInput("probInStateRmean", "9. Select restricted mean time",
+               value=Pr_in_St_max_time(), min=1, max=Pr_in_St_max_time(), step=1)
+})
+#9A. Object for Restricted mean 
+Pr_in_St_Rmean <- reactive({
+  input$probInStateRmean
+})
+#10. Run probability-in-state curves
+output$run_probability_in_state <- renderUI({  
+  selectInput("runProbInSt", "10. Run probability-in-state?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")     
+})
+#10A. Object for running probability in state curves 
+Run_Pr_in_St <- reactive({
+  input$runProbInSt
+})
+#10B. Run the function that calculates the unconditional probability in state
+run_prob_in_state_0 <- reactive({
+  if (Run_Pr_in_St() =="Yes") {
+    probStCrv0Fnc(Data=df_MULTI_STATE(), ID_var=state_time_Srvchck_ID(), tstart_var=state_time_start(), 
+                  tstop_var=state_time_stop(), event_var=state_time_event())
+  }
+})
+#10C. Run the unconditional survival fit
+prob_in_state_0 <- reactive({
+  run_prob_in_state_0()
+})
+
+#10D. Run the function that calculates the probability in state for a stratified analysis
+run_prob_in_state_1 <- reactive({
+  if (Run_Pr_in_St() =="Yes") {
+    if (Pr_in_St_Strata() =="Yes") {
+      probStCrv1Fnc(Data=df_MULTI_STATE(), ID_var=state_time_Srvchck_ID(), tstart_var=state_time_start(), 
+                  tstop_var=state_time_stop(), event_var=state_time_event(), X= Pr_in_St_Strata_Factor() )
+    }
+  }
+})
+#10E. Run the conditional survival fit
+prob_in_state_1 <- reactive({
+  run_prob_in_state_1()
+})
+
+#10F. Print the probability in state output
+output$print_prob_in_state <- renderPrint({
+  if (Run_Pr_in_St() =="Yes") {
+    if (Pr_in_St_Strata() =="Yes") {
+  print(prob_in_state_1(), rmean= Pr_in_St_Rmean() )
+    } else {
+      print(prob_in_state_0(), rmean= Pr_in_St_Rmean() )
+    }
+  }
+})
+
+###############################################
+## Function for probability in state         ##
+###############################################
+#Null model survival function
+probStCrv0Fnc <- function(Data, ID_var, tstart_var, tstop_var, event_var) {
+  #Formula
+  srvFuncFmla0 <- as.formula(paste0("Surv(", tstart_var, ",", tstop_var, ",", event_var,  ")", "~ 1") )
+  #Survival function for a null model
+  Survival_function_0 <- survfit(srvFuncFmla0, data=Data, id=Data[, which(colnames(Data) == ID_var) ],
+                                 influence=TRUE) 
+  return(Survival_function_0)
+}
+#Single covariate survival function
+probStCrv1Fnc <- function(Data, ID_var, tstart_var, tstop_var, event_var, X) {
+  #Formula
+  srvFuncFmla1 <- as.formula(paste0("Surv(", tstart_var, ",", tstop_var, ",", event_var,  ")", "~ ", X) )
+  #Survival function for a null model
+  Survival_function_1 <- survfit(srvFuncFmla1, data=Data, id=Data[, which(colnames(Data) == ID_var) ], 
+                                 influence=TRUE) 
+  return(Survival_function_1)
+}
+
+## Restricted mean time-in-state ##
+output$rmean_time_state_prime_level <- renderUI({
+  selectInput("rmeanTmStPrLev", "11. Select the primary level",
+              choices = levels(as.factor( df_MULTI_STATE()[, Pr_in_St_Strata_Factor()])), multiple=FALSE )
+})
+#11A. Primary level_name 
+rmean_Tm_St_Prime_Level <- reactive({
+  input$rmeanTmStPrLev
+})
+#11B. 
+rmean_Tm_St_Prime_Level_number <- reactive({
+  which(levels(as.factor( df_MULTI_STATE()[, Pr_in_St_Strata_Factor()])) == rmean_Tm_St_Prime_Level())
+  })
+#12. Restricted mean 
+output$rmean_time_in_state_rmean <- renderUI({  
+  numericInput("rmeanTmStRmean", "12. Select restricted mean time",
+               value=Pr_in_St_max_time(), min=1, max=Pr_in_St_max_time(), step=1)
+})
+#12A. Object for Restricted mean 
+rmean_Time_in_St_Rmean <- reactive({
+  input$rmeanTmStRmean
+})
+#13. Run mean time-in-state curves
+output$run_time_in_state_z_test <- renderUI({  
+  selectInput("runTmInStZTst", "13. Run mean time-in-state test?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")     
+})
+#13A. Object for mean time-in-state test 
+Run_Tm_State_Z_Test <- reactive({
+  input$runTmInStZTst
+})
+
+#13B. Run the function that calculates the mean difference test
+run_mean_time_in_state <- reactive({
+  if (Run_Tm_State_Z_Test() =="Yes") {
+    rmean_z_test(survobj= prob_in_state_1(), rmean=rmean_Time_in_St_Rmean(), 
+                 level= rmean_Tm_St_Prime_Level_number())  
+    }
+})
+
+#13C. Run the conditional survival fit
+mn_Tm_In_State_Z_Test <- reactive({
+  run_mean_time_in_state()
+})
+#13D. Print the probability in state output
+output$print_prob_in_state_Z_test <- renderPrint({
+  if (Run_Tm_State_Z_Test() =="Yes") {
+    mn_Tm_In_State_Z_Test()
+#    run_mean_time_in_state()
+  }
+})
+
+
+###############################################
+## Function for Z test of mean time in state ##
+###############################################
+rmean_z_test <- function(survobj, rmean=NULL, level) {
+  number_of_strata <- length(survobj[["strata"]])
+  #This will stop the function from working if it doesn't have 2 groups in the strata
+  if(number_of_strata != 2) 
+    stop(paste0("Only runs for number of groups = 2. Your number of groups = ", number_of_strata)) 
+  s1 <- summary((survobj), rmean=rmean)$table                                   #Get summary info
+  r1 <- nrow(s1)                                                                #Get max row number
+  tmp_ls <- strsplit(names(survobj$strata), "=")                                #Split strata levels and var name
+  strata_levs <- c(tmp_ls[[1]][[2]], tmp_ls[[2]][[2]])                          #List of strata levels
+  level_name <- strata_levs[level]                                              #Primary group name
+  row_numbers <- grep(paste0("=",level_name ),                                  #Get primary group's row numbers 
+                      rownames(summary((survobj))$table))
+  #Put each group's output into a list that I will merge later
+  df_list <- list()
+  df_list[[1]] <- s1[row_numbers, ]
+  df_list[[2]] <- s1[setdiff(1:r1, row_numbers), ]
+  #Calculate summary statistics  
+  Diff <- df_list[[1]][,3] - df_list[[2]][,3]
+  SE  <- sqrt(df_list[[1]][,4]^2 + df_list[[2]][,4]^2)
+  Z <- abs(Diff)/SE
+  df2nms <- rownames(df_list[[2]])
+  #2 tail p-value
+  P.Value <- (1-pnorm(Z))*2
+  dfz <- data.frame(df_list[[1]], "Group 2"=df2nms, df_list[[2]], Diff, SE, Z, P.Value)
+  colnames(dfz)[c(1:4, 6:9)] <- c("n.1", "nevent.1", "rmean.1", "std.rmean.1",
+                                  "n.2", "nevent.2", "rmean.2", "std.rmean.2")
+  return(dfz)
+}
+
+################################
+## Graph probability in state ##
+################################
+#14. Stratify probability-in-state curves
+output$prob_state_strata_plot_yesno <- renderUI({  
+  selectInput("prStStrplotYn", "14. Want to stratify curves?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")     
+})
+#14A. Object for running probability in state curves 
+Prob_State_Strat_Plot_YN <- reactive({
+  input$prStStrplotYn
+})
+
+# Get the state names
+Prob_St_Event_Names <- reactive({
+  as.character(unlist(dimnames(prob_in_state_1()$transitions)[1]))
+})
+## Colors ##
+#15. Select colors for probability-in-state curves
+output$prob_state_curves_colors <- renderUI({  
+  selectInput("prStcurveColor", "15. Select state colors for curves", 
+              choices = colors()[c(24,552, 498, 652, 254,26, 152,8, 32,68,
+                                   75,95,119,139,142,310 ,367 ,450 ,568 ,589)], multiple=TRUE)     
+})
+#15A. Object for curve colors 
+Prob_St_Curve_Color <- reactive({
+  input$prStcurveColor
+})
+#15B. Run function to assign colors to states
+Prob_St_Curve_Color_Assign <- reactive({
+  fncPrStCurveCol(States= Prob_St_Event_Names(), Choices=Prob_St_Curve_Color() ) 
+})
+#15C. Run the probability in state curve colors
+Prob_State_Curve_Colors <- reactive({
+  fncPrStCurveCol(States= unname(unlist(dimnames(prob_in_state_0()$transitions)[1])), 
+                  Choices=Prob_St_Curve_Color_Assign())
+})
+
+#16. Select the time excluded states
+output$prob_state_exclude_state <- renderUI({
+  selectInput("prStExclSt", "16. Select the states to exclude",
+              choices = Prob_St_Event_Names(), multiple=TRUE )
+})
+#16A. Object with just start time 
+Prob_St_Exclude_State <- reactive({
+  input$prStExclSt
+})
+#17. Legend location
+output$prob_state_time_legend <- renderUI({  
+  selectInput("prStTmLegend", "17. Select the legend location",
+              choices = c("bottomright", "bottom", "bottomleft", "left", 
+                          "topleft", "top", "topright", "right", "center"),  multiple=FALSE)
+})
+#17A. Object with Legend location
+Prob_St_Tm_legend <- reactive({
+  input$prStTmLegend
+})
+
+## X and Y limits ##
+#18. Indicate lower limit of x-axis
+output$prob_state_curve_Xlim1 <- renderUI({
+  numericInput("psc_Xlim1", "18. Lower X-axis limit",
+               value = 0, step = 1)
+})
+#18A. Object for lower limit of x-axis
+Pr_St_curve_Xlim1 <- reactive({
+  input$psc_Xlim1
+})
+
+#19. Indicate upper limit of x-axis
+output$prob_state_curve_Xlim2 <- renderUI({
+  numericInput("psc_Xlim2", "19. Upper X-axis limit",
+               value = Pr_in_St_max_time(), step = 1)
+})
+#19A. Object for upper limit of x-axis
+Pr_St_curve_Xlim2 <- reactive({
+  input$psc_Xlim2
+})
+
+#20. Indicate lower limit of y-axis
+output$prob_state_curve_Ylim1 <- renderUI({
+  numericInput("psc_Ylim1", "20. Lower Y-axis limit",
+               value = 0, step = .01)
+})
+#20A. Object for lower limit of Y-axis
+Pr_St_curve_Ylim1 <- reactive({
+  input$psc_Ylim1
+})
+
+#21. Indicate upper limit of y-axis
+output$prob_state_curve_Ylim2 <- renderUI({
+  numericInput("psc_Ylim2", "21. Upper Y-axis limit",
+               value = 1, step = .01)
+})
+#21A. Object for lower limit of Y-axis
+Pr_St_curve_Ylim2 <- reactive({
+  input$psc_Ylim2
+})
+
+#22. X axis time values
+output$prob_state_time_x_axis_vals <- renderUI({  
+  selectInput("prStTmXAxisVls", "22. X-axis time value labels",
+              choices = as.character(0:Pr_in_St_max_time()),  multiple=TRUE)
+})
+#22A, Object with X axis values
+Prob_St_Tm_X_Axis_Val <- reactive({
+  input$prStTmXAxisVls
+})
+#23. X axis location for text values
+output$prob_state_time_x_axis_text <- renderUI({  
+  numericInput("prStTmXAxisTxt", "23. X-axis state label location",
+              min=0, max=Pr_in_St_max_time(), step=1, value=Pr_in_St_max_time() * 0.25)
+})
+#23A, Object with X axis text value
+Prob_St_Tm_X_Axis_Txt <- reactive({
+  input$prStTmXAxisTxt
+})
+
+#24. Run probability-in-state curves
+output$run_prob_state_curves <- renderUI({  
+  selectInput("runPrStCurve", "24. Run probability-in-state curves?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")     
+})
+#24A. Object for mean time-in-state test 
+Run_Pr_St_Curves <- reactive({
+  input$runPrStCurve
+})
+#24B. Run the probability in state curve plot 
+Run_Prob_State_Curve_Plot <- reactive({
+  if(Run_Pr_St_Curves() == "Yes") {
+    if(Prob_State_Strat_Plot_YN() == "Yes") {
+    fncProbStateCurve(AJcurve=prob_in_state_1(), Strata_fac_Name=Pr_in_St_Strata_Factor(),
+                      Color=Prob_St_Curve_Color_Assign(), 
+                      XLim=c(Pr_St_curve_Xlim1(), Pr_St_curve_Xlim2() ), 
+                      YLim=c(Pr_St_curve_Ylim1(), Pr_St_curve_Ylim2() ),  
+                      XTime= Prob_St_Tm_X_Axis_Val(), Excluded=Prob_St_Exclude_State(), 
+                      TextX=Prob_St_Tm_X_Axis_Txt(), 
+                       Leg_Loc=Prob_St_Tm_legend() ) 
+  } else {
+    fncProbStateCurve(AJcurve=prob_in_state_0(), Strata_fac_Name=Pr_in_St_Strata_Factor(),
+                      Color=Prob_St_Curve_Color_Assign(), 
+                      XLim=c(Pr_St_curve_Xlim1(), Pr_St_curve_Xlim2() ), 
+                      YLim=c(Pr_St_curve_Ylim1(), Pr_St_curve_Ylim2() ),  
+                      XTime= Prob_St_Tm_X_Axis_Val(), Excluded=Prob_St_Exclude_State(), 
+                      TextX=Prob_St_Tm_X_Axis_Txt(), 
+                      Leg_Loc=Prob_St_Tm_legend() ) 
+  }
+  }
+})
+#24C. Object for the run of the probability in state curves
+Prob_State_Curve_Plot <- reactive({
+  if(Run_Pr_St_Curves() == "Yes") {
+    Run_Prob_State_Curve_Plot()  
+  }
+  })
+#24D. Render plot function for the Plot the probability in state curves
+output$probability_in_state_plot <- renderPlot({
+  if(Run_Pr_St_Curves() == "Yes") {
+    Prob_State_Curve_Plot()  
+    }
+})
+
+##################################################  
+## Function to plot probability in state curves ##
+##################################################  
+fncProbStateCurve <- function(AJcurve, Strata_fac_Name=NULL, Color=NULL, XLim=NULL, YLim=NULL, XTime=NULL, 
+                              Excluded=NULL, TextX=NULL, Leg_Loc=NULL) {
+  #Get values for plot arguments 
+  summary_state_nms <- unname(unlist(dimnames(AJcurve$transitions)[1]))               #Run first. State names
+  number_state_nms <- length(summary_state_nms)                               #Number of states
+  Line_Colors <- Color[ which(!summary_state_nms %in% Excluded ) ] 
+#  Line_Colors <- Color 
+  strata_number <- if(length(AJcurve[["strata"]])== 0) {                      #Number of strata
+    1 
+  } else {
+    length(AJcurve[["strata"]])
+  }                            
+  Strata_fac <- if( strata_number== 1) {                                      #Strata names
+    "All" 
+  } else {
+    Strata_fac_Name
+  }                
+  active_plot_states <- setdiff(summary_state_nms, Excluded)                  #Total strata - Excluded
+  strata_levs <- if( strata_number== 1) {
+    "All" 
+  } else {
+    sub(paste0(Strata_fac ,"="), "", names(AJcurve$strata) )                  #List of strata level names
+  }
+  #Get X and Y coordinates on the curves
+  tpstate <- summary(AJcurve)                                                 #Survival fit summary
+  tpstate_probs <- data.frame(cbind(tpstate$time, tpstate$pstate))            #Curve X,Y coordinates
+  colnames(tpstate_probs) <- c("Time", summary_state_nms)                     #Column names
+  #Calculate text label Y coordinates
+  exlv <- round(TextX, 0)
+#  rng_exlv <- (exlv-5):(exlv+5)
+#  xy_cord_df <- tpstate_probs[tpstate_probs$Time %in% rng_exlv, ]
+  rng_exlv <- (which.min(abs(tpstate_probs$Time - exlv)) - 5):(which.min(abs(tpstate_probs$Time - exlv)) + 5)
+  xy_cord_df <- tpstate_probs[tpstate_probs$Time %in% range(tpstate_probs$Time[rng_exlv])[1]:range(tpstate_probs$Time[rng_exlv])[2], ]
+  xy_cord_df_mean <- colMeans(xy_cord_df[, -1])
+  #Legend name
+  Leg_Name <- strata_levs
+  #Plot title
+  Plot_title <- if( strata_number== 1) {
+    "Probability-in-State over time"
+  } else {
+    paste0("Probability-in-State over time by ",Strata_fac, " levels" )                  
+  }
+  #Set up plot
+  plot(AJcurve, col=rep(Line_Colors, each=strata_number), main= Plot_title, 
+       lwd=2, lty=1:strata_number, 
+       xlim=XLim, ylim=YLim, xaxt='n', noplot=Excluded,
+       xlab="Time", ylab="Current state") 
+  axis(1, as.numeric(XTime), XTime)
+  text(x=rep(TextX, times= strata_number), 
+       y=xy_cord_df_mean[ which(!summary_state_nms %in% Excluded ) ],
+       labels=summary_state_nms[ which(!summary_state_nms %in% Excluded ) ], col=Line_Colors, cex=3)
+#No legend returned if there is no strata (i.e., unconditional model)
+  if(strata_number > 1) {
+    legend(Leg_Loc, legend=Leg_Name, col=1, lty=1:(length(active_plot_states)), cex=2, lwd=2)
+  }
+}
+
+
+##########################################
+## Function to select colors for curves ##
+##########################################
+fncPrStCurveCol <- function(States, Choices) {
+  my_clr <- c(24,552, 498, 652, 254,26, 152,8,32 ,68,75,95,119,139,142,310 ,367 ,450 ,568 ,589)
+  my_clr_names <- colors()[my_clr]
+  Colors_for_Plots <- my_clr_names[match(Choices[1:length(States)], my_clr_names) ]
+  names(Colors_for_Plots) <- States
+    return(Colors_for_Plots)
+}
+
+
+##########################################
+## Cox type specific multi-state models ##
+##########################################
+
+#1. Select the time start variable
+output$cph_Time_Start <- renderUI({                                
+  selectInput("cphTimeStart", "1. Select 'time start' variable",
+              choices = var_ms_df(), multiple=FALSE )
+})
+#1A. Object with just start time 
+cph_time_start <- reactive({
+  input$cphTimeStart
+})
+#2. Select the time stop variable
+output$cph_Time_Stop <- renderUI({                                
+  selectInput("cphTimeStop", "2. Select 'time stop' variable",
+              choices = setdiff(var_ms_df(), cph_time_start()), multiple=FALSE )
+})
+#2A. Object with just time stop indicator
+cph_time_stop <- reactive({
+  input$cphTimeStop
+})
+#3. Select the event variable
+output$cph_Time_Event <- renderUI({                                
+  selectInput("cphTimeEvent", "3. Select the event variable",
+              choices = setdiff(var_ms_df(), c(cph_time_start(), cph_time_stop()) ), multiple=FALSE )
+})
+#3A. Object with just event indicator
+cph_time_event <- reactive({
+  input$cphTimeEvent
+})
+#4. Select the ID variable
+output$Cph_Time_Fmla_ID <- renderUI({                                
+  selectInput("cphTimeFmlaID", "4. Select the ID variable",
+              choices = setdiff(var_ms_df(), c(cph_time_start(), cph_time_stop(), cph_time_event()) ), 
+              multiple=FALSE )
+}) 
+#4A. Object with just ID indicator
+cph_time_fmla_id <- reactive({
+  input$cphTimeFmlaID
+})
+#5. Select the predictors.
+output$M_S_v_x <- renderUI({
+  selectInput("msVX", "5. Select the predictors", 
+              choices = setdiff(var_ms_df(), c(cph_time_start(), cph_time_stop(), cph_time_event(), cph_time_fmla_id()) ), multiple=TRUE, 
+              selected=setdiff(var_ms_df(), c(cph_time_start(), cph_time_stop(), cph_time_event(), cph_time_fmla_id()) )[1])
+})
+#5A. Object with just multi-state predictors
+ms_v_x <- reactive({
+  input$msVX
+})
+#5B. Make the formula
+ms_cph_mdl_fmla <- reactive({
+  as.formula(paste(paste0("Surv(",cph_time_start(), ",", cph_time_stop(), ",", cph_time_event(), ")", "~"),   
+                   paste(ms_v_x(), collapse= "+")))
+})
+#6. Revise the formula text
+output$MS_CPH_Uf <- renderUI({
+  textInput("upMsCphFmla", "6. Update formula (e.g., strata(X) )", 
+            value= deparse(ms_cph_mdl_fmla(), width.cutoff=500 ))
+})
+#6A. Object with updated formula
+ms_cph_ufmla <- reactive({
+  input$upMsCphFmla
+})
+#7. Indicate if you should update the model.
+output$Update_MS_CPH_Yes <- renderUI({
+  selectInput("upMsCphY", "7. Use the updated model formula?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")
+})
+#7A. Object with updated yes/no
+update_ms_cph_y <- reactive({
+  input$upMsCphY
+})
+#7B. Updated formula
+ms_cph_mdl_fmla2u <- reactive({ 
+  if (length(ms_v_x() ) ==1) {
+    as.formula(paste(paste0("Surv(",cph_time_start(), ",", cph_time_stop(), ",", cph_time_event(), ")", "~"),   
+                     paste(strsplit(ms_cph_ufmla(), "~")[[1]][2])))
+  } else {
+    as.formula(paste(paste0("Surv(",cph_time_start(), ",", cph_time_stop(), ",", cph_time_event(), ")", "~"),   
+                     paste(strsplit(ms_cph_ufmla(), "~")[[1]][2], collapse= "+")))
+  }
+})
+#8. Transition specific formulas
+output$ms_Trn_Spc_Fmla <- renderUI({
+  textInput("msTrnSpcFmla", "8. Update transition specific formula", 
+            value= ms_trn_spc_formula() )     
+})
+#8B. Make full regression call
+ms_trn_spc_formula <- reactive({
+  paste0("coxph(list(",  deparse(ms_cph_mdl_fmla(), width.cutoff=500 ),  ",), data=", input$msDfInputName,", ", "id=", 
+         cph_time_fmla_id(), ", model=TRUE" , ")")
+})
+#8A. Object with formula
+ms_trn_spc_fmla <- reactive({
+  input$msTrnSpcFmla
+})
+#9. Indicate if you should use the transition specific model.
+output$MS_Trns_Use_Yes <- renderUI({
+  selectInput("msTrnsUseYes", "9. Use the transition specific formula?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")
+})
+#9A. Object with yes/no on using transition specific formula
+ms_trns_use_yesno <- reactive({
+  input$msTrnsUseYes
+})
+#10. Determine if we should begin modeling.
+output$Begin_MS_Mdl <- renderUI({  
+  selectInput("BeginMSMdl", "10. Begin modeling?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")
+})
+#10A. Object with yes/no on running the model
+begin_ms_model <- reactive({
+  input$BeginMSMdl
+})
+#10B. Defines the type of model being used
+multi_state_model_type <- reactive({
+  if(begin_ms_model() == "Yes") {
+    if(ms_trns_use_yesno() == "Yes") {
+      "Transition"
+    } else {
+      "Baseline"
+    }
+  }
+})
+#10C. Reactive function that runs the multi-state transition model function 
+MS_Trns_Fit <- reactive({
+  if(begin_ms_model() == "Yes") {
+    if(ms_trns_use_yesno() == "Yes") {
+      makeMsTrnsFitfnc(ms_trn_spc_fmla() )
+    }
+  }
+})
+#10D. Create the multi state model 
+multi_state_model <- reactive({
+  if(begin_ms_model() == "Yes") {
+    switch(multi_state_model_type(),
+           "Baseline"   = if(update_ms_cph_y() == "Yes") {
+             coxph(ms_cph_mdl_fmla2u(), data=df_MULTI_STATE(), 
+                   id=df_MULTI_STATE()[, which(colnames(df_MULTI_STATE()) == cph_time_fmla_id()) ], model=TRUE)
+           } else {
+             coxph(ms_cph_mdl_fmla(), data=df_MULTI_STATE(), 
+                   id=df_MULTI_STATE()[, which(colnames(df_MULTI_STATE()) == cph_time_fmla_id()) ], model=TRUE)
+           },
+           "Transition" = if(ms_trns_use_yesno() == "Yes") {
+             MS_Trns_Fit()
+           }  
+    )}
+})
+#11. Download time dependent data file
+output$ms_Cph_Download_Nm <- renderUI({ 
+  textInput("msCphDownloadNm", "11. Enter the data frame name", 
+            value= "ms_fit")     
+})
+#12. Setup to download
+output$ms_model_download <- downloadHandler(
+  filename = "multi_state_fit.RData",
+  content = function(con) {
+    assign(input$msCphDownloadNm, multi_state_model() )
+    save(list=input$msCphDownloadNm, file=con)
+  }
+)
+#13. Create reactive function of X level names 
+multi_state_x_level_names <- reactive({
+  attributes(multi_state_model()$cmap)$dimnames[[1]][-1]
+})
+#14. Create reactive function of transition names 
+multi_state_transition_names <- reactive({
+  attributes(multi_state_model()$cmap)$dimnames[[2]]
+})
+#15. Regression model output
+output$ms_model_fit_out <- renderPrint({ 
+  if(begin_ms_model() == "Yes") {
+    list("Model"=multi_state_model(),
+         "States"=multi_state_model()$states,
+         "Current State Map"=multi_state_model()$cmap,
+         "Transitions"=multi_state_model()$transitions,
+         "Coefficient's X Levels"= multi_state_x_level_names() ) 
+    #"Coefficient's X Levels"=attributes(multi_state_model()$cmap)$dimnames[[1]][-1]) 
+  }
+})
+
+
+####################################
+## Make transition specific model ##
+####################################
+makeMsTrnsFitfnc <- function(setup) {
+  #Sets up script that is saved as a temp file  
+  tfsetup <- paste0("ms_model_fit <- ", setup)
+  #Sources the temp file to create the data
+  msDfsourceFnc(tfsetup)
+  return(ms_model_fit)
+}
+
+##################################################
+##  Schoenfeld residuals for multi-state models ##
+##################################################
+#1. Decide if we should make Schoenfeld residuals.
+output$Begin_MS_Schoenfeld_Res <- renderUI({  
+  selectInput("BeginMSchRes", "1. Create Schoenfeld residuals?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")
+})
+#1A. Object for yes/no on residuals
+begin_ms_schoenfeld_residuals <- reactive({
+  input$BeginMSchRes
+})
+#2. Select the variable for the Schoenfeld residuals
+output$MSSchoenfeld_X <- renderUI({
+  if(begin_ms_model() == "Yes") {
+    selectInput("MSschoenfeldx", "2. Select a single Schoenfeld residual", 
+              choices = MSschoenfeld_X_names_plot() , multiple=FALSE, selected=MSschoenfeld_X_names_plot()[1])
+  }
+})
+#2A. Object for individual X residual name
+ms_schoenfeld_X <- reactive({
+  input$MSschoenfeldx
+})
+#Creates Schoenfeld residuals
+MSschoenfeld_e <- reactive({
+  if(begin_ms_model() == "Yes") {
+    if(begin_ms_schoenfeld_residuals() == "Yes") {
+    cox.zph(multi_state_model())
+  }
+}
+})
+#This prints the point estimates and confidence intervals
+output$MSschoenfeld_test <- renderTable({
+  if(begin_ms_model() == "Yes") {
+    if(begin_ms_schoenfeld_residuals() == "Yes") {
+      MSschoenfeld_e()[[1]]
+    }
+  }
+}, rownames = TRUE)
+#This gets the residual names for plots
+MSschoenfeld_X_names_plot <- reactive({
+  if(begin_ms_model() == "Yes") {
+    if(begin_ms_schoenfeld_residuals() == "Yes") {
+      rownames(MSschoenfeld_e()[[1]])[-length(rownames(MSschoenfeld_e()[[1]]))]
+    }
+  }
+})
+#This plots the Schoenfeld residuals    
+output$MSschoenfeld_plt <- renderPlot({
+  if(begin_ms_model() == "Yes") {
+    if(begin_ms_schoenfeld_residuals() == "Yes") {
+  plot(MSschoenfeld_e()[which(MSschoenfeld_X_names_plot()== ms_schoenfeld_X())], col=2, lwd=2)
+  abline(h=0, lty=3, col=4, lwd=2)
+    }
+  }
+}, height = 800)
+
+
+################################################################
+## Make a model summary table to use for the state space plot ##
+################################################################
+#1. Select the summary X levels I want
+output$MS_Sum_X_Levs1 <- renderUI({
+  if(begin_ms_model() == "Yes") {
+    selectInput("msSumXLev1", "1. Select summary X levels", 
+                choices = multi_state_x_level_names() , multiple=FALSE, selected=multi_state_x_level_names()[1])
+  }
+})
+#1A. Object with X axis values
+ms_summary_x_levels1 <- reactive({
+  if(begin_ms_model() == "Yes") {
+    input$msSumXLev1
+  }
+})
+#2. Transition names
+output$MS_Sum_Trns_Nms1 <- renderUI({  
+  if(begin_ms_model() == "Yes") {
+    selectInput("msSumTrnNm1", "2. Select specific transitions",
+              #choices = multi_state_transition_names(),  multiple=TRUE, selected=multi_state_transition_names()[1])
+    choices = multi_state_transition_names(),  multiple=TRUE)
+  }
+})
+#2A. Object with transition names
+ms_summary_transition_names1 <- reactive({
+  if(begin_ms_model() == "Yes") {
+    input$msSumTrnNm1
+  }
+})
+#3. Multiplier value for continuous variables
+output$MS_Sum_Multi_Val1 <- renderUI({  
+  if(begin_ms_model() == "Yes") {
+    numericInput("mSSumMultiVal1", "3. Select continuous X multiplier",
+               min=1, step=1, value=1)
+  }
+})
+#3A. Object with multiplier value
+ms_summary_multiplier_value1 <- reactive({
+  if(begin_ms_model() == "Yes") {
+    input$mSSumMultiVal1
+  }
+})
+#Optional 2nd summary
+#4. Select the summary X levels I want
+output$MS_Sum_X_Levs2 <- renderUI({
+  if(begin_ms_model() == "Yes") {
+    selectInput("msSumXLev2", "1. Select summary X levels", 
+                choices = multi_state_x_level_names() , multiple=FALSE,  
+                selected=setdiff(multi_state_x_level_names(), ms_summary_x_levels1())[1]
+                )
+  }
+})
+#4A. Object with X axis values
+ms_summary_x_levels2 <- reactive({
+  if(begin_ms_model() == "Yes") {
+    input$msSumXLev2
+  }
+})
+#5. Transition names
+output$MS_Sum_Trns_Nms2 <- renderUI({  
+  if(begin_ms_model() == "Yes") {
+    selectInput("msSumTrnNm2", "2. Select specific transitions",
+                #choices = multi_state_transition_names(),  multiple=TRUE, selected=multi_state_transition_names()[1])
+    choices = multi_state_transition_names(),  multiple=TRUE)
+  }
+})
+#5A. Object with transition names
+ms_summary_transition_names2 <- reactive({
+  if(begin_ms_model() == "Yes") {
+    input$msSumTrnNm2
+  }
+})
+#6. Multiplier value for continuous variables
+output$MS_Sum_Multi_Val2 <- renderUI({  
+  if(begin_ms_model() == "Yes") {
+    numericInput("mSSumMultiVal2", "3. Select continuous X multiplier",
+                 min=1, step=1, value=1)
+  }
+})
+#6A. Object with multiplier value
+ms_summary_multiplier_value2 <- reactive({
+  if(begin_ms_model() == "Yes") {
+    input$mSSumMultiVal2
+  }
+})
+#7. Requesting two levels.
+output$Sum_2_X_Lev_Yes <- renderUI({  
+  if(begin_ms_model() == "Yes") {
+    selectInput("Sum2XLevY", "7. Did you enter two X-levels?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")
+  }
+})
+#7A. Object for requesting two levels.
+summarize_2_x_levels_yes <- reactive({
+  if(begin_ms_model() == "Yes") {
+    input$Sum2XLevY 
+  }
+})
+#8. Run the model summary
+output$Begin_MS_Sum_Yes <- renderUI({  
+  if(begin_ms_model() == "Yes") {
+    selectInput("BeginMSSumY", "8. Run the model summary?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")
+  }
+})
+#8A. Object for requesting two levels.
+begin_ms_summary_yes <- reactive({
+  if(begin_ms_model() == "Yes") {
+    input$BeginMSSumY 
+  }
+})
+#9. Reactive function that runs the model summary function.
+run_ms_model_summary <- reactive({
+    if(begin_ms_summary_yes() == "Yes") {
+      if(summarize_2_x_levels_yes() == "Yes") {
+        fncMdlXLevSmry(model=multi_state_model(), 
+                   trans= list(ms_summary_transition_names1(), ms_summary_transition_names2()), 
+                   main= ms_summary_x_levels1(), 
+                   second= ms_summary_x_levels2(), 
+                   multiplier=c(ms_summary_multiplier_value1(), ms_summary_multiplier_value2()), round_lev=2)  
+      } else {
+        mdlSmryFnc(model=multi_state_model(), 
+                   trans=ms_summary_transition_names1(), 
+                   main=ms_summary_x_levels1(), 
+                   multiplier=ms_summary_multiplier_value1(), round_lev=2) 
+    }
+  }
+})
+#10. Print results
+output$ms_model_summary_out <- renderPrint({ 
+  run_ms_model_summary()
+})
+
+######################################
+## Function for model summary table ##
+######################################
+mdlSmryFnc <- function(model, trans=NULL, main=NULL, multiplier=1, round_lev=2) {
+  #Transition names
+  cmap_tbl <- model$cmap
+  coxph_row_nm <- rownames(cmap_tbl)
+  coxph_trans <- colnames(cmap_tbl)
+  #Creates the CMAP names that removes the strata part of the name
+  cmap_nms <- list()
+  for(i in 1:length(coxph_row_nm)) {
+    cmap_nms[[i]] <- strsplit(strsplit(coxph_row_nm[[i]], c("\\("), fixed=F)[[1]][2], c("\\)"), fixed=F)[[1]][1]
+  }
+  #Replaces NAs found in non-strata variables with the proper name
+  for(i in 1:length(coxph_row_nm)) {
+    if(is.na(cmap_nms[[i]])) {
+      cmap_nms[[i]] <- coxph_row_nm[[i]]
+    }
+  }
+  #Change the names in the cmap table
+  rownames(cmap_tbl) <- cmap_nms 
+  # "main2" Identifies the target variable used for the "key" and "X" part of the function output 
+  if (is.null(main)) {
+    main2 <- which(rownames(cmap_tbl) != "Baseline")[1]
+  } else {
+    main2 <- which(rownames(cmap_tbl) == main)
+  }
+  #Key transitions from function input or all transitions by default
+  if (is.null(trans)) {
+    key_trans <- coxph_trans
+  } else {
+    key_trans <- trans
+  }
+  #Element names and numbers of key transitions
+  trans_nms <- which(coxph_trans %in% key_trans)
+  coef_trans <- cmap_tbl[main2, which(coxph_trans %in% key_trans)]
+  
+  #Identify the main variable and associated rows from the coefficient table
+  if (is.null(main)) {
+    main_var_coef <- unlist(cmap_tbl[rownames(cmap_tbl) != "Baseline", drop=F, ][1,])
+  } else {
+    main_var_coef <- unlist(cmap_tbl[rownames(cmap_tbl)== main, ])
+  }
+  #Model summary output
+  mdl_out <- summary(model)$coefficients
+  #Pull out the exponentiated coefficients
+  #exp_coef <- mdl_out[main_var_coef, 2]
+  exp_coef <- mdl_out[main_var_coef, which(colnames(mdl_out) =="exp(coef)")]
+  #Pull out the coefficient p-values
+  #pval_trans <-mdl_out[main_var_coef, 6]
+  pval_trans <-mdl_out[main_var_coef, which(colnames(mdl_out) =="Pr(>|z|)")]
+  #Convert p-values to *
+  pval_symbol <- vector( length=length(pval_trans))
+  pval_symbol[pval_trans >= .1]  <- ""
+  pval_symbol[pval_trans < .1]   <- "+"
+  pval_symbol[pval_trans < .05]  <- "*"
+  pval_symbol[pval_trans < .01]  <- "**"
+  pval_symbol[pval_trans < .001] <- "***"
+  #Get the summary of the transitions for the plot text
+  smry_trans <- paste0(round(exp_coef[trans_nms]^multiplier, round_lev), pval_symbol[trans_nms])
+  #This will be used to paste the 2 states together for table headings
+  smry_result <- vector(length=length(trans_nms))
+  #Vector to store the transition names from:to
+  sts <- colnames(model$cmap)[trans_nms]
+  #For loop that creates the transition names
+  for (i in 1:length(trans_nms)) {
+    smry_result[i] <- paste0(model$states[as.numeric(unlist(strsplit(sts[i], ":"))[1])], 
+                             " -> ",
+                             model$states[as.numeric(unlist(strsplit(sts[i], ":"))[2])])
+  }
+  #Get the summary table
+  trans_out <- as.data.frame(cbind("Transition"=smry_result, "HR"=exp_coef[trans_nms], 
+                                   "p.value"= pval_trans[trans_nms]))
+  #Name the summary coefficients and p-value symbols vector elements
+  names(smry_trans) <- smry_result
+  #Returns the output table and the transition summary needed for the plot text
+  return(list(output=trans_out , smry=smry_trans, key=cmap_tbl[main2, which(coxph_trans %in% key_trans)], 
+              X= rownames(cmap_tbl)[main2]))
+}
+
+####################################################
+## Function to make MS output for multiple levels ##
+####################################################
+fncMdlXLevSmry <- function(model, trans=NULL, main=NULL, second=NULL, multiplier=1, round_lev=2) {
+  XLevs=c(main, second)
+  rslt <- list()
+  for (i in 1:length(XLevs)) {
+    rslt[[i]] <- mdlSmryFnc(model=model, trans=trans[[i]], main=XLevs[i],
+                            multiplier=multiplier[i], round_lev=round_lev)
+  }
+  for (i in 1:length(XLevs)) {
+    names(rslt)[i] <- XLevs[[i]]
+  }
+  return(rslt)
+}
+
+#########################
+## State space diagram ##
+#########################
+#1. Select colors for probability-in-state curves
+output$State_Spc_Color <- renderUI({  
+  selectInput("stateSpcClrs", "1. Select state colors for curves", 
+              choices = colors()[c(24,552, 498, 652, 254,26, 152,8, 32,68,
+                                   75,95,119,139,142,310 ,367 ,450 ,568 ,589)], multiple=TRUE)     
+})
+#1A. Object for curve colors 
+state_space_colors <- reactive({
+  input$stateSpcClrs
+})
+#2. Revise plot layout
+output$ms_St_Spc_Layout <- renderUI({
+  textInput("msStSpcLyt", "2. New plot layout", 
+            value= state_build_txt_input() )     
+})
+#2C. Object with the standard diagram box setup
+state_build_txt_input <- reactive({
+  fncStateBuildTxtInput(multi_state_model()$states)
+})
+#2A. Object with new layout
+ms_state_space_layout <- reactive({
+  input$msStSpcLyt
+})
+#3. Modifies the plot layout.
+output$MS_Mod_St_Spc_Layout <- renderUI({  
+  selectInput("msModStSpcLyt", "3. Want to modify plot layout?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")
+})
+#3A. Object with yes/no on modifying the layout
+ms_modify_state_space_layout <- reactive({
+  input$msModStSpcLyt
+})
+#4. Legend location
+output$St_Sp_Legend <- renderUI({  
+  selectInput("StSpLgnd", "4. Select the legend location",
+              choices = c("bottomright", "bottom", "bottomleft", "left", 
+                          "topleft", "top", "topright", "right", "center"),  multiple=FALSE)
+})
+#4A. Object with Legend location
+state_space_legend <- reactive({
+  input$StSpLgnd
+})
+#5. Modifies the plot layout.
+output$Make_St_Spc_Diag <- renderUI({  
+  selectInput("makeStSpcDiag", "5. Create state space diagram?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")
+})
+#5A. Object with yes/no on creating the state space diagram
+ms_make_state_space_diagram <- reactive({
+  input$makeStSpcDiag
+})
+#5B. Make state space diagram
+#Make_State_Space_Plot <- reactive({
+#  if(begin_ms_model() == "Yes") {
+#    if( ms_make_state_space_diagram() == "Yes") {
+#      fncStateSpacePlot(fit=multi_state_model(), fit_smry=run_ms_model_summary(), 
+#   Choices=state_space_colors(), Build=ms_make_state_space_diagram(), 
+#   NewBuild= eval(parse(text=ms_state_space_layout() )), lgn_loc=state_space_legend() )  
+#    }
+#   }
+#})
+#5C. MS state space plot    
+output$ms_state_space_plot <- renderPlot({
+  if(begin_ms_model() == "Yes") {
+    if( ms_make_state_space_diagram() == "Yes") {
+      #Make_State_Space_Plot()
+      fncStateSpacePlot(fit=multi_state_model(), fit_smry=run_ms_model_summary(), 
+                        Choices=state_space_colors(), Build=ms_make_state_space_diagram(), 
+                        NewBuild= eval(parse(text=ms_state_space_layout() )), lgn_loc=state_space_legend() ) 
+    }
+  }
+
+  ## Interactive shiny plot
+#  points( source_coords$xy[1], source_coords$xy[2], cex=3, pch=NA)
+  points( source_coords$xy[1], source_coords$xy[1], cex=3, pch=NA)
+  ## Destination
+  text(dest_coords$x, dest_coords$y, DistCost()$Lost , cex=2)
+}, height = 800)
+#5D. Creates the state space text values 
+Make_State_Space_Txt_Vals <- reactive({
+  if(begin_ms_model() == "Yes") {
+    if( ms_make_state_space_diagram() == "Yes") {
+      fncMSStSpcTxt(mdl_smr= run_ms_model_summary())
+    }
+  }
+})
+  
+########################################################################
+## Interactive state space values for plotting witht the click option ##
+########################################################################
+#Point click options outside of plot so it'll be clean if I just want the plot
+  ms_State_Space_Initial_X <- -.1
+  ms_State_Space_Initial_Y <- -.1
+  
+  ## Source Locations (Home Base)
+  source_coords <- reactiveValues(xy=c(x=ms_State_Space_Initial_X, y=ms_State_Space_Initial_Y) )
+  
+  ## Dest Coords
+  dest_coords <- reactiveValues(x=ms_State_Space_Initial_X, y=ms_State_Space_Initial_Y)
+  observeEvent(plot_click_slow(), {
+    dest_coords$x <- c(dest_coords$x, plot_click_slow()$x)
+    dest_coords$y <- c(dest_coords$y, plot_click_slow()$y)
+  })
+  
+  ## Don't fire off the plot click too often
+  plot_click_slow <- debounce(reactive(input$plot_click), 300)
+  
+  #My values
+  DistCost <- reactive({
+    num_points <- length(dest_coords$x)
+    #Coefficient values
+    list( Lost= Make_State_Space_Txt_Vals() )
+  })
+  
+################  
+
+#########################################################################
+## Function that creates the matrix for the arrows in the state figure ##
+#########################################################################
+fncStateCnct <- function(what, fit, fit_smry,  ...) { 
+  nmbr_st <- length(fit$states)
+  sname <- c("Entry", fit$states[-1])
+  ls_length <- length(fit_smry)
+  connect <- matrix(0, nmbr_st, nmbr_st, dimnames=list(sname, sname)) 
+  if(ls_length==4) {
+    mat_coords_txt <- strsplit(names(fit_smry[[3]]), ":")
+  } else {
+    mat_coords_txt <- strsplit(names(fit_smry[[1]][[3]]), ":")
+  }
+  mat_coords_X <- as.numeric(unlist(lapply(mat_coords_txt, `[[`, 1)))  #Grabs 1st element
+  mat_coords_Y <- as.numeric(unlist(lapply(mat_coords_txt, `[[`, 2)))  #Grabs 2nd element
+  list_lngth <- length(mat_coords_txt)
+  for(i in 1:list_lngth) {
+    connect[mat_coords_X[i], mat_coords_Y[i]] <- 1
+  }
+  return(connect)
+}
+
+########################################################
+## Function that gets number of arrows for each state ##
+########################################################
+fncStateArrow <- function(connect_matrix) {
+  #Gets the number of values greater than 0 
+  grt_thn_0 <- function(x) sum(x > 0)
+  #Runs the function above for each state
+  apply(connect_matrix, 2, grt_thn_0) 
+}
+
+################################################
+## Function that replicates the color numbers ##
+################################################
+fncStateColArrow <- function(arrow_count, box_col) {
+  arw_col <- rep(box_col, arrow_count)
+}
+
+#######################################################
+## Function that gets the standard diagram box setup ##
+#######################################################
+fncStateBuild <- function(connect_matrix) {
+  st_bld <- c(1, length(rownames(connect_matrix))-2, 1)
+  return(st_bld)
+}
+  #2B. Function to get quick state build
+  fncStateBuildTxtInput <- function(states_in_fit) {
+    st_bld <- c(1, length(states_in_fit)-2, 1)
+    st_bld <- paste0("c(",toString(st_bld), ")" )
+    return(st_bld)
+  }
+  
+################################################
+## Function to get state space diagram values ##
+################################################
+#Number of summary transitions
+fncNmbSmrTrn <- function(mdl_smr) {
+  nmbr_sum_trn <- length(mdl_smr[[1]][[3]])
+}
+
+#Number of summary coefficients
+fncNmbSmrX <- function(mdl_smr) {
+  nmbr_sum_X <- length(mdl_smr)
+}
+
+################################################
+## Function to get state space diagram values ##
+################################################
+fncMSStSpcSmry <- function(mdl_smr) {
+  nx <- fncNmbSmrX(mdl_smr)
+  #Number of predictors in state space diagram 
+  ms_nmbr_state_fig_x <- length(mdl_smr)
+  state_space_smry1 <- mdl_smr[[1]][["smry"]]
+  #For loop to get values for 1 or 2 coefficients
+  if(nx==2) {
+    for(i in 1:nx) {
+      #Get primary summary coefficients 
+      state_space_smry2 <- paste0("(",mdl_smr[[2]][["smry"]],")")
+      names(state_space_smry2) <- names(mdl_smr[[2]][["smry"]])
+      State_Space_Summary <- list(state_space_smry1=state_space_smry1, state_space_smry2=state_space_smry2)
+    }
+  } else {
+    State_Space_Summary <- list(state_space_smry1)
+  }
+  return(State_Space_Summary)
+}
+
+################################################
+## Function to get state space Text values ##
+################################################
+fncMSStSpcTxt <- function(mdl_smr) {
+  nx <- fncNmbSmrX(mdl_smr)
+  #Number of predictors in state space diagram 
+  ms_nmbr_state_fig_x <- length(mdl_smr)
+  #For loop to get values for 1 or 2 coefficients
+  if(nx==2) {
+    for(i in 1:nx) {
+      #Get primary summary coefficients 
+      state_space_smry1 <- mdl_smr[[1]][["smry"]]
+      state_space_smry2 <- paste0("(",mdl_smr[[2]][["smry"]],")")
+      names(state_space_smry2) <- names(mdl_smr[[2]][["smry"]])
+      State_Space_Summary <- c(state_space_smry1, state_space_smry2)
+    }
+  } else {
+    State_Space_Summary <- mdl_smr[["smry"]]
+  }
+  State_Space_Summary <- c(" ", State_Space_Summary)
+  return(State_Space_Summary)
+}
+
+############################################
+## Function to create state space diagram ##
+############################################
+fncStateSpacePlot <- function(fit, fit_smry, Choices, Build="No", NewBuild, lgn_loc
+                              ) {
+  States <-  c("Entry", fit$states[-1])
+  #Get objects from various functions
+  connect_mat <- fncStateCnct(fit=fit, fit_smry=fit_smry)
+  connect_mat <- edit(connect_mat)
+  cnt_arws <- fncStateArrow(connect_mat)
+  ms_clr <- fncPrStCurveCol(States, Choices)
+  arow_colr <- fncStateColArrow(cnt_arws, ms_clr)
+  if(Build== "Yes") {
+    state_build <- NewBuild
+  } 
+  #Therneau's state space figure
+  statefig(matrix(state_build), connect_mat, cex=1.5,
+           acol=arow_colr, #Arrows point in order of columns, see matrix 
+           bcol=ms_clr, #In order of column names
+           lwd=2.5) 
+  ###########
+    nx <- fncNmbSmrX(mdl_smr=fit_smry)
+    if(nx==2) {
+      #Text labels for secondary coefficient2
+      legend(lgn_loc, legend= c(paste0("State <- ", toupper(abbreviate(fit_smry[[1]][4], minlength=6))), 
+                                paste0("State <- ( ", toupper(abbreviate(fit_smry[[2]][4], minlength=6)), " )") ), 
+             bty="n", cex=2)
+    } else {
+      legend(lgn_loc, legend= paste0("State <- ", toupper(abbreviate(fit_smry[4], minlength=6))), 
+             bty="n", cex=2)
+    }
+  }
+
+############################################
+## Function to get text label coordinates ##   
+############################################
+#1. Primary coefficient  
+fncStSpcTxtXY1 <- function(mdl_smr) {
+  st_spc_smry_ls <- fncMSStSpcSmry(mdl_smr=mdl_smr)
+  
+  #Get primary X/Y coordinates 
+  txt_lbl_crds1 <- locator(n= length(st_spc_smry_ls[[1]]))
+  return(txt_lbl_crds1)
+}
+
+#2. Secondary coefficient  
+fncStSpcTxtXY2 <- function(mdl_smr) {
+  st_spc_smry_ls <- fncMSStSpcSmry(mdl_smr=mdl_smr)
+  #Run locator
+  if(length(state_smry_ls) ==2) {
+    txt_lbl_crds2 <- locator(n= length(st_spc_smry_ls[[2]]))
+  } else {
+    txt_lbl_crds2 <- NULL
+  }
+  return(txt_lbl_crds2)
+}
+
+###########################################################
+## Function to create state space text values and legend ##
+###########################################################
+fncStSpcTextLgd <- function(mdls, tc1, tc2=NULL, lgn_loc) {
+  #State space summary
+  st_spc_smry_ls <- fncMSStSpcSmry(mdl_smr=mdls)
+  #Get basic values
+  nt <- fncNmbSmrTrn(mdl_smr=mdls)
+  nx <- fncNmbSmrX(mdl_smr=mdls)
+  #Text labels for primary coefficient2
+  if(nx==2) {
+    #Text labels for secondary coefficient2
+    for(i in 1:nt) {
+      text(tc1$x[i], tc1$y[i], st_spc_smry_ls[[1]][i], cex=1.5)
+      text(tc2$x[i], tc2$y[i], st_spc_smry_ls[[2]][i], cex=1.5)
+      legend(lgn_loc, legend= c(paste0("State <- ", toupper(abbreviate(mdls[[1]][4], minlength=6))), 
+                                paste0("State <- ( ", toupper(abbreviate(mdls[[2]][4], minlength=6)), " )") ), 
+             bty="n", cex=1.33)
+      
+    }
+  } else {
+    for(i in 1:nt) {
+      text(tc1$x[i], tc1$y[i], st_spc_smry_ls[[1]][i], cex=1.5)  
+      legend(lgn_loc, legend= paste0("State <- ", toupper(abbreviate(mdls[[1]][4], minlength=6))), 
+             bty="n", cex=1.33)
+    }
+  }
+}
+
+
+################################################################################
+
+################################################################################
 ## Testing section: Begin  ##
 ################################################################################
 #output$testplot1 <- renderPlot({ 
 ##  plot(values$a, values$b)
 ##} )
-#output$test1 <- renderPrint({
-#  quant_ests()
+output$test1 <- renderPrint({
+  list( fit_smry=run_ms_model_summary(), 
+       Choices=state_space_colors(), Build=ms_make_state_space_diagram(), 
+       layout=ms_state_space_layout(), 
+       str_spl =strsplit(names(run_ms_model_summary()[[1]][[3]]), ":"),
+       nms=names(run_ms_model_summary()[[1]][[3]])
+#    txt_lbl_crds1(),
+#       txt_lbl_crds2(),
+#       add_state_space_text_legend(), 
+#       Make_State_Space_Text_Legend()
+  )
+  #  quant_ests()
   #summary(xdf())
   #mc_arg_fnc1()
   #str(mc_sim_fnc1())
   #input_mc_df1()
 #  vls2()
 #MsStrat0()
-#  })
+  })
 
 
 ################################################################################

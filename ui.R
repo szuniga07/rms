@@ -725,8 +725,258 @@ fluidRow(
        uiOutput("abbr_length")
 )),
 h5("Random effects frailties sorted alphabetically by cluster name and numerically by frailty value."),
-verbatimTextOutput("frail_output")
+verbatimTextOutput("frail_output"),
+br(),
+
 ),    
+
+########################
+## Multi-state models ##
+########################
+tabPanel("Multi-State", 
+         h4("Multi-state survival analysis"),
+         br(),
+         h5("This tab allows one to create 1) a multi-state dataset, 2) Aalen-Johansen survival estimates, 3) probability-in-state-curves, 4) a restricted mean time-in-state Z test for 2 groups, 5) Cox type-specific regressions, and 6) state space diagrams."),
+         h5("For an introduction to multi-state modeling, please see Terry Therneau's 2018 article: 'Application of multi-state models in cancer clinical trials'. Clinical Trials, 15(5), 489-498."),
+         br(),
+         ## Multi-state model ##
+         h4("Create a multi-state model data frame."),
+         h5("This section converts wide format data into long format and produces multiple variables such as start and stop times for various states."),
+         h5("Important: One time variable (e.g., #3) that covers the full range is required (i.e., values of 1:max(Time)). The ID variable in #5 needs to be in sequential order (i.e., no gaps). The time variable created from #2, will take the same name."),
+         fluidRow(
+           column(3, 
+                  uiOutput("st_Time_Trans")),
+           column(3, offset=1,
+                  uiOutput("st_Bin_Term")),
+           column(3, offset=1,
+                  uiOutput("st_Time_Term"))
+         ),
+         h5("#4 below calculates cumulative values for events. #6 merges in non-state variables that remain constant over time such as birth year and location."),
+         fluidRow(
+           column(3, 
+                  uiOutput("st_Prior_Event")),
+           column(3, offset=1,
+                  uiOutput("st_Time_ID")),
+           column(3, offset=1,
+                  uiOutput("st_Time_I_V"))
+         ),
+         h5("Create and save multi-state data."),
+         fluidRow(
+           column(3,
+                  uiOutput("make_multi_state_df")),
+           column(3, offset=1,
+                  uiOutput("ms_data_download_name")) ,
+           column(3, offset=1,
+                  downloadLink('ms_data_download', '9. Click to download data.'))
+         ),
+         br(),
+         ## Load data  
+         h4("All sections in steps 1-24 are dependent on preceeding steps. Complete relevant steps prior to subsequent steps (e.g., restricted time is optional)."),
+         br(),
+         h5("Check the multistate survival transition and data build attributes."),
+         fluidRow(
+           column(3, 
+                  uiOutput("ms_df_input_name")),
+           column(3, offset=1,
+                  uiOutput("st_Time_Start")),
+           column(3, offset=1,
+                  uiOutput("st_Time_Stop"))
+         ),
+         fluidRow(
+           column(3, 
+                  uiOutput("st_Time_Event")),
+           column(3, offset=1, 
+                  uiOutput("st_Time_Srvchck_ID")),
+           column(3, offset=1,
+                  uiOutput("check_multi_state_df"))
+         ),
+         ## Survival check output ##
+         verbatimTextOutput("survival_check_attr"),
+         br(),
+         h4("Set up 'Current Probability-in-State' Aalen-Johansen Survival Estimates"),
+         fluidRow(
+           column(3, 
+                  uiOutput("prob_in_state_strata")),
+           column(3, 
+                  uiOutput("prob_in_state_strata_factor")),
+           column(3, 
+                  uiOutput("prob_in_state_rmean")),
+           column(3, 
+                  uiOutput("run_probability_in_state"))
+         ),
+         br(),
+         ## Aalen-Johansen survival estimates of probability in state ##
+         verbatimTextOutput("print_prob_in_state"),
+         br(),
+         h4("Test the difference in mean Time-in-State of a 2 group strata (e.g., intervention and control)"),
+         h5("Conducts a Z test between groups' mean time-in-state."),
+         fluidRow(
+           column(3, 
+                  uiOutput("rmean_time_state_prime_level")),
+           column(3, offset=1,
+                  uiOutput("rmean_time_in_state_rmean")),
+           column(3, offset=1,
+                  uiOutput("run_time_in_state_z_test"))
+         ),
+         br(),
+         verbatimTextOutput("print_prob_in_state_Z_test"),
+         br(),
+h4("Probability-in-State curves"),
+h5("Uses the Aalen-Johansen survival estimates for unconditional and conditional (stratified) displays. Colors assigned to factors in the order they are listed in various output above."),
+fluidRow(
+  column(3, 
+         uiOutput("prob_state_strata_plot_yesno")),
+  column(3, 
+         uiOutput("prob_state_curves_colors")),
+  column(3, 
+         uiOutput("prob_state_exclude_state")),
+  column(3, 
+         uiOutput("prob_state_time_legend"))
+),
+br(),
+#X and Y limits
+fluidRow(
+  column(3, 
+         uiOutput("prob_state_curve_Xlim1")),
+  column(3, 
+         uiOutput("prob_state_curve_Xlim2")),
+  column(3, 
+         uiOutput("prob_state_curve_Ylim1")),
+  column(3, 
+         uiOutput("prob_state_curve_Ylim2"))
+),
+br(),
+#Colors
+fluidRow(
+  column(3, 
+         uiOutput("prob_state_time_x_axis_vals")),
+  column(3, 
+         uiOutput("prob_state_time_x_axis_text")),
+  column(3, 
+         uiOutput("run_prob_state_curves"))
+),
+br(),
+plotOutput("probability_in_state_plot", height = 800, width="100%"),
+br(),
+## Cox PH multi-state model ##
+h4("Cox type specific multi-state model"),
+h6("Conduct baseline models with consistent X across all transitions or transition specific models. Transition models allow for different, clinically relevant predictors in each transition."),
+fluidRow(
+  column(3, 
+         uiOutput("cph_Time_Start")),
+  column(3, offset=1,
+         uiOutput("cph_Time_Stop")),
+  column(3, offset=1,
+         uiOutput("cph_Time_Event"))
+),
+br(),
+h5("Update the baseline model formula in #6. Use 'strata' rather than 'strat' to stratify."),
+fluidRow(
+  column(3, 
+         uiOutput("Cph_Time_Fmla_ID")),
+  column(3, offset=1,
+         uiOutput("M_S_v_x")),
+  column(3, offset=1,
+         uiOutput("MS_CPH_Uf"))
+),
+br(),
+h5("Create transition specific models (e.g., '1:2') in #8."),
+h6("Example code: coxph(list(Surv(start, stop, event) ~ age, 1:2 + 2:3 ~ age + sex), data=mgus1, id=id, model=TRUE)"),
+fluidRow(
+  column(3, 
+         uiOutput("Update_MS_CPH_Yes")),
+  column(3, offset=1,
+         uiOutput("ms_Trn_Spc_Fmla")),
+  column(3, offset=1,
+         uiOutput("MS_Trns_Use_Yes"))
+),
+br(),
+h5("Create and save a multi-state model."),
+fluidRow(
+  column(3,
+         uiOutput("Begin_MS_Mdl")),
+  column(3, offset=1,
+         uiOutput("ms_Cph_Download_Nm")) ,
+  column(3, offset=1,
+         downloadLink('ms_model_download', '12. Click to download model.'))
+),
+br(),
+h4("Regression results"),
+h5("Positive logits indicate faster transition times into new states. Negative logits indicate slower transitions."),
+verbatimTextOutput("ms_model_fit_out"),
+br(),
+## Schoenfeld residauls ##
+h4("Schoenfeld residuals"),
+h5("Assess the Cox model's proportional hazards assumption."),
+br(),
+fluidRow(
+  column(3,
+         uiOutput("Begin_MS_Schoenfeld_Res")),
+  column(3, offset=1,
+         uiOutput("MSSchoenfeld_X")) 
+),
+h5("Schoenfeld residuals test"),
+h6("Schoenfeld residuals not run on a transition specific model entered into #8 above."),
+tableOutput("MSschoenfeld_test"),
+h5("Schoenfeld residuals plot"),
+h6("Check for a pattern in time. An upwards line may suggest an increasing effect in X over time. For binary predictors (with no interaction term), the top band of dots is failures when X=1, lower band is when X=0"),
+plotOutput("MSschoenfeld_plt", height = 800, width="100%"),
+br(),
+#Model summary for state space diagram
+h4("Summarize output"),
+h5("Create the model summary to retrieve the state space diagram values"),
+h6("Select options for the coefficient of primary interest. Leaving #2 blank returns all transitions."),
+fluidRow(
+  column(3, 
+         uiOutput("MS_Sum_X_Levs1")),
+  column(3, offset=1,
+         uiOutput("MS_Sum_Trns_Nms1")),
+  column(3, offset=1,
+         uiOutput("MS_Sum_Multi_Val1"))
+),
+h6("Select options for the coefficient of secondary interest. Leaving #5 blank returns all transitions."),
+fluidRow(
+  column(3, 
+         uiOutput("MS_Sum_X_Levs2")),
+  column(3, offset=1,
+         uiOutput("MS_Sum_Trns_Nms2")),
+  column(3, offset=1,
+         uiOutput("MS_Sum_Multi_Val2"))
+),
+fluidRow(
+  column(3, 
+         uiOutput("Sum_2_X_Lev_Yes")),
+  column(3, offset=1,
+         uiOutput("Begin_MS_Sum_Yes"))
+),
+br(),
+h4("Model summary of key transitions"),
+verbatimTextOutput("ms_model_summary_out"),
+br(),
+## State space diagram, text values, and legend ##
+h4("State space diagram"),
+h5("After the state space diagram is created, point and left-click on the plot to automatically add transition coefficients to that spot."),
+fluidRow(
+  column(3, 
+         uiOutput("State_Spc_Color")),
+  column(3, offset=1,
+         uiOutput("ms_St_Spc_Layout")),
+  column(3, offset=1,
+         uiOutput("MS_Mod_St_Spc_Layout"))
+),
+h5("After the first click, you will need to repeatedly close the pop-up matrix to add each text label. Edit the matrix to add curvature by entering values above/below 1."),
+fluidRow(
+  column(3, 
+         uiOutput("St_Sp_Legend")),
+  column(3, offset=1,
+         uiOutput("Make_St_Spc_Diag"))
+  ),
+plotOutput("ms_state_space_plot", height = 800, width="100%", click="plot_click"),
+  br()
+
+#End of tab
+),    
+
 
 #############
 tabPanel("Cost", 
@@ -1111,13 +1361,13 @@ tabPanel("95% CIs",
 
 
 ############## TEST SECTION #############################
-# , #THIS COMMA IS COMMENTED OUT IN CASE I EVER NEED THE TEST FUNCTION BELOW    
+ , #THIS COMMA IS COMMENTED OUT IN CASE I EVER NEED THE TEST FUNCTION BELOW    
 
-#tabPanel("Test it",                                #Creates a new panel named "Test"
-#         fluidRow(                           #Wrapping them in a fluidRow provides easy control over  
-#           verbatimTextOutput("test1")
+tabPanel("Test it",                                #Creates a new panel named "Test"
+         fluidRow(                           #Wrapping them in a fluidRow provides easy control over  
+           verbatimTextOutput("test1")
 #           plotOutput("testplot1")
-#         ))
+         ))
 ############## TEST SECTION #############################
 
 

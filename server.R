@@ -6938,25 +6938,10 @@ fncStSpcTextLgd <- function(mdls, tc1, tc2=NULL, lgn_loc) {
 #output$testplot1 <- renderPlot({ 
 ##  plot(values$a, values$b)
 ##} )
-output$test1 <- renderPrint({
-  list( fit_smry=run_ms_model_summary(), 
-       Choices=state_space_colors(), Build=ms_make_state_space_diagram(), 
-       layout=ms_state_space_layout(), 
-       str_spl =strsplit(names(run_ms_model_summary()[[1]][[3]]), ":"),
-       nms=names(run_ms_model_summary()[[1]][[3]])
-#    txt_lbl_crds1(),
-#       txt_lbl_crds2(),
-#       add_state_space_text_legend(), 
-#       Make_State_Space_Text_Legend()
-  )
-  #  quant_ests()
-  #summary(xdf())
-  #mc_arg_fnc1()
-  #str(mc_sim_fnc1())
-  #input_mc_df1()
-#  vls2()
-#MsStrat0()
-  })
+
+#output$test1 <- renderPrint({
+#  list( 1)
+#  })
 
 
 ################################################################################

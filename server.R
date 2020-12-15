@@ -6113,7 +6113,8 @@ fncProbStateCurve <- function(AJcurve, Strata_fac_Name=NULL, Color=NULL, XLim=NU
        labels=summary_state_nms[ which(!summary_state_nms %in% Excluded ) ], col=Line_Colors, cex=3)
 #No legend returned if there is no strata (i.e., unconditional model)
   if(strata_number > 1) {
-    legend(Leg_Loc, legend=Leg_Name, col=1, lty=1:(length(active_plot_states)), cex=2, lwd=2)
+#    legend(Leg_Loc, legend=Leg_Name, col=1, lty=1:(length(active_plot_states)), cex=2, lwd=2)
+    legend(Leg_Loc, legend=Leg_Name, col=1, lty=1:(length(strata_levs)), cex=2, lwd=2)
   }
 }
 

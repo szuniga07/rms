@@ -6868,11 +6868,14 @@ fncStateSpacePlot <- function(fit, fit_smry, Choices, Build="No", NewBuild, lgn_
     nx <- fncNmbSmrX(mdl_smr=fit_smry)
     if(nx==2) {
       #Text labels for secondary coefficient2
-      legend(lgn_loc, legend= c(paste0("State <- ", toupper(abbreviate(fit_smry[[1]][4], minlength=6))), 
-                                paste0("State <- ( ", toupper(abbreviate(fit_smry[[2]][4], minlength=6)), " )") ), 
+#      legend(lgn_loc, legend= c(paste0("State <- ", toupper(abbreviate(fit_smry[[1]][4], minlength=6))), 
+#                                paste0("State <- ( ", toupper(abbreviate(fit_smry[[2]][4], minlength=6)), " )") ), 
+      legend(lgn_loc, legend= c(paste0("State <- ", abbreviate(fncStSpcLegendFactoLev(fit, fit_smry[[1]][4]), minlength=10)), 
+                                paste0("State <- ( ", abbreviate(fncStSpcLegendFactoLev(fit, fit_smry[[2]][4]), minlength=10), " )") ), 
              bty="n", cex=2)
     } else {
-      legend(lgn_loc, legend= paste0("State <- ", toupper(abbreviate(fit_smry[4], minlength=6))), 
+#      legend(lgn_loc, legend= paste0("State <- ", toupper(abbreviate(fit_smry[4], minlength=6))), 
+      legend(lgn_loc, legend= paste0("State <- ", abbreviate(fncStSpcLegendFactoLev(fit, fit_smry[4]), minlength=10)), 
              bty="n", cex=2)
     }
   }
@@ -6901,34 +6904,66 @@ fncStSpcTxtXY2 <- function(mdl_smr) {
   return(txt_lbl_crds2)
 }
 
+##########################################################################
+## Function that removes factor names from factor levels for the legend ##
+##########################################################################
+#For example "Age_group65+" -> "65+"
+fncStSpcLegendFactoLev <- function(Model_fit, X_Lev) {
+  #Get the separate parts of the model call so I can get all X
+  mdl_cl <- names(Model_fit[["model"]])
+  #Get variable names from the model
+  mdl_var <- mdl_cl[-(grep("\\(", mdl_cl))]
+  #Determine whether each X is the level we want or not
+  tvec <- vector()
+  for(i in 1:length(mdl_var)) {
+    if(grepl(mdl_var[i], X_Lev) == TRUE ) {
+      tvec[i] <- TRUE
+    } else {
+      tvec[i] <- FALSE
+    }
+  }
+  #Indicates the correct variable name to check for
+  sub_nm <- mdl_var[tvec]
+  #Creates the coefficient level to use in the legend
+  output_val <- vector()
+  if(nchar( sub(sub_nm, "", X_Lev) ) ==0 ) {
+    output_val[1] <- sub_nm
+  } else {
+    output_val[1] <-  sub(sub_nm, "", X_Lev)
+  }
+  return(Level=output_val)
+}
+
 ###########################################################
 ## Function to create state space text values and legend ##
 ###########################################################
-fncStSpcTextLgd <- function(mdls, tc1, tc2=NULL, lgn_loc) {
-  #State space summary
-  st_spc_smry_ls <- fncMSStSpcSmry(mdl_smr=mdls)
-  #Get basic values
-  nt <- fncNmbSmrTrn(mdl_smr=mdls)
-  nx <- fncNmbSmrX(mdl_smr=mdls)
-  #Text labels for primary coefficient2
-  if(nx==2) {
-    #Text labels for secondary coefficient2
-    for(i in 1:nt) {
-      text(tc1$x[i], tc1$y[i], st_spc_smry_ls[[1]][i], cex=1.5)
-      text(tc2$x[i], tc2$y[i], st_spc_smry_ls[[2]][i], cex=1.5)
-      legend(lgn_loc, legend= c(paste0("State <- ", toupper(abbreviate(mdls[[1]][4], minlength=6))), 
-                                paste0("State <- ( ", toupper(abbreviate(mdls[[2]][4], minlength=6)), " )") ), 
-             bty="n", cex=1.33)
-      
-    }
-  } else {
-    for(i in 1:nt) {
-      text(tc1$x[i], tc1$y[i], st_spc_smry_ls[[1]][i], cex=1.5)  
-      legend(lgn_loc, legend= paste0("State <- ", toupper(abbreviate(mdls[[1]][4], minlength=6))), 
-             bty="n", cex=1.33)
-    }
-  }
-}
+#fncStSpcTextLgd <- function(mdls, Model_fit, tc1, tc2=NULL, lgn_loc) {
+#  #State space summary
+#  st_spc_smry_ls <- fncMSStSpcSmry(mdl_smr=mdls)
+#  #Get basic values
+#  nt <- fncNmbSmrTrn(mdl_smr=mdls)
+#  nx <- fncNmbSmrX(mdl_smr=mdls)
+#  #Text labels for primary coefficient2
+#  if(nx==2) {
+#    #Text labels for secondary coefficient2
+#    for(i in 1:nt) {
+#      text(tc1$x[i], tc1$y[i], st_spc_smry_ls[[1]][i], cex=1.5)
+#      text(tc2$x[i], tc2$y[i], st_spc_smry_ls[[2]][i], cex=1.5)
+#      legend(lgn_loc, legend= c(paste0("State <- ",   abbreviate(fncStSpcLegendFactoLev(Model_fit, mdls[[1]][4]), minlength=10)), 
+#                                paste0("State <- ( ", abbreviate(fncStSpcLegendFactoLev(Model_fit, mdls[[2]][4]), minlength=10), " )") ), 
+#             #paste0("State <- ( ", abbreviate(mdls[[2]][4], minlength=6), " )") ), 
+#             bty="n", cex=1.33)
+#      
+#    }
+#  } else {
+#    for(i in 1:nt) {
+#      text(tc1$x[i], tc1$y[i], st_spc_smry_ls[[1]][i], cex=1.5)  
+#      legend(lgn_loc, legend= paste0("State <- ", abbreviate(fncStSpcLegendFactoLev(Model_fit, mdls[[1]][4]), minlength=10)), 
+#      #legend(lgn_loc, legend= paste0("State <- ", abbreviate(mdls[[1]][4], minlength=10)), 
+#                    bty="n", cex=1.33)
+#    }
+#  }
+#}
 
 
 ################################################################################

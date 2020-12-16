@@ -773,7 +773,7 @@ tabPanel("Multi-State",
          ## Load data  
          h4("All sections in steps 1-24 are dependent on preceeding steps. Complete relevant steps prior to subsequent steps (e.g., restricted time is optional)."),
          br(),
-         h5("Check the multistate survival transition and data build attributes."),
+         h4("Multi-state data frame diagnostics"),
          fluidRow(
            column(3, 
                   uiOutput("ms_df_input_name")),
@@ -861,6 +861,7 @@ br(),
 ## Cox PH multi-state model ##
 h4("Cox type specific multi-state model"),
 h6("Conduct baseline models with consistent X across all transitions or transition specific models. Transition models allow for different, clinically relevant predictors in each transition."),
+h5("First, enter the data name in the 'Multi-state data frame diagnostics' section above."),
 fluidRow(
   column(3, 
          uiOutput("cph_Time_Start")),

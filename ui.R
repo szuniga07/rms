@@ -773,7 +773,7 @@ tabPanel("Multi-State",
          ## Load data  
          h4("All sections in steps 1-24 are dependent on preceeding steps. Complete relevant steps prior to subsequent steps (e.g., restricted time is optional)."),
          br(),
-         h4("Multi-state data frame diagnostics"),
+         h4("Load multi-state data frame and check build"),
          fluidRow(
            column(3, 
                   uiOutput("ms_df_input_name")),
@@ -806,7 +806,9 @@ tabPanel("Multi-State",
          ),
          br(),
          ## Aalen-Johansen survival estimates of probability in state ##
+         h5("Summary of restricted mean time in state. Default time = max(time) when not specified by user."), 
          verbatimTextOutput("print_prob_in_state"),
+         h5("Added 95% CIs to survival package summary using the Normal Approximation method. More conservative than Z test, see discussion on influence matrix in package documentation."),
          br(),
          h4("Test the difference in mean Time-in-State of a 2 group strata (e.g., intervention and control)"),
          h5("Conducts a Z test between groups' mean time-in-state."),
@@ -861,7 +863,7 @@ br(),
 ## Cox PH multi-state model ##
 h4("Cox type specific multi-state model"),
 h6("Conduct baseline models with consistent X across all transitions or transition specific models. Transition models allow for different, clinically relevant predictors in each transition."),
-h5("First, enter the data name in the 'Multi-state data frame diagnostics' section above."),
+h5("First, enter the data name in the 'Load multi-state data frame and review build' section above."),
 fluidRow(
   column(3, 
          uiOutput("cph_Time_Start")),

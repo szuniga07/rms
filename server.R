@@ -5673,7 +5673,7 @@ state_time_Srvchck_ID <- reactive({
 })
 #6. Check the survival pattern and construction of the dataset
 output$check_multi_state_df <- renderUI({  
-  selectInput("checkMultiStateDF", "6. Do you want to check the data build?", 
+  selectInput("checkMultiStateDF", "6. Do you want to load the data?", 
               choices = c("No", "Yes"), multiple=FALSE, selected="No")     
 })
 #6A. Run the function that shows the survival check and data attributes
@@ -5777,14 +5777,17 @@ prob_in_state_1 <- reactive({
   run_prob_in_state_1()
 })
 
-#10F. Print the probability in state output
+#10F. Run the function for probability in state 95% confidence intervals
+summary_CI_prob_in_state <- reactive({
+  #  if (Run_Pr_in_St() =="Yes") {
+  fncPsSmryCI(RUN=Run_Pr_in_St(), IS.sTRATA=Pr_in_St_Strata(),
+              PS0=run_prob_in_state_0(), PS1=run_prob_in_state_1(), RMean=Pr_in_St_Rmean())
+  #  }
+})
+#10G. Run the function above
 output$print_prob_in_state <- renderPrint({
   if (Run_Pr_in_St() =="Yes") {
-    if (Pr_in_St_Strata() =="Yes") {
-  print(prob_in_state_1(), rmean= Pr_in_St_Rmean() )
-    } else {
-      print(prob_in_state_0(), rmean= Pr_in_St_Rmean() )
-    }
+    summary_CI_prob_in_state()
   }
 })
 
@@ -5808,6 +5811,24 @@ probStCrv1Fnc <- function(Data, ID_var, tstart_var, tstop_var, event_var, X) {
   Survival_function_1 <- survfit(srvFuncFmla1, data=Data, id=Data[, which(colnames(Data) == ID_var) ], 
                                  influence=TRUE) 
   return(Survival_function_1)
+}
+###############################################################################
+# Function to add 95% confidence intervals to the probability in state output # 
+###############################################################################
+fncPsSmryCI <- function(RUN="No", IS.sTRATA="No", PS0, PS1, RMean) {
+  if (RUN =="Yes") {
+    if (IS.sTRATA =="Yes") {
+      s1 <- summary(PS1, rmean= RMean )$table
+    } else {
+      s1 <- summary(PS0, rmean= RMean  )$table
+    }
+  }
+  s1 <- data.frame(s1)
+  s1$Lower.95.CL <- s1$rmean - (1.96 * s1[,4])
+  s1$Upper.95.CL <- s1$rmean + (1.96 * s1[,4])
+  colnames(s1)[3] <- paste0("rmean(T=", RMean, ")")
+  colnames(s1)[4] <- "std(rmean)"
+  return(s1) 
 }
 
 ## Restricted mean time-in-state ##

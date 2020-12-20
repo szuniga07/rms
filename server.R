@@ -5673,7 +5673,7 @@ state_time_Srvchck_ID <- reactive({
 })
 #6. Check the survival pattern and construction of the dataset
 output$check_multi_state_df <- renderUI({  
-  selectInput("checkMultiStateDF", "6. Do you want to load the data?", 
+  selectInput("checkMultiStateDF", "6. Do you want to check the data build?", 
               choices = c("No", "Yes"), multiple=FALSE, selected="No")     
 })
 #6A. Run the function that shows the survival check and data attributes

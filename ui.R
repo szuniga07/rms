@@ -808,7 +808,7 @@ tabPanel("Multi-State",
          ## Aalen-Johansen survival estimates of probability in state ##
          h5("Summary of restricted mean time in state. Default time = max(time) when not specified by user."), 
          verbatimTextOutput("print_prob_in_state"),
-         h5("Added 95% CIs to survival package summary using the Normal Approximation method. More conservative than Z test, see discussion on influence matrix in package documentation."),
+         h5("Added 95% CIs to survival package summary using the Normal Approximation method. More conservative than the Z test below, see discussion on influence matrix in package documentation."),
          br(),
          h4("Test the difference in mean Time-in-State of a 2 group strata (e.g., intervention and control)"),
          h5("Conducts a Z test between groups' mean time-in-state."),

@@ -6640,7 +6640,7 @@ fncMdlXLevSmry <- function(model, trans=NULL, main=NULL, second=NULL, multiplier
 #########################
 #1. Select colors for probability-in-state curves
 output$State_Spc_Color <- renderUI({  
-  selectInput("stateSpcClrs", "1. Select state colors for curves", 
+  selectInput("stateSpcClrs", "1. Select colors for states and lines", 
               choices = colors()[c(24,552, 498, 652, 254,26, 152,8, 32,68,
                                    75,95,119,139,142,310 ,367 ,450 ,568 ,589)], multiple=TRUE)     
 })
@@ -6682,7 +6682,7 @@ state_space_legend <- reactive({
 })
 #5. Modifies the plot layout.
 output$Make_St_Spc_Diag <- renderUI({  
-  selectInput("makeStSpcDiag", "5. Create state space diagram?", 
+  selectInput("makeStSpcDiag", "5. Create state space figure?", 
               choices = c("No", "Yes"), multiple=FALSE, selected="No")
 })
 #5A. Object with yes/no on creating the state space diagram

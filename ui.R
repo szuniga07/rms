@@ -925,9 +925,9 @@ h5("Schoenfeld residuals plot"),
 h6("Check for a pattern in time. An upwards line may suggest an increasing effect in X over time. For binary predictors (with no interaction term), the top band of dots is failures when X=1, lower band is when X=0"),
 plotOutput("MSschoenfeld_plt", height = 800, width="100%"),
 br(),
-#Model summary for state space diagram
+#Model summary for state space figure
 h4("Summarize output"),
-h5("Create the model summary to retrieve the state space diagram values"),
+h5("Create the model summary to retrieve the state space figure values"),
 h6("Select options for the coefficient of primary interest. Leaving #2 blank returns all transitions."),
 fluidRow(
   column(3, 

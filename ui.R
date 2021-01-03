@@ -14,7 +14,7 @@ library(jsonlite)
       
       mainPanel(
         tabsetPanel(                                      #Creates multiple tabs.
-          tabPanel("Data", 
+          tabPanel("Data",  
                    h4("Download, Upload and Save Data."),
                    br(),
                    h5("Upload R Data."),

@@ -106,7 +106,7 @@ shinyServer(
     })
     #Numeric
     output$modify_numeric <- renderUI({                                 
-      selectInput("ModifyNumeric", "3. Select variables to convert to a 'character'.", 
+      selectInput("ModifyNumeric", "3. Select variables to convert to a 'numeric'.", 
                   choices = var(), multiple=TRUE)
     })
 

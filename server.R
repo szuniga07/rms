@@ -1042,7 +1042,7 @@ output$desc_YhatHistRslt <- renderPrint({
         #the real name like "state", it should work
         #plot(  do.call("summary", list(fit1(), state=unique(df()[,"state"])[1], est.all=FALSE) )) 
       } else {
-        plot(summary(fit1()))
+        plot(summary(fit1()), pch=11, col.points=2)
       }
     }, height = 600)
 #################################################

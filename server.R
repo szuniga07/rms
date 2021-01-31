@@ -4513,7 +4513,7 @@ output$Schoenfeld_X <- renderUI({
 #Creates the Schoenfeld residuals
 schoenfeld_e <- reactive({
   if (input$regress_type %in% c("Cox PH", "Cox PH with censoring")) {
-    cox.zph(fit1())
+    cox.zph(fit1(), transform='identity', terms=TRUE)
   }  
 })
 
@@ -4528,13 +4528,17 @@ output$schoenfeld_test <- renderTable({
 schoenfeld_X_names_plot <- reactive({
   rownames(schoenfeld_e()[[1]])[-length(rownames(schoenfeld_e()[[1]]))]
 })
-
+#Get means of Schoenfeld residuals to use as reference line in plot
+schoenfeld_var_mn <- reactive({
+  colMeans(as.data.frame(schoenfeld_e()[["y"]]))
+})
 #This plots the Schoenfeld residuals    
 output$schoenfeld_plt <- renderPlot({
   if (input$regress_type %in% c("Cox PH", "Cox PH with censoring")) {
     #DELETE 6/1/2020  #plot(schoenfeld_e()[input$schoenfeldx], col=2, lwd=2)
     plot(schoenfeld_e()[which(schoenfeld_X_names_plot()== input$schoenfeldx)], col=2, lwd=2)
-    abline(h=0, lty=3, col=4, lwd=2)
+    abline(h= schoenfeld_var_mn()[which(names(schoenfeld_var_mn()) == input$schoenfeldx)], col=3, lwd=2, lty=3)
+    #abline(h=0, lty=3, col=4, lwd=2)
   }
 }, height = 800)
 
@@ -4868,26 +4872,31 @@ output$time_dependent_predictors <- renderUI({
 output$td_cut_lev <- renderUI({ 
   textInput("TdCutLev", "2. Type in time period cutoffs.", value ="Default") 
 })
+#Yes/no on if I want to calculate an interaction for a continuous variable
+output$td_X_by_time_yesno <- renderUI({                                 
+  selectInput("tdXByTimeYesNo", "3. Want a continuous X by Time interaction?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")     
+})
 #A select box for the variable that interacts with time
 output$time_dependent_var <- renderUI({                                
-  selectInput("TimeDepVar", "3. Select the interaction variable",       
+  selectInput("TimeDepVar", "4. Select the interaction variable",       
               choices = predictor(), multiple=FALSE, 
               selected= predictor()[1])   #Will make choices based on my reactive function.
 })
 
 output$td_log_increment <- renderUI({ 
-  numericInput("TdLogIncrement", "4. Select a value to add to log(time).",
+  numericInput("TdLogIncrement", "5. Select a value to add to log(time).",
                value=0, min=0, step=1) 
 })
 
 #Yes/No if I want to create the time-dependent file
 output$td_data_yes_no <- renderUI({ 
-  selectInput("TdDataYesNo", "5. Want a time-dependent data file?",
+  selectInput("TdDataYesNo", "6. Want a time-dependent data file?",
               choices = c("No", "Yes"), multiple=FALSE, selected="No") 
 })
 #Download time dependent data file
 output$td_data_download_name <- renderUI({ 
-  textInput("TdDataDownloadName", "6. Enter the data name.", 
+  textInput("TdDataDownloadName", "7. Enter the data name.", 
             value= "td_df")     
 })
 output$td_data_download <- downloadHandler(
@@ -4915,13 +4924,13 @@ tdcut1 <-  reactive({
 })
 
 #Function that creates a time dependent data file
-timeDepDfFnc <- function(X, Y, Z, censor, reg, df, tdcut1, AddLog) {
+timeDepDfFnc <- function(X, Y, Z, censor, reg, df, tdcut1, AddLog, XbyT) {
   #No censoring
   if (reg == "Cox PH") {
     cph_fmla <- as.formula(paste(paste0("Surv(", Y,")" , "~"),
                                  paste(X, collapse= "+")))
     timeDepDF <- survSplit(formula= cph_fmla, data=df, cut=tdcut1,
-                           start="tstart", id= "id.obs", episode= 
+                           start="tstart", id= "id", episode= 
                              "tgroup",
                            end="tstop", event="event")
   }
@@ -4930,12 +4939,17 @@ timeDepDfFnc <- function(X, Y, Z, censor, reg, df, tdcut1, AddLog) {
     ccph_fmla <- as.formula(paste(paste0("Surv(", Y, ",", censor, ")", "~"),
                                   paste(X, collapse= "+")))
     timeDepDF <- survSplit(formula=ccph_fmla , data=df, cut=tdcut1,
-                           start="tstart", id= "id.obs", episode= "tgroup",
+                           start="tstart", id= "id", episode= "tgroup",
                            end="tstop", event="event")
   }
+  
   #INTERACTION  
-  timeDepDF[,paste0(Z, ".log.", Y)] <- 
+  if (XbyT == "Yes") {
+    timeDepDF[,paste0(Z, ".log.", Y)] <- 
     timeDepDF[, Z]*log(timeDepDF[,"tgroup"] + AddLog)      
+  }    
+    #timeDepDF[,paste0(Z, ".log.", Y)] <- 
+    #timeDepDF[, Z]*log(timeDepDF[,"tgroup"] + AddLog)      
   return(timeDepDF)
 }
 
@@ -4944,7 +4958,7 @@ TdDataFrame <-  reactive({
   if (input$TdDataYesNo == "Yes") { 
     timeDepDfFnc(X=input$TDPredX, Y=outcome(), Z=input$TimeDepVar, censor=censor1(), 
                  reg=input$regress_type, df=df(), tdcut1=tdcut1(), 
-                 AddLog= input$TdLogIncrement)
+                 AddLog= input$TdLogIncrement, XbyT=input$tdXByTimeYesNo)
   }
 })
 
@@ -6374,7 +6388,7 @@ ms_schoenfeld_X <- reactive({
 MSschoenfeld_e <- reactive({
   if(begin_ms_model() == "Yes") {
     if(begin_ms_schoenfeld_residuals() == "Yes") {
-    cox.zph(multi_state_model())
+    cox.zph(multi_state_model(), transform='identity', terms=TRUE)
   }
 }
 })

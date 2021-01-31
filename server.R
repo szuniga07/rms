@@ -4886,7 +4886,7 @@ output$time_dependent_var <- renderUI({
 
 output$td_log_increment <- renderUI({ 
   numericInput("TdLogIncrement", "5. Select a value to add to log(time).",
-               value=0, min=0, step=1) 
+               value=1, min=0, step=1) 
 })
 
 #Yes/No if I want to create the time-dependent file

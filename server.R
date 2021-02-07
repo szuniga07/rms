@@ -447,6 +447,7 @@ shinyServer(
                        paste(mdl_vnms(), collapse= "+")))
     })
 
+#Cox models    
     cox_mdl_fmla1 <- reactive({             #Spline terms 
       as.formula(paste(paste0("Surv(",input$variableY,")" , "~"),   
                        paste(mdl_vnms(), collapse= "+")))
@@ -462,12 +463,33 @@ shinyServer(
                        paste(mdl_vnms(), collapse= "+")))
     })
 
-#    cox_mdl_fmla2u <- reactive({             #Spline terms 
-#      as.formula(paste(paste0("Surv(",input$variableY, ",", censor1(), ")", "~"),   
-#                       paste(strsplit(input$up_fmla, "~")[[1]][2], collapse= "+")))
-#    })
-
     cox_mdl_fmla2u <- reactive({             #Spline terms 
+      if (length(input$variableX) ==1) {
+        as.formula(paste(paste0("Surv(",input$variableY, ",", censor1(), ")", "~"),   
+                         paste(strsplit(input$up_fmla, "~")[[1]][2])))
+      } else {
+        as.formula(paste(paste0("Surv(",input$variableY, ",", censor1(), ")", "~"),   
+                         paste(strsplit(input$up_fmla, "~")[[1]][2], collapse= "+")))
+      }
+    })
+    
+    #AFT models
+    aft_mdl_fmla1 <- reactive({             #Spline terms 
+      as.formula(paste(paste0("Surv(",input$variableY,")" , "~"),   
+                       paste(mdl_vnms(), collapse= "+")))
+    })
+    
+    aft_mdl_fmla1u <- reactive({             #Spline terms 
+      as.formula(paste(paste0("Surv(",input$variableY,")" , "~"),   
+                       paste(strsplit(input$up_fmla, "~")[[1]][2], collapse= "+")))
+    })
+    
+    aft_mdl_fmla2 <- reactive({             #Spline terms 
+      as.formula(paste(paste0("Surv(",input$variableY, ",", censor1(), ")", "~"),   
+                       paste(mdl_vnms(), collapse= "+")))
+    })
+    
+    aft_mdl_fmla2u <- reactive({             #Spline terms 
       if (length(input$variableX) ==1) {
         as.formula(paste(paste0("Surv(",input$variableY, ",", censor1(), ")", "~"),   
                          paste(strsplit(input$up_fmla, "~")[[1]][2])))
@@ -506,8 +528,9 @@ shinyServer(
              "Quantile" = plot_yhat <- yhat,
 #             "Cox PH"   = plot_yhat <- 1/(1+exp(-yhat)),
              "Cox PH"   = plot_yhat <- yhat,
-#"Cox PH with censoring"     = plot_yhat <- 1/(1+exp(-yhat)),
              "Cox PH with censoring"     = plot_yhat <- yhat,
+             "AFT"   = plot_yhat <- yhat,
+             "AFT with censoring"     = plot_yhat <- yhat,
              "Generalized Least Squares" = plot_yhat <- yhat )
       return(plot_yhat)
     }
@@ -762,6 +785,15 @@ shinyServer(
                      cph(cox_mdl_fmla2u(), x=TRUE, y=TRUE, data=df(), surv=TRUE)
                    } else {
                      cph(cox_mdl_fmla2(), x=TRUE, y=TRUE, data=df(), surv=TRUE)},
+                   #AFT models
+                   "AFT"   = if(input$updy == "Yes") {
+                     psm(aft_mdl_fmla1u(), data=df(), x=TRUE, y=TRUE, dist=AFT_PSM_Dist())
+                   } else {
+                     psm(aft_mdl_fmla1(), data=df(), x=TRUE, y=TRUE, dist=AFT_PSM_Dist())},
+                   "AFT with censoring" = if(input$updy == "Yes") {
+                     psm(aft_mdl_fmla2u(), data=df(),  x=TRUE, y=TRUE, dist=AFT_PSM_Dist())
+                   } else {
+                     psm(aft_mdl_fmla2(), x=TRUE, y=TRUE, data=df(), dist=AFT_PSM_Dist())},
                    "Generalized Least Squares" = if(input$updy == "Yes") {
                      Gls(as.formula(input$up_fmla), x=TRUE, data=df(), correlation=corCAR1(form= gls_cor()))
                    } else {
@@ -803,6 +835,15 @@ shinyServer(
                      fit.mult.impute(cox_mdl_fmla2u(), cph, mi(), data=df(), pr=FALSE)
                    } else {
                      fit.mult.impute(cox_mdl_fmla2(), cph, mi(), data=df(), pr=FALSE)},
+                   #AFT models
+                   "AFT"   = if(input$updy == "Yes") {
+                     fit.mult.impute(aft_mdl_fmla1u(), psm, mi(), data=df(), pr=FALSE)
+                   } else {
+                     fit.mult.impute(aft_mdl_fmla1(), psm, mi(), data=df(), pr=FALSE)},
+                   "AFT with censoring" = if(input$updy == "Yes") {
+                     fit.mult.impute(aft_mdl_fmla2u(), psm, mi(), data=df(), pr=FALSE)
+                   } else {
+                     fit.mult.impute(aft_mdl_fmla2(), psm, mi(), data=df(), pr=FALSE)},
                    "Generalized Least Squares" = if(input$updy == "Yes") {
                      fit.mult.impute(cox_mdl_fmla2u(), Gls, mi(), data=df(), pr=FALSE, correlation=corCAR1(form= gls_cor()))
                    } else {
@@ -846,7 +887,6 @@ shinyServer(
                   choices = setdiff(var(), outcome()), multiple=TRUE, selected=var()[2])     #Will make choices based on my reactive function.
     })
 
-    
     #Selects the regression type.
     output$reg_typ <- renderUI({                                #Creates a UI function here but it will
       selectInput("regress_type", "5. Select the regression method",
@@ -854,22 +894,29 @@ shinyServer(
                               "Logistic", 
                               "Ordinal Logistic",
                               "Poisson",
-                              "Quantile",
                               "Cox PH",
                               "Cox PH with censoring",
-                              "Generalized Least Squares"),
+                              "AFT",
+                              "AFT with censoring",
+                              "Generalized Least Squares",
+                              "Quantile"),
                   selected="Linear", multiple=FALSE)
     })
     
-    #Indicate the quantile/percentile value to use in quantile regression
-    output$quant_tau <- renderUI({                                 #Same idea as output$vy
-      numericInput("tau1", "6. Quantile level for quantile regression",
-                value=0.50, min=0, max=1, step=.05)     #Will make choices based on my reactive function.
+    #6. Indicate the censoring variable.
+    output$censoring <- renderUI({                                 #Same idea as output$vy
+      textInput("censor", "6. Censoring variable for survival model")     #Will make choices based on my reactive function.
+    })
+
+    #7. Indicate if there should be splines.
+    output$aft_dist <- renderUI({  
+      selectInput("aftDist", "7. Select the Y distribution for AFT models", choices = c("weibull", "exponential", "gaussian","logistic","lognormal", "loglogistic"), 
+                  multiple=FALSE, selected="weibull")     
     })
     
-    #Indicate the censoring variable.
-    output$censoring <- renderUI({                                 #Same idea as output$vy
-      textInput("censor", "7. Censoring variable for Cox PH model")     #Will make choices based on my reactive function.
+    #7A. Object for AFT Y distribution for psm()
+    AFT_PSM_Dist <- reactive({         
+      input$aftDist
     })
     
     #Indicate the clustering structure.
@@ -878,41 +925,37 @@ shinyServer(
       choices = gls_lev1_2(), multiple=TRUE, selected=gls_lev1_2()[1:2])
     })
 
+    #Indicate the quantile/percentile value to use in quantile regression
+    output$quant_tau <- renderUI({                                 #Same idea as output$vy
+      numericInput("tau1", "9. Quantile level for quantile regression",
+                   value=0.50, min=0, max=1, step=.05)     #Will make choices based on my reactive function.
+    })
+    
     #Indicate if there should be splines.
     output$rcs_yes <- renderUI({                                 #Same idea as output$vy
-      selectInput("rcsy", "9. Do you want splines?", 
+      selectInput("rcsy", "10. Do you want splines?", 
                   choices = c("No", "Yes"), multiple=FALSE, selected="No")     #Will make choices based on my reactive function.
     })
     
     #Select the variables that will have splines.
     output$rx <- renderUI({                                 #Same idea as output$vy
-      selectInput("rcs_X", "10. Select the spline variables (continuous only)", 
+      selectInput("rcs_X", "11. Select the spline variables (continuous only)", 
                   choices = predictor(), multiple=TRUE, selected=predictor()[1])     #Will make choices based on my reactive function.
     })
 
     #Indicate if you should update the model.
     output$update_yes <- renderUI({                                 #Same idea as output$vy
-      selectInput("updy", "11. Do you want to update the model formula?", 
+      selectInput("updy", "12. Do you want to update the model formula?", 
                   choices = c("No", "Yes"), multiple=FALSE, selected="No")     #Will make choices based on my reactive function.
     })
     
     #Update the model formula.
     output$uf <- renderUI({                                 #Same idea as output$vy
-      textInput("up_fmla", "12. Update formula (Interactions: Change \"+\" to \'*\', strat(X) to stratify CPH)", 
+      textInput("up_fmla", "13. Update formula (Interactions: Change \"+\" to \'*\', strat(X) to stratify CPH)", 
                 value= deparse(mdl_fmla(), width.cutoff=500 ))     #Will make choices based on my reactive function.
     })
     
-    #Download the model data and predictions--REMOVING BECAUSE I HAVE THE PRED TAB
-#    observe({
-#      if(input$dmdfyhat == "Yes")
-#      {
-#        sink("model_yhat.txt", append=F)
-#        write.table(dyhat_df(), row.names=F, sep="\t")
-#        sink()
-#      }
-#    })
-
-    #Indicates if the SINGLEpredictor is stratified, needed to print regression results output$regress
+    #Indicates if the SINGLE predictor is stratified, needed to print regression results output$regress
     MsStrat0 <- reactive({
       if( length(input$variableX) < 2) {
        # if(input$updy == "Yes") {
@@ -920,12 +963,8 @@ shinyServer(
         } else {
         0
         } 
-#      } else {
-#        if(input$updy == "Yes") {
-#          0
-#        }
-#      } 
     }) 
+    
     #Regression results.
     output$regress <- renderPrint({                                                 
       atch()
@@ -941,21 +980,11 @@ shinyServer(
       }
     })
     #Regression results.
-#    output$regress <- renderPrint({                                                 
-    #      atch()
-    #      if( input$regress_type %in% c("Logistic", "Ordinal Logistic", "Poisson", "Cox PH", "Cox PH with censoring")) {
-    #    print( list("Model"=fit1(), "Exponentiated Coefficients"= exp(fit1()[["coefficients"]])) )
-    #  } else {
-    #    print(fit1())  #Summary of model fit.
-    #  }
-    #})
-    
     #Model predicted Y regression equation
     output$regress_equation <- renderPrint({                                                 
       options(scipen=20)
       print(Function(fit1()))
     })
-    
     
     describeY <- reactive({                  #This stores the censoring variable. 
       print(describe(as.numeric(df()[, input$variableY], na.rm=TRUE), #Summary of Y variable.
@@ -1244,6 +1273,9 @@ lwd=3, ylab="Yhat", xlab=XyplotX1(), cex=1.75,
       if(reg %in% c("Cox PH", "Cox PH with censoring")) {
         xyplot_ylab <- paste0("Hazard Ratio (",lev1, ":", lev2,")")
       }
+      if(reg %in% c("AFT","AFT with censoring")) {
+        xyplot_ylab <- paste0("Survival Time Ratio (",lev1, ":", lev2,")")
+      }
       if(reg %in% c("Logistic", "Ordinal Logistic") ) {
         xyplot_ylab <- paste0("Odds Ratio (",lev1, ":", lev2,")")
       }
@@ -1252,7 +1284,7 @@ lwd=3, ylab="Yhat", xlab=XyplotX1(), cex=1.75,
         xyplot_ylab <- paste0("Contrast (",lev1, ":", lev2,")")
     }
       ## Determine if it is an abline at 0 or 1 ##
-      if(reg %in% c("Cox PH", "Cox PH with censoring","Logistic", "Ordinal Logistic") ) {
+      if(reg %in% c("Cox PH", "Cox PH with censoring","Logistic", "Ordinal Logistic","AFT","AFT with censoring") ) {
         abline_01 <- 1
       }
       if(reg %in% c("Linear","Poisson","Quantile","Generalized Least
@@ -1269,15 +1301,15 @@ lwd=3, ylab="Yhat", xlab=XyplotX1(), cex=1.75,
       
       ## Exponentiate the data if needed ##
       #Contrast
-      if(reg %in% c("Cox PH", "Cox PH with censoring","Logistic", "Ordinal Logistic","Poisson")) {
+      if(reg %in% c("Cox PH", "Cox PH with censoring","Logistic", "Ordinal Logistic","Poisson","AFT","AFT with censoring")) {
         w[["Contrast"]] <- exp(w[["Contrast"]])
       }
       #Lower
-      if(reg %in% c("Cox PH", "Cox PH with censoring","Logistic", "Ordinal Logistic","Poisson")) {
+      if(reg %in% c("Cox PH", "Cox PH with censoring","Logistic", "Ordinal Logistic","Poisson","AFT","AFT with censoring")) {
         w[["Lower"]] <- exp(w[["Lower"]])
       }
       #Upper
-      if(reg %in% c("Cox PH", "Cox PH with censoring","Logistic", "Ordinal Logistic","Poisson")) {
+      if(reg %in% c("Cox PH", "Cox PH with censoring","Logistic", "Ordinal Logistic","Poisson","AFT","AFT with censoring")) {
         w[["Upper"]] <- exp(w[["Upper"]])
       }
       
@@ -1710,6 +1742,8 @@ yhat_plot_fnc <- function(yhat, reg_yhat) {
          "Quantile" = plot_yhat <- yhat,
          "Cox PH"   = plot_yhat <- 1/(1+exp(-yhat)),
          "Cox PH with censoring"     = plot_yhat <- 1/(1+exp(-yhat)),
+         "AFT"   = plot_yhat <- 1/(1+exp(-yhat)),
+         "AFT with censoring"     = plot_yhat <- 1/(1+exp(-yhat)),
          "Generalized Least Squares" = plot_yhat <- yhat)
   return(plot_yhat)
 }
@@ -3500,6 +3534,15 @@ fit.si <<- reactive({
              cph(cox_mdl_fmla2u(), x=TRUE, y=TRUE, data=new_imputed.si(), surv=TRUE)
            } else {
              cph(cox_mdl_fmla2(), x=TRUE, y=TRUE, data=new_imputed.si(), surv=TRUE)},
+           #AFT models
+           "AFT"   = if(input$updy == "Yes") {
+             psm(aft_mdl_fmla1u(), data=new_imputed.si(), x=TRUE, y=TRUE, dist=AFT_PSM_Dist())
+           } else {
+             psm(aft_mdl_fmla1(), data=new_imputed.si(), x=TRUE, y=TRUE, dist=AFT_PSM_Dist())},
+           "AFT with censoring" = if(input$updy == "Yes") {
+             psm(aft_mdl_fmla2u(), data=new_imputed.si(), x=TRUE, y=TRUE, dist=AFT_PSM_Dist())
+           } else {
+             psm(aft_mdl_fmla2(), data=new_imputed.si(),  x=TRUE, y=TRUE, dist=AFT_PSM_Dist())},
            "Generalized Least Squares" = if(input$updy == "Yes") {
              Gls(as.formula(input$up_fmla), x=TRUE, data=new_imputed.si(), correlation=corCAR1(form= gls_cor()))
            } else {
@@ -4635,7 +4678,7 @@ SrvLogLog <- reactive({
 
 #Survival fit object
 srvft1 <- reactive({ 
-  if (input$regress_type %in% c("Cox PH", "Cox PH with censoring")) {
+  if (input$regress_type %in% c("Cox PH", "Cox PH with censoring","AFT","AFT with censoring")) {
     survfit(fit1(), conf.int=input$SrvPltLvl)
   }
 })
@@ -4737,6 +4780,13 @@ kmSrvftFmlaFnc <- function (regress_type,Y,cens,KMSrvPltX) {
   if (regress_type == "Cox PH with censoring") {
     fmla <- as.formula(paste(paste0("Surv(", Y, ",", cens, ")", "~", KMSrvPltX)))
   }
+  #AFT models
+  if (regress_type == "AFT") {
+    fmla <- as.formula(paste(paste0("Surv(", Y, ")", "~", KMSrvPltX)))
+  }
+  if (regress_type == "AFT with censoring") {
+    fmla <- as.formula(paste(paste0("Surv(", Y, ",", cens, ")", "~", KMSrvPltX)))
+  }
   return(fmla)
 } 
 #Function to get the right KM formula for the underline/unconditional survival function
@@ -4745,6 +4795,13 @@ kmSrvftFmlaUnconFnc <- function (regress_type,Y,cens,KMSrvPltX) {
     fmla <- as.formula(paste(paste0("Surv(", Y, ")", "~", 1 )))
   }
   if (regress_type == "Cox PH with censoring") {
+    fmla <- as.formula(paste(paste0("Surv(", Y, ",", cens, ")", "~", 1 )))
+  }
+  #AFT models
+  if (regress_type == "AFT") {
+    fmla <- as.formula(paste(paste0("Surv(", Y, ")", "~", 1 )))
+  }
+  if (regress_type == "AFT with censoring") {
     fmla <- as.formula(paste(paste0("Surv(", Y, ",", cens, ")", "~", 1 )))
   }
   return(fmla)
@@ -5413,6 +5470,365 @@ output$cme_model <- downloadHandler(
     save(list=input$CmeMdlFitName, file=con)
   }
 )
+
+###########################################################
+##       Quantile and mean estimates for CPH and PSM     ##
+###########################################################
+#1. Select the grouping variable for the density plot with 2 plots--value of 1=treatment group
+output$surv_binary_X <- renderUI({
+  selectInput("survBinX", "1. Select a binary X to compare survival estimates.", 
+              choices = predictor())     
+})
+#1A. Create a reactive function for the stratified variable in the Cost density plot
+survival_var_X <- reactive({
+  input$survBinX
+})
+
+#2. Select the type of density plot to run (full sample or by a group)
+output$surv_binary_compare <- renderUI({
+  selectInput("survBinComp", "2. Do you want to compare survival estimates?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")     
+})
+
+############################################
+#   Plot 2: Estimated cost over quantiles  #
+############################################
+surv_quant_ests_fnc <- function(fit, Y, X, reg) {
+  #Creates function that will make correct value 
+  surv_MED_cox <<- Quantile(fit)                                                       #Creates function to compute quantiles
+  
+  #5. Cost--get predicted values at different quantiles
+  if (reg %in% c("Cox PH", "Cox PH with censoring")) {
+    p1.50 <- Predict(fit, fun=function(x) surv_MED_cox(lp=x))                           #MED_coxian
+    p1.10 <- Predict(fit, fun=function(x) surv_MED_cox(q=.90, lp=x))                    #10th percentile
+    p1.25 <- Predict(fit, fun=function(x) surv_MED_cox(q=.75, lp=x))                    #25th percentile
+    p1.75 <- Predict(fit, fun=function(x) surv_MED_cox(q=.25, lp=x))                    #75th percentile
+    p1.90 <- Predict(fit, fun=function(x) surv_MED_cox(q=.10, lp=x))                    #90th percentile
+  }
+  if (reg %in% c("AFT","AFT with censoring") ) {
+    p1.50 <- Predict(fit, fun=function(x) surv_MED_cox(lp=x))                           #MED_coxian
+    p1.10 <- Predict(fit, fun=function(x) surv_MED_cox(q=.10, lp=x))                    #10th percentile
+    p1.25 <- Predict(fit, fun=function(x) surv_MED_cox(q=.25, lp=x))                    #25th percentile
+    p1.75 <- Predict(fit, fun=function(x) surv_MED_cox(q=.75, lp=x))                    #75th percentile
+    p1.90 <- Predict(fit, fun=function(x) surv_MED_cox(q=.90, lp=x))                    #90th percentile
+  }
+  
+  #This gets predicted intervention scores for different percentiles
+  int_pnm <- c(paste0(X,".1"), paste0(X,".2")) #Only place I use X argument
+  est1.10 <- p1.10[which(row.names(p1.10) %in% int_pnm), c("yhat", "lower", "upper")]
+  est1.25 <- p1.25[which(row.names(p1.25) %in% int_pnm), c("yhat", "lower", "upper")]
+  est1.50 <- p1.50[which(row.names(p1.50) %in% int_pnm), c("yhat", "lower", "upper")]
+  est1.75 <- p1.75[which(row.names(p1.75) %in% int_pnm), c("yhat", "lower", "upper")]
+  est1.90 <- p1.90[which(row.names(p1.90) %in% int_pnm), c("yhat", "lower", "upper")]
+  #This changes it to a data.frame class from an RMS class
+  class(est1.10) <- "data.frame"
+  class(est1.25) <- "data.frame"
+  class(est1.50) <- "data.frame"
+  class(est1.75) <- "data.frame"
+  class(est1.90) <- "data.frame"
+  est1 <- data.frame(rbind(unlist(est1.10), unlist(est1.25), unlist(est1.50),     #Merge the results
+                           unlist(est1.75), unlist(est1.90)))
+  
+  #Re-arrange order to get values set up for display in the plot
+  #Cox PH
+  if (reg %in% c("Cox PH", "Cox PH with censoring")) {
+    est2 <- est1[, c(2,6,4,1,5,3)]
+  }
+  #AFT
+  if (reg %in% c("AFT","AFT with censoring") ) {
+    est2 <- est1[, c(2,4,6,1,3,5)]
+  }
+  colnames(est2) <- c("TREATMENT", "L95", "U95","Control", "L95", "U95")
+  rownames(est2) <- c("p10", "p25", "p50","p75", "p90")
+  
+  #Add cost difference between Treatment and controls 
+  est2$Diff. <- round(est2$TREATMENT - est2$Control, 2 )
+  ## Add in weighted average into the table
+  #Combine everything
+  return(list(est1=est1, est2=est2))
+}  
+
+#This runs the quant_plt1_fnc() function above
+surv_quant_ests <- reactive({
+  if(input$survBinComp == "Yes") {
+    surv_quant_ests_fnc(fit=fit1(), Y= outcome(), X= survival_var_X(), reg=input$regress_type)
+  }  
+})
+
+#This prints the point estimates and confidence intervals
+output$surv_quant_out1 <- renderTable({
+  if(input$survBinComp == "Yes") {
+    surv_quant_ests()[["est2"]]
+  }
+}, rownames = TRUE)
+
+
+##########################
+### Get mean estimates ###
+##########################
+surv_mean_ests_fnc <- function(fit, Y, X, reg) {
+  #Creates function that will make correct value 
+  surv_MN_cox <<- Mean(fit)                                                       #Creates function to compute quantiles
+  
+  #5. Cost--get predicted values at different quantiles
+  if (reg %in% c("Cox PH", "Cox PH with censoring")) {
+    p1.mean <- Predict(fit, fun=function(x) surv_MN_cox(lp=x))                           #MN_coxian
+  }
+  if (reg %in% c("AFT","AFT with censoring")) {
+    p1.mean <- Predict(fit, fun=function(x) surv_MN_cox(lp=x))                           #MN_coxian
+  }
+  
+  #This gets predicted intervention scores for different percentiles
+  int_pnm <- c(paste0(X,".1"), paste0(X,".2")) #Only place I use X argument
+  est1.mean <- p1.mean[which(row.names(p1.mean) %in% int_pnm), c("yhat", "lower", "upper")]
+  #This changes it to a data.frame class from an RMS class
+  class(est1.mean) <- "data.frame"
+  est1 <- data.frame(rbind(unlist(est1.mean)))
+  
+  #Re-arrange order to get values set up for display in the plot
+  #Cox PH
+  if (reg %in% c("Cox PH", "Cox PH with censoring")) {
+    est2 <- est1[, c(2,6,4,1,5,3)]
+  }
+  #AFT
+  if (reg %in% c("AFT","AFT with censoring") ) {
+    est2 <- est1[, c(2,4,6,1,3,5)]
+  }
+  colnames(est2) <- c("TREATMENT", "L95", "U95","Control", "L95", "U95")
+  rownames(est2) <- "Mean"
+  #Add cost difference beteen Treatment and controls 
+  est2$Diff. <- abs(round(est2$Control) - round(est2$TREATMENT))
+  return(list(est1=est1, est2=est2))
+}  
+
+#This runs the quant_plt1_fnc() function above
+surv_mean_ests <- reactive({
+  if(input$survBinComp == "Yes") {
+    surv_mean_ests_fnc(fit=fit1(), Y= outcome(), X= survival_var_X(), reg=input$regress_type)
+  }  
+})
+
+#This prints the point estimates and confidence intervals
+output$surv_mean_out1 <- renderTable({
+  if(input$survBinComp == "Yes") {
+    surv_mean_ests()[["est2"]]
+  }
+}, rownames = TRUE)
+
+#Observed mean and quantiles
+#This gets quantiles and means
+#Function that gets cost value quantiles between the treatment and control groups 
+surv_quant <- function(y, x, df) {
+  
+  #Treatment/control group means/medians
+  ctl_med <- median(df[, y][as.numeric(df[, x]) == min(as.numeric(df[, x]))], na.rm=T)
+  trt_med <- median(df[, y][as.numeric(df[, x]) == max(as.numeric(df[, x]))], na.rm=T)
+  ctl_mn <- mean(df[, y][as.numeric(df[, x]) == min(as.numeric(df[, x]))], na.rm=T)
+  trt_mn <- mean(df[, y][as.numeric(df[, x]) == max(as.numeric(df[, x]))], na.rm=T)
+  #### Get quantiles and bind with means. Partially used in the legend and the observed table in a later section
+  qt1 <- quantile(df[, y][as.numeric(df[, x]) == min(as.numeric(df[, x]))], probs=c(.1, .25, .5, .75, .9), na.rm=T)
+  qt2 <- quantile(df[, y][as.numeric(df[, x]) == max(as.numeric(df[, x]))], probs=c(.1, .25, .5, .75, .9), na.rm=T)
+  odf_mqt <- as.data.frame(rbind(cbind(round(qt2, 2), round(qt1 ,2)),
+                                 cbind(round(trt_mn, 2), round(ctl_mn, 2)) ))
+  rownames(odf_mqt) <- c("p10", "p25", "p50", "p75", "p90", "Mean")
+  colnames(odf_mqt) <- c("Treatment", "Control")  #Observed data.frame of the means and quantiles
+  ###  
+  return(list("odf_mqt"=odf_mqt))
+}
+#Run the function above
+surv_quant_run <- reactive({
+  if(input$survBinComp == "Yes") {
+    surv_quant(y= outcome(), x= survival_var_X() , df= df())
+  }  
+})
+
+## This extracts the observed data.frame means and quantiles from the reactive function below ##
+surv_obs_df_mqt <- reactive({
+  if(input$survBinComp == "Yes") {
+    surv_quant_run()$odf_mqt
+  }  
+})
+#This prints the means and quantiles
+output$surv_obsdfmqt_out1 <- renderTable({
+  if(input$survBinComp == "Yes") {
+    surv_obs_df_mqt()
+  }
+}, rownames = TRUE)
+
+###############################################
+## Probability of survival at specific time  ##
+###############################################
+#1. Indicate survival time
+output$surv_probability_time <- renderUI({
+  numericInput("survProbTime", "1. Select a survival time.",
+               value = 1, step = 1)
+})
+#1A. Reactive function of survival time
+surv_Prob_Time_Val <- reactive({
+  if(input$survTimeProbYN == "Yes") {
+    input$survProbTime
+  }  
+})
+
+#2. Select whether it is a survival probability or hazard function 
+output$surv_time_probability_hazard_survival <- renderUI({
+  selectInput("survTimeProbHazSurv", "2. Select a hazard or survival.", 
+              choices = c("Hazard", "Survival"), multiple=FALSE, selected="Survival")     
+})
+#2A. Reactive function of survival or hazard
+surv_Time_Prob_Haz_Srv <- reactive({
+  if(input$survTimeProbYN == "Yes") {
+    input$survTimeProbHazSurv
+  }  
+})
+
+#3. Run the survival probability calculation
+output$surv_time_probability_yesno <- renderUI({
+  selectInput("survTimeProbYN", "3. Calculate the probability of survival time?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")     
+})
+
+#4. Get values that are adjusted to
+surv_adjto_vals <- reactive({
+  if(input$survTimeProbYN == "Yes") {
+    predict(fit1(), type="adjto.data.frame")
+  }  
+})
+
+#5. Run the function below
+surv_hazard_survival_function_run <- reactive({
+  if(input$survTimeProbYN == "Yes") {
+    fncProbSrvTime(fit=fit1(), time=surv_Prob_Time_Val(), reg=input$regress_type, DataFrm=surv_adjto_vals(), what=surv_Time_Prob_Haz_Srv())
+  }  
+})
+
+#6. Probability output 
+output$surv_hazard_survival_function_out <- renderPrint({
+  if(input$survTimeProbYN == "Yes") {
+    surv_hazard_survival_function_run()
+  }
+})
+
+## Function that creates survival probability at a certain time ##
+fncProbSrvTime <- function(fit, time, reg, DataFrm, what) {
+  #Gets 'adjusted to' values from the model
+  adj_vals <- edit(DataFrm)
+  #Get predicted values
+  X.beta <- predict(fit, data.frame(adj_vals))
+  #Calculate probabilities
+  if (reg %in% c("AFT","AFT with censoring")) {
+    if (what == "Survival") {
+      surv  <- Survival(fit)
+      Prob  <- surv(time, X.beta)
+    } else {
+      haz   <- Hazard(fit)
+      Prob  <- haz(time, X.beta)
+    } 
+  } 
+  if (reg %in% c("Cox PH","Cox PH with censoring")) {
+    if (what == "Survival") {
+      surv  <- Survival(fit)
+      Prob  <- surv(time, X.beta)
+    }  
+    else {
+      stop("Error: Cannot get hazard probablility for Cox PH model. Try AFT psm().")
+    }
+  }
+  #Assign name of probability  
+  names(Prob) <- what 
+  #Final values  
+  return(list( "Probability"=Prob, "Time"=time, "X.Values"=adj_vals))
+}
+
+#################################
+## Download survival estimates ##
+#################################
+#1. Indicate survival time
+output$survival_estimate_time <- renderUI({
+  numericInput("survEstTime", "1. Select a survival time.",
+               value = 1, step = 1, min=1)
+})
+
+#2. Select whether it is a survival probability or hazard function 
+output$survival_estimate_hazard_survival <- renderUI({
+  selectInput("survEstHazSurv", "2. Select a hazard or survival.", 
+              choices = c("hazard", "survival"), multiple=FALSE, selected="survival")     
+})
+
+#3. Run the survival probability calculation
+output$survival_estimate_yesno <- renderUI({
+  selectInput("survEstYN", "3. Calculate the estimates?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")     
+})
+#4. Download time dependent data file
+output$surv_est_data_download_name <- renderUI({ 
+  textInput("SEDataDownloadName", "4. Enter the data framename.", 
+            value= "survival_est")     
+})
+#5. Setup to download
+output$se_data_download <- downloadHandler(
+  filename = "survival_estimate_df.RData",
+  content = function(con) {
+    assign(input$SEDataDownloadName, SEDataFrame())
+    save(list=input$SEDataDownloadName, file=con)
+  }
+)
+
+#Reactive function that runs the multi-state data function above
+SEDataFrame <- reactive({
+  if (input$survEstYN=="Yes") {
+    fncDownSrvEst(fit=fit1(), Time=input$survEstTime, reg=input$regress_type, DataFrm=df(), What=input$survEstHazSurv)
+  }
+})
+
+## Function that creates survival estimate data at a certain time ##
+fncDownSrvEst <- function(fit, Time, reg, DataFrm, What) {
+  #Median survival time
+  med   <- Quantile(fit)
+  #Mean survival time
+  meant <- Mean(fit)
+  
+  #Calculate probabilities
+  if (reg %in% c("AFT","AFT with censoring")) {
+    if (What == "survival") {
+      se1 <- survest(fit, newdata=DataFrm, times=Time, what=What) 
+    } else {
+      se1 <- survest(fit, newdata=DataFrm, times=Time, what=What)  #Does not work on CPH
+    } 
+  } 
+  if (reg %in% c("Cox PH","Cox PH with censoring")) {
+    if (What == "survival") {
+      se1 <- survest(fit, newdata=DataFrm, times=Time)
+    }  
+    else {
+      stop("Error: Cannot get hazard function for Cox PH model. Try AFT psm().")
+    }
+  }
+  #Construct data frame for output  
+  if (reg %in% c("AFT","AFT with censoring")) {
+    if (What == "survival") {
+      SurvEst <- data.frame(meant(lp=se1$linear.predictors),med(lp=se1$linear.predictors), se1$linear.predictors, se1$surv, se1$lower, se1$upper, se1$std.err)
+      colnames(SurvEst) <- c("Mean.Surv.Time","Med.Surv.Time","LinearPredictor", "survival","Lower", "Upper","SE")
+    } else {
+      SurvEst <- se1
+    } 
+  } 
+  if (reg %in% c("Cox PH","Cox PH with censoring")) {
+    if (What == "survival") {
+      SurvEst <- data.frame(meant(lp=predict(fit)),med(lp=predict(fit)), se1$surv, se1$lower, se1$upper, se1$std.err)
+      colnames(SurvEst) <- c("Mean.Surv.Time","Med.Surv.Time", "survival","Lower", "Upper","SE")
+    }  
+    else {
+      stop("Error: Cannot get hazard function for Cox PH model. Try AFT psm().")
+    }
+  }
+  #Final data  
+  return(SurvEst)
+}
+
+
+################################################################################
+
 
 ################################################################################
 ##                           Multi-state model                                ##

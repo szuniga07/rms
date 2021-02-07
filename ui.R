@@ -122,21 +122,19 @@ fluidRow(
                    br(),                   
 
                    uiOutput("vx"),  #vx is the created drop down box coming from renderUI in server.r.
+                   br(),
+                   uiOutput("reg_typ"),  #
                    br()
-                   
                      ),
                    
                    column(3,  offset=1,
-                   uiOutput("reg_typ"),  #vx is the created drop down box coming from renderUI in server.r.
+                          uiOutput("censoring"),  #Survival censoring variable
+                          br(),
+                          uiOutput("aft_dist"),  #AFT distribution choice.
                    br(),
-                   
+                   uiOutput("clustering"),  #GLS clustering variable.
+                   br(),
                    uiOutput("quant_tau"),  #Selects the percentile to use in quantile regression.
-                   br(),
-                   
-                   uiOutput("censoring"),  #vx is the created drop down box coming from renderUI in server.r.
-                   br(),
-
-                   uiOutput("clustering"),  #vx is the created drop down box coming from renderUI in server.r.
                    br()
                    ),
                    
@@ -605,6 +603,63 @@ verbatimTextOutput("KM_SF_Output_C"),
 br(),
 ############################## End here
 
+h4("Estimated Survival Times"),
+br(),
+## Estimated mean and quantiles in values of Y ##
+fluidRow(
+  column(3, 
+         uiOutput("surv_binary_X")),
+  column(3,
+         uiOutput("surv_binary_compare"))
+),
+br(),
+h5("Quantiles: Point estimates and confidence intervals of the effects from the 10th/25th/50th/75th/95th percentiles."),
+tableOutput("surv_quant_out1"),
+br(),
+h5("Mean: Point estimates and confidence intervals for the mean effect."),
+tableOutput("surv_mean_out1"),
+br(),
+h5("Observed outcome means and quantiles."),
+tableOutput("surv_obsdfmqt_out1"),
+br(),
+h4("Probability of survival for specific times"),
+h5("Includes option to get hazard function for AFT models."),
+br(),
+h5("Enter the X values when the data box opens. Defaults are adjusted model values."),
+fluidRow(
+  column(3, 
+         uiOutput("surv_probability_time")),
+  column(3, 
+         uiOutput("surv_time_probability_hazard_survival")),
+  column(3,
+         uiOutput("surv_time_probability_yesno"))
+),
+br(),
+h5("Results"),
+verbatimTextOutput("surv_hazard_survival_function_out"), 
+br(),
+
+## Download Survival Estimates ##
+h4("Download Survival Estimates"),
+br(),
+fluidRow(
+  column(3, 
+         uiOutput("survival_estimate_time")),
+  column(3, offset=1,
+         uiOutput("survival_estimate_hazard_survival"))
+),
+br(),
+fluidRow(
+  column(3,
+         uiOutput("survival_estimate_yesno")),
+  column(3, offset=1,
+         uiOutput("surv_est_data_download_name")) ,
+  column(3, offset=1,
+         downloadLink('se_data_download', '5. Click to download estimates.'))
+),
+br(),
+
+###############################
          h4("Schoenfeld residuals"),
          h5("Assess the Cox model's proportional hazards assumption."),
          br(),

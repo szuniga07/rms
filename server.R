@@ -5661,7 +5661,7 @@ output$surv_obsdfmqt_out1 <- renderTable({
 #1. Indicate survival time
 output$surv_probability_time <- renderUI({
   numericInput("survProbTime", "1. Select a survival time.",
-               value = 1, step = 1)
+               value = 1, step = 1, min=1)
 })
 #1A. Reactive function of survival time
 surv_Prob_Time_Val <- reactive({

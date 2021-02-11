@@ -625,7 +625,7 @@ br(),
 h4("Probability of survival for specific times"),
 h5("Includes option to get hazard function for AFT models."),
 br(),
-h5("Enter the X values when the data box opens. Defaults are adjusted model values."),
+h5("Enter the X values when the data box opens and then close to get the probability. Note: Close the data box to run new models. Defaults are adjusted model values."),
 fluidRow(
   column(3, 
          uiOutput("surv_probability_time")),

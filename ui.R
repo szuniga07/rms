@@ -261,10 +261,30 @@ tabPanel("Describe",
                   uiOutput("desc_choice"))
          ),
          plotOutput("DescSmryPlt", height = 800, width = 1200),          
-         #plotOutput("DescSmryPlt", height = 700),          
+         #summaryRc plot 
+         br(),
+         fluidRow(
+           h4("Graphical Summarization of Continuous Variables Against a Continuous Response"),
            br(),
+           column(3, 
+                  uiOutput("smryRc_y")),
+           column(3, offset=1,
+                  uiOutput("smryRc_x"))
+         ),
+         br(),
+         fluidRow(
+           column(3, 
+                  uiOutput("smryRc_strat_yes_no")),
+           column(3, offset=1,
+                  uiOutput("smryRc_z")),
+           column(3, offset=1,
+                  uiOutput("smryrc_choice"))
+         ),
+         plotOutput("summaryRC_plot_function_out", height = 800, width = "100%"),          
+         br(),
          fluidRow(
            h4("Explore the missingness of a variable by factor levels."),
+           br(),
            column(3, 
                   uiOutput("miss_y")),
            column(3, offset=1,

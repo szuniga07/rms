@@ -3606,6 +3606,88 @@ output$DescSmryPlt <- renderPlot({
 #}, height = 700, width = 1000  )
 }, height = 800, width = 1200  )
 
+##########################################################################
+## summaryRc plot of continuous Y by continuous X with a stratification ##
+##########################################################################
+
+#1. Y variable "Select the response variable"
+output$smryRc_y <- renderUI({                                
+  selectInput("smryrcY", "1. Select the continuous outcome variable",        
+              choices = var(), multiple=FALSE, selected=var()[1] ) 
+})
+#1A. Reactive function for the Y variable
+smryRc_outcome <- reactive({
+  input$smryrcY
+})
+#2. X formula  "Select the explanatory variable"
+#Select the predictors.
+output$smryRc_x <- renderUI({                                 #Same idea as output$vy
+  selectInput("smryrcX", "2. Select the continuous predictor", 
+              choices = setdiff(var(), smryRc_outcome()), multiple=FALSE, selected=var()[2]) 
+})
+#2A. Reactive function for the X variable
+smryRc_X_var <- reactive({
+  input$smryrcX
+})
+# stratify  
+#3. Do you want to stratify by a factor
+output$smryRc_strat_yes_no <- renderUI({  
+  selectInput("smryRcStratYN", "3. Do you want to stratify?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")     
+})
+#4. Select a stratification variable
+output$smryRc_z <- renderUI({                                 #Same idea as output$vy
+  selectInput("smryrcZ", "4. Select the stratification variable", 
+              choices = setdiff(var(), c(smryRc_outcome(),smryRc_X_var )), multiple=FALSE, 
+              selected=setdiff(var(), c(smryRc_outcome(),smryRc_X_var() ))[1]) 
+})
+#4A. Reactive function for the stratification variable
+smryRc_Z_var <- reactive({
+  input$smryrcZ
+})
+#5. Run the graph
+output$smryrc_choice <- renderUI({  
+  selectInput("smryRcChoice", "5. Run the summary plot now?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")     
+})
+#6. Run the function below
+summaryRC_plot_function_run <- reactive({
+  if(input$smryRcChoice == "Yes") {
+    if(input$smryRcStratYN == "Yes") {    
+    fncSumRcPlot(X=smryRc_X_var(), Y=smryRc_outcome(), Z=smryRc_Z_var(), DF=df())
+  }  else {
+    fncSumRcPlot(X=smryRc_X_var(), Y=smryRc_outcome(), Z=NULL, DF=df())
+  }
+}
+})
+#6A. Summary plot output 
+output$summaryRC_plot_function_out <- renderPlot({
+  if(input$smryRcChoice == "Yes") {
+    summaryRC_plot_function_run()
+  }
+})
+## Function that creates summaryRc plot ##
+fncSumRcPlot <- function(X, Y, Z=NULL, DF) {
+  Vnms <- X
+  #Create formula
+  if(is.null(Z)) {
+    fmla <- as.formula(paste(paste0(Y , "~"),   
+                             paste(Vnms, collapse= "+") ))
+  } else {
+    fmla <- as.formula(paste(paste0(Y , "~"),   
+                             paste(Vnms, collapse= "+"), "+ stratify(", Z,")" ))
+  }
+  #Create summary plot
+  if(is.null(Z)) {
+    summaryRc(fmla, data=DF, col=c(1,2), cex.quant=1.5, lwd=2, datadensity=TRUE, trim=.01,
+              nloc=FALSE)
+  } else {
+    summaryRc(fmla, data=DF, col=c(1:length(levels(as.factor(DF[, Z] )))), cex.quant=1.5, lwd=2,
+              datadensity=TRUE, trim=.01, label.curves=list(keys='lines'), nloc=FALSE)
+  }
+}
+
+
 ## Missing variable plots
 #Select the outcome
 output$miss_y <- renderUI({                                
@@ -3773,13 +3855,13 @@ cost_plot1_grp <- function(y, x, df) {
 cost_quant <- function(y, x, df) {
   
   #Treatment/control group means/medians
-  ctl_med <- median(df[, y][as.numeric(df[, x]) == min(as.numeric(df[, x]))], na.rm=T)
-  trt_med <- median(df[, y][as.numeric(df[, x]) == max(as.numeric(df[, x]))], na.rm=T)
-  ctl_mn <- mean(df[, y][as.numeric(df[, x]) == min(as.numeric(df[, x]))], na.rm=T)
-  trt_mn <- mean(df[, y][as.numeric(df[, x]) == max(as.numeric(df[, x]))], na.rm=T)
+  ctl_med <- median(df[, y][as.numeric(df[, x]) == min(as.numeric(df[, x]), na.rm=T)], na.rm=T)
+  trt_med <- median(df[, y][as.numeric(df[, x]) == max(as.numeric(df[, x]), na.rm=T)], na.rm=T)
+  ctl_mn <- mean(df[, y][as.numeric(df[, x]) == min(as.numeric(df[, x]), na.rm=T)], na.rm=T)
+  trt_mn <- mean(df[, y][as.numeric(df[, x]) == max(as.numeric(df[, x]), na.rm=T)], na.rm=T)
   #### Get quantiles and bind with means. Partially used in the legend and the observed table in a later section
-  qt1 <- quantile(df[, y][as.numeric(df[, x]) == min(as.numeric(df[, x]))], probs=c(.1, .25, .5, .75, .9), na.rm=T)
-  qt2 <- quantile(df[, y][as.numeric(df[, x]) == max(as.numeric(df[, x]))], probs=c(.1, .25, .5, .75, .9), na.rm=T)
+  qt1 <- quantile(df[, y][as.numeric(df[, x]) == min(as.numeric(df[, x]), na.rm=T)], probs=c(.1, .25, .5, .75, .9), na.rm=T)
+  qt2 <- quantile(df[, y][as.numeric(df[, x]) == max(as.numeric(df[, x]), na.rm=T)], probs=c(.1, .25, .5, .75, .9), na.rm=T)
   odf_mqt <- as.data.frame(rbind(cbind(round(qt2, 2), round(qt1 ,2)),
                                  cbind(round(trt_mn, 2), round(ctl_mn, 2)) ))
   rownames(odf_mqt) <- c("p10", "p25", "p50", "p75", "p90", "Mean")
@@ -5621,13 +5703,13 @@ output$surv_mean_out1 <- renderTable({
 surv_quant <- function(y, x, df) {
   
   #Treatment/control group means/medians
-  ctl_med <- median(df[, y][as.numeric(df[, x]) == min(as.numeric(df[, x]))], na.rm=T)
-  trt_med <- median(df[, y][as.numeric(df[, x]) == max(as.numeric(df[, x]))], na.rm=T)
-  ctl_mn <- mean(df[, y][as.numeric(df[, x]) == min(as.numeric(df[, x]))], na.rm=T)
-  trt_mn <- mean(df[, y][as.numeric(df[, x]) == max(as.numeric(df[, x]))], na.rm=T)
+  ctl_med <- median(df[, y][as.numeric(df[, x]) == min(as.numeric(df[, x]), na.rm=T)], na.rm=T)
+  trt_med <- median(df[, y][as.numeric(df[, x]) == max(as.numeric(df[, x]), na.rm=T)], na.rm=T)
+  ctl_mn <- mean(df[, y][as.numeric(df[, x]) == min(as.numeric(df[, x]), na.rm=T)], na.rm=T)
+  trt_mn <- mean(df[, y][as.numeric(df[, x]) == max(as.numeric(df[, x]), na.rm=T)], na.rm=T)
   #### Get quantiles and bind with means. Partially used in the legend and the observed table in a later section
-  qt1 <- quantile(df[, y][as.numeric(df[, x]) == min(as.numeric(df[, x]))], probs=c(.1, .25, .5, .75, .9), na.rm=T)
-  qt2 <- quantile(df[, y][as.numeric(df[, x]) == max(as.numeric(df[, x]))], probs=c(.1, .25, .5, .75, .9), na.rm=T)
+  qt1 <- quantile(df[, y][as.numeric(df[, x]) == min(as.numeric(df[, x]), na.rm=T)], probs=c(.1, .25, .5, .75, .9), na.rm=T)
+  qt2 <- quantile(df[, y][as.numeric(df[, x]) == max(as.numeric(df[, x]), na.rm=T)], probs=c(.1, .25, .5, .75, .9), na.rm=T)
   odf_mqt <- as.data.frame(rbind(cbind(round(qt2, 2), round(qt1 ,2)),
                                  cbind(round(trt_mn, 2), round(ctl_mn, 2)) ))
   rownames(odf_mqt) <- c("p10", "p25", "p50", "p75", "p90", "Mean")

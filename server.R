@@ -1035,6 +1035,243 @@ output$desc_YhatHistRslt <- renderPrint({
   print(describeYhatHistRslt())
 })    
 
+#########################################
+## Binary classification of predictors ##
+#########################################
+
+#1. Select a cutoff level.
+output$pred_class_thresh <- renderUI({                                 
+  numericInput("PredClassThresh", "1. Select a cutoff level.", 
+               value = 0, step = .01)     
+})
+#1A. Object for cutoff level 
+prediction_class_threshold <- reactive({
+  input$PredClassThresh
+})
+
+#2. Select a survival model time (e.g., 7 days)
+output$pred_class_time <- renderUI({                                 
+  numericInput("PredClassTime", "2. Select a survival model time (e.g., 7 days).", 
+               value = 1, step = 1, min=0)     
+})
+#2A. Object for survival model time 
+prediction_classification_time <- reactive({
+  input$PredClassTime
+})
+
+#3. Select the approximate number of histogram bars
+output$pred_class_hist_bars <- renderUI({                                 
+  numericInput("PredClassHistBars", "3. Select the approximate number of histogram bars.", 
+               value = 15, step = 1, min=2)     
+})
+#3A. Object for histogram bars 
+prediction_class_histogram_bars <- reactive({
+  input$PredClassHistBars
+})
+
+#4Indicate if you want the classification plot
+output$pred_class_hist_yesno <- renderUI({                                 
+  selectInput("PredClassHistYN", "4. Do you want to run the classification plot?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")     
+})
+#4A. Object for classification plot 
+prediction_class_histogram_yes_no <- reactive({
+  input$PredClassHistYN
+})
+#Run functions below
+#5. Get data for functions
+get_binary_class_df <- reactive({
+  if (prediction_class_histogram_yes_no() =="Yes") {
+    fncYhatClassDf(Fit=fit1(), Y=outcome(), Threshold=prediction_class_threshold(), Censor=censor1()[length(censor1())], 
+                   PredTime=prediction_classification_time(), RegType=input$regress_type, DF=df() )
+    }
+})
+#5A. Run the data function
+binary_classification_data_output <- reactive({
+  get_binary_class_df()
+})
+
+#6. Get AUC
+get_binary_class_AUC <- reactive({
+  if (prediction_class_histogram_yes_no() =="Yes") {
+    fncThreshAUC(Fit=fit1(), Y=outcome(), Threshold=prediction_class_threshold(), Censor=censor1()[length(censor1())], 
+                   PredTime=prediction_classification_time(), RegType=input$regress_type, DF=df(), ClassDF=binary_classification_data_output() )
+  }
+})
+#6A. Run the AUC function
+binary_classification_AUC_output <- reactive({
+    get_binary_class_AUC()
+  })
+
+#7. Plot binary classification
+plot_binary_class_function <- reactive({
+  if (prediction_class_histogram_yes_no() =="Yes") {
+    fncYhatClassPlt(ClassDF=binary_classification_data_output(), AUC=binary_classification_AUC_output(), 
+                    Brks=prediction_class_histogram_bars() )
+  }
+})
+#7A. Run the plot function 
+output$plot_binary_class_run <- renderPlot({
+    plot_binary_class_function()
+})
+
+#8. Get sensitivity and specificity from data
+get_binary_class_sensitivity_specificity <- reactive({
+  if (prediction_class_histogram_yes_no() =="Yes") {
+    fncClassDfSmry(ClassDF=binary_classification_data_output() )
+  }
+})
+#8A. Run the print function 
+output$get_bin_class_sens_spc_out <- renderPrint({
+    get_binary_class_sensitivity_specificity()
+})
+
+################
+##  Functions ##
+################
+
+##############
+## Get data ##
+##############
+fncYhatClassDf <- function(Fit, Y, Threshold, Censor=NULL, PredTime=NULL, RegType, DF)  {
+  tm1 <- Fit
+  atime <- PredTime
+  tdf <- DF
+  tY <- Y
+  tcensor <- Censor
+  # Need to make object for this so I can calculate the trapezoid AUC:
+  threshLev <- Threshold
+  #Get predictions for values at threshold
+  #Make data for predict()
+  newtdf1 <- switch(RegType,                
+                    "Linear"   = tdf[ tdf[,  tY] >= threshLev, ], 
+                    "Logistic" = tdf[ tdf[,  tY] == 1, ],
+                    "Ordinal Logistic"  = tdf[ tdf[,  tY] > 1, ],
+                    "Poisson"  = tdf[ tdf[,  tY] >= log(threshLev), ],
+                    "Quantile" = tdf[ tdf[,  tY] >= threshLev, ],
+                    "Cox PH"   = tdf[tdf[,  tY] >= atime, ],
+                    "Cox PH with censoring"  = tdf[ tdf[, tcensor ] ==1 & tdf[,  tY] >= atime, ],
+                    "AFT"  = tdf[tdf[,  tY] >= atime, ],
+                    "AFT with censoring"     = tdf[ tdf[, tcensor ] ==1 & tdf[,  tY] >= atime, ],
+                    "Generalized Least Squares" = tdf[ tdf[,  tY] >= threshLev, ] )
+  newtdf2 <- switch(RegType,                
+                    "Linear"   = tdf[ tdf[,  tY] < threshLev, ], 
+                    "Logistic" = tdf[ tdf[,  tY] == 0, ],
+                    "Ordinal Logistic"  = tdf[ tdf[,  tY]  ==1, ],
+                    "Poisson"  = tdf[ tdf[,  tY] < log(threshLev), ],
+                    "Quantile" = tdf[ tdf[,  tY] < threshLev, ],
+                    "Cox PH"   = tdf[tdf[,  tY] < atime, ],
+                    "Cox PH with censoring"  = tdf[ tdf[, tcensor ] ==0 & tdf[,  tY] < atime, ],
+                    "AFT"  = tdf[tdf[,  tY] < atime, ],
+                    "AFT with censoring"     = tdf[ tdf[, tcensor ] ==0 & tdf[,  tY] >= atime, ],
+                    "Generalized Least Squares" = tdf[ tdf[,  tY] < threshLev, ] )
+  #Get tranformed values of threshold when using logits 
+  Transform.Threshold <- switch(RegType,                
+                                "Linear"   = NA, 
+                                "Logistic" = plogis(threshLev),
+                                "Ordinal Logistic"  = plogis(threshLev),
+                                "Poisson"  = exp(threshLev),
+                                "Quantile" = NA,
+                                "Cox PH"   = plogis(threshLev),
+                                "Cox PH with censoring"  = plogis(threshLev),
+                                "AFT"  = plogis(threshLev),
+                                "AFT with censoring"     = plogis(threshLev),
+                                "Generalized Least Squares" = NA )
+  #Predictions
+  #pm_all <- predict(tm1, newdata= tdf)
+  pm1 <- predict(tm1, newdata= newtdf1)
+  pm2 <- predict(tm1, newdata= newtdf2)
+  #Get values for xlim of plot
+  senspcXmin <- min(range(pm1, na.rm=T),range(pm2, na.rm=T))
+  senspcXmax <- max(range(pm1, na.rm=T),range(pm2, na.rm=T))
+  ## This determines the amount of predictions above a certain level
+  #Sensitivity
+  #Get probability for 4 typs of response
+  pr_table1 <- prop.table(table(factor(pm1 >= threshLev, levels=c("FALSE","TRUE") )))
+  pr_table2 <- prop.table(table(factor(pm2 >= threshLev, levels=c("FALSE","TRUE") )))
+  #Sensitivity and 1 - specificity
+  propAbovMY1 <-  pr_table1["TRUE"]  #Sensitivity
+  fls_Neg <-  pr_table1["FALSE"]  #FALSE negative
+  propAbovMY0 <- pr_table2["TRUE"]  #1-specificity or false-positive
+  specifity <-  pr_table2["FALSE"]  #Sensitivity
+  
+  
+  return(list("pm1"=pm1, "pm2"=pm2, "threshLev"=threshLev, "senspcXmin"=senspcXmin, "senspcXmax"=senspcXmax,
+              "propAbovMY1"=propAbovMY1, "fls_Neg"=fls_Neg,  "propAbovMY0"=propAbovMY0, "specifity"=specifity,
+              "Transform.Threshold"=Transform.Threshold))
+  
+}
+
+#####################################################
+## Function to create AUC for each threshold I set ##
+#####################################################
+fncThreshAUC <- function(Fit, Y, Threshold, Censor=NULL, PredTime=NULL, RegType, DF, ClassDF) {
+  #Get sensitivity and specificity for IQR of predicted values
+  yClass.10 <-  fncYhatClassDf(Fit=Fit, Y=Y, Threshold=as.numeric(Threshold[8]), 
+                               Censor=Censor, PredTime=PredTime, RegType=RegType, DF=DF)
+  yClass.25 <-  fncYhatClassDf(Fit=Fit, Y=Y, Threshold=as.numeric(Threshold[9]), 
+                               Censor=Censor, PredTime=PredTime, RegType=RegType, DF=DF)
+  yClass.50 <-  fncYhatClassDf(Fit=Fit, Y=Y, Threshold=as.numeric(Threshold[10]), 
+                               Censor=Censor, PredTime=PredTime, RegType=RegType, DF=DF)
+  yClass.75 <-  fncYhatClassDf(Fit=Fit, Y=Y, Threshold=as.numeric(Threshold[11]), 
+                               Censor=Censor, PredTime=PredTime, RegType=RegType, DF=DF)
+  yClass.90 <-  fncYhatClassDf(Fit=Fit, Y=Y, Threshold=as.numeric(Threshold[12]), 
+                               Censor=Censor, PredTime=PredTime, RegType=RegType, DF=DF)
+  
+  #Create vectors for sensitivity and specificity
+  yClassSens <- sort(c(yClass.10$propAbovMY1, yClass.25$propAbovMY1, yClass.50$propAbovMY1, yClass.75$propAbovMY1, yClass.90$propAbovMY1, ClassDF$propAbovMY1), decreasing=TRUE) 
+  yClassSpec <- sort(c(yClass.10$specifity,yClass.25$specifity, yClass.50$specifity, yClass.75$specifity,yClass.90$specifity, ClassDF$specifity)) 
+  #Add in values of 0 and 1 for perfect sensitivity and specificity
+  yClassSens <- c(1, yClassSens, 0)
+  yClassSpec <- c(0, yClassSpec, 1)
+  
+  #Gets differences between specificity values
+  spc_diff <- diff(yClassSpec)
+  
+  #Adds sensitivity portions of formula
+  sns_diff <- vector(length= length(yClassSens) - 1)
+  i <- 1
+  while (i < length(yClassSens) ) {
+    sns_diff[i] <- yClassSens[i] + yClassSens[i+1] 
+    i = i+1
+  }
+  
+  #Command to get AUC#
+  Threshold.AUC <- sum(.5*(spc_diff * sns_diff))
+  return("Threshold.AUC"=Threshold.AUC)
+}
+
+##############
+## Graphing ##
+##############
+fncYhatClassPlt <- function(ClassDF, AUC, Brks)  {
+  par(mfrow=c(2,1))
+  
+  h1 <- hist(ClassDF$pm1,  plot=FALSE, breaks=Brks)
+  cuts1 <- cut(h1$breaks, c(-Inf, ClassDF$threshLev, Inf))
+  plot(h1, col=c("grey", "green")[cuts1], xlim=c(ClassDF$senspcXmin, ClassDF$senspcXmax),
+       main=paste0("Outcome = Yes. Proportion of predictions at or above cutoff: ", round(ClassDF$propAbovMY1, 3), ".  AUC = ", round(AUC, 3),"." ),
+       xlab=paste0("Sensitivity: True-Positives in green using a cutoff of ", ClassDF$threshLev, " (Transformed = ", round(ClassDF$Transform.Threshold, 3), ")." ))
+  abline(v=ClassDF$threshLev, lwd=3, col=4)
+  h2 <- hist(ClassDF$pm2, plot=FALSE, breaks=Brks)
+  cuts2 <- cut(h2$breaks, c(-Inf, ClassDF$threshLev, Inf))
+  plot(h2, col=c("grey", "red")[cuts2], xlim=c(ClassDF$senspcXmin, ClassDF$senspcXmax),
+       main=paste0("Outcome = No. Proportion of predictions at or above cutoff: ", round(ClassDF$propAbovMY0, 3), ".  AUC = ", round(AUC, 3),"."  ),
+       xlab=paste0("1 - Specificity: False-Positives in red using a cutoff of ", ClassDF$threshLev, " (Transformed = ", round(ClassDF$Transform.Threshold, 3), ")." ))
+  abline(v=ClassDF$threshLev, lwd=3, col=4)
+  par(mfrow=c(1,1))
+}
+
+########################
+## Get summary values ##
+########################
+fncClassDfSmry <- function(ClassDF) {
+  return(list("Sensitivity"=unname(ClassDF$propAbovMY1), "Specifity"= unname(ClassDF$specifity),
+              "False.Positives"= unname(ClassDF$propAbovMY0), "False.Negatives"= unname(ClassDF$fls_Neg) ))
+}
+
+
+################################################################################
 
     #Monte Carlo tab
     output$s_seed <- renderUI({                                 #Same idea as output$vy

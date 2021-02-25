@@ -150,14 +150,9 @@ fluidRow(
                           
                           uiOutput("uf"),  #vx is the created drop down box coming from renderUI in server.r.
                           br() 
-                          #, #Taking out these 3 lines because I will have a PRED tab
-#                           selectInput("dmdfyhat", "13. Do you want to download the predictions (yhat: raw/logit)?", 
-#                                      choices = c("No", "Yes"), multiple=FALSE, selected="No")     
                    )
                    ),
                    
-                   
-
                    h4("Regression results"),
                    verbatimTextOutput("regress"),  #"regress" calls output$regress from server.r 
                    br(),
@@ -179,9 +174,31 @@ fluidRow(
 h4("Describe the predicted values"),
 verbatimTextOutput("desc_YhatHistRslt"),  #
                    plotOutput("y_hat_hist"),
-                   h5("Linear predicted values (logit, exp(logit), or response level) and probabilities (Logistic regression).")
+                   h5("Linear predicted values (logit, exp(logit), or response level) and probabilities (Logistic regression)."),
+br(),
+h4("Examine sensitivity and specificity values from a threshold on predicted values."),
+fluidRow(
+  column(3, 
+         uiOutput("pred_class_thresh")),
+  column(3, offset=1,
+         uiOutput("pred_class_time"))
+),
+br(),
+fluidRow(
+  column(3, 
+         uiOutput("pred_class_hist_bars")),
+  column(3, offset=1,
+         uiOutput("pred_class_hist_yesno"))
+),
+br(),
+h5("Set a prediction threshold and examine sensitivity and 1-specificity (false positives) below. Find the best cutoff level. AUC calculated using the trapezoidal rule (Rosner, 2006)."),
+plotOutput("plot_binary_class_run", height = 800, width="100%"),
+br(),
+h5("Get sensitivity, specificity, false-positive, and false-negative values associated with your prediction threshold value."),
+verbatimTextOutput("get_bin_class_sens_spc_out"),
+br()
 
-                   ),    
+),    
 
 ############## PREDs SECTION #############################
 tabPanel("PREDs",                                #Creates a new panel named "Test"

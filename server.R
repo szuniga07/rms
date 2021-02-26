@@ -1042,7 +1042,7 @@ output$desc_YhatHistRslt <- renderPrint({
 #1. Select a cutoff level.
 output$pred_class_thresh <- renderUI({                                 
   numericInput("PredClassThresh", "1. Select a cutoff level.", 
-               value = 0, step = .01)     
+               value = 0, step = .1)     
 })
 #1A. Object for cutoff level 
 prediction_class_threshold <- reactive({

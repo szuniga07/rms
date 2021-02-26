@@ -191,7 +191,7 @@ fluidRow(
          uiOutput("pred_class_hist_yesno"))
 ),
 br(),
-h5("Set a prediction threshold and examine sensitivity and 1-specificity (false positives) below. Find the best cutoff level. AUC calculated using the trapezoidal rule (Rosner, 2006)."),
+h5("Set a prediction threshold and examine sensitivity and 1-specificity (false positives) below. Find the best cutoff level. AUC calculated using the trapezoidal rule (Rosner, 2006). X-axis values are linear predictors."),
 plotOutput("plot_binary_class_run", height = 800, width="100%"),
 br(),
 h5("Get sensitivity, specificity, false-positive, and false-negative values associated with your prediction threshold value."),

@@ -191,7 +191,7 @@ fluidRow(
          uiOutput("pred_class_hist_yesno"))
 ),
 br(),
-h5("Set a prediction threshold and examine sensitivity and 1-specificity (false positives) below. Find the best cutoff level. AUC calculated using the trapezoidal rule (Rosner, 2006)."),
+h5("Set a prediction threshold and examine sensitivity and 1-specificity (false positives) below. Find the best cutoff level. AUC calculated using the trapezoidal rule (Rosner, 2006) at quantiles (.10, .25, .50, .75, .90) and cutoff level."),
 h5("X-axis values are linear predictions. For AFT models, sensitivty and 1-specificity values are in reverse because predictions are in survival times (i.e., use values below cutoff)."),
 plotOutput("plot_binary_class_run", height = 800, width="100%"),
 br(),

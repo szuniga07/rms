@@ -59,13 +59,17 @@ shinyServer(
 
     #This is the new data from this question: 4. Do you want to create a new data frame?
     #Use this as a summary to confirm new data
-    new_smry_df <- reactive({                  
+    new_smry_df <- reactive({     
+      if(input$create_new_df == "Yes") {
       str(newdf())  
+      }
     })
     
     #Don't need this for "Data" tab
     output$new_smry_df <- renderPrint({
-      new_smry_df()
+      if(input$create_new_df == "Yes") {
+        new_smry_df()
+      }
     })
     
     #Use
@@ -537,15 +541,17 @@ shinyServer(
     
     #This reactive function runs the yhat_plot_fnc function above  
     yhat_hist_rslt <- reactive ({
-      yhat_hist_plot_fnc(yhat=predict(fit1()), reg_yhat=input$regress_type)
+      if (input$begin_mdl == "Yes") {
+        yhat_hist_plot_fnc(yhat=predict(fit1()), reg_yhat=input$regress_type)
+      }
     })
     
     
     output$y_hat_hist <- renderPlot({
-#        hist(predict(fit1()), main="Histogram of the predicted Y values",
-#             xlab=paste0(input$variableY))
+      if (input$begin_mdl == "Yes") {
       hist(yhat_hist_rslt(), main="Histogram of the predicted Y values",
                         xlab=paste0(input$variableY, " (range: ", round(min(yhat_hist_rslt(), na.rm=T),3), " to ", round(max(yhat_hist_rslt(), na.rm=T), 3), ". Unique values= ", length(unique(yhat_hist_rslt())) ,".)" ))
+      }
     })
     
     ########### Model approximation section ###########        
@@ -983,7 +989,9 @@ shinyServer(
     #Model predicted Y regression equation
     output$regress_equation <- renderPrint({                                                 
       options(scipen=20)
+      if (input$begin_mdl == "Yes") {
       print(Function(fit1()))
+      }
     })
     
     describeY <- reactive({                  #This stores the censoring variable. 
@@ -1017,8 +1025,10 @@ nm_x_var <- reactive({
 #})
 
 
-    output$specifications <- renderPrint({                                                 
+    output$specifications <- renderPrint({   
+      if (input$begin_mdl == "Yes") {
       print( specs(fit1(), long=TRUE))  #Summary of model fit.
+      }
     })
     
     output$desc_Y <- renderPrint({                                                 
@@ -1031,8 +1041,10 @@ nm_x_var <- reactive({
 #            descript="Predicted values" )  
            #descript=paste0("Summary of ",input$variableY) )  
     })
-output$desc_YhatHistRslt <- renderPrint({                                                 
-  print(describeYhatHistRslt())
+output$desc_YhatHistRslt <- renderPrint({ 
+  if (input$begin_mdl == "Yes") {
+    print(describeYhatHistRslt())
+  }
 })    
 
 #########################################
@@ -1046,7 +1058,9 @@ output$pred_class_thresh <- renderUI({
 })
 #1A. Object for cutoff level 
 prediction_class_threshold <- reactive({
-  input$PredClassThresh
+  if (input$begin_mdl == "Yes") {
+    input$PredClassThresh
+  }
 })
 
 #2. Select a survival model time (e.g., 7 days)
@@ -1056,8 +1070,10 @@ output$pred_class_time <- renderUI({
 })
 #2A. Object for survival model time 
 prediction_classification_time <- reactive({
-  input$PredClassTime
-})
+  if (input$begin_mdl == "Yes") {
+    input$PredClassTime
+  }
+  })
 
 #3. Select the approximate number of histogram bars
 output$pred_class_hist_bars <- renderUI({                                 
@@ -1066,7 +1082,9 @@ output$pred_class_hist_bars <- renderUI({
 })
 #3A. Object for histogram bars 
 prediction_class_histogram_bars <- reactive({
-  input$PredClassHistBars
+  if (input$begin_mdl == "Yes") {
+    input$PredClassHistBars
+  }
 })
 
 #4Indicate if you want the classification plot
@@ -1076,7 +1094,9 @@ output$pred_class_hist_yesno <- renderUI({
 })
 #4A. Object for classification plot 
 prediction_class_histogram_yes_no <- reactive({
-  input$PredClassHistYN
+  if (input$begin_mdl == "Yes") {
+    input$PredClassHistYN
+  }
 })
 #Run functions below
 #5. Get data for functions
@@ -1088,7 +1108,9 @@ get_binary_class_df <- reactive({
 })
 #5A. Run the data function
 binary_classification_data_output <- reactive({
-  get_binary_class_df()
+  if (prediction_class_histogram_yes_no() =="Yes") {
+    get_binary_class_df()
+  }
 })
 
 #6. Get AUC
@@ -1100,20 +1122,24 @@ get_binary_class_AUC <- reactive({
 })
 #6A. Run the AUC function
 binary_classification_AUC_output <- reactive({
+  if (prediction_class_histogram_yes_no() =="Yes") {
     get_binary_class_AUC()
+}
   })
 
 #7. Plot binary classification
 plot_binary_class_function <- reactive({
   if (prediction_class_histogram_yes_no() =="Yes") {
     fncYhatClassPlt(ClassDF=binary_classification_data_output(), AUC=binary_classification_AUC_output(), 
-                    Brks=prediction_class_histogram_bars() )
+                    Brks=prediction_class_histogram_bars(), RegType= input$regress_type)
   }
 })
 #7A. Run the plot function 
 output$plot_binary_class_run <- renderPlot({
+  if (prediction_class_histogram_yes_no() =="Yes") {
     plot_binary_class_function()
-})
+  }
+  })
 
 #8. Get sensitivity and specificity from data
 get_binary_class_sensitivity_specificity <- reactive({
@@ -1123,7 +1149,9 @@ get_binary_class_sensitivity_specificity <- reactive({
 })
 #8A. Run the print function 
 output$get_bin_class_sens_spc_out <- renderPrint({
+  if (prediction_class_histogram_yes_no() =="Yes") {
     get_binary_class_sensitivity_specificity()
+  }
 })
 
 ################
@@ -1244,19 +1272,66 @@ fncThreshAUC <- function(Fit, Y, Threshold, Censor=NULL, PredTime=NULL, RegType,
 ##############
 ## Graphing ##
 ##############
-fncYhatClassPlt <- function(ClassDF, AUC, Brks)  {
+fncYhatClassPlt <- function(ClassDF, AUC, Brks, RegType)  {
   par(mfrow=c(2,1))
+  #Sensitivity and 1-specificity
+  Sens.Value <- switch(RegType,                
+                        "Linear"   = round(ClassDF$propAbovMY1, 3), 
+                        "Logistic" = round(ClassDF$propAbovMY1, 3),
+                        "Ordinal Logistic"  = round(ClassDF$propAbovMY1, 3),
+                        "Poisson"  = round(ClassDF$propAbovMY1, 3),
+                        "Quantile" = round(ClassDF$propAbovMY1, 3),
+                        "Cox PH"   = round(ClassDF$propAbovMY1, 3),
+                        "Cox PH with censoring"  = round(ClassDF$propAbovMY1, 3),
+                        "AFT"  = round(ClassDF$fls_Neg, 3) ,
+                        "AFT with censoring"     = round(ClassDF$fls_Neg, 3),
+                        "Generalized Least Squares" = round(ClassDF$propAbovMY1, 3) )
+  Spec.Value <- switch(RegType,                
+                        "Linear"   = round(ClassDF$propAbovMY0, 3), 
+                        "Logistic" = round(ClassDF$propAbovMY0, 3),
+                        "Ordinal Logistic"  = round(ClassDF$propAbovMY0, 3),
+                        "Poisson"  = round(ClassDF$propAbovMY0, 3),
+                        "Quantile" = round(ClassDF$propAbovMY0, 3),
+                        "Cox PH"   = round(ClassDF$propAbovMY0, 3),
+                        "Cox PH with censoring"  = round(ClassDF$propAbovMY0, 3),
+                        "AFT"  = round(ClassDF$specifity, 3), 
+                        "AFT with censoring"     = round(ClassDF$specifity, 3),
+                        "Generalized Least Squares" = round(ClassDF$propAbovMY0, 3) )
+  #Bar colors
+  Bar.Colors1 <- switch(RegType,                
+                                "Linear"   = c("grey", "green"), 
+                                "Logistic" = c("grey", "green"),
+                                "Ordinal Logistic"  = c("grey", "green"),
+                                "Poisson"  = c("grey", "green"),
+                                "Quantile" = c("grey", "green"),
+                                "Cox PH"   = c("grey", "green"),
+                                "Cox PH with censoring"  = c("grey", "green"),
+                                "AFT"  = c("green", "grey"),
+                                "AFT with censoring"     = c("green", "grey"),
+                                "Generalized Least Squares" = c("grey", "green") )
+  Bar.Colors2 <- switch(RegType,                
+                        "Linear"   = c("grey", "red"), 
+                        "Logistic" = c("grey", "red"),
+                        "Ordinal Logistic"  = c("grey", "red"),
+                        "Poisson"  = c("grey", "red"),
+                        "Quantile" = c("grey", "red"),
+                        "Cox PH"   = c("grey", "red"),
+                        "Cox PH with censoring"  = c("grey", "red"),
+                        "AFT"  = c("red", "grey"),
+                        "AFT with censoring"     = c("red", "grey"),
+                        "Generalized Least Squares" = c("grey", "red") )
   
   h1 <- hist(ClassDF$pm1,  plot=FALSE, breaks=Brks)
   cuts1 <- cut(h1$breaks, c(-Inf, ClassDF$threshLev, Inf))
-  plot(h1, col=c("grey", "green")[cuts1], xlim=c(ClassDF$senspcXmin, ClassDF$senspcXmax),
-       main=paste0("Outcome = Yes. Proportion of predictions at or above cutoff: ", round(ClassDF$propAbovMY1, 3), ".  AUC = ", round(AUC, 3),"." ),
+  plot(h1, col=Bar.Colors1[cuts1], xlim=c(ClassDF$senspcXmin, ClassDF$senspcXmax),
+       main=paste0("Outcome = Yes. Proportion of predictions at or above cutoff: ", Sens.Value, ".  AUC = ", round(AUC, 3),"." ),
        xlab=paste0("Sensitivity: True-Positives in green using a cutoff of ", ClassDF$threshLev, " (Transformed = ", round(ClassDF$Transform.Threshold, 3), ")." ))
   abline(v=ClassDF$threshLev, lwd=3, col=4)
+  
   h2 <- hist(ClassDF$pm2, plot=FALSE, breaks=Brks)
   cuts2 <- cut(h2$breaks, c(-Inf, ClassDF$threshLev, Inf))
-  plot(h2, col=c("grey", "red")[cuts2], xlim=c(ClassDF$senspcXmin, ClassDF$senspcXmax),
-       main=paste0("Outcome = No. Proportion of predictions at or above cutoff: ", round(ClassDF$propAbovMY0, 3), ".  AUC = ", round(AUC, 3),"."  ),
+  plot(h2, col=Bar.Colors2[cuts2], xlim=c(ClassDF$senspcXmin, ClassDF$senspcXmax),
+       main=paste0("Outcome = No. Proportion of predictions at or above cutoff: ", Spec.Value, ".  AUC = ", round(AUC, 3),"."  ),
        xlab=paste0("1 - Specificity: False-Positives in red using a cutoff of ", ClassDF$threshLev, " (Transformed = ", round(ClassDF$Transform.Threshold, 3), ")." ))
   abline(v=ClassDF$threshLev, lwd=3, col=4)
   par(mfrow=c(1,1))

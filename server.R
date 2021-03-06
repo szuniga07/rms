@@ -1756,27 +1756,308 @@ lwd=3, ylab="Yhat", xlab=XyplotX1(), cex=1.75,
       }
     }, rownames = TRUE)
     
-    
+    ##############    
+    ## Nomogram ##
+    ##############    
 #This plots the predicted values as a nomogram    
+
+##Select the times for probability of survival
+#1. Revise plot layout
+output$nomo_prob_surv_time <- renderUI({
+  textInput("nomoPrbSrvTm", "1. Probability of survival to:", 
+            value= "c(1,2)" )     
+})
+#1A. Object with new layout
+nomogram_prob_survival_time <- reactive({
+  eval(parse(text=input$nomoPrbSrvTm ))
+})
+
+#2. Divider value to transform the survival time for "med" and "mmeant" (e.g., time/12=Years)
+output$nomo_trans_time_denom <- renderUI({  
+#  if(nomogram_yes() == "Yes") {
+    numericInput("nomoTrnsTmDnm", "2. Transformation time (e.g., 36/12= 3 years)",
+                 min=1, step=1, value=1)
+#  }
+})
+#2A. Object with multiplier value
+nomo_transformation_time_denom <- reactive({
+  if(nomogram_yes() == "Yes") {
+    input$nomoTrnsTmDnm
+  }
+})
+
+#Select the function at times (matches with "med" and "mmeant") or use .05 and .95 quantiles
+#3. Revise plot layout
+output$nomo_pred_surv_time_xaxis <- renderUI({
+  textInput("nomoPrdSrvTmXaxis", "3. Median and mean survival X-axis times:", 
+            value= "c(1,2)" )     
+})
+#3A. Object with new layout
+nomo_pred_surv_time_xaxis <- reactive({
+  if(nomogram_yes() == "Yes") {
+  eval(parse(text=input$nomoPrdSrvTmXaxis ))
+  }
+})
+
+#For labels
+#4. Select numerical amount for labels (e.g., 3 and 5 years)
+output$nomo_surv_time_prob_vals <- renderUI({
+  textInput("nomoSrvTimePrVls", "4. Select label values for survival times.", 
+            value= "c(1,2)" )     
+})
+#4A. Object with new layout
+nomo_survival_time_prob_values <- reactive({
+  if(nomogram_yes() == "Yes") {
+  eval(parse(text=input$nomoSrvTimePrVls ))
+  }
+})
+
+#Select the time frame (select once when both time frames are identical e.g., 3 year and 5 year)
+#For labels
+#5. Select numerical amount for labels (e.g., 3 and 5 years)
+output$nomo_surv_time_prob_pers <- renderUI({
+  selectInput("nomoSrvTimePrbPrs", "5. Select label time period",
+              choices = c("hour", "day", "week", "month", "year"), multiple=FALSE )
+})
+#5A. Object with new layout
+nomo_survival_time_prob_periods <- reactive({
+#  eval(parse(text=input$nomoSrvTimePrVls ))
+  if(nomogram_yes() == "Yes") {
+  input$nomoSrvTimePrbPrs
+  }
+})
+
+#6. Transition specific formulas
+output$nomo_up_Fmla <- renderUI({
+  textInput("nomoUpFmla", "6. Update nomogram formula", 
+  #value= deparse(nomo_fmla_output(), width.cutoff=500 )  )     
+  value= nomo_fmla_output()  )     
+})
+#6B. Make full regression call
+#nomo_first_formula <- reactive({
+#  paste0("coxph(list(",  deparse(ms_cph_mdl_fmla(), width.cutoff=500 ),  ",), data=", input$msDfInputName,", ", "id=", 
+#         cph_time_fmla_id(), ", model=TRUE" , ")")
+#})
+#6A. Object with formula
+nomo_update_formula <- reactive({
+  parse(text=sub("expression", "", input$nomoUpFmla))
+})
+
+#7. Create yes/no box to determine plot single partial effect
+output$nomo_yes <- renderUI({                                 #Same idea as output$vy
+  selectInput("nomoYes", "7. Do you want to create a nomogram?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")     #Will make choices based on my reactive function.
+})
+#7A. Object with new layout
+nomogram_yes <- reactive({
+  input$nomoYes
+})
+
+#8. Run function to get nomogram formula
+get_nomo_fmla <- reactive({
+#  if (nomogram_yes() =="Yes") {
+    fncNomo(RegType=input$regress_type)
+#  }
+})
+#8A. Run the data function
+nomo_fmla_output <- reactive({
+#  if (nomogram_yes() =="Yes") {
+    get_nomo_fmla()
+#  }
+})
+
+#9. Run function to get nomogram formula  nomo_fmla_output()$Nomogram
+get_nomo_plot <- reactive({
+  if (nomogram_yes() =="Yes") {
+    fncNomoPlot(Nom=nomo_update_formula(), Fit=fit1(), PrbSrvTm=nomogram_prob_survival_time(), TrnSrvTm=nomo_transformation_time_denom(), 
+            MdMnSrvTm=nomo_pred_surv_time_xaxis(), Time_label=nomo_survival_time_prob_values(), 
+            Time_label_period=nomo_survival_time_prob_periods(), RegType=input$regress_type)
+  }
+})
+#9A. Run the data function
+#nomo_plot_output <- reactive({
+#  if (nomogram_yes() =="Yes") {
+#    get_nomo_plot()
+#  }
+#})
+
+#Run plot
 output$nomo_gram <- renderPlot({
-  if(input$nomo_yes == "Yes") {
-    plot(  do.call("nomogram", list(fit1(), omit=nm_x_var()) )) 
+  if(nomogram_yes() == "Yes") {
+    get_nomo_plot()
   } else {
     plot(nomogram(fit1()))
   }
-}, height = 600)
+}, height = 800)
+
+#Old code
+#This plots the predicted values as a nomogram    
+#output$nomo_gram <- renderPlot({
+#  if(input$nomo_yes == "Yes") {
+#    plot(  do.call("nomogram", list(fit1(), omit=nm_x_var()) )) 
+#  } else {
+#    plot(nomogram(fit1()))
+#  }
+#}, height = 600)
 #Create yes/no box to determine plot single partial effect
-output$nomo_one_yes <- renderUI({                                 #Same idea as output$vy
-  selectInput("nomo_yes", "1. Do you want to plot a single or multiple predictor scores?", 
-              choices = c("No", "Yes"), multiple=FALSE, selected="No")     #Will make choices based on my reactive function.
-})
+#output$nomo_one_yes <- renderUI({                                 #Same idea as output$vy
+#  selectInput("nomo_yes", "1. Do you want to plot a single or multiple predictor scores?", 
+#              choices = c("No", "Yes"), multiple=FALSE, selected="No")     #Will make choices based on my reactive function.
+#})
 #Select the variables that will get 
-output$nomo_one_x <- renderUI({
-  selectInput("nm_X", "2. Select the predictor(s).", multiple=TRUE,
-              choices = predictor(), selected=predictor()[1])     #Will make choices based on my reactive function.
-})
+#output$nomo_one_x <- renderUI({
+#  selectInput("nm_X", "2. Select the predictor(s).", multiple=TRUE,
+#              choices = predictor(), selected=predictor()[1])     #Will make choices based on my reactive function.
+#})
+
+## Functions ##
+#Function that creates nomogram expression
+#fncNomo <- function(Fit, PrbSrvTm, TrnSrvTm, MdMnSrvTm, Time_label,RegType)  {
+fncNomo <- function(RegType)  {
+  nom <- switch(RegType,                
+                "Linear"   = expression(nomogram(Fit)), 
+                "Logistic" = expression(nomogram(Fit, fun=plogis)),
+                "Ordinal Logistic"  = expression(nomogram(Fit, fun=plogis)),
+                "Poisson"  = expression(nomogram(Fit, fun=exp)),
+                "Quantile" = expression(nomogram(Fit)),
+                "Cox PH"   = expression(nomogram(Fit, 
+                                                 fun=list(surv1, surv2, med, mnt),
+                                                 funlabel=c(paste0(Time_label[1], "-", Time_label_period, " Survival"),
+                                                            paste0(Time_label[2], "-", Time_label_period, " Survival"),
+                                                            paste0('Median Survival Time (', Time_label_period, 's)'),
+                                                            paste0('Mean Survival Time (', Time_label_period, 's)')),
+                                                 fun.at=list(ss, ss, MdMnSrvTm, MdMnSrvTm)   )),
+                "Cox PH with censoring"  =   expression(nomogram(Fit, 
+                                                                 fun=list(surv1, surv2, med, mnt),
+                                                                 funlabel=c(paste0(Time_label[1], "-", Time_label_period, " Survival"),
+                                                                            paste0(Time_label[2], "-", Time_label_period, " Survival"),
+                                                                            paste0('Median Survival Time (', Time_label_period, 's)'),
+                                                                            paste0('Mean Survival Time (', Time_label_period, 's)')),
+                                                                 fun.at=list(ss, ss, MdMnSrvTm, MdMnSrvTm)   )),
+                "AFT"  = expression(nomogram(Fit, 
+                                             fun=list(surv1, surv2, med, mnt),
+                                             funlabel=c(paste0(Time_label[1], "-", Time_label_period, " Survival"),
+                                                        paste0(Time_label[2], "-", Time_label_period, " Survival"),
+                                                        paste0('Median Survival Time (', Time_label_period, 's)'),
+                                                        paste0('Mean Survival Time (', Time_label_period, 's)')),
+                                             fun.at=list(ss, ss, MdMnSrvTm, MdMnSrvTm)   )),
+                "AFT with censoring" = expression(nomogram(Fit, 
+                                                           fun=list(surv1, surv2, med, mnt),
+                                                           funlabel=c(paste0(Time_label[1], "-", Time_label_period, " Survival"),
+                                                                      paste0(Time_label[2], "-", Time_label_period, " Survival"),
+                                                                      paste0('Median Survival Time (', Time_label_period, 's)'),
+                                                                      paste0('Mean Survival Time (', Time_label_period, 's)')),
+                                                           fun.at=list(ss, ss, MdMnSrvTm, MdMnSrvTm)   )),
+                "Generalized Least Squares" = expression(nomogram(Fit)) )
+  return(list("Nomogram"=nom  ))
+  
+}
+
+#Function that creates nomogram
+fncNomoPlot <- function(Nom, Fit, PrbSrvTm, TrnSrvTm, MdMnSrvTm, Time_label,Time_label_period,RegType)  {
+  #Survival probability labeling 
+  ss    <- c(0,.05,.1,.2,.3,.4,.5,.6,.7,.8,.9,.95, 1)
+  #Survival function  
+  surv  <- switch(RegType,                
+                  "Linear"   = NA , 
+                  "Logistic" = NA ,
+                  "Ordinal Logistic"  = NA ,
+                  "Poisson"  = NA ,
+                  "Quantile" = NA ,
+                  "Cox PH"   =  Survival(Fit),
+                  "Cox PH with censoring"  =  Survival(Fit),
+                  "AFT"  =  Survival(Fit),
+                  "AFT with censoring" =  Survival(Fit),
+                  "Generalized Least Squares" =  NA )
+  #Survival at time 1 
+  surv1  <- switch(RegType,                
+                   "Linear"   = NA , 
+                   "Logistic" = NA ,
+                   "Ordinal Logistic"  = NA ,
+                   "Poisson"  = NA ,
+                   "Quantile" = NA ,
+                   "Cox PH"   =  function(x) surv(PrbSrvTm[1], lp=x),
+                   "Cox PH with censoring"  =  function(x) surv(PrbSrvTm[1], lp=x),
+                   "AFT"  =  function(x) surv(PrbSrvTm[1], lp=x),
+                   "AFT with censoring" =  function(x) surv(PrbSrvTm[1], lp=x),
+                   "Generalized Least Squares" =  NA )
+  #Survival at time 2 
+  surv2  <- switch(RegType,                
+                   "Linear"   = NA , 
+                   "Logistic" = NA ,
+                   "Ordinal Logistic"  = NA ,
+                   "Poisson"  = NA ,
+                   "Quantile" = NA ,
+                   "Cox PH"   =  function(x) surv(PrbSrvTm[2], lp=x),
+                   "Cox PH with censoring"  =  function(x) surv(PrbSrvTm[2], lp=x),
+                   "AFT"  =  function(x) surv(PrbSrvTm[2], lp=x),
+                   "AFT with censoring" =  function(x) surv(PrbSrvTm[2], lp=x),
+                   "Generalized Least Squares" =  NA )
+  #Quantile function 
+  quan  <- switch(RegType,                
+                  "Linear"   = NA , 
+                  "Logistic" = NA ,
+                  "Ordinal Logistic"  = NA ,
+                  "Poisson"  = NA ,
+                  "Quantile" = NA ,
+                  "Cox PH"   = Quantile(Fit),
+                  "Cox PH with censoring"  = Quantile(Fit),
+                  "AFT"  =  Quantile(Fit),
+                  "AFT with censoring" = Quantile(Fit),
+                  "Generalized Least Squares" =  NA )
+  #Median function 
+  med  <- switch(RegType,                
+                 "Linear"   = NA , 
+                 "Logistic" = NA ,
+                 "Ordinal Logistic"  = NA ,
+                 "Poisson"  = NA ,
+                 "Quantile" = NA ,
+                 "Cox PH"   = function(x) quan(lp=x)/TrnSrvTm,
+                 "Cox PH with censoring"  = function(x) quan(lp=x)/TrnSrvTm,
+                 "AFT"  =  function(x) quan(lp=x)/TrnSrvTm,
+                 "AFT with censoring" = function(x) quan(lp=x)/TrnSrvTm,
+                 "Generalized Least Squares" =  NA )
+  #Mean function 
+  meant  <- switch(RegType,                
+                   "Linear"   = NA , 
+                   "Logistic" = NA ,
+                   "Ordinal Logistic"  = NA ,
+                   "Poisson"  = NA ,
+                   "Quantile" = NA ,
+                   "Cox PH"   = Mean(Fit),
+                   "Cox PH with censoring"  = Mean(Fit),
+                   "AFT"  =  Mean(Fit),
+                   "AFT with censoring" = Mean(Fit),
+                   "Generalized Least Squares" =  NA )
+  #Mean time function 
+  mnt  <- switch(RegType,                
+                 "Linear"   = NA , 
+                 "Logistic" = NA ,
+                 "Ordinal Logistic"  = NA ,
+                 "Poisson"  = NA ,
+                 "Quantile" = NA ,
+                 "Cox PH"   = function(x) meant(lp=x)/TrnSrvTm,
+                 "Cox PH with censoring"  = function(x) meant(lp=x)/TrnSrvTm,
+                 "AFT"  =  function(x) meant(lp=x)/TrnSrvTm,
+                 "AFT with censoring" = function(x) meant(lp=x)/TrnSrvTm,
+                 "Generalized Least Squares" =  NA )
+  #Plot nomogram
+  switch(RegType,                
+         "Linear"   = plot(eval(Nom)) , 
+         "Logistic" = plot(eval(Nom)) ,
+         "Ordinal Logistic"  = plot(eval(Nom)) ,
+         "Poisson"  = plot(eval(Nom)) ,
+         "Quantile" = plot(eval(Nom)) ,
+         "Cox PH"   = plot(eval(Nom)) ,
+         "Cox PH with censoring"  = plot(eval(Nom)) ,
+         "AFT"  = plot(eval(Nom)) ,
+         "AFT with censoring" = plot(eval(Nom)) ,
+         "Generalized Least Squares" =  plot(eval(Nom)) )
+}
 
 
+
+## Calibration ##
 output$calibrate_type <- renderUI({                                #Creates a UI function here but it will
   selectInput("caliType", "1. Select the calibration method",
               choices = c("crossvalidation", "boot", ".632", "randomization"),
@@ -7885,7 +8166,7 @@ fncStSpcLegendFactoLev <- function(Model_fit, X_Lev) {
 ##} )
 
 #output$test1 <- renderPrint({
-#  list( 1)
+#  list( nomo_update_formula(), class(nomo_update_formula() ))
 #  })
 
 

@@ -512,13 +512,34 @@ br()
                    ),    #Creates a new panel named "Summary"
           tabPanel("Nomogram",
                    h4("Hand calculate probabilities with a nomogram"),
-                   h4("We use a nomogram that converts each effect in the model to a 0 to 100 scale."),
-                   plotOutput("nomo_gram", height = 600),
+                   h4("We use a nomogram that converts each effect in the model to a 0 to 100 (e.g., probability for logistic model) or time scale."),
                    br(),
-                   uiOutput("nomo_one_yes"),  #vx is the created drop down box coming from renderUI in server.r.
+                   h5("Survival. #1: Select 2 times for a survival probability, #2: Divide to convert into new time periods or leave as 1 to keep the same, #3: Specify time frame for Median/Mean predictions."),
+                   fluidRow(
+                     column(4,
+                            uiOutput("nomo_prob_surv_time")),
+                     column(4,
+                            uiOutput("nomo_trans_time_denom")),
+                     column(4,
+                            uiOutput("nomo_pred_surv_time_xaxis"))
+                   ),
                    br(),
-                   uiOutput("nomo_one_x"),  #vx is the created drop down box coming from renderUI in server.r.
-                   br()                   
+                   h5("Survival model labeling features. #4: Time values listed in predictions, #5: Time periods such as 'days'. "),
+                   fluidRow(
+                     column(4,
+                            uiOutput("nomo_surv_time_prob_vals")),
+                     column(4,
+                            uiOutput("nomo_surv_time_prob_pers"))
+                   ),
+                   h5("Update the nomogram for all models. #6: Modify the nomogram or revise X values not able to plot...ap=c(.1,.5,1:5,10,20,30,40), #7: Update various models."),
+                   fluidRow(
+                     column(4,
+                            uiOutput("nomo_up_Fmla")),
+                     column(4,
+                            uiOutput("nomo_yes"))
+                   ),
+                   plotOutput("nomo_gram", height = 800, width="100%"),
+                   br()
           ),    #Creates a new panel named "Nomogram"                           
           
           tabPanel("Calibration",

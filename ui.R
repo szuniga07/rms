@@ -1491,7 +1491,7 @@ tabPanel("95% CIs",
 
 ############## TEST SECTION #############################
 # , #THIS COMMA IS COMMENTED OUT IN CASE I EVER NEED THE TEST FUNCTION BELOW    
-
+ 
 #tabPanel("Test it",                                #Creates a new panel named "Test"
 #         fluidRow(                           #Wrapping them in a fluidRow provides easy control over  
 #           verbatimTextOutput("test1")

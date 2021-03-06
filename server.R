@@ -2090,16 +2090,16 @@ output$cali_brate <- renderPlot({
   values$mn_y <- mean(as.numeric(df()[, input$variableY], na.rm=TRUE))
   set.seed(1)
   if (input$caliType == "boot") {
-    plot(calibrate(fit1(), B=input$cali_B_n, u=values$mn_y, method="boot"), subtitles=TRUE)
+    plot(calibrate(fit1(), B=input$cali_B_n, u=values$md_y, method="boot"), subtitles=TRUE)
   }
   if (input$caliType == "crossvalidation") {
-    plot(calibrate(fit1(), B=input$cali_B_n, u=values$mn_y, method="crossvalidation"), subtitles=TRUE)
+    plot(calibrate(fit1(), B=input$cali_B_n, u=values$md_y, method="crossvalidation"), subtitles=TRUE)
   }
   if (input$caliType == ".632") {
-    plot(calibrate(fit1(), u=values$mn_y, method=".632", B=input$cali_B_n), subtitles=TRUE)
+    plot(calibrate(fit1(), u=values$md_y, method=".632", B=input$cali_B_n), subtitles=TRUE)
   }
   if (input$caliType == "randomization") {
-    plot(calibrate(fit1(),  u=values$mn_y, method="randomization", B=input$cali_B_n), subtitles=TRUE)
+    plot(calibrate(fit1(),  u=values$md_y, method="randomization", B=input$cali_B_n), subtitles=TRUE)
   }
   }
   } 
@@ -2111,16 +2111,16 @@ output$cali_brate <- renderPlot({
       values$mn_y <- mean(as.numeric(new_imputed.si()[, input$variableY], na.rm=TRUE))
       set.seed(1)
       if (input$caliType == "boot") {
-        plot(calibrate(fit.si(), B=input$cali_B_n, u=values$mn_y, method="boot"), subtitles=TRUE)
+        plot(calibrate(fit.si(), B=input$cali_B_n, u=values$md_y, method="boot"), subtitles=TRUE)
       }
       if (input$caliType == "crossvalidation") {
-        plot(calibrate(fit.si(), B=input$cali_B_n, u=values$mn_y, method="crossvalidation"), subtitles=TRUE)
+        plot(calibrate(fit.si(), B=input$cali_B_n, u=values$md_y, method="crossvalidation"), subtitles=TRUE)
       }
       if (input$caliType == ".632") {
-        plot(calibrate(fit.si(), u=values$mn_y, method=".632", B=input$cali_B_n), subtitles=TRUE)
+        plot(calibrate(fit.si(), u=values$md_y, method=".632", B=input$cali_B_n), subtitles=TRUE)
       }
       if (input$caliType == "randomization") {
-        plot(calibrate(fit.si(),  u=values$mn_y, method="randomization", B=input$cali_B_n), subtitles=TRUE)
+        plot(calibrate(fit.si(),  u=values$md_y, method="randomization", B=input$cali_B_n), subtitles=TRUE)
       }
     }
   }

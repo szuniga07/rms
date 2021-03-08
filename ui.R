@@ -512,7 +512,7 @@ br()
                    ),    #Creates a new panel named "Summary"
           tabPanel("Nomogram",
                    h4("Hand calculate probabilities with a nomogram"),
-                   h4("We use a nomogram that converts each effect in the model to a 0 to 100 (e.g., probability for logistic model) or time scale."),
+                   h4("We use a nomogram that converts each effect in the model to a 0 to 100 scale (e.g., probability for logistic model) or time scale."),
                    br(),
                    h5("Survival. #1: Select 2 times for a survival probability, #2: Divide to convert into new time periods or leave as 1 to keep the same, #3: Specify time frame for Median/Mean predictions."),
                    fluidRow(

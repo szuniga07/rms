@@ -539,7 +539,9 @@ br()
                             uiOutput("nomo_yes"))
                    ),
                    plotOutput("nomo_gram", height = 800, width="100%"),
-                   br()
+                   br(),
+                   h4("Nomogram output"),
+                   verbatimTextOutput("nomogram_smry")
           ),    #Creates a new panel named "Nomogram"                           
           
           tabPanel("Calibration",

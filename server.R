@@ -1866,49 +1866,34 @@ nomo_fmla_output <- reactive({
 #  }
 })
 
-#9. Run function to get nomogram formula  nomo_fmla_output()$Nomogram
-get_nomo_plot <- reactive({
+#9. Get nomogram output
+get_nomo_output <- reactive({
   if (nomogram_yes() =="Yes") {
-    fncNomoPlot(Nom=nomo_update_formula(), Fit=fit1(), PrbSrvTm=nomogram_prob_survival_time(), TrnSrvTm=nomo_transformation_time_denom(), 
-            MdMnSrvTm=nomo_pred_surv_time_xaxis(), Time_label=nomo_survival_time_prob_values(), 
-            Time_label_period=nomo_survival_time_prob_periods(), RegType=input$regress_type)
+    fncNomoOutput(Nom=nomo_update_formula(), Fit=fit1(), PrbSrvTm=nomogram_prob_survival_time(), TrnSrvTm=nomo_transformation_time_denom(), 
+                MdMnSrvTm=nomo_pred_surv_time_xaxis(), Time_label=nomo_survival_time_prob_values(), 
+                Time_label_period=nomo_survival_time_prob_periods(), RegType=input$regress_type)
   }
 })
-#9A. Run the data function
-#nomo_plot_output <- reactive({
-#  if (nomogram_yes() =="Yes") {
-#    get_nomo_plot()
-#  }
-#})
 
-#Run plot
+
+#10. Run plot
 output$nomo_gram <- renderPlot({
   if(nomogram_yes() == "Yes") {
-    get_nomo_plot()
+    plot(get_nomo_output())
   } else {
     plot(nomogram(fit1()))
   }
 }, height = 800)
 
-#Old code
-#This plots the predicted values as a nomogram    
-#output$nomo_gram <- renderPlot({
-#  if(input$nomo_yes == "Yes") {
-#    plot(  do.call("nomogram", list(fit1(), omit=nm_x_var()) )) 
-#  } else {
-#    plot(nomogram(fit1()))
-#  }
-#}, height = 600)
-#Create yes/no box to determine plot single partial effect
-#output$nomo_one_yes <- renderUI({                                 #Same idea as output$vy
-#  selectInput("nomo_yes", "1. Do you want to plot a single or multiple predictor scores?", 
-#              choices = c("No", "Yes"), multiple=FALSE, selected="No")     #Will make choices based on my reactive function.
-#})
-#Select the variables that will get 
-#output$nomo_one_x <- renderUI({
-#  selectInput("nm_X", "2. Select the predictor(s).", multiple=TRUE,
-#              choices = predictor(), selected=predictor()[1])     #Will make choices based on my reactive function.
-#})
+#11. Print nomogram results
+output$nomogram_smry <- renderPrint({ 
+  if(nomogram_yes() == "Yes") {
+    get_nomo_output()
+  } else {
+    nomogram(fit1())
+  }
+})
+
 
 ## Functions ##
 #Function that creates nomogram expression
@@ -1954,7 +1939,7 @@ fncNomo <- function(RegType)  {
 }
 
 #Function that creates nomogram
-fncNomoPlot <- function(Nom, Fit, PrbSrvTm, TrnSrvTm, MdMnSrvTm, Time_label,Time_label_period,RegType)  {
+fncNomoOutput <- function(Nom, Fit, PrbSrvTm, TrnSrvTm, MdMnSrvTm, Time_label,Time_label_period,RegType)  {
   #Survival probability labeling 
   ss    <- c(0,.05,.1,.2,.3,.4,.5,.6,.7,.8,.9,.95, 1)
   #Survival function  
@@ -2042,19 +2027,19 @@ fncNomoPlot <- function(Nom, Fit, PrbSrvTm, TrnSrvTm, MdMnSrvTm, Time_label,Time
                  "AFT with censoring" = function(x) meant(lp=x)/TrnSrvTm,
                  "Generalized Least Squares" =  NA )
   #Plot nomogram
-  switch(RegType,                
-         "Linear"   = plot(eval(Nom)) , 
-         "Logistic" = plot(eval(Nom)) ,
-         "Ordinal Logistic"  = plot(eval(Nom)) ,
-         "Poisson"  = plot(eval(Nom)) ,
-         "Quantile" = plot(eval(Nom)) ,
-         "Cox PH"   = plot(eval(Nom)) ,
-         "Cox PH with censoring"  = plot(eval(Nom)) ,
-         "AFT"  = plot(eval(Nom)) ,
-         "AFT with censoring" = plot(eval(Nom)) ,
-         "Generalized Least Squares" =  plot(eval(Nom)) )
+  Nomogram.Output  <- switch(RegType,                
+         "Linear"   = eval(Nom) , 
+         "Logistic" = eval(Nom) ,
+         "Ordinal Logistic"  = eval(Nom) ,
+         "Poisson"  = eval(Nom) ,
+         "Quantile" = eval(Nom) ,
+         "Cox PH"   = eval(Nom) ,
+         "Cox PH with censoring"  = eval(Nom) ,
+         "AFT"  = eval(Nom) ,
+         "AFT with censoring" = eval(Nom) ,
+         "Generalized Least Squares" =  eval(Nom) )
+  return("Nomogram.Output"=Nomogram.Output)
 }
-
 
 
 ## Calibration ##

@@ -553,13 +553,17 @@ br()
                    column(3, offset=1,
                    uiOutput("calibrate_B_arg_n"),
                    uiOutput("BeginCalibrate")
-                   )),
+                   ),
+                   column(3, offset=1,
+                          uiOutput("calibrate_surv_time")
+                   )
+                   ),
                    h5("Note: Prior to validation, create the single imputed data under 'Transformation and Imputation of predictors' in the 'Reduce' tab for multiple imputation purposes."),
                    #h6("Note: Confirm the single imputed or original dataframe is loaded in the 'Model builder' tab, depending on your purpose."),
                    br(),
                    h4("Model calibration (e.g, bootstrapped, cross-validated--repeated 100 times)"),
                    h4("The reliability of a model, meaning the ability of the model to predict future observations as well as it appeared to predict the responses at hand."),
-                   plotOutput("cali_brate", height = 600)
+                   plotOutput("cali_brate", height = 800, width= "100%")
                    ),    #Creates a new panel named "Summary"
                        
           tabPanel("Validation", 

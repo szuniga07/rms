@@ -995,8 +995,8 @@ shinyServer(
     })
     
     describeY <- reactive({                  #This stores the censoring variable. 
-      print(describe(as.numeric(df()[, input$variableY], na.rm=TRUE), #Summary of Y variable.
-                     descript=paste0("Summary of ",input$variableY) ))  
+      describe(as.numeric(df()[, input$variableY], na.rm=TRUE), #Summary of Y variable.
+                     descript=paste0("Summary of ",input$variableY) )  
     })
     
     #The single partial effect variable to plot
@@ -2054,15 +2054,21 @@ output$calibrate_B_arg_n <- renderUI({
   numericInput("cali_B_n", "2. Crossvalidation k-folds or Bootstrap #", value = 10, min=2)
 })
 
+#3. Pick a time for survival models
+output$calibrate_surv_time <- renderUI({
+  numericInput("calSrvTM", "3. Select time for survival models", value= as.numeric(describeY()[["counts"]][10]), 
+               min=as.numeric(describeY()[["extremes"]][1]), max=as.numeric(describeY()[["extremes"]][10]), step=1)
+})
+
 #Asks if you did multiple imputation.
 output$MIForCali <- renderUI({  
-  selectInput("MI_for_cali", "3. Did you do Multiple Imputation?", 
+  selectInput("MI_for_cali", "4. Did you do Multiple Imputation?", 
               choices = c("No", "Yes"), multiple=FALSE, selected="No")     #Will make choices based on my reactive function.
 })
 
 #Determine if we should begin the calibration.
 output$BeginCalibrate <- renderUI({  
-  selectInput("begin_cali", "4. Begin calibration?", 
+  selectInput("begin_cali", "5. Begin calibration?", 
               choices = c("No", "Yes"), multiple=FALSE, selected="No")     #Will make choices based on my reactive function.
 })
 
@@ -2071,20 +2077,18 @@ output$cali_brate <- renderPlot({
   if (input$MI_for_cali == "No") {
     
   if (input$begin_cali == "Yes") {
-  values$md_y <- median(as.numeric(df()[, input$variableY], na.rm=TRUE))
-  values$mn_y <- mean(as.numeric(df()[, input$variableY], na.rm=TRUE))
   set.seed(1)
   if (input$caliType == "boot") {
-    plot(calibrate(fit1(), B=input$cali_B_n, u=values$md_y, method="boot"), subtitles=TRUE)
+    plot(calibrate(fit1(), B=input$cali_B_n, u=input$calSrvTM, method="boot"), subtitles=TRUE)
   }
   if (input$caliType == "crossvalidation") {
-    plot(calibrate(fit1(), B=input$cali_B_n, u=values$md_y, method="crossvalidation"), subtitles=TRUE)
+    plot(calibrate(fit1(), B=input$cali_B_n, u=input$calSrvTM, method="crossvalidation"), subtitles=TRUE)
   }
   if (input$caliType == ".632") {
-    plot(calibrate(fit1(), u=values$md_y, method=".632", B=input$cali_B_n), subtitles=TRUE)
+    plot(calibrate(fit1(), u=input$calSrvTM, method=".632", B=input$cali_B_n), subtitles=TRUE)
   }
   if (input$caliType == "randomization") {
-    plot(calibrate(fit1(),  u=values$md_y, method="randomization", B=input$cali_B_n), subtitles=TRUE)
+    plot(calibrate(fit1(),  u=input$calSrvTM, method="randomization", B=input$cali_B_n), subtitles=TRUE)
   }
   }
   } 
@@ -2092,25 +2096,23 @@ output$cali_brate <- renderPlot({
   if (input$MI_for_cali == "Yes") {
     
     if (input$begin_cali == "Yes") {
-      values$md_y <- median(as.numeric(new_imputed.si()[, input$variableY], na.rm=TRUE))
-      values$mn_y <- mean(as.numeric(new_imputed.si()[, input$variableY], na.rm=TRUE))
       set.seed(1)
       if (input$caliType == "boot") {
-        plot(calibrate(fit.si(), B=input$cali_B_n, u=values$md_y, method="boot"), subtitles=TRUE)
+        plot(calibrate(fit.si(), B=input$cali_B_n, u=input$calSrvTM, method="boot"), subtitles=TRUE)
       }
       if (input$caliType == "crossvalidation") {
-        plot(calibrate(fit.si(), B=input$cali_B_n, u=values$md_y, method="crossvalidation"), subtitles=TRUE)
+        plot(calibrate(fit.si(), B=input$cali_B_n, u=input$calSrvTM, method="crossvalidation"), subtitles=TRUE)
       }
       if (input$caliType == ".632") {
-        plot(calibrate(fit.si(), u=values$md_y, method=".632", B=input$cali_B_n), subtitles=TRUE)
+        plot(calibrate(fit.si(), u=input$calSrvTM, method=".632", B=input$cali_B_n), subtitles=TRUE)
       }
       if (input$caliType == "randomization") {
-        plot(calibrate(fit.si(),  u=values$md_y, method="randomization", B=input$cali_B_n), subtitles=TRUE)
+        plot(calibrate(fit.si(),  u=input$calSrvTM, method="randomization", B=input$cali_B_n), subtitles=TRUE)
       }
     }
   }
   
-}, height = 600)
+}, height = 800)
 
 
 #Select the validation method, "boot" is slow
@@ -2133,7 +2135,7 @@ output$MIForVali <- renderUI({
 
 #Determine if we should begin the calibration.
 output$BeginValidate <- renderUI({  
-  selectInput("begin_vali", "3. Begin validation?", 
+  selectInput("begin_vali", "4. Begin validation?", 
               choices = c("No", "Yes"), multiple=FALSE, selected="No")     #Will make choices based on my reactive function.
 })
 

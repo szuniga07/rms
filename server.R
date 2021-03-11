@@ -1179,9 +1179,9 @@ fncYhatClassDf <- function(Fit, Y, Threshold, Censor=NULL, PredTime=NULL, RegTyp
                     "Poisson"  = tdf[ tdf[,  tY] >= log(threshLev), ],
                     "Quantile" = tdf[ tdf[,  tY] >= threshLev, ],
                     "Cox PH"   = tdf[tdf[,  tY] >= atime, ],
-                    "Cox PH with censoring"  = tdf[ tdf[, tcensor ] ==1 & tdf[,  tY] >= atime, ],
+                    "Cox PH with censoring"  = tdf[ tdf[, tcensor ] == max(tdf[, tcensor ], na.rm=T) & tdf[,  tY] >= atime, ],
                     "AFT"  = tdf[tdf[,  tY] >= atime, ],
-                    "AFT with censoring"     = tdf[ tdf[, tcensor ] ==1 & tdf[,  tY] >= atime, ],
+                    "AFT with censoring"     = tdf[ tdf[, tcensor ] ==max(tdf[, tcensor ], na.rm=T) & tdf[,  tY] >= atime, ],
                     "Generalized Least Squares" = tdf[ tdf[,  tY] >= threshLev, ] )
   newtdf2 <- switch(RegType,                
                     "Linear"   = tdf[ tdf[,  tY] < threshLev, ], 
@@ -1190,9 +1190,9 @@ fncYhatClassDf <- function(Fit, Y, Threshold, Censor=NULL, PredTime=NULL, RegTyp
                     "Poisson"  = tdf[ tdf[,  tY] < log(threshLev), ],
                     "Quantile" = tdf[ tdf[,  tY] < threshLev, ],
                     "Cox PH"   = tdf[tdf[,  tY] < atime, ],
-                    "Cox PH with censoring"  = tdf[ tdf[, tcensor ] ==0 & tdf[,  tY] < atime, ],
+                    "Cox PH with censoring"  = tdf[ tdf[, tcensor ] ==min(tdf[, tcensor ], na.rm=T) & tdf[,  tY] < atime, ],
                     "AFT"  = tdf[tdf[,  tY] < atime, ],
-                    "AFT with censoring"     = tdf[ tdf[, tcensor ] ==0 & tdf[,  tY] >= atime, ],
+                    "AFT with censoring"     = tdf[ tdf[, tcensor ] ==min(tdf[, tcensor ], na.rm=T) & tdf[,  tY] >= atime, ],
                     "Generalized Least Squares" = tdf[ tdf[,  tY] < threshLev, ] )
   #Get tranformed values of threshold when using logits 
   Transform.Threshold <- switch(RegType,                
@@ -1211,8 +1211,8 @@ fncYhatClassDf <- function(Fit, Y, Threshold, Censor=NULL, PredTime=NULL, RegTyp
   pm1 <- predict(tm1, newdata= newtdf1)
   pm2 <- predict(tm1, newdata= newtdf2)
   #Get values for xlim of plot
-#  senspcXmin <- min(range(pm1, na.rm=T),range(pm2, na.rm=T))
-#  senspcXmax <- max(range(pm1, na.rm=T),range(pm2, na.rm=T))
+  #  senspcXmin <- min(range(pm1, na.rm=T),range(pm2, na.rm=T))
+  #  senspcXmax <- max(range(pm1, na.rm=T),range(pm2, na.rm=T))
   ## This determines the amount of predictions above a certain level
   #Sensitivity
   #Get probability for 4 typs of response

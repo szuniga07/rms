@@ -1132,7 +1132,8 @@ binary_classification_AUC_output <- reactive({
 plot_binary_class_function <- reactive({
   if (prediction_class_histogram_yes_no() =="Yes") {
     fncYhatClassPlt(ClassDF=binary_classification_data_output(), AUC=binary_classification_AUC_output(), 
-                    Brks=prediction_class_histogram_bars(), RegType= input$regress_type, Yhat=describeYhatHistRslt())
+                    Brks=prediction_class_histogram_bars(), RegType= input$regress_type #Dropped, Yhat=describeYhatHistRslt() 
+                    )
   }
 })
 #7A. Run the plot function 
@@ -1168,6 +1169,8 @@ fncYhatClassDf <- function(Fit, Y, Threshold, Censor=NULL, PredTime=NULL, RegTyp
   tdf <- DF
   tY <- Y
   tcensor <- Censor
+  PREDrange <- range(predict(Fit), na.rm=T)  
+  
   # Need to make object for this so I can calculate the trapezoid AUC:
   threshLev <- Threshold
   #Get predictions for values at threshold
@@ -1178,9 +1181,9 @@ fncYhatClassDf <- function(Fit, Y, Threshold, Censor=NULL, PredTime=NULL, RegTyp
                     "Ordinal Logistic"  = tdf[ tdf[,  tY] > 1, ],
                     "Poisson"  = tdf[ tdf[,  tY] >= log(threshLev), ],
                     "Quantile" = tdf[ tdf[,  tY] >= threshLev, ],
-                    "Cox PH"   = tdf[tdf[,  tY] >= atime, ],
+                    "Cox PH"   = tdf[tdf[,  tY] < atime, ],
                     "Cox PH with censoring"  = tdf[ tdf[, tcensor ] == max(tdf[, tcensor ], na.rm=T) & tdf[,  tY] >= atime, ],
-                    "AFT"  = tdf[tdf[,  tY] >= atime, ],
+                    "AFT"  = tdf[tdf[,  tY] < atime, ],
                     "AFT with censoring"     = tdf[ tdf[, tcensor ] ==max(tdf[, tcensor ], na.rm=T) & tdf[,  tY] >= atime, ],
                     "Generalized Least Squares" = tdf[ tdf[,  tY] >= threshLev, ] )
   newtdf2 <- switch(RegType,                
@@ -1189,9 +1192,9 @@ fncYhatClassDf <- function(Fit, Y, Threshold, Censor=NULL, PredTime=NULL, RegTyp
                     "Ordinal Logistic"  = tdf[ tdf[,  tY]  ==1, ],
                     "Poisson"  = tdf[ tdf[,  tY] < log(threshLev), ],
                     "Quantile" = tdf[ tdf[,  tY] < threshLev, ],
-                    "Cox PH"   = tdf[tdf[,  tY] < atime, ],
+                    "Cox PH"   = tdf[tdf[,  tY] >= atime, ],
                     "Cox PH with censoring"  = tdf[ tdf[, tcensor ] ==min(tdf[, tcensor ], na.rm=T) & tdf[,  tY] < atime, ],
-                    "AFT"  = tdf[tdf[,  tY] < atime, ],
+                    "AFT"  = tdf[tdf[,  tY] >= atime, ],
                     "AFT with censoring"     = tdf[ tdf[, tcensor ] ==min(tdf[, tcensor ], na.rm=T) & tdf[,  tY] >= atime, ],
                     "Generalized Least Squares" = tdf[ tdf[,  tY] < threshLev, ] )
   #Get tranformed values of threshold when using logits 
@@ -1211,8 +1214,8 @@ fncYhatClassDf <- function(Fit, Y, Threshold, Censor=NULL, PredTime=NULL, RegTyp
   pm1 <- predict(tm1, newdata= newtdf1)
   pm2 <- predict(tm1, newdata= newtdf2)
   #Get values for xlim of plot
-  #  senspcXmin <- min(range(pm1, na.rm=T),range(pm2, na.rm=T))
-  #  senspcXmax <- max(range(pm1, na.rm=T),range(pm2, na.rm=T))
+    senspcXmin <- PREDrange[1]
+    senspcXmax <- PREDrange[2]
   ## This determines the amount of predictions above a certain level
   #Sensitivity
   #Get probability for 4 typs of response
@@ -1225,7 +1228,7 @@ fncYhatClassDf <- function(Fit, Y, Threshold, Censor=NULL, PredTime=NULL, RegTyp
   specifity <-  pr_table2["FALSE"]  #Sensitivity
   
   
-  return(list("pm1"=pm1, "pm2"=pm2, "threshLev"=threshLev, #"senspcXmin"=senspcXmin, "senspcXmax"=senspcXmax,
+  return(list("pm1"=pm1, "pm2"=pm2, "threshLev"=threshLev, "senspcXmin"=senspcXmin, "senspcXmax"=senspcXmax,
               "propAbovMY1"=propAbovMY1, "fls_Neg"=fls_Neg,  "propAbovMY0"=propAbovMY0, "specifity"=specifity,
               "Transform.Threshold"=Transform.Threshold))
   
@@ -1273,10 +1276,12 @@ fncThreshAUC <- function(Fit, Y, Threshold, Censor=NULL, PredTime=NULL, RegType,
 ##############
 ## Graphing ##
 ##############
-fncYhatClassPlt <- function(ClassDF, AUC, Brks, RegType, Yhat)  {
+fncYhatClassPlt <- function(ClassDF, AUC, Brks, RegType)  {
   par(mfrow=c(2,1))
-  xlimMin <- Yhat[["extremes"]][1]
-  xlimMax <- Yhat[["extremes"]][10]
+#  xlimMin <- Yhat[["extremes"]][1]
+#  xlimMax <- Yhat[["extremes"]][10]
+  xlimMin <- ClassDF$senspcXmin
+  xlimMax <- ClassDF$senspcXmax
   #Sensitivity and 1-specificity
   Sens.Value <- switch(RegType,                
                         "Linear"   = round(ClassDF$propAbovMY1, 3), 

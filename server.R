@@ -18,6 +18,7 @@ library(sensitivity)
 library(meta)
 library(rpart)
 library(coxme)
+#Surival package data: cancer colon diabetic flchain heart mgus nafld1 pbc transplant   
 data(lungcancer)
 options(shiny.maxRequestSize=1000*1024^2)    #This will increase the shiny file upload limit from current 5MB max
 options(scipen=10)                                                               #General option to see low decimals
@@ -1182,9 +1183,12 @@ fncYhatClassDf <- function(Fit, Y, Threshold, Censor=NULL, PredTime=NULL, RegTyp
                     "Poisson"  = tdf[ tdf[,  tY] >= log(threshLev), ],
                     "Quantile" = tdf[ tdf[,  tY] >= threshLev, ],
                     "Cox PH"   = tdf[tdf[,  tY] < atime, ],
-                    "Cox PH with censoring"  = tdf[ tdf[, tcensor ] == max(tdf[, tcensor ], na.rm=T) & tdf[,  tY] >= atime, ],
+#old                    "Cox PH with censoring"  = tdf[ tdf[, tcensor ] == max(tdf[, tcensor ], na.rm=T) & tdf[,  tY] >= atime, ],
+                    "Cox PH with censoring"  = tdf[ tdf[, tcensor ] == max(tdf[, tcensor ], na.rm=T) & tdf[,  tY] < atime, ],
                     "AFT"  = tdf[tdf[,  tY] < atime, ],
-                    "AFT with censoring"     = tdf[ tdf[, tcensor ] ==max(tdf[, tcensor ], na.rm=T) & tdf[,  tY] >= atime, ],
+#old                    "AFT with censoring"     = tdf[ tdf[, tcensor ] ==max(tdf[, tcensor ], na.rm=T) & tdf[,  tY] >= atime, ],
+                    "AFT with censoring"     = tdf[ tdf[, tcensor ] ==max(tdf[, tcensor ], na.rm=T) & tdf[,  tY] < atime, ],
+
                     "Generalized Least Squares" = tdf[ tdf[,  tY] >= threshLev, ] )
   newtdf2 <- switch(RegType,                
                     "Linear"   = tdf[ tdf[,  tY] < threshLev, ], 
@@ -1193,9 +1197,11 @@ fncYhatClassDf <- function(Fit, Y, Threshold, Censor=NULL, PredTime=NULL, RegTyp
                     "Poisson"  = tdf[ tdf[,  tY] < log(threshLev), ],
                     "Quantile" = tdf[ tdf[,  tY] < threshLev, ],
                     "Cox PH"   = tdf[tdf[,  tY] >= atime, ],
-                    "Cox PH with censoring"  = tdf[ tdf[, tcensor ] ==min(tdf[, tcensor ], na.rm=T) & tdf[,  tY] < atime, ],
-                    "AFT"  = tdf[tdf[,  tY] >= atime, ],
-                    "AFT with censoring"     = tdf[ tdf[, tcensor ] ==min(tdf[, tcensor ], na.rm=T) & tdf[,  tY] >= atime, ],
+#old                    "Cox PH with censoring"  = tdf[ tdf[, tcensor ] ==min(tdf[, tcensor ], na.rm=T) & tdf[,  tY] < atime, ],
+                    "Cox PH with censoring"  = tdf[ tdf[, tcensor ] ==min(tdf[, tcensor ], na.rm=T) & tdf[,  tY] >= atime, ],
+"AFT"  = tdf[tdf[,  tY] >= atime, ],
+#old                    "AFT with censoring"     = tdf[ tdf[, tcensor ] ==min(tdf[, tcensor ], na.rm=T) & tdf[,  tY] >= atime, ],
+                    "AFT with censoring"     = tdf[ tdf[, tcensor ] ==min(tdf[, tcensor ], na.rm=T) & tdf[,  tY] < atime, ],
                     "Generalized Least Squares" = tdf[ tdf[,  tY] < threshLev, ] )
   #Get tranformed values of threshold when using logits 
   Transform.Threshold <- switch(RegType,                
@@ -1218,14 +1224,16 @@ fncYhatClassDf <- function(Fit, Y, Threshold, Censor=NULL, PredTime=NULL, RegTyp
     senspcXmax <- PREDrange[2]
   ## This determines the amount of predictions above a certain level
   #Sensitivity
-  #Get probability for 4 typs of response
-  pr_table1 <- prop.table(table(factor(pm1 >= threshLev, levels=c("FALSE","TRUE") )))
-  pr_table2 <- prop.table(table(factor(pm2 >= threshLev, levels=c("FALSE","TRUE") )))
+  #Get probability for 4 types of response
+#old  pr_table1 <- prop.table(table(factor(pm1 >= threshLev, levels=c("FALSE","TRUE") )))
+#old  pr_table2 <- prop.table(table(factor(pm2 >= threshLev, levels=c("FALSE","TRUE") )))
+  pr_table1 <- prop.table(table(factor(pm1 > threshLev, levels=c("FALSE","TRUE") )))
+  pr_table2 <- prop.table(table(factor(pm2 > threshLev, levels=c("FALSE","TRUE") )))
   #Sensitivity and 1 - specificity
   propAbovMY1 <-  pr_table1["TRUE"]  #Sensitivity
   fls_Neg <-  pr_table1["FALSE"]  #FALSE negative
   propAbovMY0 <- pr_table2["TRUE"]  #1-specificity or false-positive
-  specifity <-  pr_table2["FALSE"]  #Sensitivity
+  specifity <-  pr_table2["FALSE"]  #Specificity
   
   
   return(list("pm1"=pm1, "pm2"=pm2, "threshLev"=threshLev, "senspcXmin"=senspcXmin, "senspcXmax"=senspcXmax,
@@ -1344,14 +1352,14 @@ fncYhatClassPlt <- function(ClassDF, AUC, Brks, RegType)  {
   h1 <- hist(ClassDF$pm1,  plot=FALSE, breaks=Brks)
   cuts1 <- cut(h1$breaks, c(-Inf, ClassDF$threshLev, Inf))
   plot(h1, col=Bar.Colors1[cuts1], xlim=c(xlimMin, xlimMax),
-       main=paste0("Outcome = Yes. Proportion of predictions at or above cutoff: ", Sens.Value, ".  AUC = ", AUC_val, "." ),
+       main=paste0("Outcome = Yes. (n = ", length(ClassDF$pm1),"). Proportion of predictions at or above cutoff: ", Sens.Value, ".  AUC = ", AUC_val, "." ),
        xlab=paste0("Sensitivity: True-Positives in green using a cutoff of ", ClassDF$threshLev, " (Transformed = ", round(ClassDF$Transform.Threshold, 3), ")." ))
   abline(v=ClassDF$threshLev, lwd=3, col=4)
   
   h2 <- hist(ClassDF$pm2, plot=FALSE, breaks=Brks)
   cuts2 <- cut(h2$breaks, c(-Inf, ClassDF$threshLev, Inf))
   plot(h2, col=Bar.Colors2[cuts2], xlim=c(xlimMin, xlimMax),
-       main=paste0("Outcome = No. Proportion of predictions at or above cutoff: ", Spec.Value, ".  AUC = ", AUC_val, "."  ),
+       main=paste0("Outcome = No. (n = ", length(ClassDF$pm2),"). Proportion of predictions at or above cutoff: ", Spec.Value, ".  AUC = ", AUC_val, "."  ),
        xlab=paste0("1 - Specificity: False-Positives in red using a cutoff of ", ClassDF$threshLev, " (Transformed = ", round(ClassDF$Transform.Threshold, 3), ")." ))
   abline(v=ClassDF$threshLev, lwd=3, col=4)
   par(mfrow=c(1,1))

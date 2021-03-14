@@ -1259,8 +1259,12 @@ fncThreshAUC <- function(Fit, Y, Threshold, Censor=NULL, PredTime=NULL, RegType,
                                Censor=Censor, PredTime=PredTime, RegType=RegType, DF=DF)
   
   #Create vectors for sensitivity and specificity
-  yClassSens <- sort(c(yClass.10$propAbovMY1, yClass.25$propAbovMY1, yClass.50$propAbovMY1, yClass.75$propAbovMY1, yClass.90$propAbovMY1, ClassDF$propAbovMY1), decreasing=TRUE) 
-  yClassSpec <- sort(c(yClass.10$specifity,yClass.25$specifity, yClass.50$specifity, yClass.75$specifity,yClass.90$specifity, ClassDF$specifity)) 
+  #This adds in quantiles (.10,.25,.50,.75,.90) and the cutoff level. Equivalent to full AUC.
+#  yClassSens <- sort(c(yClass.10$propAbovMY1, yClass.25$propAbovMY1, yClass.50$propAbovMY1, yClass.75$propAbovMY1, yClass.90$propAbovMY1, ClassDF$propAbovMY1), decreasing=TRUE) 
+#  yClassSpec <- sort(c(yClass.10$specifity,yClass.25$specifity, yClass.50$specifity, yClass.75$specifity,yClass.90$specifity, ClassDF$specifity)) 
+  ## This AUC is based only on the cutoff level. Use this to get the binary classification AUC.
+  yClassSens <- c(ClassDF$propAbovMY1)
+  yClassSpec <- c(ClassDF$specifity) 
   #Add in values of 0 and 1 for perfect sensitivity and specificity
   yClassSens <- c(1, yClassSens, 0)
   yClassSpec <- c(0, yClassSpec, 1)

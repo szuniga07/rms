@@ -2073,7 +2073,7 @@ output$calibrate_B_arg_n <- renderUI({
 
 #3. Pick a time for survival models
 output$calibrate_surv_time <- renderUI({
-  numericInput("calSrvTM", "3. Select time for survival models", value= as.numeric(describeY()[["counts"]][10]), 
+  numericInput("calSrvTM", "3. Select a time for survival models", value= as.numeric(describeY()[["counts"]][10]), 
                min=as.numeric(describeY()[["extremes"]][1]), max=as.numeric(describeY()[["extremes"]][10]), step=1)
 })
 
@@ -2162,16 +2162,16 @@ output$vali_date <- renderPrint({
     if (input$begin_vali == "Yes") {
       set.seed(1)
       if (input$valiType == "boot") {
-        print(validate(fit1(), B=input$vali_B_n, method="boot", bw=TRUE), digits=3, B=50)
+        print(rms:::validate(fit1(), B=input$vali_B_n, method="boot", bw=TRUE), digits=3, B=50)
       }
       if (input$valiType == "crossvalidation") {
-        print(validate(fit1(), B=input$vali_B_n, method="crossvalidation"), digits=3)
+        print(rms:::validate(fit1(), B=input$vali_B_n, method="crossvalidation"), digits=3)
       }
       if (input$valiType == ".632") {
-        print(validate(fit1(),  method=".632", B=input$vali_B_n), digits=3)
+        print(rms:::validate(fit1(),  method=".632", B=input$vali_B_n), digits=3)
       }
       if (input$valiType == "randomization") {
-        print(validate(fit1(),  method="randomization", B=input$vali_B_n), digits=3)
+        print(rms:::validate(fit1(),  method="randomization", B=input$vali_B_n), digits=3)
       }
     }
   }
@@ -2181,16 +2181,16 @@ output$vali_date <- renderPrint({
     if (input$begin_vali == "Yes") {
       set.seed(1)
       if (input$valiType == "boot") {
-        print(validate(fit.si(), B=input$vali_B_n, method="boot", bw=TRUE), digits=3, B=50)
+        print(rms:::validate(fit.si(), B=input$vali_B_n, method="boot", bw=TRUE), digits=3, B=50)
       }
       if (input$valiType == "crossvalidation") {
-        print(validate(fit.si(), B=input$vali_B_n, method="crossvalidation"), digits=3)
+        print(rms:::validate(fit.si(), B=input$vali_B_n, method="crossvalidation"), digits=3)
       }
       if (input$valiType == ".632") {
-        print(validate(fit.si(),  method=".632", B=input$vali_B_n), digits=3)
+        print(rms:::validate(fit.si(),  method=".632", B=input$vali_B_n), digits=3)
       }
       if (input$valiType == "randomization") {
-        print(validate(fit.si(),  method="randomization", B=input$vali_B_n), digits=3)
+        print(rms:::validate(fit.si(),  method="randomization", B=input$vali_B_n), digits=3)
       }
     }
   }

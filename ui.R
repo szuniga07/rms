@@ -1,7 +1,7 @@
 library(shiny)
 library(jsonlite)
  
-
+ 
 #The code below allows me to print 2 plots in the same panel.   
   shinyUI(
     fluidPage( 

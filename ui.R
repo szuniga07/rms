@@ -188,6 +188,8 @@ fluidRow(
   column(3, 
          uiOutput("pred_class_hist_bars")),
   column(3, offset=1,
+         uiOutput("class_hist_asp_ratio")),
+  column(3, offset=1,
          uiOutput("pred_class_hist_yesno"))
 ),
 br(),

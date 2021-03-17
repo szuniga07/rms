@@ -1088,33 +1088,45 @@ prediction_class_histogram_bars <- reactive({
   }
 })
 
-#4Indicate if you want the classification plot
-output$pred_class_hist_yesno <- renderUI({                                 
-  selectInput("PredClassHistYN", "4. Do you want to run the classification plot?", 
+#4. Select a survival model time (e.g., 7 days)
+output$class_hist_asp_ratio <- renderUI({                                 
+  selectInput("clsHistAspRtio", "4. Do you want the y-axis on the same scale?", 
               choices = c("No", "Yes"), multiple=FALSE, selected="No")     
 })
-#4A. Object for classification plot 
+#4A. Object for survival model time 
+class_histogram_aspect_ratio <- reactive({
+  if (input$begin_mdl == "Yes") {
+    input$clsHistAspRtio
+  }
+})
+
+#5Indicate if you want the classification plot
+output$pred_class_hist_yesno <- renderUI({                                 
+  selectInput("PredClassHistYN", "5. Do you want to run the classification plot?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")     
+})
+#5A. Object for classification plot 
 prediction_class_histogram_yes_no <- reactive({
   if (input$begin_mdl == "Yes") {
     input$PredClassHistYN
   }
 })
 #Run functions below
-#5. Get data for functions
+#6. Get data for functions
 get_binary_class_df <- reactive({
   if (prediction_class_histogram_yes_no() =="Yes") {
     fncYhatClassDf(Fit=fit1(), Y=outcome(), Threshold=prediction_class_threshold(), Censor=censor1()[length(censor1())], 
                    PredTime=prediction_classification_time(), RegType=input$regress_type, DF=df() )
     }
 })
-#5A. Run the data function
+#6A. Run the data function
 binary_classification_data_output <- reactive({
   if (prediction_class_histogram_yes_no() =="Yes") {
     get_binary_class_df()
   }
 })
 
-#6. Get AUC
+#7. Get AUC
 get_binary_class_AUC <- reactive({
   if (prediction_class_histogram_yes_no() =="Yes") {
     #fncThreshAUC(Fit=fit1(), Y=outcome(), Threshold=prediction_class_threshold(), Censor=censor1()[length(censor1())], 
@@ -1122,35 +1134,35 @@ get_binary_class_AUC <- reactive({
                    PredTime=prediction_classification_time(), RegType=input$regress_type, DF=df(), ClassDF=binary_classification_data_output() )
   }
 })
-#6A. Run the AUC function
+#7A. Run the AUC function
 binary_classification_AUC_output <- reactive({
   if (prediction_class_histogram_yes_no() =="Yes") {
     get_binary_class_AUC()
 }
   })
 
-#7. Plot binary classification
+#8. Plot binary classification
 plot_binary_class_function <- reactive({
   if (prediction_class_histogram_yes_no() =="Yes") {
     fncYhatClassPlt(ClassDF=binary_classification_data_output(), AUC=binary_classification_AUC_output(), 
-                    Brks=prediction_class_histogram_bars(), RegType= input$regress_type #Dropped, Yhat=describeYhatHistRslt() 
+                    Brks=prediction_class_histogram_bars(), RegType= input$regress_type, aspectRatio=class_histogram_aspect_ratio() #Dropped, Yhat=describeYhatHistRslt() 
                     )
   }
 })
-#7A. Run the plot function 
+#8A. Run the plot function 
 output$plot_binary_class_run <- renderPlot({
   if (prediction_class_histogram_yes_no() =="Yes") {
     plot_binary_class_function()
   }
   })
 
-#8. Get sensitivity and specificity from data
+#9. Get sensitivity and specificity from data
 get_binary_class_sensitivity_specificity <- reactive({
   if (prediction_class_histogram_yes_no() =="Yes") {
     fncClassDfSmry(ClassDF=binary_classification_data_output(), RegType= input$regress_type)
   }
 })
-#8A. Run the print function 
+#9A. Run the print function 
 output$get_bin_class_sens_spc_out <- renderPrint({
   if (prediction_class_histogram_yes_no() =="Yes") {
     get_binary_class_sensitivity_specificity()
@@ -1288,7 +1300,7 @@ fncThreshAUC <- function(Fit, Y, Threshold, Censor=NULL, PredTime=NULL, RegType,
 ##############
 ## Graphing ##
 ##############
-fncYhatClassPlt <- function(ClassDF, AUC, Brks, RegType)  {
+fncYhatClassPlt <- function(ClassDF, AUC, Brks, RegType, aspectRatio)  {
   par(mfrow=c(2,1))
 #  xlimMin <- Yhat[["extremes"]][1]
 #  xlimMax <- Yhat[["extremes"]][10]
@@ -1352,17 +1364,25 @@ fncYhatClassPlt <- function(ClassDF, AUC, Brks, RegType)  {
                     "AFT"  = round(1-AUC, 3),
                     "AFT with censoring"     = round(1-AUC, 3),
                     "Generalized Least Squares" = round(AUC, 3) )
-  
+
+  #Histogram values  
   h1 <- hist(ClassDF$pm1,  plot=FALSE, breaks=Brks)
   cuts1 <- cut(h1$breaks, c(-Inf, ClassDF$threshLev, Inf))
-  plot(h1, col=Bar.Colors1[cuts1], xlim=c(xlimMin, xlimMax),
+  h2 <- hist(ClassDF$pm2, plot=FALSE, breaks=Brks)
+  cuts2 <- cut(h2$breaks, c(-Inf, ClassDF$threshLev, Inf))
+  #Get maximum part of histogram y-axis
+  if (aspectRatio == "Yes") {
+    hyMAX <- max(max(h1$counts), max(h2$counts))
+  } else {
+    hyMAX <- c(max(h1$counts), max(h2$counts))
+  }
+  
+  #Histograms
+  plot(h1, col=Bar.Colors1[cuts1], xlim=c(xlimMin, xlimMax), ylim=c(0, head(hyMAX, 1)),
        main=paste0("Outcome = Yes. (n = ", length(ClassDF$pm1),"). Proportion of predictions at or above cutoff: ", Sens.Value, ".  AUC = ", AUC_val, "." ),
        xlab=paste0("Sensitivity: True-Positives in green using a cutoff of ", ClassDF$threshLev, " (Transformed = ", round(ClassDF$Transform.Threshold, 3), ")." ))
   abline(v=ClassDF$threshLev, lwd=3, col=4)
-  
-  h2 <- hist(ClassDF$pm2, plot=FALSE, breaks=Brks)
-  cuts2 <- cut(h2$breaks, c(-Inf, ClassDF$threshLev, Inf))
-  plot(h2, col=Bar.Colors2[cuts2], xlim=c(xlimMin, xlimMax),
+  plot(h2, col=Bar.Colors2[cuts2], xlim=c(xlimMin, xlimMax), ylim=c(0, tail(hyMAX, 1)),
        main=paste0("Outcome = No. (n = ", length(ClassDF$pm2),"). Proportion of predictions at or above cutoff: ", Spec.Value, ".  AUC = ", AUC_val, "."  ),
        xlab=paste0("1 - Specificity: False-Positives in red using a cutoff of ", ClassDF$threshLev, " (Transformed = ", round(ClassDF$Transform.Threshold, 3), ")." ))
   abline(v=ClassDF$threshLev, lwd=3, col=4)

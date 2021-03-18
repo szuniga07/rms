@@ -191,7 +191,7 @@ fluidRow(
          uiOutput("class_hist_asp_ratio")),
   column(3, offset=1,
          uiOutput("pred_class_hist_yesno"))
-),
+), 
 br(),
 h5("Set a prediction threshold and examine sensitivity and 1-specificity (false positives) below. Find the best cutoff level. AUC calculated using the trapezoidal rule (Rosner, 2006) at the cutoff level."),
 h5("Outcome = Yes = max(Outcome). Outcome = No = min(Outcome). In a 'Cox PH with censoring' model, Outcome = Yes = 'Dead', Outcome = Yes = 'Alive'. For non-censored 'Cox PH' and 'AFT', Outcome = Yes = <Time-cutoff and Outcome = No = >=Time-cutoff because it represents higher risk/faster outcomes."),

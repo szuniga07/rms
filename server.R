@@ -1090,7 +1090,7 @@ prediction_class_histogram_bars <- reactive({
 
 #4. Select a survival model time (e.g., 7 days)
 output$class_hist_asp_ratio <- renderUI({                                 
-  selectInput("clsHistAspRtio", "4. Do you want the y-axis on the same scale?", 
+  selectInput("clsHistAspRtio", "4. Do you want both y-axes on the same scale?", 
               choices = c("No", "Yes"), multiple=FALSE, selected="No")     
 })
 #4A. Object for survival model time 

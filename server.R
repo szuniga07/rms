@@ -2108,7 +2108,7 @@ calibrate_survival_quantile_n <- reactive({
 
 #Asks if you did multiple imputation.
 output$MIForCali <- renderUI({  
-  selectInput("MI_for_cali", "5. Did you do Multiple Imputation?", 
+  selectInput("MI_for_cali", "5. Did you use Multiple Imputation?", 
               choices = c("No", "Yes"), multiple=FALSE, selected="No")     #Will make choices based on my reactive function.
 })
 

@@ -550,7 +550,7 @@ br()
           tabPanel("Calibration",
                    h4("The reliability of a model, meaning the ability of the model to predict future observations as well as it appeared to predict the responses at hand."),
                    br(),
-                   h5("Note: Prior to validation, create the single imputed data under 'Transformation and Imputation of predictors' in the 'Reduce' tab for multiple imputation purposes."),
+                   h5("Note: Prior to calibration, create the single imputed data under 'Transformation and Imputation of predictors' in the 'Reduce' tab for multiple imputation purposes."),
                    h5("For #4, select the number of groups that survival models calibration is validated on (see note below). Default is 5 (e.g., sample size/5)."),
                    br(),
                    fluidRow(
@@ -568,7 +568,7 @@ br()
                    )
                    ),
                    br(),
-                   h5("For survival models, black dots are predicted means. The blue Xs represent bootstrap bias-corrected Kaplan-Meier estimates."),
+                   h5("For validation of survival model calibration, black dots are means of predicted values. The blue Xs represent bootstrap bias-corrected Kaplan-Meier estimates."),
                    h5("Apparent calibration accuracy obtained by stratifying intervals and plotting the mean predicted value within the interval by the stratum's Kaplan-Meier estimate."),
                    plotOutput("cali_brate", height = 800, width= "100%")
                    ),    #Creates a new panel named "Summary"
@@ -592,7 +592,8 @@ br()
                       the sample to a risk of dying above a predicted value of .9 while 
                       the other model assigns .08 of the sample to the high risk group, 
                       the second model is more discriminating."),
-                   h6("Note: Use the \"boot\" method to view the \"Factors Retained in Backwards Elimination\". These are factors found statistically significant in random draws. First 50 bootstrapped results shown."), 
+                   h6("Note: Use the \"boot\" method to view the \"Factors Retained in Backwards Elimination\". These are factors found statistically significant in random draws. First 50 bootstrapped results shown."),
+                   h6("A Slope much smaller than 1 indicates that the range of observed risks is much smaller than the range of predicted risks. And vice vera."),
                    verbatimTextOutput("vali_date")),    #Creates a new panel named "Summary"
 
 #############

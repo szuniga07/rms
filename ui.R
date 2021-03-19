@@ -548,24 +548,28 @@ br()
           ),    #Creates a new panel named "Nomogram"                           
           
           tabPanel("Calibration",
+                   h4("The reliability of a model, meaning the ability of the model to predict future observations as well as it appeared to predict the responses at hand."),
+                   br(),
+                   h5("Note: Prior to validation, create the single imputed data under 'Transformation and Imputation of predictors' in the 'Reduce' tab for multiple imputation purposes."),
+                   h5("For #4, select the number of groups that survival models calibration is validated on (see note below). Default is 5 (e.g., sample size/5)."),
+                   br(),
                    fluidRow(
                    column(3, 
-                   uiOutput("calibrate_type"),
-                   uiOutput("MIForCali")
+                   uiOutput("calibrate_type"), 
+                   uiOutput("calibrate_surv_quan_n")
                    ),  
                    column(3, offset=1,
                    uiOutput("calibrate_B_arg_n"),
-                   uiOutput("BeginCalibrate")
+                   uiOutput("MIForCali") 
                    ),
                    column(3, offset=1,
-                          uiOutput("calibrate_surv_time")
+                          uiOutput("calibrate_surv_time"),
+                          uiOutput("BeginCalibrate")
                    )
                    ),
-                   h5("Note: Prior to validation, create the single imputed data under 'Transformation and Imputation of predictors' in the 'Reduce' tab for multiple imputation purposes."),
-                   #h6("Note: Confirm the single imputed or original dataframe is loaded in the 'Model builder' tab, depending on your purpose."),
                    br(),
-                   h4("Model calibration (e.g, bootstrapped, cross-validated--repeated 100 times)"),
-                   h4("The reliability of a model, meaning the ability of the model to predict future observations as well as it appeared to predict the responses at hand."),
+                   h5("For survival models, black dots are predicted means. The blue Xs represent bootstrap bias-corrected Kaplan-Meier estimates."),
+                   h5("Apparent calibration accuracy obtained by stratifying intervals and plotting the mean predicted value within the interval by the stratum's Kaplan-Meier estimate."),
                    plotOutput("cali_brate", height = 800, width= "100%")
                    ),    #Creates a new panel named "Summary"
                        

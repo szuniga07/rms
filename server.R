@@ -2097,15 +2097,24 @@ output$calibrate_surv_time <- renderUI({
                min=as.numeric(describeY()[["extremes"]][1]), max=as.numeric(describeY()[["extremes"]][10]), step=1)
 })
 
+#4. Pick a time for survival models
+output$calibrate_surv_quan_n <- renderUI({
+  numericInput("calSrvQnN", "4. Select quantile N for survival models", value= 5, min=1, max=100, step=1) 
+})
+#4A. Quantile N object
+calibrate_survival_quantile_n <- reactive({
+  input$calSrvQnN
+})
+
 #Asks if you did multiple imputation.
 output$MIForCali <- renderUI({  
-  selectInput("MI_for_cali", "4. Did you do Multiple Imputation?", 
+  selectInput("MI_for_cali", "5. Did you do Multiple Imputation?", 
               choices = c("No", "Yes"), multiple=FALSE, selected="No")     #Will make choices based on my reactive function.
 })
 
 #Determine if we should begin the calibration.
 output$BeginCalibrate <- renderUI({  
-  selectInput("begin_cali", "5. Begin calibration?", 
+  selectInput("begin_cali", "6. Begin calibration?", 
               choices = c("No", "Yes"), multiple=FALSE, selected="No")     #Will make choices based on my reactive function.
 })
 
@@ -2127,6 +2136,12 @@ output$cali_brate <- renderPlot({
   if (input$caliType == "randomization") {
     plot(calibrate(fit1(),  u=input$calSrvTM, method="randomization", B=input$cali_B_n), subtitles=TRUE)
   }
+#Add validation of right censored data
+      set.seed(1)
+      if (input$regress_type %in%  c("Cox PH","Cox PH with censoring","AFT","AFT with censoring")) {
+        plot(calibrate(fit1(), B=input$cali_B_n, u=input$calSrvTM, m=floor(sum(fit1()$n )/calibrate_survival_quantile_n()), 
+                       cmethod='KM'), add=TRUE)
+      }
   }
   } 
   ######
@@ -2145,6 +2160,12 @@ output$cali_brate <- renderPlot({
       }
       if (input$caliType == "randomization") {
         plot(calibrate(fit.si(),  u=input$calSrvTM, method="randomization", B=input$cali_B_n), subtitles=TRUE)
+      }
+      #Add validation of right censored data
+      set.seed(1)
+      if (input$regress_type %in%  c("Cox PH","Cox PH with censoring","AFT","AFT with censoring")) {
+        plot(calibrate(fit.si(), B=input$cali_B_n, u=input$calSrvTM, m=floor(sum(fit.si()$n )/calibrate_survival_quantile_n()), 
+                       cmethod='KM'), add=TRUE)
       }
     }
   }

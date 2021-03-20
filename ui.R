@@ -568,7 +568,7 @@ br()
                    )
                    ),
                    br(),
-                   h5("For validation of survival model calibration, black dots are means of predicted values. The blue Xs represent bootstrap bias-corrected Kaplan-Meier estimates."),
+                   h5("Validation of survival model calibration: Black dots are means of predicted values with 95% CIs. The blue Xs represent bootstrap bias-corrected Kaplan-Meier estimates."),
                    h5("Apparent calibration accuracy obtained by stratifying intervals and plotting the mean predicted value within the interval by the stratum's Kaplan-Meier estimate."),
                    plotOutput("cali_brate", height = 800, width= "100%")
                    ),    #Creates a new panel named "Summary"

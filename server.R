@@ -2139,7 +2139,7 @@ output$cali_brate <- renderPlot({
 #Add validation of right censored data
       set.seed(1)
       if (input$regress_type %in%  c("Cox PH","Cox PH with censoring","AFT","AFT with censoring")) {
-        plot(calibrate(fit1(), B=input$cali_B_n, u=input$calSrvTM, m=floor(sum(fit1()$n )/calibrate_survival_quantile_n()), 
+        plot(calibrate(fit1(), B=input$cali_B_n, u=input$calSrvTM, m=floor(length(fit1()$linear.predictors) /calibrate_survival_quantile_n()), 
                        cmethod='KM'), add=TRUE)
       }
   }
@@ -2164,7 +2164,7 @@ output$cali_brate <- renderPlot({
       #Add validation of right censored data
       set.seed(1)
       if (input$regress_type %in%  c("Cox PH","Cox PH with censoring","AFT","AFT with censoring")) {
-        plot(calibrate(fit.si(), B=input$cali_B_n, u=input$calSrvTM, m=floor(sum(fit.si()$n )/calibrate_survival_quantile_n()), 
+        plot(calibrate(fit.si(), B=input$cali_B_n, u=input$calSrvTM, m=floor( length(fit.si()$linear.predictors) /calibrate_survival_quantile_n()), 
                        cmethod='KM'), add=TRUE)
       }
     }

@@ -5427,7 +5427,7 @@ output$SpTimeInc <- renderUI({
 })
 #Indicate if you want the hazard function
 output$HazardPlot <- renderUI({                                 
-  selectInput("hazard_plot", "10. Do you want the hazard curve?", 
+  selectInput("hazard_plot", "10. Do you want the cumulative hazard?", 
               choices = c("No", "Yes"), multiple=FALSE, selected="No")     
 })
 #Indicate if you want the log-minus-log plot
@@ -5440,7 +5440,8 @@ SrvHzr <- reactive({
   if (input$hazard_plot == "No") {
     function(x) {x}
   } else {
-    function(x) {1 - x}
+    #function(x) {1 - x}
+    "cumhaz"
   }
 })
 #"Survival" or "Hazard" to be used for labels
@@ -5448,7 +5449,8 @@ SrvHzrLbl <- reactive({
   if (input$hazard_plot == "No") {
     "Survival"
   } else {
-    "Hazard"
+    #"Hazard"
+    "Cumulative Hazard"
   }
 })
 #"Survival" or "Hazard" to be used to indicate a log-minus-log plot
@@ -5475,7 +5477,7 @@ output$surv_plot1 <- renderPlot({
     if ("strata" %in% names(srvft1()) ) {
       plot(srvft1(), 
            xlim=c(input$sp_Xlim1, input$sp_Xlim2), ylim=c(input$sp_Ylim1,input$sp_Ylim2),
-           ylab= paste0(SrvHzrLbl(), " Probability"), fun=SrvHzr(),
+           ylab= paste0(SrvHzrLbl()), fun=SrvHzr(),
            xlab=paste0(SrvHzrLbl()," functions of time stratified by ", strsplit(names(srvft1()$strata)[1], "=")[[1]][1], 
                        " with ", input$SrvPltLvl*100, "% confidence intervals"), 
            mark.time=T, pch=LETTERS[1:length(names(srvft1()$strata))])
@@ -5483,7 +5485,7 @@ output$surv_plot1 <- renderPlot({
           if ( !"strata" %in% names(srvft1()) ) {
       plot(srvft1(), fun=SrvHzr(),
            xlim=c(input$sp_Xlim1, input$sp_Xlim2), ylim=c(input$sp_Ylim1,input$sp_Ylim2),
-           ylab=paste0(SrvHzrLbl()," Probability"),
+           ylab=paste0(SrvHzrLbl()),
            xlab=paste0(SrvHzrLbl(), " function of time with ", input$SrvPltLvl*100, "% confidence intervals"))
     }
   } else {

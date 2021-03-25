@@ -5874,20 +5874,21 @@ output$DFBETASYesNo <- renderUI({
 # Save DFBETAS output #
 #####################
 output$SaveDFBETAS <- renderUI({  
-  selectInput("save_dfbetas", "1. Save the DFBETAS?", 
+  selectInput("save_dfbetas", "1. Save the residuals?", 
               choices = c("No", "Yes"), multiple=FALSE, selected="No")     #Will make choices based on my reactive function.
 })
 dfbetasFit <- reactive({
   if(input$save_dfbetas == "Yes") {
-    list("DFBETAS"=dfbetas_res(),
-         "Influential"=w_influ(),
-         "InfluentialData"=w_influ_df(),
-         "Schoenfeld"= Schoenfeld_res(),
-         "Martingale"=Martingale_res())
+    list("DFBETAS"= try(dfbetas_res()),
+         "Deviance"= Deviance_res(),
+         "Influential"= try(w_influ()),
+         "InfluentialData"= try(w_influ_df()),
+         "Schoenfeld"= try(Schoenfeld_res()),
+         "Martingale"= try(Martingale_res()))
   }
 })
 output$dfbetas_fit_name <- renderUI({ 
-  textInput("DFBETASFitName", "2. Enter the DFBETAS name.", 
+  textInput("DFBETASFitName", "2. Enter the residuals' name.", 
             value= "DFBETASres")     
 })
 output$dfbetas_influential_residuals <- downloadHandler(
@@ -5914,6 +5915,12 @@ Martingale_res <- reactive({
 dfbetas_res <- reactive({ 
   if (input$regress_type %in% c("Cox PH", "Cox PH with censoring")) {
     residuals(fit1(), type="dfbetas")
+  }
+})
+## Gets Deviance residuals
+Deviance_res <- reactive({ 
+  if (input$regress_type %in% c("AFT","AFT with censoring","Cox PH", "Cox PH with censoring")) {
+    residuals(fit1(), type="deviance")
   }
 })
 #Gets influential observations by predictors

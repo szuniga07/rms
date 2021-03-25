@@ -798,7 +798,7 @@ fluidRow(
 
          verbatimTextOutput("InfluenceDFBETAS"), 
          br(),
-h5("The DFBETAS, influential cases, Schoenfeld and Martingale residuals are saved in the download."),
+h5("Residuals: DFBETAS, Deviance, influential cases, Schoenfeld and Martingale residuals are saved in the download. AFT models only have Deviance residuals."),
 fluidRow(
   column(3, 
          uiOutput("SaveDFBETAS")),

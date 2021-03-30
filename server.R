@@ -835,13 +835,13 @@ shinyServer(
                    } else {
                      fit.mult.impute(mdl_fmla(), Rq, mi(), data=df(), pr=FALSE, tau=as.numeric(rq_tau1()))},
                    "Cox PH"   = if(input$updy == "Yes") {
-                     fit.mult.impute(cox_mdl_fmla1u(), cph, mi(), data=df(), pr=FALSE)
+                     fit.mult.impute(cox_mdl_fmla1u(), cph, mi(), data=df(), pr=FALSE, surv=TRUE)
                    } else {
-                     fit.mult.impute(cox_mdl_fmla1(), cph, mi(), data=df(), pr=FALSE)},
+                     fit.mult.impute(cox_mdl_fmla1(), cph, mi(), data=df(), pr=FALSE, surv=TRUE)},
                    "Cox PH with censoring" = if(input$updy == "Yes") {
-                     fit.mult.impute(cox_mdl_fmla2u(), cph, mi(), data=df(), pr=FALSE)
+                     fit.mult.impute(cox_mdl_fmla2u(), cph, mi(), data=df(), pr=FALSE, surv=TRUE)
                    } else {
-                     fit.mult.impute(cox_mdl_fmla2(), cph, mi(), data=df(), pr=FALSE)},
+                     fit.mult.impute(cox_mdl_fmla2(), cph, mi(), data=df(), pr=FALSE, surv=TRUE)},
                    #AFT models
                    "AFT"   = if(input$updy == "Yes") {
                      fit.mult.impute(aft_mdl_fmla1u(), psm, mi(), data=df(), pr=FALSE)
@@ -1059,9 +1059,9 @@ output$pred_class_thresh <- renderUI({
 })
 #1A. Object for cutoff level 
 prediction_class_threshold <- reactive({
-  if (input$begin_mdl == "Yes") {
+#  if (input$begin_mdl == "Yes") {
     input$PredClassThresh
-  }
+#  }
 })
 
 #2. Select a survival model time (e.g., 7 days)
@@ -1071,9 +1071,9 @@ output$pred_class_time <- renderUI({
 })
 #2A. Object for survival model time 
 prediction_classification_time <- reactive({
-  if (input$begin_mdl == "Yes") {
+#  if (input$begin_mdl == "Yes") {
     input$PredClassTime
-  }
+#  }
   })
 
 #3. Select the approximate number of histogram bars
@@ -1083,9 +1083,9 @@ output$pred_class_hist_bars <- renderUI({
 })
 #3A. Object for histogram bars 
 prediction_class_histogram_bars <- reactive({
-  if (input$begin_mdl == "Yes") {
+#  if (input$begin_mdl == "Yes") {
     input$PredClassHistBars
-  }
+#  }
 })
 
 #4. Select a survival model time (e.g., 7 days)
@@ -1095,9 +1095,9 @@ output$class_hist_asp_ratio <- renderUI({
 })
 #4A. Object for survival model time 
 class_histogram_aspect_ratio <- reactive({
-  if (input$begin_mdl == "Yes") {
+#  if (input$begin_mdl == "Yes") {
     input$clsHistAspRtio
-  }
+#  }
 })
 
 #5Indicate if you want the classification plot
@@ -1107,9 +1107,9 @@ output$pred_class_hist_yesno <- renderUI({
 })
 #5A. Object for classification plot 
 prediction_class_histogram_yes_no <- reactive({
-  if (input$begin_mdl == "Yes") {
+ # if (input$begin_mdl == "Yes") {
     input$PredClassHistYN
-  }
+#  }
 })
 #Run functions below
 #6. Get data for functions
@@ -8220,6 +8220,8 @@ fncStSpcLegendFactoLev <- function(Model_fit, X_Lev) {
 ##} )
 
 #output$test1 <- renderPrint({
+#summary(new_imputed.si())
+#  list("ti"=fit1()$time, "sv"= fit1()$surv)
 #  list( nomo_update_formula(), class(nomo_update_formula() ))
 #  })
 

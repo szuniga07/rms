@@ -542,17 +542,17 @@ shinyServer(
     
     #This reactive function runs the yhat_plot_fnc function above  
     yhat_hist_rslt <- reactive ({
-      if (input$begin_mdl == "Yes") {
-        yhat_hist_plot_fnc(yhat=predict(fit1()), reg_yhat=input$regress_type)
-      }
+      #if (input$begin_mdl == "Yes") {
+        try( yhat_hist_plot_fnc(yhat=predict(fit1()), reg_yhat=input$regress_type) )
+      #}
     })
     
     
     output$y_hat_hist <- renderPlot({
-      if (input$begin_mdl == "Yes") {
-      hist(yhat_hist_rslt(), main="Histogram of the predicted Y values",
-                        xlab=paste0(input$variableY, " (range: ", round(min(yhat_hist_rslt(), na.rm=T),3), " to ", round(max(yhat_hist_rslt(), na.rm=T), 3), ". Unique values= ", length(unique(yhat_hist_rslt())) ,".)" ))
-      }
+#      if (input$begin_mdl == "Yes") {
+      try( hist(yhat_hist_rslt(), main="Histogram of the predicted Y values",
+                        xlab=paste0(input$variableY, " (range: ", round(min(yhat_hist_rslt(), na.rm=T),3), " to ", round(max(yhat_hist_rslt(), na.rm=T), 3), ". Unique values= ", length(unique(yhat_hist_rslt())) ,".)" )) )
+#      }
     })
     
     ########### Model approximation section ###########        
@@ -1043,9 +1043,9 @@ nm_x_var <- reactive({
            #descript=paste0("Summary of ",input$variableY) )  
     })
 output$desc_YhatHistRslt <- renderPrint({ 
-  if (input$begin_mdl == "Yes") {
-    print(describeYhatHistRslt())
-  }
+#  if (input$begin_mdl == "Yes") {
+    try( print(describeYhatHistRslt()) )
+#  }
 })    
 
 #########################################
@@ -5427,32 +5427,31 @@ output$SpTimeInc <- renderUI({
 })
 #Indicate if you want the hazard function
 output$HazardPlot <- renderUI({                                 
-  selectInput("hazard_plot", "10. Do you want the cumulative hazard?", 
-              choices = c("No", "Yes"), multiple=FALSE, selected="No")     
+  selectInput("hazard_plot", "10. Do you want the hazard or survival?", 
+              choices = c("Cumulative Hazard", "Cumulative Incidence", "Survival"), multiple=FALSE, selected="Survival")     
 })
 #Indicate if you want the log-minus-log plot
 output$SrvLogLog <- renderUI({                                 
   selectInput("srv_log_log", "11. Want a log-minus-log plot (assess PH)?", 
               choices = c("No", "Yes"), multiple=FALSE, selected="No")     
 })
-#This will go into the "fun" argument based on if I want a survival or Hazard function
-SrvHzr <- reactive({ 
-  if (input$hazard_plot == "No") {
-    function(x) {x}
-  } else {
-    #function(x) {1 - x}
-    "cumhaz"
-  }
-})
 #"Survival" or "Hazard" to be used for labels
 SrvHzrLbl <- reactive({ 
-  if (input$hazard_plot == "No") {
-    "Survival"
-  } else {
-    #"Hazard"
-    "Cumulative Hazard"
-  }
+  input$hazard_plot
+  #  if (input$hazard_plot == "No") {
+  #    "Survival"
+  #  } else {
+  #    #"Hazard"
+  #    "Cumulative Hazard"
+  #  }
 })
+#This will go into the "fun" argument based on if I want a survival or Hazard function
+SrvHzr <- reactive({ 
+      switch(SrvHzrLbl(), 
+             "Survival"                =  function(x) {x},
+             "Cumulative Hazard"       =  "cumhaz",
+             "Cumulative Incidence"    =  function(x) {1 - x})
+  })
 #"Survival" or "Hazard" to be used to indicate a log-minus-log plot
 SrvLogLog <- reactive({ 
   if (input$srv_log_log == "No") {

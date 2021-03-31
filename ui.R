@@ -605,7 +605,7 @@ tabPanel("Survival",
          h5("Note: Stratified survival function curves don't include time increment and confidence bands/bars options."),
          h5("The log-minus-log plot is not applicable to the survival and cumulative hazard function plots. The log-minus-log plot can have negative values, adjust y limit values accordingly."),
          br(),
-         h5("Set up the survival plot."),
+         h5("Set up the survival plot. The default plot (#4 == 'No') is the Kaplan-Meier survival function (#10 == 'Survival')."),
          fluidRow(
            column(3, 
                   uiOutput("srv_plt_one_x")),
@@ -627,7 +627,7 @@ fluidRow(
   column(3,
          uiOutput("SurvPltYlim2"))
 ),
-h5("For model survival plots, select 'No' for #10."),
+h5("For model survival plots, select either 'Survival' or 'Cumulative Incidence' for #10 (i.e., plot not run for 'Cumulative Hazard')."),
 fluidRow(
   column(3, 
          uiOutput("SpTimeInc")),

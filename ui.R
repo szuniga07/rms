@@ -149,10 +149,10 @@ fluidRow(
                           br(),
                           
                           uiOutput("uf"),  #vx is the created drop down box coming from renderUI in server.r.
-                          br() 
                    )
                    ),
-                   
+                   h5("Note: To model using Multiple Imputation, set #2 to 'No' after completing imputations."),
+                   br(), 
                    h4("Regression results"),
                    verbatimTextOutput("regress"),  #"regress" calls output$regress from server.r 
                    br(),

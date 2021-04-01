@@ -891,7 +891,7 @@ shinyServer(
         rslt[i] <- strsplit(censor, symb[i] )
       }
       #Select correct censor variable
-      if(all(sapply(rslt,length) > 1) ==TRUE) {
+      if(all(sapply(rslt,length) == 1) ==TRUE) {
         newtc <- censor
       } else {
         newtc <- rslt[which(sapply(rslt,length) > 1)][[1]][1]

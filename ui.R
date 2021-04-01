@@ -169,7 +169,6 @@ fluidRow(
                    h4("Describe the outcome variable"),
                    verbatimTextOutput("desc_Y"),  #"regress" calls output$regress from server.r
                    plotOutput("outcome_hist"),
-                   h5("Histogram of numeric variables (i.e., not factors)"),
                    br(),
 h4("Describe the predicted values"),
 verbatimTextOutput("desc_YhatHistRslt"),  #

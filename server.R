@@ -860,18 +860,45 @@ shinyServer(
           
         })
 
-    rq_tau1 <- reactive({                  #This stores the censoring variable. 
+    rq_tau1 <- reactive({                  #This stores the quantile regression value. 
       input$tau1
+    })
+    
+    gls_clst1 <- reactive({                  #This stores the GLS cluster variable. 
+      input$gls_clst
     })
     
     censor1 <- reactive({                  #This stores the censoring variable. 
       input$censor
     })
     
-    gls_clst1 <- reactive({                  #This stores the censoring variable. 
-      input$gls_clst
+    censor2 <- reactive({                  #This abbreviates the censoring variable if it uses a formula. 
+      #Create censor variable using function below
+    if(input$regress_type %in% c("Cox PH with censoring", "AFT with censoring")) {
+      abbrv_censor(censor= censor1() )
+    } else {
+      NA
+    }
     })
     
+    #Function that gives the censor variable even using a formula for the value
+    abbrv_censor <- function(censor) {
+      #Symbols used for censor variable
+      symb <- c(" ", "!", "\\+", ">", "<" )
+      #String split, grab first element as
+      rslt <- list()
+      for (i in 1:length(symb)) {
+        rslt[i] <- strsplit(censor, symb[i] )
+      }
+      #Select correct censor variable
+      if(all(sapply(rslt,length) > 1) ==TRUE) {
+        newtc <- censor
+      } else {
+        newtc <- rslt[which(sapply(rslt,length) > 1)][[1]][1]
+      }
+      return("Abbreviated.Censor"=newtc)
+    }
+
 
     #  Model  builder tab  #
     ## Outputs that will show up in UI.R file and in GUI ##
@@ -1100,7 +1127,7 @@ class_histogram_aspect_ratio <- reactive({
 #  }
 })
 
-#5Indicate if you want the classification plot
+#5. Indicate if you want the classification plot
 output$pred_class_hist_yesno <- renderUI({                                 
   selectInput("PredClassHistYN", "5. Do you want to run the classification plot?", 
               choices = c("No", "Yes"), multiple=FALSE, selected="No")     
@@ -1115,7 +1142,7 @@ prediction_class_histogram_yes_no <- reactive({
 #6. Get data for functions
 get_binary_class_df <- reactive({
   if (prediction_class_histogram_yes_no() =="Yes") {
-    fncYhatClassDf(Fit=fit1(), Y=outcome(), Threshold=prediction_class_threshold(), Censor=censor1()[length(censor1())], 
+    fncYhatClassDf(Fit=fit1(), Y=outcome(), Threshold=prediction_class_threshold(), Censor=censor2()[length(censor2())], 
                    PredTime=prediction_classification_time(), RegType=input$regress_type, DF=df() )
     }
 })
@@ -1130,7 +1157,7 @@ binary_classification_data_output <- reactive({
 get_binary_class_AUC <- reactive({
   if (prediction_class_histogram_yes_no() =="Yes") {
     #fncThreshAUC(Fit=fit1(), Y=outcome(), Threshold=prediction_class_threshold(), Censor=censor1()[length(censor1())], 
-    fncThreshAUC(Fit=fit1(), Y=outcome(), Threshold=describeYhatHistRslt(), Censor=censor1()[length(censor1())], 
+    fncThreshAUC(Fit=fit1(), Y=outcome(), Threshold=describeYhatHistRslt(), Censor=censor2()[length(censor2())], 
                    PredTime=prediction_classification_time(), RegType=input$regress_type, DF=df(), ClassDF=binary_classification_data_output() )
   }
 })

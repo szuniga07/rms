@@ -5908,7 +5908,7 @@ dfbetasFit <- reactive({
     list("DFBETAS"= try(dfbetas_res()),
          "Deviance"= Deviance_res(),
          "Influential"= try(w_influ()),
-         "InfluentialData"= try(w_influ_df()),
+         "Influential.Data"= try(w_influ_df()),
          "Schoenfeld"= try(Schoenfeld_res()),
          "Martingale"= try(Martingale_res()))
   }
@@ -5973,7 +5973,104 @@ output$InfluenceDFBETAS <- renderPrint({
     w_influ_df()
     }
   })
-  
+
+#############################
+## Deviance residual plots ##  
+#############################
+
+#Deviance residual outlier function plot
+#1. Create yes/no box to run the DFBETAS residuals
+output$dev_res_yesno <- renderUI({                                 
+  selectInput("devResYN", "1. Do you want to plot the deviance residuals?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")     
+})
+#1A. Reactive function for residuals
+deviance_residuals_yesno <- reactive({ 
+  input$devResYN
+  })
+#1B. Run function to get plot
+plot_deviance_outlier_function <- reactive({
+  if (deviance_residuals_yesno() =="Yes") {
+    fncDevResOtlrPlot(Deviance=Deviance_res(), DF=df(),  Y=outcome(), Censor=censor1(), RegType=input$regress_type )
+  }
+})
+#1C. Create the plot
+output$prediction_deviance_outlier_run <- renderPlot({
+  if (deviance_residuals_yesno() =="Yes") {
+    plot_deviance_outlier_function()
+  }
+})
+
+## Deviance by covariates
+#1. Select the predictors.
+output$deviance_cov_plot_x <- renderUI({
+  selectInput("devCovPltX", "1. Select the covariate", 
+              choices = var(), multiple=FALSE, selected=var()[1])
+})
+#1A. Reactive function for residuals
+deviance_covariate_plot_X <- reactive({ 
+  input$devCovPltX
+})
+
+#2. Create yes/no box to run the DFBETAS residuals
+output$dev_cov_yesno <- renderUI({                                 
+  selectInput("devCovYN", "2. Do you want to plot deviance by a covariate?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")     
+})
+#2A. Reactive function for residuals
+deviance_covariate_yesno <- reactive({ 
+  input$devCovYN
+})
+#2B. Run function to get plot
+plot_deviance_covariate_function <- reactive({
+  if (deviance_covariate_yesno() =="Yes") {
+    fncDevResCovPlot(Deviance=Deviance_res(), DF=df(), X=deviance_covariate_plot_X(), RegType=input$regress_type)
+  }
+})
+#2C. Create the plot
+output$prediction_deviance_covariate_run <- renderPlot({
+  if (deviance_covariate_yesno() =="Yes") {
+    plot_deviance_covariate_function()
+  }
+})
+
+
+## Function to create plot of outliers
+fncDevResOtlrPlot <- function(Deviance, DF,  Y, Censor=NULL, RegType ) {
+  if(RegType %in% c("AFT with censoring","Cox PH with censoring") ) {
+    Mdl_Status <- eval(parse(text=paste0(deparse(substitute(DF)), "$", Censor) ))
+  }
+  #Plot for censoring
+  if(RegType %in% c("AFT with censoring","Cox PH with censoring") ) {
+    plot(DF[, Y], Deviance , type='n', xlab= Y, ylab="Deviance Residual (SD)",
+         main="Deviance residuals across time")
+    points(DF[, Y][ Mdl_Status == FALSE ], Deviance[ Mdl_Status == FALSE ] , col=4, pch=1)
+    points(DF[, Y][Mdl_Status == TRUE],    Deviance[ Mdl_Status == TRUE ] , col=2, pch=19)
+  }
+  #Regular plot
+  if(RegType %in% c("AFT","Cox PH") ) {
+    plot(DF[, Y], Deviance , type='p', xlab= Y, ylab="Deviance Residuals (SD)",
+         main="Deviance residuals across time")
+  }
+  #Legend
+  if(RegType %in% c("AFT with censoring","Cox PH with censoring") ) {
+    legend('topright', legend=c("Event", "Survived/Censored"), col=c(2,4), pch=c(19,1), cex=2)
+  }
+}
+
+## Function to create plot of residuals by covariates
+fncDevResCovPlot <- function(Deviance, DF, X, RegType ) {
+  #Regular plot
+  if(RegType %in% c("AFT","AFT with censoring","Cox PH", "Cox PH with censoring") ) {
+    scatter.smooth(DF[, X], Deviance, ylab="Deviance Residuals (SD)", xlab= X, 
+                   main=paste0("Deviance residuals by ", X), 
+                   lpars =list(col = "red", lwd = 3, lty = 1))
+  }
+}
+
+#fncDevResCovPlot(Deviance=res, DF=pbc, X="bili", RegType= "Cox PH with censoring")
+
+################################################################################
 
 #Multilevel modeling 
 #Selects a level 2 covariate

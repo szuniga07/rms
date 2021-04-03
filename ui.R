@@ -733,6 +733,8 @@ fluidRow(
 br(),
 
 ###############################
+h3("Residuals"),
+br(),
          h4("Schoenfeld residuals"),
          h5("Assess the Cox model's proportional hazards assumption."),
          br(),
@@ -742,43 +744,7 @@ br(),
 h6("Check for a pattern in time. An upwards line may suggest an increasing effect in X over time. For binary predictors (with no interaction term), the top band of dots is failures when X=1, lower band is when X=0"),
 h6("The dotted green line represents X's coefficient or mean of residuals. You can see how the proportional hazards varies around the average, over time."),
 uiOutput("Schoenfeld_X"),
-         plotOutput("schoenfeld_plt", height = 800, width="100%"),
-br(),
-## Creating time-dependent datasets ##
-h4("Time-dependent/varying dataset creation for a time-dependent/varying coefficient model."),
-h5("To create a time-dependent/varying covariate dataset, go to the 'Multi-State' tab."),
-br(),
-h5("This creates a time-dependent dataset with an optional interaction term (continuous X*Time) to assess and model accordingly for the proportional hazards assumption."),
-h5("In #1, enter the variables you want in the dataset"),
-h5("For categorical X (e.g., 'Intervention'), select 'No' for #3 and skip #5. For continuous X, select 'Yes' for #3."),
-h5("For step 4, enter the covariate of primary interest. For example, there are 3 'Intervention' coefficients for 0-30, 30-60, 60+ day periods."),
-h5("When specifying the time-dependent model later in the 'Model builder' tab, use Outcome=tstart, Censor= tstop,event."),
-h5("For a model using categorical X (as binary 0/1), specify the Intervention*Time period as 'Intervention*strat(tgroup)'. To interpret the 2nd time period (tgroup=2), multiply exp(coefficients): Intervention * 'Intervention * tgroup=2'. The 'Intervention' coefficient is Intervention*tgroup=1. Interpret the coefficient 'as is'."),
-h5("We may want to add a value to the time value to emphasize parts of the period (e.g., log(time+20) ). If so, set the value in #5 below."),
-br(),
-fluidRow(
-         column(3, 
-                uiOutput("time_dependent_predictors")) ,
-         column(3,
-                uiOutput("td_cut_lev")) ,
-         column(3,
-                uiOutput("td_X_by_time_yesno")) ,
-         column(3, 
-                uiOutput("time_dependent_var")) 
-), 
-br(),
-fluidRow(
-  column(3, 
-         uiOutput("td_log_increment")) ,
-  column(3, 
-         uiOutput("td_data_yes_no")) ,
-  column(3, 
-         uiOutput("td_data_download_name")) ,
-    column(3, 
-         downloadLink('td_data_download', '8. Click to download data.'))
-),
-br(),
-h5("Remember to save R data frames with the extension '.RData'."),
+plotOutput("schoenfeld_plt", height = 800, width="100%"),
 
 ############################################### END HERE
 
@@ -797,6 +763,27 @@ fluidRow(
 
          verbatimTextOutput("InfluenceDFBETAS"), 
          br(),
+h4("Deviance residuals"),
+br(),
+h5("Plot deviance residuals to examine outliers."),
+h5("In Cox PH models, positive values indicate failure times are sooner than expected and negative values indicate that failure times are longer than expected (or were censored)."),
+h5("For AFT models, vice versa is true. Deviance are the only residuals available for AFT models."),
+fluidRow(
+  column(6,
+         uiOutput("dev_res_yesno"))
+),
+plotOutput("prediction_deviance_outlier_run", height = 800, width="100%"),
+br(),
+h5("Deviance scatterplot to assess 1) the association between a covariate and unexplained variation, 2) whether to add new covariates, 3) and non-linearity. Plot has loess smoothing."),
+fluidRow(
+  column(5, 
+         uiOutput("deviance_cov_plot_x")) ,
+  column(5, offset=1,
+         uiOutput("dev_cov_yesno"))
+),
+plotOutput("prediction_deviance_covariate_run", height = 800, width="100%"),
+
+br(),
 h5("Residuals: DFBETAS, Deviance, influential cases, Schoenfeld and Martingale residuals are saved in the download. AFT models only have Deviance residuals."),
 fluidRow(
   column(3, 
@@ -808,6 +795,46 @@ fluidRow(
 ),
 h5("Remember to save R data frames with the extension '.RData'."),
 br(),
+
+br(),
+## Creating time-dependent datasets ##
+h4("Time-dependent/varying dataset creation for a time-dependent/varying coefficient model."),
+h5("To create a time-dependent/varying covariate dataset, go to the 'Multi-State' tab."),
+br(),
+h5("This creates a time-dependent dataset with an optional interaction term (continuous X*Time) to assess and model accordingly for the proportional hazards assumption."),
+h5("In #1, enter the variables you want in the dataset"),
+h5("For categorical X (e.g., 'Intervention'), select 'No' for #3 and skip #5. For continuous X, select 'Yes' for #3."),
+h5("For step 4, enter the covariate of primary interest. For example, there are 3 'Intervention' coefficients for 0-30, 30-60, 60+ day periods."),
+h5("When specifying the time-dependent model later in the 'Model builder' tab, use Outcome=tstart, Censor= tstop,event."),
+h5("For a model using categorical X (as binary 0/1), specify the Intervention*Time period as 'Intervention*strat(tgroup)'. To interpret the 2nd time period (tgroup=2), multiply exp(coefficients): Intervention * 'Intervention * tgroup=2'. The 'Intervention' coefficient is Intervention*tgroup=1. Interpret the coefficient 'as is'."),
+h5("We may want to add a value to the time value to emphasize parts of the period (e.g., log(time+20) ). If so, set the value in #5 below."),
+br(),
+fluidRow(
+  column(3, 
+         uiOutput("time_dependent_predictors")) ,
+  column(3,
+         uiOutput("td_cut_lev")) ,
+  column(3,
+         uiOutput("td_X_by_time_yesno")) ,
+  column(3, 
+         uiOutput("time_dependent_var")) 
+), 
+br(),
+fluidRow(
+  column(3, 
+         uiOutput("td_log_increment")) ,
+  column(3, 
+         uiOutput("td_data_yes_no")) ,
+  column(3, 
+         uiOutput("td_data_download_name")) ,
+  column(3, 
+         downloadLink('td_data_download', '8. Click to download data.'))
+),
+br(),
+h5("Remember to save R data frames with the extension '.RData'."),
+br(),
+
+## Multi-level Cox PH model ##
          h4("Mixed effects Cox proportional hazards model"),
          h5("Answer 'Yes' for the cost analysis to get the frailties and graph in the correct direction."),
          h5("Note: If you updated the model formula, the mixed effects model won't run when there are spline terms (e.g., rcs(X,5))."),

@@ -774,7 +774,7 @@ fluidRow(
 ),
 plotOutput("prediction_deviance_outlier_run", height = 800, width="100%"),
 br(),
-h5("Deviance scatterplot to assess 1) the association between a covariate and unexplained variation, 2) whether to add new covariates, 3) and non-linearity. Plot has loess smoothing."),
+h5("Deviance scatterplot to assess 1) the association between a covariate and unexplained variation, 2) whether to add new covariates, 3) and non-linearity. Plot has a loess smoothed line (in red)."),
 fluidRow(
   column(5, 
          uiOutput("deviance_cov_plot_x")) ,

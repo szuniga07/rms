@@ -5959,11 +5959,22 @@ w_influ <- reactive({
     }
   }
 })
+#show.influence report argument
+w_influ_report <- reactive({ 
+  if (input$regress_type %in% c( "Cox PH with censoring")) {
+    if (input$DFBETAS_Yes_No =="Yes") { 
+      c(outcome(), censor2())
+    } 
+  } else {
+    outcome()
+  }
+})
+
 #Gets the data frame of the influential observations
 w_influ_df <- reactive({ 
   if (input$regress_type %in% c("Cox PH", "Cox PH with censoring")) {
     if (input$DFBETAS_Yes_No =="Yes") { 
-    show.influence(w_influ(), dframe=df())
+    show.influence(w_influ(), dframe=df(), report=w_influ_report() )
     }
   }
 })

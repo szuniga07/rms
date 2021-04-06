@@ -300,6 +300,7 @@ tabPanel("Describe",
            column(3, offset=1,
                   uiOutput("smryrc_choice"))
          ),
+         h5("Summary of lowess smoothed X against Y by stratification levels. Percentiles and tick marks below indicate X's data density."),
          plotOutput("summaryRC_plot_function_out", height = 800, width = "100%"),          
          br(),
          fluidRow(

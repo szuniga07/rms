@@ -4387,7 +4387,7 @@ summaryRC_plot_function_run <- reactive({
   }  else {
     fncSumRcPlot(X=smryRc_X_var(), Y=smryRc_outcome(), Z=NULL, DF=df())
   }
-}
+} 
 })
 #6A. Summary plot output 
 output$summaryRC_plot_function_out <- renderPlot({

@@ -1000,16 +1000,15 @@ shinyServer(
     }) 
     
     #Regression results.
-    output$regress <- renderPrint({                                                 
+    output$regress <- renderPrint({                                                
       atch()
       if(MsStrat0() ==1) {
-        print( fit1() )
-      } else {
-        
+        print(list( "Model"=fit1(), "AIC"=AIC(fit1()) ))
+      } else {   
         if( input$regress_type %in% c("Logistic", "Ordinal Logistic", "Poisson", "Cox PH", "Cox PH with censoring")) {
-          print( list("Model"=fit1(), "Exponentiated Coefficients"= exp(fit1()[["coefficients"]])) )
+          print( list("Model"=fit1(), "Exponentiated Coefficients"= exp(fit1()[["coefficients"]]), "AIC"=AIC(fit1())) )
         } else {
-          print(fit1())  #Summary of model fit.
+          print(list( "Model"=fit1(), "AIC"=AIC(fit1()) ))
         }
       }
     })
@@ -6145,9 +6144,9 @@ efit1 <- reactive({
   }
 })
 #Print up the model output
-output$efit1_out <- renderPrint({ 
+output$efit1_out <- renderPrint({
   if (input$CoxmeYes == "Yes") {
-  efit1()
+    list("Model"=efit1(), "AIC"= AIC(efit1()) )
   }
 })
 
@@ -7681,14 +7680,15 @@ multi_state_transition_names <- reactive({
   attributes(multi_state_model()$cmap)$dimnames[[2]]
 })
 #15. Regression model output
-output$ms_model_fit_out <- renderPrint({ 
+output$ms_model_fit_out <- renderPrint({
   if(begin_ms_model() == "Yes") {
     list("Model"=multi_state_model(),
          "States"=multi_state_model()$states,
          "Current State Map"=multi_state_model()$cmap,
          "Transitions"=multi_state_model()$transitions,
-         "Coefficient's X Levels"= multi_state_x_level_names() ) 
-    #"Coefficient's X Levels"=attributes(multi_state_model()$cmap)$dimnames[[1]][-1]) 
+         "Coefficient's X Levels"= multi_state_x_level_names(),
+         "AIC"= AIC(efit1()) )
+    #"Coefficient's X Levels"=attributes(multi_state_model()$cmap)$dimnames[[1]][-1])
   }
 })
 

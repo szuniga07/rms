@@ -1141,7 +1141,7 @@ prediction_class_histogram_yes_no <- reactive({
 #6. Get data for functions
 get_binary_class_df <- reactive({
   if (prediction_class_histogram_yes_no() =="Yes") {
-    fncYhatClassDf(Fit=fit1(), Y=outcome(), Threshold=prediction_class_threshold(), Censor=censor2()[length(censor2())], 
+    fncYhatClassDf(Fit=fit1(), Y=outcome(), Threshold=prediction_class_threshold(), Censor=censor1(), 
                    PredTime=prediction_classification_time(), RegType=input$regress_type, DF=df() )
     }
 })
@@ -1155,9 +1155,9 @@ binary_classification_data_output <- reactive({
 #7. Get AUC
 get_binary_class_AUC <- reactive({
   if (prediction_class_histogram_yes_no() =="Yes") {
-    #fncThreshAUC(Fit=fit1(), Y=outcome(), Threshold=prediction_class_threshold(), Censor=censor1()[length(censor1())], 
-    fncThreshAUC(Fit=fit1(), Y=outcome(), Threshold=describeYhatHistRslt(), Censor=censor2()[length(censor2())], 
-                   PredTime=prediction_classification_time(), RegType=input$regress_type, DF=df(), ClassDF=binary_classification_data_output() )
+    fncThreshAUC(ClassDF=binary_classification_data_output() )
+#    fncThreshAUC(Fit=fit1(), Y=outcome(), Threshold=describeYhatHistRslt(), Censor=censor2()[length(censor2())], 
+#                   PredTime=prediction_classification_time(), RegType=input$regress_type, DF=df(), ClassDF=binary_classification_data_output() )
   }
 })
 #7A. Run the AUC function
@@ -1222,11 +1222,10 @@ fncYhatClassDf <- function(Fit, Y, Threshold, Censor=NULL, PredTime=NULL, RegTyp
                     "Quantile" = tdf[ tdf[,  tY] >= threshLev, ],
                     "Cox PH"   = tdf[tdf[,  tY] < atime, ],
 #old                    "Cox PH with censoring"  = tdf[ tdf[, tcensor ] == max(tdf[, tcensor ], na.rm=T) & tdf[,  tY] >= atime, ],
-                    "Cox PH with censoring"  = tdf[ tdf[, tcensor ] == max(tdf[, tcensor ], na.rm=T) & tdf[,  tY] < atime, ],
+                    "Cox PH with censoring"  = tdf[ eval(parse(text=paste0("tdf$",tcensor) )) == TRUE & tdf[,  tY] < atime, ],
                     "AFT"  = tdf[tdf[,  tY] < atime, ],
 #old                    "AFT with censoring"     = tdf[ tdf[, tcensor ] ==max(tdf[, tcensor ], na.rm=T) & tdf[,  tY] >= atime, ],
-                    "AFT with censoring"     = tdf[ tdf[, tcensor ] ==max(tdf[, tcensor ], na.rm=T) & tdf[,  tY] < atime, ],
-
+                    "AFT with censoring"     = tdf[eval(parse(text=paste0("tdf$",tcensor) )) == FALSE & tdf[,  tY] < atime, ],
                     "Generalized Least Squares" = tdf[ tdf[,  tY] >= threshLev, ] )
   newtdf2 <- switch(RegType,                
                     "Linear"   = tdf[ tdf[,  tY] < threshLev, ], 
@@ -1236,10 +1235,10 @@ fncYhatClassDf <- function(Fit, Y, Threshold, Censor=NULL, PredTime=NULL, RegTyp
                     "Quantile" = tdf[ tdf[,  tY] < threshLev, ],
                     "Cox PH"   = tdf[tdf[,  tY] >= atime, ],
 #old                    "Cox PH with censoring"  = tdf[ tdf[, tcensor ] ==min(tdf[, tcensor ], na.rm=T) & tdf[,  tY] < atime, ],
-                    "Cox PH with censoring"  = tdf[ tdf[, tcensor ] ==min(tdf[, tcensor ], na.rm=T) & tdf[,  tY] >= atime, ],
-"AFT"  = tdf[tdf[,  tY] >= atime, ],
+                    "Cox PH with censoring"  = tdf[ eval(parse(text=paste0("tdf$",tcensor) )) == FALSE & tdf[,  tY] >= atime, ],
+                    "AFT"  = tdf[tdf[,  tY] >= atime, ],
 #old                    "AFT with censoring"     = tdf[ tdf[, tcensor ] ==min(tdf[, tcensor ], na.rm=T) & tdf[,  tY] >= atime, ],
-                    "AFT with censoring"     = tdf[ tdf[, tcensor ] ==min(tdf[, tcensor ], na.rm=T) & tdf[,  tY] < atime, ],
+                    "AFT with censoring"     = tdf[eval(parse(text=paste0("tdf$",tcensor) )) == FALSE & tdf[,  tY] < atime, ],
                     "Generalized Least Squares" = tdf[ tdf[,  tY] < threshLev, ] )
   #Get tranformed values of threshold when using logits 
   Transform.Threshold <- switch(RegType,                
@@ -1272,34 +1271,44 @@ fncYhatClassDf <- function(Fit, Y, Threshold, Censor=NULL, PredTime=NULL, RegTyp
   fls_Neg <-  pr_table1["FALSE"]  #FALSE negative
   propAbovMY0 <- pr_table2["TRUE"]  #1-specificity or false-positive
   specifity <-  pr_table2["FALSE"]  #Specificity
-  
-  
+#Get frequencies
+  f_table1 <- table(factor(pm1 > threshLev, levels=c("FALSE","TRUE") ))
+  f_table2 <- table(factor(pm2 > threshLev, levels=c("FALSE","TRUE") ))
+  #Sensitivity and 1 - specificity
+  N.AbovMY1 <-  f_table1["TRUE"]  #Sensitivity
+  N.fls_Neg <-  f_table1["FALSE"]  #FALSE negative
+  N.AbovMY0 <- f_table2["TRUE"]  #1-specificity or false-positive
+  N.specifity <-  f_table2["FALSE"]  #Specificity
+    
   return(list("pm1"=pm1, "pm2"=pm2, "threshLev"=threshLev, "senspcXmin"=senspcXmin, "senspcXmax"=senspcXmax,
               "propAbovMY1"=propAbovMY1, "fls_Neg"=fls_Neg,  "propAbovMY0"=propAbovMY0, "specifity"=specifity,
-              "Transform.Threshold"=Transform.Threshold))
+              "Transform.Threshold"=Transform.Threshold,
+              "N.AbovMY1"=N.AbovMY1, "N.fls_Neg"=N.fls_Neg,  "N.AbovMY0"=N.AbovMY0, "N.specifity"=N.specifity))
   
 }
 
 #####################################################
 ## Function to create AUC for each threshold I set ##
 #####################################################
-fncThreshAUC <- function(Fit, Y, Threshold, Censor=NULL, PredTime=NULL, RegType, DF, ClassDF) {
+fncThreshAUC <- function(ClassDF) {
+  #fncThreshAUC <- function(Fit, Y, Threshold, Censor=NULL, PredTime=NULL, RegType, DF, ClassDF) {
+  #Code removed because I will only use the sensitivity and specificity to determine the AUC
   #Get sensitivity and specificity for IQR of predicted values
-  yClass.10 <-  fncYhatClassDf(Fit=Fit, Y=Y, Threshold=as.numeric(Threshold[["counts"]][8]), 
-                               Censor=Censor, PredTime=PredTime, RegType=RegType, DF=DF)
-  yClass.25 <-  fncYhatClassDf(Fit=Fit, Y=Y, Threshold=as.numeric(Threshold[["counts"]][9]), 
-                               Censor=Censor, PredTime=PredTime, RegType=RegType, DF=DF)
-  yClass.50 <-  fncYhatClassDf(Fit=Fit, Y=Y, Threshold=as.numeric(Threshold[["counts"]][10]), 
-                               Censor=Censor, PredTime=PredTime, RegType=RegType, DF=DF)
-  yClass.75 <-  fncYhatClassDf(Fit=Fit, Y=Y, Threshold=as.numeric(Threshold[["counts"]][11]), 
-                               Censor=Censor, PredTime=PredTime, RegType=RegType, DF=DF)
-  yClass.90 <-  fncYhatClassDf(Fit=Fit, Y=Y, Threshold=as.numeric(Threshold[["counts"]][12]), 
-                               Censor=Censor, PredTime=PredTime, RegType=RegType, DF=DF)
-  
+  #yClass.10 <-  fncYhatClassDf(Fit=Fit, Y=Y, Threshold=as.numeric(Threshold[["counts"]][8]), 
+  #                             Censor=Censor, PredTime=PredTime, RegType=RegType, DF=DF)
+  #yClass.25 <-  fncYhatClassDf(Fit=Fit, Y=Y, Threshold=as.numeric(Threshold[["counts"]][9]), 
+  #                             Censor=Censor, PredTime=PredTime, RegType=RegType, DF=DF)
+  #yClass.50 <-  fncYhatClassDf(Fit=Fit, Y=Y, Threshold=as.numeric(Threshold[["counts"]][10]), 
+  #                             Censor=Censor, PredTime=PredTime, RegType=RegType, DF=DF)
+  #yClass.75 <-  fncYhatClassDf(Fit=Fit, Y=Y, Threshold=as.numeric(Threshold[["counts"]][11]), 
+  #                             Censor=Censor, PredTime=PredTime, RegType=RegType, DF=DF)
+  #yClass.90 <-  fncYhatClassDf(Fit=Fit, Y=Y, Threshold=as.numeric(Threshold[["counts"]][12]), 
+  #                             Censor=Censor, PredTime=PredTime, RegType=RegType, DF=DF)
   #Create vectors for sensitivity and specificity
   #This adds in quantiles (.10,.25,.50,.75,.90) and the cutoff level. Equivalent to full AUC.
 #  yClassSens <- sort(c(yClass.10$propAbovMY1, yClass.25$propAbovMY1, yClass.50$propAbovMY1, yClass.75$propAbovMY1, yClass.90$propAbovMY1, ClassDF$propAbovMY1), decreasing=TRUE) 
 #  yClassSpec <- sort(c(yClass.10$specifity,yClass.25$specifity, yClass.50$specifity, yClass.75$specifity,yClass.90$specifity, ClassDF$specifity)) 
+  
   ## This AUC is based only on the cutoff level. Use this to get the binary classification AUC.
   yClassSens <- c(ClassDF$propAbovMY1)
   yClassSpec <- c(ClassDF$specifity) 
@@ -1405,11 +1414,11 @@ fncYhatClassPlt <- function(ClassDF, AUC, Brks, RegType, aspectRatio)  {
   
   #Histograms
   plot(h1, col=Bar.Colors1[cuts1], xlim=c(xlimMin, xlimMax), ylim=c(0, head(hyMAX, 1)),
-       main=paste0("Outcome = Yes. (n = ", length(ClassDF$pm1),"). Proportion of predictions at or above cutoff: ", Sens.Value, ".  AUC = ", AUC_val, "." ),
+       main=paste0("Outcome = Yes. (n = ", sum(ClassDF$N.AbovMY1, ClassDF$N.fls_Neg),"). Proportion of predictions at or above cutoff: ", Sens.Value, ".  AUC = ", AUC_val, "." ),
        xlab=paste0("Sensitivity: True-Positives in green using a cutoff of ", ClassDF$threshLev, " (Transformed = ", round(ClassDF$Transform.Threshold, 3), ")." ))
   abline(v=ClassDF$threshLev, lwd=3, col=4)
   plot(h2, col=Bar.Colors2[cuts2], xlim=c(xlimMin, xlimMax), ylim=c(0, tail(hyMAX, 1)),
-       main=paste0("Outcome = No. (n = ", length(ClassDF$pm2),"). Proportion of predictions at or above cutoff: ", Spec.Value, ".  AUC = ", AUC_val, "."  ),
+       main=paste0("Outcome = No. (n = ", sum(ClassDF$N.specifity, ClassDF$N.AbovMY0),"). Proportion of predictions at or above cutoff: ", Spec.Value, ".  AUC = ", AUC_val, "."  ),
        xlab=paste0("1 - Specificity: False-Positives in red using a cutoff of ", ClassDF$threshLev, " (Transformed = ", round(ClassDF$Transform.Threshold, 3), ")." ))
   abline(v=ClassDF$threshLev, lwd=3, col=4)
   par(mfrow=c(1,1))
@@ -1467,9 +1476,67 @@ fncClassDfSmry <- function(ClassDF, RegType) {
                         "AFT"  = 1-unname(ClassDF$fls_Neg),
                         "AFT with censoring"     = 1-unname(ClassDF$fls_Neg),
                         "Generalized Least Squares" = unname(ClassDF$fls_Neg) )
+
+  ## Frequencies ##
+  #Sensitivity value
+  N.AbovMY1 <- switch(RegType,                
+                        "Linear"   = unname(ClassDF$N.AbovMY1), 
+                        "Logistic" = unname(ClassDF$N.AbovMY1),
+                        "Ordinal Logistic"  = unname(ClassDF$N.AbovMY1),
+                        "Poisson"  = unname(ClassDF$N.AbovMY1),
+                        "Quantile" = unname(ClassDF$N.AbovMY1),
+                        "Cox PH"   = unname(ClassDF$N.AbovMY1),
+                        "Cox PH with censoring"  = unname(ClassDF$N.AbovMY1),
+                        "AFT"  = unname(ClassDF$N.fls_Neg),
+                        "AFT with censoring"     = unname(ClassDF$N.fls_Neg),
+                        "Generalized Least Squares" = unname(ClassDF$N.AbovMY1) )
+  #Specificity value
+  N.specifity <- switch(RegType,                
+                      "Linear"   = unname(ClassDF$N.specifity), 
+                      "Logistic" = unname(ClassDF$N.specifity),
+                      "Ordinal Logistic"  = unname(ClassDF$N.specifity),
+                      "Poisson"  = unname(ClassDF$N.specifity),
+                      "Quantile" = unname(ClassDF$N.specifity),
+                      "Cox PH"   = unname(ClassDF$N.specifity),
+                      "Cox PH with censoring"  = unname(ClassDF$N.specifity),
+                      "AFT"  = unname(ClassDF$N.AbovMY0),
+                      "AFT with censoring"     = unname(ClassDF$N.AbovMY0),
+                      "Generalized Least Squares" = unname(ClassDF$N.specifity) )
+  #False.Positives value
+  N.AbovMY0 <- switch(RegType,                
+                        "Linear"   = unname(ClassDF$N.AbovMY0), 
+                        "Logistic" = unname(ClassDF$N.AbovMY0),
+                        "Ordinal Logistic"  = unname(ClassDF$N.AbovMY0),
+                        "Poisson"  = unname(ClassDF$N.AbovMY0),
+                        "Quantile" = unname(ClassDF$N.AbovMY0),
+                        "Cox PH"   = unname(ClassDF$N.AbovMY0),
+                        "Cox PH with censoring"  = unname(ClassDF$N.AbovMY0),
+                        "AFT"  = unname(ClassDF$N.specifity),
+                        "AFT with censoring"     = unname(ClassDF$N.specifity),
+                        "Generalized Least Squares" = unname(ClassDF$N.AbovMY0) )
+  #False.Negatives value
+  N.fls_Neg <- switch(RegType,                
+                    "Linear"   = unname(ClassDF$N.fls_Neg), 
+                    "Logistic" = unname(ClassDF$N.fls_Neg),
+                    "Ordinal Logistic"  = unname(ClassDF$N.fls_Neg),
+                    "Poisson"  = unname(ClassDF$N.fls_Neg),
+                    "Quantile" = unname(ClassDF$N.fls_Neg),
+                    "Cox PH"   = unname(ClassDF$N.fls_Neg),
+                    "Cox PH with censoring"  = unname(ClassDF$N.fls_Neg),
+                    "AFT"  = unname(ClassDF$N.AbovMY1),
+                    "AFT with censoring"     = unname(ClassDF$N.AbovMY1),
+                    "Generalized Least Squares" = unname(ClassDF$N.fls_Neg) )
+  
+  #Positive Predictive Value
+  PPV <- N.AbovMY1/ (N.AbovMY1 + N.AbovMY0)
+  #Negative Predictive Value
+  NPV <- N.specifity/ (N.specifity + N.fls_Neg)
   
   return(list("Sensitivity"=propAbovMY1, "Specifity"= specifity,
-              "False.Positives"= propAbovMY0, "False.Negatives"= fls_Neg ))
+              "False.Positives"= propAbovMY0, "False.Negatives"= fls_Neg,
+              "Positive.Predictive.Value"=PPV, "Negative.Predictive.Value"=NPV,
+              "N.Sensitivity"=N.AbovMY1, "N.Specifity"=N.specifity, 
+              "N.False.Positives"= N.AbovMY0, "N.False.Negatives"= N.fls_Neg))
 }
 
 

@@ -194,7 +194,7 @@ h5("Outcome = Yes = max(Outcome). Outcome = No = min(Outcome). In a 'Cox PH with
 h5("X-axis values are linear predictions. For AFT models, sensitivty and 1-specificity values are in reverse because predictions are in survival times (i.e., use values below cutoff)."),
 plotOutput("plot_binary_class_run", height = 800, width="100%"),
 br(),
-h5("Get sensitivity, specificity, false-positive, and false-negative values associated with your prediction threshold value."),
+h5("Get sensitivity, specificity, false-positive, false-negative, and positive and negative predictive values associated using your prediction threshold value."),
 verbatimTextOutput("get_bin_class_sens_spc_out"),
 br()
 

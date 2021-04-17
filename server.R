@@ -770,7 +770,7 @@ shinyServer(
                      ols(mdl_fmla(), x=TRUE, y=TRUE, data=df())},
                    "Logistic" = if(input$updy == "Yes") {
                      lrm(as.formula(input$up_fmla), x=TRUE, y=TRUE, data=df(), tol=1e-100, maxit=20) #I added tol value so it can handle time predictor (YYMM)
-                   } else { #Added maxit to handle small samples. See https://stat.ethz.ch/pipermail/r-help/2017-September/449115.html 
+                   } else { #Added maxit to handle small samples. See https://urldefense.com/v3/__https://stat.ethz.ch/pipermail/r-help/2017-September/449115.html__;!!BZ50a36bapWJ!_bne7hFPjFdIFa0T_9B5HbrEL69oFO3OoedM7D9VwJE7eccwVOokapNQ9LPSXLsFRQ$  
                      lrm(mdl_fmla(), x=TRUE, y=TRUE, data=df(), tol=1e-100, maxit=20)},  #I added tol value so it can handle time predictor that causes "singularity"
                    "Ordinal Logistic" = if(input$updy == "Yes") {
                      orm(as.formula(input$up_fmla), x=TRUE, y=TRUE, data=df())
@@ -1194,6 +1194,102 @@ output$get_bin_class_sens_spc_out <- renderPrint({
     get_binary_class_sensitivity_specificity()
   }
 })
+#############################
+## Decision curve analysis ##
+#############################
+#10. Indicate if you want the classification plot
+output$decison_curve_anly_yesno <- renderUI({                                 
+  selectInput("decisCrvAnlYN", "2. Do you want to run the decision curve analysis?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")     
+})
+#10A. Object for classification plot 
+#prediction_class_histogram_yes_no
+decison_curve_analysis_yes_no <- reactive({
+  input$decisCrvAnlYN
+})
+#11. Indicate if you want the classification plot
+output$net_or_intervention <- renderUI({                                 
+  selectInput("netOrIntrvntn", "1. Plot net benefit or interventions avoided?", 
+              choices = c("Net Benefit", "Interventions Avoided"), multiple=FALSE, selected="Net Benefit")     
+})
+#11A. Object for classification plot 
+#prediction_class_histogram_yes_no
+net_benefit_or_interventions <- reactive({
+  input$netOrIntrvntn
+})
+#Run functions below
+#12. Get data for functions
+get_thresh_quant_df <- reactive({
+  if (decison_curve_analysis_yes_no() =="Yes") {
+    fncThreshQntl(Fit=fit1(), Y=outcome(), Threshold=describeYhatHistRslt(), Censor=censor1(), 
+                  PredTime=prediction_classification_time(), RegType=input$regress_type, DF=df())
+  }
+})
+#12A. Run the data function
+thresh_quant_data_output <- reactive({
+  if (decison_curve_analysis_yes_no() =="Yes") {
+    get_thresh_quant_df()
+  }
+})
+#13. Set up Decision Curve
+plot_thresh_quant_function <- reactive({
+  if (decison_curve_analysis_yes_no() =="Yes") {
+    fncDcsnCrvPlt(ThreshQntl=thresh_quant_data_output(), CType=net_benefit_or_interventions(),
+                  xlim1=descion_crv_plt_xlim1(), xlim2=descion_crv_plt_xlim2(), ylim1=descion_crv_plt_ylim1(), ylim2=descion_crv_plt_ylim2())
+  }
+})
+#13A. Run the plot function 
+output$plot_thresh_quant_run <- renderPlot({
+  if (decison_curve_analysis_yes_no() =="Yes") {
+    plot_thresh_quant_function()
+  }
+})
+
+#14. Indicate lower limit of x-axis
+output$descionCrvPltXlim1 <- renderUI({
+  numericInput("dc_Xlim1", "3. Lower X-axis limit.",
+               #value = cox_min_time(), step = 1)
+               value = 0, step = .1)
+})
+#14A. Set up Decision Curve
+descion_crv_plt_xlim1 <- reactive({
+  if (decison_curve_analysis_yes_no() =="Yes") {
+    input$dc_Xlim1
+  }
+})
+#15. Indicate upper limit of x-axis
+output$descionCrvPltXlim2 <- renderUI({
+  numericInput("dc_Xlim2", "4. Upper X-axis limit.",
+               value = 1, step = .1)
+})
+#15A. Set up Decision Curve
+descion_crv_plt_xlim2 <- reactive({
+  if (decison_curve_analysis_yes_no() =="Yes") {
+    input$dc_Xlim2
+  }
+})
+#16. Indicate lower limit of y-axis
+output$descionCrvPltYlim1 <- renderUI({
+  numericInput("dc_Ylim1", "5. Lower Y-axis limit.",
+               value = 0, step = .1)
+})
+#16A. Set up Decision Curve
+descion_crv_plt_ylim1 <- reactive({
+  if (decison_curve_analysis_yes_no() =="Yes") {
+    input$dc_Ylim1
+  }
+})
+#17. Indicate upper limit of x-axis
+output$descionCrvPltYlim2 <- renderUI({
+  numericInput("dc_Ylim2", "6. Upper Y-axis limit.",
+               value = 1, step = .1)
+})
+#17A. Set up Decision Curve
+descion_crv_plt_ylim2 <- reactive({
+  if (decison_curve_analysis_yes_no() =="Yes") {
+    input$dc_Ylim2
+  }
+})
 
 ################
 ##  Functions ##
@@ -1291,24 +1387,6 @@ fncYhatClassDf <- function(Fit, Y, Threshold, Censor=NULL, PredTime=NULL, RegTyp
 ## Function to create AUC for each threshold I set ##
 #####################################################
 fncThreshAUC <- function(ClassDF) {
-  #fncThreshAUC <- function(Fit, Y, Threshold, Censor=NULL, PredTime=NULL, RegType, DF, ClassDF) {
-  #Code removed because I will only use the sensitivity and specificity to determine the AUC
-  #Get sensitivity and specificity for IQR of predicted values
-  #yClass.10 <-  fncYhatClassDf(Fit=Fit, Y=Y, Threshold=as.numeric(Threshold[["counts"]][8]), 
-  #                             Censor=Censor, PredTime=PredTime, RegType=RegType, DF=DF)
-  #yClass.25 <-  fncYhatClassDf(Fit=Fit, Y=Y, Threshold=as.numeric(Threshold[["counts"]][9]), 
-  #                             Censor=Censor, PredTime=PredTime, RegType=RegType, DF=DF)
-  #yClass.50 <-  fncYhatClassDf(Fit=Fit, Y=Y, Threshold=as.numeric(Threshold[["counts"]][10]), 
-  #                             Censor=Censor, PredTime=PredTime, RegType=RegType, DF=DF)
-  #yClass.75 <-  fncYhatClassDf(Fit=Fit, Y=Y, Threshold=as.numeric(Threshold[["counts"]][11]), 
-  #                             Censor=Censor, PredTime=PredTime, RegType=RegType, DF=DF)
-  #yClass.90 <-  fncYhatClassDf(Fit=Fit, Y=Y, Threshold=as.numeric(Threshold[["counts"]][12]), 
-  #                             Censor=Censor, PredTime=PredTime, RegType=RegType, DF=DF)
-  #Create vectors for sensitivity and specificity
-  #This adds in quantiles (.10,.25,.50,.75,.90) and the cutoff level. Equivalent to full AUC.
-#  yClassSens <- sort(c(yClass.10$propAbovMY1, yClass.25$propAbovMY1, yClass.50$propAbovMY1, yClass.75$propAbovMY1, yClass.90$propAbovMY1, ClassDF$propAbovMY1), decreasing=TRUE) 
-#  yClassSpec <- sort(c(yClass.10$specifity,yClass.25$specifity, yClass.50$specifity, yClass.75$specifity,yClass.90$specifity, ClassDF$specifity)) 
-  
   ## This AUC is based only on the cutoff level. Use this to get the binary classification AUC.
   yClassSens <- c(ClassDF$propAbovMY1)
   yClassSpec <- c(ClassDF$specifity) 
@@ -1326,7 +1404,6 @@ fncThreshAUC <- function(ClassDF) {
     sns_diff[i] <- yClassSens[i] + yClassSens[i+1] 
     i = i+1
   }
-  
   #Command to get AUC#
   Threshold.AUC <- sum(.5*(spc_diff * sns_diff))
   return("Threshold.AUC"=Threshold.AUC)
@@ -1527,18 +1604,126 @@ fncClassDfSmry <- function(ClassDF, RegType) {
                     "AFT with censoring"     = unname(ClassDF$N.AbovMY1),
                     "Generalized Least Squares" = unname(ClassDF$N.fls_Neg) )
   
+  #Total N
+  total_N <- sum(N.AbovMY1,N.AbovMY0, N.specifity, N.fls_Neg) 
+  
+  #Weighted threshold value
+  wt_thresh <- switch(RegType,                
+                      "Linear"   = sum(N.AbovMY1,N.fls_Neg)/total_N, 
+                      "Logistic" = plogis(ClassDF$threshLev),
+                      "Ordinal Logistic"  = plogis(ClassDF$threshLev),
+                      "Poisson"  = sum(N.AbovMY1,N.fls_Neg)/total_N,
+                      "Quantile" = sum(N.AbovMY1,N.fls_Neg)/total_N,
+                      "Cox PH"   = plogis(ClassDF$threshLev),
+                      "Cox PH with censoring"  = plogis(ClassDF$threshLev),
+                      "AFT"  = sum(N.AbovMY1,N.fls_Neg)/total_N,
+                      "AFT with censoring"     = sum(N.AbovMY1,N.fls_Neg)/total_N,
+                      "Generalized Least Squares" = sum(N.AbovMY1,N.fls_Neg)/total_N )
+  
   #Positive Predictive Value
   PPV <- N.AbovMY1/ (N.AbovMY1 + N.AbovMY0)
   #Negative Predictive Value
   NPV <- N.specifity/ (N.specifity + N.fls_Neg)
-  
-  return(list("Sensitivity"=propAbovMY1, "Specifity"= specifity,
-              "False.Positives"= propAbovMY0, "False.Negatives"= fls_Neg,
-              "Positive.Predictive.Value"=PPV, "Negative.Predictive.Value"=NPV,
-              "N.Sensitivity"=N.AbovMY1, "N.Specifity"=N.specifity, 
-              "N.False.Positives"= N.AbovMY0, "N.False.Negatives"= N.fls_Neg))
+  #Net benefit
+  Net.Benefit <- N.AbovMY1/total_N - N.AbovMY0/total_N * (wt_thresh /(1 - wt_thresh ))   
+  #All treated
+  All.Treated <- (N.AbovMY1 + N.fls_Neg)/total_N - (N.AbovMY0 + N.specifity)/total_N * (wt_thresh /(1 - wt_thresh))
+  #Interventions avoided
+  Interventions.Saved <- N.specifity/total_N -  N.fls_Neg/total_N * (1 - wt_thresh)/ wt_thresh  
+  return(list("Classification"= c("Sensitivity"=propAbovMY1, "Specifity"= specifity, "False.Positives"= propAbovMY0, "False.Negatives"= fls_Neg),
+              "Predictive.Values"= c("Positive.Predictive.Value"=PPV, "Negative.Predictive.Value"=NPV),
+              "Frequencies"= c("N.Sensitivity"=N.AbovMY1, "N.Specifity"=N.specifity, 
+              "N.False.Positives"= N.AbovMY0, "N.False.Negatives"= N.fls_Neg),
+              "Decision.Curve.Analysis"= c("Net.Benefit"=Net.Benefit, "All.Treated"=All.Treated,
+              "Interventions.Avoided"=Interventions.Saved)))
 }
 
+###########################################
+## Create a decision curve analysis plot ##
+###########################################
+fncThreshQntl <- function(Fit, Y, Threshold, Censor=NULL, PredTime=NULL, RegType, DF) {
+  #Get sensitivity and specificity for IQR of predicted values
+  yClass.05 <-  fncYhatClassDf(Fit=Fit, Y=Y, Threshold=as.numeric(Threshold[["counts"]][7]), 
+                               Censor=Censor, PredTime=PredTime, RegType=RegType, DF=DF)
+  yClass.10 <-  fncYhatClassDf(Fit=Fit, Y=Y, Threshold=as.numeric(Threshold[["counts"]][8]), 
+                               Censor=Censor, PredTime=PredTime, RegType=RegType, DF=DF)
+  yClass.25 <-  fncYhatClassDf(Fit=Fit, Y=Y, Threshold=as.numeric(Threshold[["counts"]][9]), 
+                               Censor=Censor, PredTime=PredTime, RegType=RegType, DF=DF)
+  yClass.50 <-  fncYhatClassDf(Fit=Fit, Y=Y, Threshold=as.numeric(Threshold[["counts"]][10]), 
+                               Censor=Censor, PredTime=PredTime, RegType=RegType, DF=DF)
+  yClass.75 <-  fncYhatClassDf(Fit=Fit, Y=Y, Threshold=as.numeric(Threshold[["counts"]][11]), 
+                               Censor=Censor, PredTime=PredTime, RegType=RegType, DF=DF)
+  yClass.90 <-  fncYhatClassDf(Fit=Fit, Y=Y, Threshold=as.numeric(Threshold[["counts"]][12]), 
+                               Censor=Censor, PredTime=PredTime, RegType=RegType, DF=DF)
+  yClass.95 <-  fncYhatClassDf(Fit=Fit, Y=Y, Threshold=as.numeric(Threshold[["counts"]][13]), 
+                               Censor=Censor, PredTime=PredTime, RegType=RegType, DF=DF)
+  #Group the output
+  YClass <- list("yClass.05"=yClass.05, "yClass.10"=yClass.10, "yClass.25"=yClass.25,"yClass.50"=yClass.50,
+                 "yClass.75"=yClass.75, "yClass.90"=yClass.90, "yClass.95"=yClass.95)
+  
+  ## Total N ##
+  total_N <- vector()
+  for (i in 1:length(YClass)) {
+    total_N[i] <- sum(YClass[[i]]$N.AbovMY1, YClass[[i]]$N.fls_Neg, YClass[[i]]$N.AbovMY0, YClass[[i]]$N.specifity)
+  }
+  
+  #Weighted threshold value
+  Threshold.Level <- vector()
+  for (i in 1:length(YClass)) {
+    Threshold.Level[i] <- switch(RegType,                
+                      "Linear"   = sum(YClass[[i]]$N.AbovMY1, YClass[[i]]$N.fls_Neg)/total_N, 
+                      "Logistic" = plogis(YClass[[i]]$threshLev),
+                      "Ordinal Logistic"  = plogis(YClass[[i]]$threshLev),
+                      "Poisson"  = sum(YClass[[i]]$N.AbovMY1, YClass[[i]]$N.fls_Neg)/total_N,
+                      "Quantile" = sum(YClass[[i]]$N.AbovMY1, YClass[[i]]$N.fls_Neg)/total_N,
+                      "Cox PH"   = plogis(YClass[[i]]$threshLev),
+                      "Cox PH with censoring"  = plogis(YClass[[i]]$threshLev),
+                      "AFT"  = sum(YClass[[i]]$N.AbovMY1, YClass[[i]]$N.fls_Neg)/total_N,
+                      "AFT with censoring"     = sum(YClass[[i]]$N.AbovMY1, YClass[[i]]$N.fls_Neg)/total_N,
+                      "Generalized Least Squares" = sum(YClass[[i]]$N.AbovMY1, YClass[[i]]$N.fls_Neg)/total_N )
+  }
+  #YClass[[i]]$N.AbovMY1, YClass[[i]]$N.fls_Neg, YClass[[i]]$N.AbovMY0, YClass[[i]]$N.specifity
+  #################
+  ## Net Benefit ##
+  #################
+  Net.Benefit <- vector()
+  Interventions.Saved <- vector()
+  All.Treated <- vector()
+  for (i in 1:length(YClass)) {
+    #Net benefit: True positives - False positives * weighting by the relative harm of a false-positive and a false-negative result
+    Net.Benefit[i] <- YClass[[i]]$N.AbovMY1/total_N[i] - YClass[[i]]$N.AbovMY0/total_N[i] * (Threshold.Level[i] /(1 - Threshold.Level[i]))   
+    #All treated: All positives - all negatives * weighting by the relative harm of a false-positive and a false-negative result
+    All.Treated[i] <- (YClass[[i]]$N.AbovMY1 + YClass[[i]]$N.fls_Neg)/total_N[i] - (YClass[[i]]$N.AbovMY0 + YClass[[i]]$N.specifity)/total_N[i] * (Threshold.Level[i] /(1 - Threshold.Level[i]))   
+    #Net benefit for True Negatives...Interventions avoided
+    Interventions.Saved[i] <- YClass[[i]]$N.specifity/total_N[i] - YClass[[i]]$N.fls_Neg/total_N[i] *  (1 - Threshold.Level[i]) / Threshold.Level[i]      
+  }
+  return(list("total_N"=total_N, "Threshold.Level"=Threshold.Level, 
+              "Net.Benefit"=Net.Benefit, "All.Treated"=All.Treated, "Interventions.Saved"=Interventions.Saved))
+}
+
+#####################################
+## Function to plot decision curve ##
+#####################################
+fncDcsnCrvPlt <- function(ThreshQntl, CType, xlim1,xlim2,ylim1,ylim2) {
+  if(CType == "Net Benefit") {
+    plot(ThreshQntl$Threshold.Level, ThreshQntl$Net.Benefit,type="n", xlim=c(xlim1,xlim2), ylim=c(ylim1,ylim2), 
+         main="Decision curve plot of threshold by benefit", xlab="Threshold", ylab="Net Benefit")
+    lines(ThreshQntl$Threshold.Level, ThreshQntl$Net.Benefit,cex=2, lwd=3, lty=2)
+    lines(ThreshQntl$Threshold.Level, ThreshQntl$All.Treated,cex=2, lwd=3, lty=1, col=2)
+    abline(h=0, col=8, lwd=2)
+    legend("bottomright", legend=c("Model", "All treated", "None treated"), 
+           col=c(1,2,8), lty=c(2,1,1),
+           lwd=2, cex=1)
+  } else {
+    plot(ThreshQntl$Threshold.Level, ThreshQntl$Interventions.Saved, 
+         lwd=4, type="l", col=4, axes=F, xlim=c(xlim1,xlim2), ylim=c(ylim1,ylim2), 
+         main="Decision curve plot of interventions avoided", xlab="Threshold", 
+         ylab="Interventions avoided per 100 persons")
+    axis(1)
+    axis(2, at= seq(0,1, .1), labels= seq(0,1, .1)*100)
+    box()
+  }
+}
 
 ################################################################################
 
@@ -1623,7 +1808,7 @@ output$predictor_smry <- renderPrint({
 
 #This Plot ANOVA to show variable importance. 
 #I set a higher tolerance based on Harrell's website
-#https://stat.ethz.ch/pipermail/r-help/2007-September/141709.html 
+#https://urldefense.com/v3/__https://stat.ethz.ch/pipermail/r-help/2007-September/141709.html__;!!BZ50a36bapWJ!_bne7hFPjFdIFa0T_9B5HbrEL69oFO3OoedM7D9VwJE7eccwVOokapNQ9LMe-u5jxw$  
 output$p_anova <- renderPlot({
   plot(anova(fit1(), tol=1e-13), cex=1.25, cex.lab=1.25, pch=19)
 }, height=700)
@@ -4307,7 +4492,7 @@ fit.si <<- reactive({
              ols(mdl_fmla(), x=TRUE, y=TRUE, data=new_imputed.si())},
            "Logistic" = if(input$updy == "Yes") {
              lrm(as.formula(input$up_fmla), x=TRUE, y=TRUE, data=new_imputed.si(), tol=1e-100, maxit=20) #I added tol value so it can handle time predictor (YYMM)
-           } else { #Added maxit to handle small samples. See https://stat.ethz.ch/pipermail/r-help/2017-September/449115.html 
+           } else { #Added maxit to handle small samples. See https://urldefense.com/v3/__https://stat.ethz.ch/pipermail/r-help/2017-September/449115.html__;!!BZ50a36bapWJ!_bne7hFPjFdIFa0T_9B5HbrEL69oFO3OoedM7D9VwJE7eccwVOokapNQ9LPSXLsFRQ$  
              lrm(mdl_fmla(), x=TRUE, y=TRUE, data=new_imputed.si(), tol=1e-100, maxit=20)},  #I added tol value so it can handle time predictor that causes "singularity"
            "Ordinal Logistic" = if(input$updy == "Yes") {
              orm(as.formula(input$up_fmla), x=TRUE, y=TRUE, data=new_imputed.si(), data=new_imputed.si())
@@ -4559,7 +4744,7 @@ lrm_miss <- reactive({             #Spline terms
   if (input$MissChoice == "Yes") {
     lrm(miss_fmla(), data=df(), tol=1e-100, maxit=20)  #added "tol" to handle fitting issues
   }                                                    #Added maxit to handle small samples. 
-})                                                     #See https://stat.ethz.ch/pipermail/r-help/2017-September/449115.html 
+})                                                     #See https://urldefense.com/v3/__https://stat.ethz.ch/pipermail/r-help/2017-September/449115.html__;!!BZ50a36bapWJ!_bne7hFPjFdIFa0T_9B5HbrEL69oFO3OoedM7D9VwJE7eccwVOokapNQ9LPSXLsFRQ$  
 #Print regression output
 output$smry_lrm_miss <- renderPrint({
   lrm_miss()

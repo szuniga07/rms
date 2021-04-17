@@ -194,10 +194,37 @@ h5("Outcome = Yes = max(Outcome). Outcome = No = min(Outcome). In a 'Cox PH with
 h5("X-axis values are linear predictions. For AFT models, sensitivty and 1-specificity values are in reverse because predictions are in survival times (i.e., use values below cutoff)."),
 plotOutput("plot_binary_class_run", height = 800, width="100%"),
 br(),
-h5("Get sensitivity, specificity, false-positive, false-negative, and positive and negative predictive values associated using your prediction threshold value."),
+h5("Get sensitivity, specificity, false-positive, false-negative, and positive and negative predictive values associated using your prediction threshold value. Includes Decision Curve Analysis."),
 verbatimTextOutput("get_bin_class_sens_spc_out"),
+h5("Positive Predictive Value: Proportion of all positive classifications that were true-positive."),
+h5("Negative Predictive Value: Proportion of all negative classifications that were true-negative."),
+br(),
+h4("Decision Curve Analysis (Vickers, 2006, doi:10.1177/0272989X06295361)"),
+br(),
+h5("The Net Benefit is the amount of outcomes detected by the model or strategy after subtracting out the adjusted false-positives. A higher Net Benefit is better, the NB plot compares what provides a better strategy along various thresholds. 'All Treated'= Interventions for all persons. No Benefit when all interventions withheld."),
+h5("Net Benefit = Frequency of Sensitivity - weighted False Positives at a specific threshold."),
+br(),
+h5("A model can reduce unnecessary interventions. For example, a risk threshold of 10% may reduce the number of unnecessary interventions by 40 per 100 without missing treatment for any patients with cancer."),
+h5("Interventions avoided = Frequency of Specificity - weighted False Negatives at a specific threshold."),
+fluidRow(
+  column(5, 
+         uiOutput("net_or_intervention")),
+  column(5, offset=1,
+         uiOutput("decison_curve_anly_yesno"))
+),
+fluidRow(
+  column(3, 
+         uiOutput("descionCrvPltXlim1")),
+  column(3,
+         uiOutput("descionCrvPltXlim2")),
+  column(3,
+         uiOutput("descionCrvPltYlim1")),
+  column(3,
+         uiOutput("descionCrvPltYlim2"))
+),
+br(),
+plotOutput("plot_thresh_quant_run", height = 800, width="100%"),
 br()
-
 ),    
 
 ############## PREDs SECTION #############################

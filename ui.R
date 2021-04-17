@@ -206,6 +206,7 @@ h5("Net Benefit = Frequency of Sensitivity - weighted False Positives at a speci
 br(),
 h5("A model can reduce unnecessary interventions. For example, a risk threshold of 10% may reduce the number of unnecessary interventions by 40 per 100 without missing treatment for any patients with cancer."),
 h5("Interventions avoided = Frequency of Specificity - weighted False Negatives at a specific threshold."),
+h5("Decision Curve works best with linear, quantile, logistic, and Cox models."),
 fluidRow(
   column(5, 
          uiOutput("net_or_intervention")),

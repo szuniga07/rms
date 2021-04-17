@@ -1314,20 +1314,20 @@ fncYhatClassDf <- function(Fit, Y, Threshold, Censor=NULL, PredTime=NULL, RegTyp
                     "Linear"   = tdf[ tdf[,  tY] >= threshLev, ], 
                     "Logistic" = tdf[ tdf[,  tY] == 1, ],
                     "Ordinal Logistic"  = tdf[ tdf[,  tY] > 1, ],
-                    "Poisson"  = tdf[ tdf[,  tY] >= log(threshLev), ],
+                    "Poisson"  = tdf[ tdf[,  tY] >= exp(threshLev), ],
                     "Quantile" = tdf[ tdf[,  tY] >= threshLev, ],
                     "Cox PH"   = tdf[tdf[,  tY] < atime, ],
 #old                    "Cox PH with censoring"  = tdf[ tdf[, tcensor ] == max(tdf[, tcensor ], na.rm=T) & tdf[,  tY] >= atime, ],
                     "Cox PH with censoring"  = tdf[ eval(parse(text=paste0("tdf$",tcensor) )) == TRUE & tdf[,  tY] < atime, ],
                     "AFT"  = tdf[tdf[,  tY] < atime, ],
 #old                    "AFT with censoring"     = tdf[ tdf[, tcensor ] ==max(tdf[, tcensor ], na.rm=T) & tdf[,  tY] >= atime, ],
-                    "AFT with censoring"     = tdf[eval(parse(text=paste0("tdf$",tcensor) )) == FALSE & tdf[,  tY] < atime, ],
+                    "AFT with censoring"     = tdf[eval(parse(text=paste0("tdf$",tcensor) )) == TRUE & tdf[,  tY] < atime, ],
                     "Generalized Least Squares" = tdf[ tdf[,  tY] >= threshLev, ] )
   newtdf2 <- switch(RegType,                
                     "Linear"   = tdf[ tdf[,  tY] < threshLev, ], 
                     "Logistic" = tdf[ tdf[,  tY] == 0, ],
                     "Ordinal Logistic"  = tdf[ tdf[,  tY]  ==1, ],
-                    "Poisson"  = tdf[ tdf[,  tY] < log(threshLev), ],
+                    "Poisson"  = tdf[ tdf[,  tY] < exp(threshLev), ],
                     "Quantile" = tdf[ tdf[,  tY] < threshLev, ],
                     "Cox PH"   = tdf[tdf[,  tY] >= atime, ],
 #old                    "Cox PH with censoring"  = tdf[ tdf[, tcensor ] ==min(tdf[, tcensor ], na.rm=T) & tdf[,  tY] < atime, ],
@@ -1609,16 +1609,16 @@ fncClassDfSmry <- function(ClassDF, RegType) {
   
   #Weighted threshold value
   wt_thresh <- switch(RegType,                
-                      "Linear"   = sum(N.AbovMY1,N.fls_Neg)/total_N, 
+                      "Linear"   = 1-sum(N.AbovMY1,N.fls_Neg)/total_N, 
                       "Logistic" = plogis(ClassDF$threshLev),
                       "Ordinal Logistic"  = plogis(ClassDF$threshLev),
                       "Poisson"  = sum(N.AbovMY1,N.fls_Neg)/total_N,
-                      "Quantile" = sum(N.AbovMY1,N.fls_Neg)/total_N,
+                      "Quantile" = 1-sum(N.AbovMY1,N.fls_Neg)/total_N,
                       "Cox PH"   = plogis(ClassDF$threshLev),
                       "Cox PH with censoring"  = plogis(ClassDF$threshLev),
                       "AFT"  = sum(N.AbovMY1,N.fls_Neg)/total_N,
                       "AFT with censoring"     = sum(N.AbovMY1,N.fls_Neg)/total_N,
-                      "Generalized Least Squares" = sum(N.AbovMY1,N.fls_Neg)/total_N )
+                      "Generalized Least Squares" = 1-sum(N.AbovMY1,N.fls_Neg)/total_N )
   
   #Positive Predictive Value
   PPV <- N.AbovMY1/ (N.AbovMY1 + N.AbovMY0)
@@ -1671,16 +1671,18 @@ fncThreshQntl <- function(Fit, Y, Threshold, Censor=NULL, PredTime=NULL, RegType
   Threshold.Level <- vector()
   for (i in 1:length(YClass)) {
     Threshold.Level[i] <- switch(RegType,                
-                      "Linear"   = sum(YClass[[i]]$N.AbovMY1, YClass[[i]]$N.fls_Neg)/total_N, 
+                      "Linear"   = 1-sum(YClass[[i]]$N.AbovMY1, YClass[[i]]$N.fls_Neg)/total_N[i], 
                       "Logistic" = plogis(YClass[[i]]$threshLev),
                       "Ordinal Logistic"  = plogis(YClass[[i]]$threshLev),
-                      "Poisson"  = sum(YClass[[i]]$N.AbovMY1, YClass[[i]]$N.fls_Neg)/total_N,
-                      "Quantile" = sum(YClass[[i]]$N.AbovMY1, YClass[[i]]$N.fls_Neg)/total_N,
+                      "Poisson"  = sum(YClass[[i]]$N.AbovMY1, YClass[[i]]$N.fls_Neg)/total_N[i],
+                      "Quantile" = 1-sum(YClass[[i]]$N.AbovMY1, YClass[[i]]$N.fls_Neg)/total_N[i],
                       "Cox PH"   = plogis(YClass[[i]]$threshLev),
                       "Cox PH with censoring"  = plogis(YClass[[i]]$threshLev),
-                      "AFT"  = sum(YClass[[i]]$N.AbovMY1, YClass[[i]]$N.fls_Neg)/total_N,
-                      "AFT with censoring"     = sum(YClass[[i]]$N.AbovMY1, YClass[[i]]$N.fls_Neg)/total_N,
-                      "Generalized Least Squares" = sum(YClass[[i]]$N.AbovMY1, YClass[[i]]$N.fls_Neg)/total_N )
+#                      "AFT"  = .5,
+#                      "AFT with censoring"     = .5,
+                      "AFT"  = sum(YClass[[i]]$N.AbovMY1, YClass[[i]]$N.fls_Neg)/total_N[i],
+                      "AFT with censoring"     = sum(YClass[[i]]$N.AbovMY1, YClass[[i]]$N.fls_Neg)/total_N[i],
+                      "Generalized Least Squares" = 1-sum(YClass[[i]]$N.AbovMY1, YClass[[i]]$N.fls_Neg)/total_N[i] )
   }
   #YClass[[i]]$N.AbovMY1, YClass[[i]]$N.fls_Neg, YClass[[i]]$N.AbovMY0, YClass[[i]]$N.specifity
   #################

@@ -1666,7 +1666,7 @@ fncThreshQntl <- function(Fit, Y, Threshold, Censor=NULL, PredTime=NULL, RegType
   for (i in 1:length(YClass)) {
     total_N[i] <- sum(YClass[[i]]$N.AbovMY1, YClass[[i]]$N.fls_Neg, YClass[[i]]$N.AbovMY0, YClass[[i]]$N.specifity)
   }
-  
+   
   #Weighted threshold value
   Threshold.Level <- vector()
   for (i in 1:length(YClass)) {

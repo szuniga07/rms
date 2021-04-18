@@ -527,11 +527,9 @@ shinyServer(
       switch(reg_yhat,                
              "Linear"   = plot_yhat <- yhat, 
              "Logistic" = plot_yhat <- 1/(1+exp(-yhat)),
-#             "Ordinal Logistic"          = plot_yhat <- 1/(1+exp(-yhat)),
              "Ordinal Logistic"          = plot_yhat <- yhat,
-             "Poisson"  = plot_yhat <- exp(yhat),
+             "Poisson"  = plot_yhat <- (yhat),
              "Quantile" = plot_yhat <- yhat,
-#             "Cox PH"   = plot_yhat <- 1/(1+exp(-yhat)),
              "Cox PH"   = plot_yhat <- yhat,
              "Cox PH with censoring"     = plot_yhat <- yhat,
              "AFT"   = plot_yhat <- yhat,
@@ -1672,7 +1670,7 @@ fncThreshQntl <- function(Fit, Y, Threshold, Censor=NULL, PredTime=NULL, RegType
   for (i in 1:length(YClass)) {
     Threshold.Level[i] <- switch(RegType,                
                       "Linear"   = 1-sum(YClass[[i]]$N.AbovMY1, YClass[[i]]$N.fls_Neg)/total_N[i], 
-                      "Logistic" = plogis(YClass[[i]]$threshLev),
+                      "Logistic" = YClass[[i]]$threshLev,
                       "Ordinal Logistic"  = plogis(YClass[[i]]$threshLev),
                       "Poisson"  = sum(YClass[[i]]$N.AbovMY1, YClass[[i]]$N.fls_Neg)/total_N[i],
                       "Quantile" = 1-sum(YClass[[i]]$N.AbovMY1, YClass[[i]]$N.fls_Neg)/total_N[i],
@@ -1715,7 +1713,7 @@ fncDcsnCrvPlt <- function(ThreshQntl, CType, xlim1,xlim2,ylim1,ylim2) {
     abline(h=0, col=8, lwd=2)
     legend("bottomright", legend=c("Model", "All treated", "None treated"), 
            col=c(1,2,8), lty=c(2,1,1),
-           lwd=2, cex=1)
+           lwd=2, cex=2)
   } else {
     plot(ThreshQntl$Threshold.Level, ThreshQntl$Interventions.Saved, 
          lwd=4, type="l", col=4, axes=F, xlim=c(xlim1,xlim2), ylim=c(ylim1,ylim2), 

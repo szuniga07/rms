@@ -1607,16 +1607,16 @@ fncClassDfSmry <- function(ClassDF, RegType) {
   
   #Weighted threshold value
   wt_thresh <- switch(RegType,                
-                      "Linear"   = 1-sum(N.AbovMY1,N.fls_Neg)/total_N, 
+                      "Linear"   = pnorm( ClassDF$threshLev, mean = mean(df()[, outcome()], na.rm=T), sd = sd(df()[, outcome()], na.rm=T)),
                       "Logistic" = plogis(ClassDF$threshLev),
                       "Ordinal Logistic"  = plogis(ClassDF$threshLev),
-                      "Poisson"  = sum(N.AbovMY1,N.fls_Neg)/total_N,
-                      "Quantile" = 1-sum(N.AbovMY1,N.fls_Neg)/total_N,
+                      "Poisson"  = pnorm( exp(ClassDF$threshLev), mean = mean(df()[, outcome()], na.rm=T), sd = sd(df()[, outcome()], na.rm=T)),                      
+                      "Quantile" = pnorm( ClassDF$threshLev, mean = mean(df()[, outcome()], na.rm=T), sd = sd(df()[, outcome()], na.rm=T)),
                       "Cox PH"   = plogis(ClassDF$threshLev),
                       "Cox PH with censoring"  = plogis(ClassDF$threshLev),
-                      "AFT"  = sum(N.AbovMY1,N.fls_Neg)/total_N,
-                      "AFT with censoring"     = sum(N.AbovMY1,N.fls_Neg)/total_N,
-                      "Generalized Least Squares" = 1-sum(N.AbovMY1,N.fls_Neg)/total_N )
+                      "AFT"  = pnorm(ClassDF$threshLev , mean = mean(c(ClassDF$pm1, ClassDF$pm2), na.rm=T), sd = sd(c(ClassDF$pm1, ClassDF$pm2), na.rm=T)),
+                      "AFT with censoring"     = pnorm(ClassDF$threshLev , mean = mean(c(ClassDF$pm1, ClassDF$pm2), na.rm=T), sd = sd(c(ClassDF$pm1, ClassDF$pm2), na.rm=T)),
+                      "Generalized Least Squares" = pnorm( ClassDF$threshLev, mean = mean(df()[, outcome()], na.rm=T), sd = sd(df()[, outcome()], na.rm=T)) )
   
   #Positive Predictive Value
   PPV <- N.AbovMY1/ (N.AbovMY1 + N.AbovMY0)
@@ -1658,6 +1658,8 @@ fncThreshQntl <- function(Fit, Y, Threshold, Censor=NULL, PredTime=NULL, RegType
   #Group the output
   YClass <- list("yClass.05"=yClass.05, "yClass.10"=yClass.10, "yClass.25"=yClass.25,"yClass.50"=yClass.50,
                  "yClass.75"=yClass.75, "yClass.90"=yClass.90, "yClass.95"=yClass.95)
+  #Quantile levels for YClass
+  YClass_Quants <- as.numeric(names(Threshold$counts)[7:13])
   
   ## Total N ##
   total_N <- vector()
@@ -1669,34 +1671,42 @@ fncThreshQntl <- function(Fit, Y, Threshold, Censor=NULL, PredTime=NULL, RegType
   Threshold.Level <- vector()
   for (i in 1:length(YClass)) {
     Threshold.Level[i] <- switch(RegType,                
-                      "Linear"   = 1-sum(YClass[[i]]$N.AbovMY1, YClass[[i]]$N.fls_Neg)/total_N[i], 
+                      "Linear"   = YClass_Quants[i], 
                       "Logistic" = YClass[[i]]$threshLev,
-                      "Ordinal Logistic"  = plogis(YClass[[i]]$threshLev),
-                      "Poisson"  = sum(YClass[[i]]$N.AbovMY1, YClass[[i]]$N.fls_Neg)/total_N[i],
-                      "Quantile" = 1-sum(YClass[[i]]$N.AbovMY1, YClass[[i]]$N.fls_Neg)/total_N[i],
+                      "Ordinal Logistic"  = YClass_Quants[i],
+                      "Poisson"  = YClass_Quants[i],
+                      "Quantile" = YClass_Quants[i],
                       "Cox PH"   = plogis(YClass[[i]]$threshLev),
                       "Cox PH with censoring"  = plogis(YClass[[i]]$threshLev),
-#                      "AFT"  = .5,
-#                      "AFT with censoring"     = .5,
-                      "AFT"  = sum(YClass[[i]]$N.AbovMY1, YClass[[i]]$N.fls_Neg)/total_N[i],
-                      "AFT with censoring"     = sum(YClass[[i]]$N.AbovMY1, YClass[[i]]$N.fls_Neg)/total_N[i],
-                      "Generalized Least Squares" = 1-sum(YClass[[i]]$N.AbovMY1, YClass[[i]]$N.fls_Neg)/total_N[i] )
+                      "AFT"  = 1 - YClass_Quants[i],
+                      "AFT with censoring"     = 1 - YClass_Quants[i],
+                      "Generalized Least Squares" = YClass_Quants[i] )
   }
-  #YClass[[i]]$N.AbovMY1, YClass[[i]]$N.fls_Neg, YClass[[i]]$N.AbovMY0, YClass[[i]]$N.specifity
   #################
   ## Net Benefit ##
   #################
   Net.Benefit <- vector()
   Interventions.Saved <- vector()
   All.Treated <- vector()
-  for (i in 1:length(YClass)) {
-    #Net benefit: True positives - False positives * weighting by the relative harm of a false-positive and a false-negative result
-    Net.Benefit[i] <- YClass[[i]]$N.AbovMY1/total_N[i] - YClass[[i]]$N.AbovMY0/total_N[i] * (Threshold.Level[i] /(1 - Threshold.Level[i]))   
-    #All treated: All positives - all negatives * weighting by the relative harm of a false-positive and a false-negative result
-    All.Treated[i] <- (YClass[[i]]$N.AbovMY1 + YClass[[i]]$N.fls_Neg)/total_N[i] - (YClass[[i]]$N.AbovMY0 + YClass[[i]]$N.specifity)/total_N[i] * (Threshold.Level[i] /(1 - Threshold.Level[i]))   
-    #Net benefit for True Negatives...Interventions avoided
-    Interventions.Saved[i] <- YClass[[i]]$N.specifity/total_N[i] - YClass[[i]]$N.fls_Neg/total_N[i] *  (1 - Threshold.Level[i]) / Threshold.Level[i]      
-  }
+  if(RegType %in% c("AFT with censoring","AFT")) {
+    for (i in 1:length(YClass)) {
+      #Net benefit: True positives - False positives * weighting by the relative harm of a false-positive and a false-negative result
+      Net.Benefit[i] <- YClass[[i]]$N.fls_Neg/total_N[i] - YClass[[i]]$N.specifity/total_N[i] * (Threshold.Level[i] /(1 - Threshold.Level[i]))   
+      #All treated: All positives - all negatives * weighting by the relative harm of a false-positive and a false-negative result
+      All.Treated[i] <- (YClass[[i]]$N.fls_Neg + YClass[[i]]$N.AbovMY1)/total_N[i] - (YClass[[i]]$N.specifity + YClass[[i]]$N.AbovMY0)/total_N[i] * (Threshold.Level[i] /(1 - Threshold.Level[i]))   
+      #Net benefit for True Negatives...Interventions avoided
+      Interventions.Saved[i] <- YClass[[i]]$N.AbovMY0/total_N[i] - YClass[[i]]$N.AbovMY1/total_N[i] *  (1 - Threshold.Level[i]) / Threshold.Level[i]      
+    }
+  } else (
+    for (i in 1:length(YClass)) {
+      #Net benefit: True positives - False positives * weighting by the relative harm of a false-positive and a false-negative result
+      Net.Benefit[i] <- YClass[[i]]$N.AbovMY1/total_N[i] - YClass[[i]]$N.AbovMY0/total_N[i] * (Threshold.Level[i] /(1 - Threshold.Level[i]))   
+      #All treated: All positives - all negatives * weighting by the relative harm of a false-positive and a false-negative result
+      All.Treated[i] <- (YClass[[i]]$N.AbovMY1 + YClass[[i]]$N.fls_Neg)/total_N[i] - (YClass[[i]]$N.AbovMY0 + YClass[[i]]$N.specifity)/total_N[i] * (Threshold.Level[i] /(1 - Threshold.Level[i]))   
+      #Net benefit for True Negatives...Interventions avoided
+      Interventions.Saved[i] <- YClass[[i]]$N.specifity/total_N[i] - YClass[[i]]$N.fls_Neg/total_N[i] *  (1 - Threshold.Level[i]) / Threshold.Level[i]      
+    }
+  )
   return(list("total_N"=total_N, "Threshold.Level"=Threshold.Level, 
               "Net.Benefit"=Net.Benefit, "All.Treated"=All.Treated, "Interventions.Saved"=Interventions.Saved))
 }

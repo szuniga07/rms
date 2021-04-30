@@ -1066,11 +1066,52 @@ nm_x_var <- reactive({
 #            descript="Predicted values" )  
            #descript=paste0("Summary of ",input$variableY) )  
     })
+    
+    ## Summary of transformed Yhat values ##
+    describeYhatHistRsltTrnsf <- reactive({ 
+      fncTrnsfYhatSmry(YhatRslt=describeYhatHistRslt(), RegType= input$regress_type)
+    })
+    
 output$desc_YhatHistRslt <- renderPrint({ 
 #  if (input$begin_mdl == "Yes") {
-    try( print(describeYhatHistRslt()) )
+    list( "Predicted.Values"=try( print(describeYhatHistRslt()) ), 
+          "Transformed.Yhat"=try(describeYhatHistRsltTrnsf() ) )
 #  }
-})    
+})  
+
+################################
+## Function to transform Yhat ##
+################################
+fncTrnsfYhatSmry <- function(YhatRslt, RegType) {
+  #Excluded values
+  excld_describe <- c("n", "missing", "distinct", "Info")
+  #Transform scores
+  Transformed.Yhat <- switch(RegType,                
+                             "Linear" = NA, 
+                             "Logistic" = plogis(as.numeric(YhatRslt$counts[setdiff(names(YhatRslt$counts), excld_describe) ])),
+                             "Ordinal Logistic" = plogis(as.numeric(YhatRslt$counts[setdiff(names(YhatRslt$counts), excld_describe) ])),
+                             "Poisson" = exp(as.numeric(YhatRslt$counts[setdiff(names(YhatRslt$counts), excld_describe) ])),
+                             "Quantile" = NA,
+                             "Cox PH" = plogis(as.numeric(YhatRslt$counts[setdiff(names(YhatRslt$counts), excld_describe) ])),
+                             "Cox PH with censoring" = plogis(as.numeric(YhatRslt$counts[setdiff(names(YhatRslt$counts), excld_describe) ])),
+                             "AFT"  = NA,
+                             "AFT with censoring"     = NA,
+                             "Generalized Least Squares" = NA )
+  #Add names
+  names(Transformed.Yhat) <- switch(RegType,                
+                                    "Linear" = NULL, 
+                                    "Logistic" = setdiff(names(YhatRslt$counts), excld_describe),
+                                    "Ordinal Logistic" = setdiff(names(YhatRslt$counts), excld_describe),
+                                    "Poisson" = setdiff(names(YhatRslt$counts), excld_describe),
+                                    "Quantile" = NA,
+                                    "Cox PH" = setdiff(names(YhatRslt$counts), excld_describe),
+                                    "Cox PH with censoring" = setdiff(names(YhatRslt$counts), excld_describe),
+                                    "AFT"  = NA,
+                                    "AFT with censoring"     = NA,
+                                    "Generalized Least Squares" = NA )
+  return("Transformed.Yhat"=Transformed.Yhat)
+}  
+
 
 #########################################
 ## Binary classification of predictors ##

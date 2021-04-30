@@ -1074,7 +1074,7 @@ nm_x_var <- reactive({
     
 output$desc_YhatHistRslt <- renderPrint({ 
 #  if (input$begin_mdl == "Yes") {
-    list( "Predicted.Values"=try( print(describeYhatHistRslt()) ), 
+    list( "Predicted.Values"=try( describeYhatHistRslt() ), 
           "Transformed.Yhat"=try(describeYhatHistRsltTrnsf() ) )
 #  }
 })  

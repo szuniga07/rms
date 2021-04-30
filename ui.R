@@ -169,7 +169,7 @@ fluidRow(
                    br(),
 h4("Describe the predicted values"),
 verbatimTextOutput("desc_YhatHistRslt"),  
-                   h5("Logistic and Cox model predictions are transformed to probabilities. Poisson model predictions are exponentiated."),
+                   h5("Transformed.Yhat: Cox and logistic model predictions are transformed to probabilities. Poisson model predictions are exponentiated."),
                    plotOutput("y_hat_hist"),
                    h5("Linear predicted values (logit, exp(logit), or response level) and probabilities (Logistic regression)."),
 br(),

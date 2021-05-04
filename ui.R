@@ -13,6 +13,11 @@
         tabsetPanel(                                      #Creates multiple tabs.
           tabPanel("Data",  
                    h4("Download, Upload and Save Data."),
+                   fluidRow(
+                     column(3, 
+                            uiOutput("View_main_df"))  
+                   ),
+                   tableOutput("view_main_data_out"),
                    br(),
                    h5("Upload R Data."),
                    ###

@@ -281,6 +281,22 @@ shinyServer(
     
 
     ######  Upload  #####
+    #1. View the data frame name
+    output$View_main_df <- renderUI({ 
+      selectInput("viewMainDF", "Want to view the top of the model data?", 
+                  choices = c("No", "Yes"), multiple=FALSE, selected="No")
+    })
+    #1A. Object with transition names
+    view_main_data_yesno <- reactive({
+      input$viewMainDF
+    })
+    #2. This prints the main data
+    output$view_main_data_out <- renderTable({
+      if(view_main_data_yesno() == "Yes") {
+        head(df(), 10)
+      }
+    }, rownames = TRUE)
+    
     #Text files    
     output$text_file_type <- renderUI({
       radioButtons(inputId="TextFile", label="1. What is the text file type?", choices = c("Comma", "Tab"))

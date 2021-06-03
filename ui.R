@@ -209,7 +209,7 @@ h5("Negative Predictive Value: Proportion of all negative classifications that w
 br(),
 h4("Decision Curve Analysis (Vickers, 2006, doi:10.1177/0272989X06295361)"),
 br(),
-h5("The Net Benefit is the amount of outcomes detected by the model or strategy after subtracting out the adjusted false-positives. A higher Net Benefit is better, the NB plot compares what provides a better strategy along various thresholds. 'All Treated'= Interventions for all persons. No Benefit when all interventions withheld."),
+h5("The Net Benefit is the amount of outcomes detected by the model (sensitivity) after subtracting out the adjusted false-positives. A higher Net Benefit is better, the NB plot compares what provides a better strategy along various thresholds. 'All Treated'= Interventions for all persons. No Benefit when all interventions withheld."),
 h5("Net Benefit = Frequency of Sensitivity - weighted False Positives at a specific threshold."),
 h5("A model can reduce unnecessary interventions. For example, a risk threshold of 10% may reduce the number of unnecessary interventions by 40 per 100 without missing treatment for any patients with cancer."),
 h5("Interventions avoided = Frequency of Specificity - weighted False Negatives at a specific threshold."),
@@ -1564,13 +1564,13 @@ tabPanel("95% CIs",
 
 
 ############## TEST SECTION #############################
-# , #THIS COMMA IS COMMENTED OUT IN CASE I EVER NEED THE TEST FUNCTION BELOW    
+ , #THIS COMMA IS COMMENTED OUT IN CASE I EVER NEED THE TEST FUNCTION BELOW    
  
-#tabPanel("Test it",                                #Creates a new panel named "Test"
-#         fluidRow(                           #Wrapping them in a fluidRow provides easy control over  
-#           verbatimTextOutput("test1")
+tabPanel("Test it",                                #Creates a new panel named "Test"
+         fluidRow(                           #Wrapping them in a fluidRow provides easy control over  
+           verbatimTextOutput("test1")
 #           plotOutput("testplot1")
-#         ))
+         ))
 ############## TEST SECTION #############################
 
 

@@ -542,8 +542,8 @@ shinyServer(
     yhat_hist_plot_fnc <- function(yhat, reg_yhat) {
       switch(reg_yhat,                
              "Linear"   = plot_yhat <- yhat, 
-             "Logistic" = plot_yhat <- 1/(1+exp(-yhat)),
-             "Ordinal Logistic"          = plot_yhat <- yhat,
+             "Logistic" = plot_yhat <- yhat,
+             "Ordinal Logistic"  = plot_yhat <- yhat,
              "Poisson"  = plot_yhat <- (yhat),
              "Quantile" = plot_yhat <- yhat,
              "Cox PH"   = plot_yhat <- yhat,
@@ -1675,6 +1675,10 @@ fncClassDfSmry <- function(ClassDF, RegType) {
                       "AFT with censoring"     = pnorm(ClassDF$threshLev , mean = mean(c(ClassDF$pm1, ClassDF$pm2), na.rm=T), sd = sd(c(ClassDF$pm1, ClassDF$pm2), na.rm=T)),
                       "Generalized Least Squares" = pnorm( ClassDF$threshLev, mean = mean(df()[, outcome()], na.rm=T), sd = sd(df()[, outcome()], na.rm=T)) )
   
+  #Accuracy 
+  Accuracy.Rate <- (N.AbovMY1 + N.specifity)/ total_N
+  #Error rate
+  Error.Rate <- (N.AbovMY0 + N.fls_Neg)/ total_N
   #Positive Predictive Value
   PPV <- N.AbovMY1/ (N.AbovMY1 + N.AbovMY0)
   #Negative Predictive Value
@@ -1685,10 +1689,11 @@ fncClassDfSmry <- function(ClassDF, RegType) {
   All.Treated <- (N.AbovMY1 + N.fls_Neg)/total_N - (N.AbovMY0 + N.specifity)/total_N * (wt_thresh /(1 - wt_thresh))
   #Interventions avoided
   Interventions.Saved <- N.specifity/total_N -  N.fls_Neg/total_N * (1 - wt_thresh)/ wt_thresh  
-  return(list("Classification"= c("Sensitivity"=propAbovMY1, "Specifity"= specifity, "False.Positives"= propAbovMY0, "False.Negatives"= fls_Neg),
+  return(list("Classification"= c("Sensitivity"=propAbovMY1, "Specifity"= specifity, "False.Positives"= propAbovMY0, "False.Negatives"= fls_Neg,
+                                  "Accuracy.Rate"=Accuracy.Rate, "Error.Rate"=Error.Rate),
               "Predictive.Values"= c("Positive.Predictive.Value"=PPV, "Negative.Predictive.Value"=NPV),
               "Frequencies"= c("N.Sensitivity"=N.AbovMY1, "N.Specifity"=N.specifity, 
-              "N.False.Positives"= N.AbovMY0, "N.False.Negatives"= N.fls_Neg),
+              "N.False.Positives"= N.AbovMY0, "N.False.Negatives"= N.fls_Neg, "N"=total_N),
               "Decision.Curve.Analysis"= c("Net.Benefit"=Net.Benefit, "All.Treated"=All.Treated,
               "Interventions.Avoided"=Interventions.Saved)))
 }
@@ -1729,7 +1734,7 @@ fncThreshQntl <- function(Fit, Y, Threshold, Censor=NULL, PredTime=NULL, RegType
   for (i in 1:length(YClass)) {
     Threshold.Level[i] <- switch(RegType,                
                       "Linear"   = YClass_Quants[i], 
-                      "Logistic" = YClass[[i]]$threshLev,
+                      "Logistic" = plogis(YClass[[i]]$threshLev),
                       "Ordinal Logistic"  = YClass_Quants[i],
                       "Poisson"  = YClass_Quants[i],
                       "Quantile" = YClass_Quants[i],
@@ -8672,11 +8677,12 @@ fncStSpcLegendFactoLev <- function(Model_fit, X_Lev) {
 ##  plot(values$a, values$b)
 ##} )
 
-#output$test1 <- renderPrint({
+output$test1 <- renderPrint({
+  thresh_quant_data_output()
 #summary(new_imputed.si())
 #  list("ti"=fit1()$time, "sv"= fit1()$surv)
 #  list( nomo_update_formula(), class(nomo_update_formula() ))
-#  })
+  })
 
 
 ################################################################################

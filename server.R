@@ -8677,12 +8677,12 @@ fncStSpcLegendFactoLev <- function(Model_fit, X_Lev) {
 ##  plot(values$a, values$b)
 ##} )
 
-output$test1 <- renderPrint({
-  thresh_quant_data_output()
+#output$test1 <- renderPrint({
+#  thresh_quant_data_output()
 #summary(new_imputed.si())
 #  list("ti"=fit1()$time, "sv"= fit1()$surv)
 #  list( nomo_update_formula(), class(nomo_update_formula() ))
-  })
+#  })
 
 
 ################################################################################

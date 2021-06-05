@@ -1090,8 +1090,10 @@ nm_x_var <- reactive({
     
 output$desc_YhatHistRslt <- renderPrint({ 
 #  if (input$begin_mdl == "Yes") {
-    list( "Predicted.Values"=try( describeYhatHistRslt() ), 
-          "Transformed.Yhat"=try(describeYhatHistRsltTrnsf() ) )
+  list( "Predicted.Values"=try( describeYhatHistRslt() ), 
+        "Transformed.Yhat"=try(describeYhatHistRsltTrnsf()[["Transformed.Yhat"]] ),
+        "Transformed.Full.Range"=try(describeYhatHistRsltTrnsf()[["Transformed.Full.Range"]] )
+  )
 #  }
 })  
 
@@ -1125,7 +1127,20 @@ fncTrnsfYhatSmry <- function(YhatRslt, RegType) {
                                     "AFT"  = NA,
                                     "AFT with censoring"     = NA,
                                     "Generalized Least Squares" = NA )
-  return("Transformed.Yhat"=Transformed.Yhat)
+  #Transform range of lowest and highest values
+  Transformed.Full.Range <- switch(RegType,                
+                             "Linear" = NA, 
+                             "Logistic" = range(plogis(as.numeric(YhatRslt$extremes)) ),
+                             "Ordinal Logistic" = range(plogis(as.numeric(YhatRslt$extremes)) ),
+                             "Poisson" = exp(as.numeric(YhatRslt$extremes)),
+                             "Quantile" = NA,
+                             "Cox PH" = range(plogis(as.numeric(YhatRslt$extremes)) ),
+                             "Cox PH with censoring" = range(plogis(as.numeric(YhatRslt$extremes)) ),
+                             "AFT"  = NA,
+                             "AFT with censoring"     = NA,
+                             "Generalized Least Squares" = NA )
+  
+  return(list("Transformed.Yhat"=Transformed.Yhat, "Transformed.Full.Range"= Transformed.Full.Range))
 }  
 
 

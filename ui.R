@@ -172,7 +172,7 @@ fluidRow(
                    verbatimTextOutput("desc_Y"),  #"regress" calls output$regress from server.r
                    plotOutput("outcome_hist"),
                    br(),
-h4("Describe the predicted values"),
+h4("Describe the predicted values"), 
 verbatimTextOutput("desc_YhatHistRslt"),  
                    h5("Transformed.Yhat: Cox and logistic model predictions are transformed to probabilities. Poisson model predictions are exponentiated."),
                    plotOutput("y_hat_hist"),

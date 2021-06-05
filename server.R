@@ -1697,7 +1697,7 @@ fncClassDfSmry <- function(ClassDF, RegType) {
               "Decision.Curve.Analysis"= c("Net.Benefit"=Net.Benefit, "All.Treated"=All.Treated,
               "Interventions.Avoided"=Interventions.Saved)))
 }
-
+ 
 ###########################################
 ## Create a decision curve analysis plot ##
 ###########################################

@@ -1172,57 +1172,85 @@ prediction_classification_time <- reactive({
 #  }
   })
 
-#3. Select the approximate number of histogram bars
+#3. Name of the prior model.
+output$class_pri_mdl_nm <- renderUI({                           
+  textInput("classPrMdlFtNm", "3. Prior model name")     
+})
+#3A. Prior model fit reactive function.
+class_prior_model_fit_name <- reactive({                 
+  if ( use_class_prior_model_YN() == "Yes") {
+    get(input$classPrMdlFtNm) 
+  } 
+})
+
+#4. Indicate if you want to use a prior model
+output$use_pred_cls_pri_mdl_yesno <- renderUI({                                 
+  selectInput("useClsPrModelYN", "4. Do you want to use the prior model fit?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")  
+  })
+
+  #4A. Object for classification plot 
+  use_class_prior_model_YN <- reactive({
+    input$useClsPrModelYN
+  })
+  
+#5. Select the approximate number of histogram bars
 output$pred_class_hist_bars <- renderUI({                                 
-  numericInput("PredClassHistBars", "3. Select the approximate number of histogram bars.", 
+  numericInput("PredClassHistBars", "5. Select the approximate number of histogram bars.", 
                value = 15, step = 1, min=2)     
 })
-#3A. Object for histogram bars 
+#5A. Object for histogram bars 
 prediction_class_histogram_bars <- reactive({
 #  if (input$begin_mdl == "Yes") {
     input$PredClassHistBars
 #  }
 })
 
-#4. Select a survival model time (e.g., 7 days)
+#6. Select a survival model time (e.g., 7 days)
 output$class_hist_asp_ratio <- renderUI({                                 
-  selectInput("clsHistAspRtio", "4. Do you want both y-axes on the same scale?", 
+  selectInput("clsHistAspRtio", "6. Do you want both y-axes on the same scale?", 
               choices = c("No", "Yes"), multiple=FALSE, selected="No")     
 })
-#4A. Object for survival model time 
+#6A. Object for survival model time 
 class_histogram_aspect_ratio <- reactive({
 #  if (input$begin_mdl == "Yes") {
     input$clsHistAspRtio
 #  }
 })
 
-#5. Indicate if you want the classification plot
+#7. Indicate if you want the classification plot
 output$pred_class_hist_yesno <- renderUI({                                 
-  selectInput("PredClassHistYN", "5. Do you want to run the classification plot?", 
+  selectInput("PredClassHistYN", "7. Do you want to run the classification plot?", 
               choices = c("No", "Yes"), multiple=FALSE, selected="No")     
 })
-#5A. Object for classification plot 
+#7A. Object for classification plot 
 prediction_class_histogram_yes_no <- reactive({
  # if (input$begin_mdl == "Yes") {
     input$PredClassHistYN
 #  }
 })
 #Run functions below
-#6. Get data for functions
+#8. Get data for functions
 get_binary_class_df <- reactive({
   if (prediction_class_histogram_yes_no() =="Yes") {
-    fncYhatClassDf(Fit=fit1(), Y=outcome(), Threshold=prediction_class_threshold(), Censor=censor1(), 
-                   PredTime=prediction_classification_time(), RegType=input$regress_type, DF=df() )
+    if (use_class_prior_model_YN() =="Yes") {
+      fncYhatClassDf(Fit=class_prior_model_fit_name(), Y=outcome(), Threshold=prediction_class_threshold(), Censor=censor1(),
+                     PredTime=prediction_classification_time(), RegType=input$regress_type, DF=df() )
+    } else {
+      fncYhatClassDf(Fit= fit1(), Y=outcome(),
+                     Threshold=prediction_class_threshold(), Censor=censor1(),
+                     PredTime=prediction_classification_time(), RegType=input$regress_type, DF=df() )
     }
+  }
 })
-#6A. Run the data function
+#8A. Run the data function
 binary_classification_data_output <- reactive({
   if (prediction_class_histogram_yes_no() =="Yes") {
     get_binary_class_df()
   }
 })
 
-#7. Get AUC
+#9. Get AUC
 get_binary_class_AUC <- reactive({
   if (prediction_class_histogram_yes_no() =="Yes") {
     fncThreshAUC(ClassDF=binary_classification_data_output() )
@@ -1230,14 +1258,14 @@ get_binary_class_AUC <- reactive({
 #                   PredTime=prediction_classification_time(), RegType=input$regress_type, DF=df(), ClassDF=binary_classification_data_output() )
   }
 })
-#7A. Run the AUC function
+#9A. Run the AUC function
 binary_classification_AUC_output <- reactive({
   if (prediction_class_histogram_yes_no() =="Yes") {
     get_binary_class_AUC()
 }
   })
 
-#8. Plot binary classification
+#10. Plot binary classification
 plot_binary_class_function <- reactive({
   if (prediction_class_histogram_yes_no() =="Yes") {
     fncYhatClassPlt(ClassDF=binary_classification_data_output(), AUC=binary_classification_AUC_output(), 
@@ -1245,20 +1273,20 @@ plot_binary_class_function <- reactive({
                     )
   }
 })
-#8A. Run the plot function 
+#10A. Run the plot function 
 output$plot_binary_class_run <- renderPlot({
   if (prediction_class_histogram_yes_no() =="Yes") {
     plot_binary_class_function()
   }
   })
 
-#9. Get sensitivity and specificity from data
+#11. Get sensitivity and specificity from data
 get_binary_class_sensitivity_specificity <- reactive({
   if (prediction_class_histogram_yes_no() =="Yes") {
     fncClassDfSmry(ClassDF=binary_classification_data_output(), RegType= input$regress_type)
   }
 })
-#9A. Run the print function 
+#11A. Run the print function 
 output$get_bin_class_sens_spc_out <- renderPrint({
   if (prediction_class_histogram_yes_no() =="Yes") {
     get_binary_class_sensitivity_specificity()
@@ -1267,94 +1295,99 @@ output$get_bin_class_sens_spc_out <- renderPrint({
 #############################
 ## Decision curve analysis ##
 #############################
-#10. Indicate if you want the classification plot
+#12. Indicate if you want the classification plot
 output$decison_curve_anly_yesno <- renderUI({                                 
   selectInput("decisCrvAnlYN", "2. Do you want to run the decision curve analysis?", 
               choices = c("No", "Yes"), multiple=FALSE, selected="No")     
 })
-#10A. Object for classification plot 
+#12A. Object for classification plot 
 #prediction_class_histogram_yes_no
 decison_curve_analysis_yes_no <- reactive({
   input$decisCrvAnlYN
 })
-#11. Indicate if you want the classification plot
+#13. Indicate if you want the classification plot
 output$net_or_intervention <- renderUI({                                 
   selectInput("netOrIntrvntn", "1. Plot net benefit or interventions avoided?", 
               choices = c("Net Benefit", "Interventions Avoided"), multiple=FALSE, selected="Net Benefit")     
 })
-#11A. Object for classification plot 
+#13A. Object for classification plot 
 #prediction_class_histogram_yes_no
 net_benefit_or_interventions <- reactive({
   input$netOrIntrvntn
 })
 #Run functions below
-#12. Get data for functions
+#14. Get data for functions 
 get_thresh_quant_df <- reactive({
   if (decison_curve_analysis_yes_no() =="Yes") {
-    fncThreshQntl(Fit=fit1(), Y=outcome(), Threshold=describeYhatHistRslt(), Censor=censor1(), 
-                  PredTime=prediction_classification_time(), RegType=input$regress_type, DF=df())
+    if (use_class_prior_model_YN() =="Yes") {
+      fncThreshQntl(Fit=class_prior_model_fit_name(), Y=outcome(), Threshold=describeYhatHistRslt(), Censor=censor1(), 
+                    PredTime=prediction_classification_time(), RegType=input$regress_type, DF=df())
+    } else {
+      fncThreshQntl(Fit=fit1(), Y=outcome(), Threshold=describeYhatHistRslt(), Censor=censor1(), 
+                    PredTime=prediction_classification_time(), RegType=input$regress_type, DF=df())
+    }
   }
 })
-#12A. Run the data function
+#14A. Run the data function
 thresh_quant_data_output <- reactive({
   if (decison_curve_analysis_yes_no() =="Yes") {
     get_thresh_quant_df()
   }
 })
-#13. Set up Decision Curve
+#15. Set up Decision Curve
 plot_thresh_quant_function <- reactive({
   if (decison_curve_analysis_yes_no() =="Yes") {
     fncDcsnCrvPlt(ThreshQntl=thresh_quant_data_output(), CType=net_benefit_or_interventions(),
                   xlim1=descion_crv_plt_xlim1(), xlim2=descion_crv_plt_xlim2(), ylim1=descion_crv_plt_ylim1(), ylim2=descion_crv_plt_ylim2())
   }
 })
-#13A. Run the plot function 
+#15A. Run the plot function 
 output$plot_thresh_quant_run <- renderPlot({
   if (decison_curve_analysis_yes_no() =="Yes") {
     plot_thresh_quant_function()
   }
 })
 
-#14. Indicate lower limit of x-axis
+#16. Indicate lower limit of x-axis
 output$descionCrvPltXlim1 <- renderUI({
   numericInput("dc_Xlim1", "3. Lower X-axis limit.",
                #value = cox_min_time(), step = 1)
                value = 0, step = .1)
 })
-#14A. Set up Decision Curve
+#16A. Set up Decision Curve
 descion_crv_plt_xlim1 <- reactive({
   if (decison_curve_analysis_yes_no() =="Yes") {
     input$dc_Xlim1
   }
 })
-#15. Indicate upper limit of x-axis
+#17. Indicate upper limit of x-axis
 output$descionCrvPltXlim2 <- renderUI({
   numericInput("dc_Xlim2", "4. Upper X-axis limit.",
                value = 1, step = .1)
 })
-#15A. Set up Decision Curve
+#17A. Set up Decision Curve
 descion_crv_plt_xlim2 <- reactive({
   if (decison_curve_analysis_yes_no() =="Yes") {
     input$dc_Xlim2
   }
 })
-#16. Indicate lower limit of y-axis
+#18. Indicate lower limit of y-axis
 output$descionCrvPltYlim1 <- renderUI({
   numericInput("dc_Ylim1", "5. Lower Y-axis limit.",
                value = 0, step = .1)
 })
-#16A. Set up Decision Curve
+#18A. Set up Decision Curve
 descion_crv_plt_ylim1 <- reactive({
   if (decison_curve_analysis_yes_no() =="Yes") {
     input$dc_Ylim1
   }
 })
-#17. Indicate upper limit of x-axis
+#19. Indicate upper limit of x-axis
 output$descionCrvPltYlim2 <- renderUI({
   numericInput("dc_Ylim2", "6. Upper Y-axis limit.",
                value = 1, step = .1)
 })
-#17A. Set up Decision Curve
+#19A. Set up Decision Curve
 descion_crv_plt_ylim2 <- reactive({
   if (decison_curve_analysis_yes_no() =="Yes") {
     input$dc_Ylim2
@@ -8692,12 +8725,13 @@ fncStSpcLegendFactoLev <- function(Model_fit, X_Lev) {
 ##  plot(values$a, values$b)
 ##} )
 
-#output$test1 <- renderPrint({
+output$test1 <- renderPrint({
 #  thresh_quant_data_output()
 #summary(new_imputed.si())
 #  list("ti"=fit1()$time, "sv"= fit1()$surv)
 #  list( nomo_update_formula(), class(nomo_update_formula() ))
-#  })
+  thresh_quant_data_output()
+  })
 
 
 ################################################################################

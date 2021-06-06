@@ -193,6 +193,14 @@ fluidRow(
          uiOutput("pred_class_time"))
 ),
 br(),
+h5("Get classifcation results from a prior model on new data. Upload prior model in 'Data' or 'PREDs' tabs, set up model above, enter prior model fit name in #3, and answer 'Yes' in #4 below."),
+fluidRow(
+  column(3, 
+         uiOutput("class_pri_mdl_nm")),
+  column(3, offset=1,
+         uiOutput("use_pred_cls_pri_mdl_yesno"))
+),
+br(),
 fluidRow(
   column(3, 
          uiOutput("pred_class_hist_bars")),

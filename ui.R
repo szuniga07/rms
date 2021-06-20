@@ -416,7 +416,18 @@ tabPanel("Describe",
          br(),
          h5("ANOVA summary table of the logistic regression."),
          verbatimTextOutput("anova_lrm_miss"),
-         br()                   
+         br(),
+         fluidRow(
+           h4("Calculator"),
+           column(4, 
+                  uiOutput("calculator_box")),
+           column(4, offset=1,
+                  uiOutput("calculator_yesno"))
+         ),
+         h5("Calculation (e.g., sqrt(16) + 6 = 10)"),         
+         br(),
+         verbatimTextOutput("prnt_calculation"),
+         br()
 ),    
 
           tabPanel("Reduce", 
@@ -1581,36 +1592,45 @@ tabPanel("95% CIs",
                   uiOutput("Ci_Alpha_Num"),
                   uiOutput("Ci_create")
            )),
-         plotOutput("Plot_Ci_output", height = 700, width="100%"),
+         plotOutput("Plot_Ci_output", height = 800, width="100%"),
          h6("Note: You can sort alphabetically by the factor level name or numerically by the point estimate. Left side = factor level, right side = point estimate."),
          verbatimTextOutput("Cidf_output"),
          h6("Note: The values above are point estimates and confidence limits that are sorted alphabetically and numerically."),
          br(),
-         h4("Performance of groups over time (need >= 6 time points)"),
+         h4("Performance of groups over time (need >= 5 time points)"),
          h5("This plot has smoothed spline trajectories, with or without confidence bands. \"Trend\" lines may not have cooridnate values that equal rates."),
          br(),
-         fluidRow(
+         fluidRow(   
            column(3, 
-                  uiOutput("FCIy"),
-                  br(),                                                 
-                  uiOutput("FCi_Choice_Type")
-                  ),
+                  uiOutput("FCIy")),
            column(3, 
-                  uiOutput("FCIx"),
-                  br(),                                                 
-                  uiOutput("FCi_Conf_Lev")
-           ),
+                  uiOutput("FCIx")),
            column(3, 
-                  uiOutput("FCIz"),
-                  br(),                                                 
-                  uiOutput("FCi_create")
-           ),
+                  uiOutput("FCIz")),
            column(3, 
-                  uiOutput("FCI_bands"),
-                  br(),                                                 
-                  uiOutput("FCI_nk_knots")
-           )),
-         h6("Hint: To zoom in on the lines only, select a lower confidence level (e.g., .01) and don't use confidence bands."),
+                  uiOutput("FCI_bands"))
+         ),
+         fluidRow(   
+           column(3, 
+                  uiOutput("FCi_Choice_Type")),
+           column(3, 
+                  uiOutput("FCi_Conf_Lev")),
+           column(3, 
+                  uiOutput("FCi_create")),
+           column(3, 
+                  uiOutput("FCI_nk_knots"))
+         ),
+         fluidRow(   
+           column(3, 
+                  uiOutput("FCI__Xlim1")),
+           column(3, 
+                  uiOutput("FCI__Xlim2")),
+           column(3, 
+                  uiOutput("FCI__Ylim1")),
+           column(3, 
+                  uiOutput("FCI__Ylim2"))
+         ),
+         h5("Modify the plot space in #9-12."),
          br(),
          plotOutput("Plot_Fci_output", height = 800, width="100%"),
          h5("These are point estimates and confidence intervals. These may not match up with smoothed lines."),

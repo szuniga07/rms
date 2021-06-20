@@ -784,7 +784,7 @@ shinyServer(
                      ols(mdl_fmla(), x=TRUE, y=TRUE, data=df())},
                    "Logistic" = if(input$updy == "Yes") {
                      lrm(as.formula(input$up_fmla), x=TRUE, y=TRUE, data=df(), tol=1e-100, maxit=20) #I added tol value so it can handle time predictor (YYMM)
-                   } else { #Added maxit to handle small samples. See https://urldefense.com/v3/__https://stat.ethz.ch/pipermail/r-help/2017-September/449115.html__;!!BZ50a36bapWJ!_bne7hFPjFdIFa0T_9B5HbrEL69oFO3OoedM7D9VwJE7eccwVOokapNQ9LPSXLsFRQ$  
+                   } else { #Added maxit to handle small samples. See https://stat.ethz.ch/pipermail/r-help/2017-September/449115.html  
                      lrm(mdl_fmla(), x=TRUE, y=TRUE, data=df(), tol=1e-100, maxit=20)},  #I added tol value so it can handle time predictor that causes "singularity"
                    "Ordinal Logistic" = if(input$updy == "Yes") {
                      orm(as.formula(input$up_fmla), x=TRUE, y=TRUE, data=df())
@@ -1928,7 +1928,7 @@ output$predictor_smry <- renderPrint({
 
 #This Plot ANOVA to show variable importance. 
 #I set a higher tolerance based on Harrell's website
-#https://urldefense.com/v3/__https://stat.ethz.ch/pipermail/r-help/2007-September/141709.html__;!!BZ50a36bapWJ!_bne7hFPjFdIFa0T_9B5HbrEL69oFO3OoedM7D9VwJE7eccwVOokapNQ9LMe-u5jxw$  
+#https://stat.ethz.ch/pipermail/r-help/2007-September/141709.html  
 output$p_anova <- renderPlot({
   plot(anova(fit1(), tol=1e-13), cex=1.25, cex.lab=1.25, pch=19)
 }, height=700)
@@ -4279,12 +4279,14 @@ fci_fac <- reactive({                  #This indicates the data frame I will use
 ########################################
 
 #This creates the time plot
-plot_fci_fnc <- function(x, y, z, xcivar, ycivar, zcivar, dataf, ci_p, ci_l, ci_u, max_pest, min_pest, max_ci, min_ci, ctrs, cibands) {
+plot_fci_fnc <- function(x, y, z, xcivar, ycivar, zcivar, dataf, ci_p, ci_l, ci_u, 
+                         max_pest, min_pest, max_ci, min_ci, ctrs, cibands, fCiXLim1, fCiXLim2, fCiYLim1, fCiYLim2) {
   #Set up colors
   my_clr <- c(175, 33, 26, 9,76,119, 310, 45, 368, 653, 69, 96,  145, 451, 500)
   plot(unique(dataf[, z]), seq(min(min_ci, na.rm=T), max(max_ci, na.rm=T), length.out=length(unique(dataf[, z]))), type="n",  
        cex.lab=1.35,cex.main=1.35,cex.sub=1.35, 
-       ylab=ycivar, xlab=zcivar, ylim=c(min(min_ci, na.rm=T)*.95, max(max_ci, na.rm=T)*1.05),
+#       ylab=ycivar, xlab=zcivar, ylim=c(min(min_ci, na.rm=T)*.95, max(max_ci, na.rm=T)*1.05),
+       ylab=ycivar, xlab=zcivar, xlim=c(fCiXLim1, fCiXLim2), ylim=c(fCiYLim1, fCiYLim2),
        main= paste0( ycivar, " trajectories of ", xcivar,  " by ", zcivar))
   #Plot point estimate lines
   ci_time <- list() 
@@ -4318,7 +4320,7 @@ plot_fci <- reactive({                  #This indicates the data frame I will us
     plot_fci_fnc(x="x_lev", y="PointEst", z="z_lev", xcivar=input$fxcivar, ycivar=input$fycivar, zcivar=input$fzcivar,
                  dataf=fcidf(), ci_p=fci_fac()$ci_p, ci_l=fci_fac()$ci_l, ci_u=fci_fac()$ci_u,
     max_pest=fci_fac()$max_pest, min_pest=fci_fac()$min_pest, max_ci=fci_fac()$max_ci, min_ci=fci_fac()$min_ci, 
-    ctrs=fci_fac()$ctrs, cibands=input$fcibands)
+    ctrs=fci_fac()$ctrs, cibands=input$fcibands, fCiXLim1=input$fCiXLim1, fCiXLim2=input$fCiXLim2, fCiYLim1=input$fCiYLim1, fCiYLim2=input$fCiYLim2)
     }
 })
 
@@ -4369,6 +4371,35 @@ output$FCi_create <- renderUI({
 output$FCI_nk_knots <- renderUI({                                
       numericInput("FciNkKnots", "8. Select the number of spline knots.",
        value = 3, min=3, max = 10, step = 1)
+})
+## Code for plot range
+#Range of X value
+range_fzcivar <- reactive({ 
+  range(as.numeric(df()[, input$fzcivar]), na.rm=TRUE )  
+})
+#Range of Y value
+range_fycivar <- reactive({ 
+  range(as.numeric(df()[, input$fycivar]), na.rm=TRUE )  
+})
+#9. Indicate lower limit of x-axis
+output$FCI__Xlim1 <- renderUI({
+  numericInput("fCiXLim1", "9. Lower X-axis limit.",
+               value = range_fzcivar()[1], step = 1)
+})
+#10. Indicate upper limit of x-axis
+output$FCI__Xlim2 <- renderUI({
+  numericInput("fCiXLim2", "10. Upper X-axis limit.",
+               value = range_fzcivar()[2], step = 1)
+})
+#11. Indicate lower limit of y-axis
+output$FCI__Ylim1 <- renderUI({
+  numericInput("fCiYLim1", "11. Lower Y-axis limit.",
+               value = range_fycivar()[1], step = 1)
+})
+#12. Indicate upper limit of x-axis
+output$FCI__Ylim2 <- renderUI({
+  numericInput("fCiYLim2", "12. Upper Y-axis limit.",
+               value = range_fycivar()[2], step = 1)
 })
 
 #Confidence interval plot for time
@@ -4624,7 +4655,7 @@ fit.si <<- reactive({
              ols(mdl_fmla(), x=TRUE, y=TRUE, data=new_imputed.si())},
            "Logistic" = if(input$updy == "Yes") {
              lrm(as.formula(input$up_fmla), x=TRUE, y=TRUE, data=new_imputed.si(), tol=1e-100, maxit=20) #I added tol value so it can handle time predictor (YYMM)
-           } else { #Added maxit to handle small samples. See https://urldefense.com/v3/__https://stat.ethz.ch/pipermail/r-help/2017-September/449115.html__;!!BZ50a36bapWJ!_bne7hFPjFdIFa0T_9B5HbrEL69oFO3OoedM7D9VwJE7eccwVOokapNQ9LPSXLsFRQ$  
+           } else { #Added maxit to handle small samples. See https://stat.ethz.ch/pipermail/r-help/2017-September/449115.html  
              lrm(mdl_fmla(), x=TRUE, y=TRUE, data=new_imputed.si(), tol=1e-100, maxit=20)},  #I added tol value so it can handle time predictor that causes "singularity"
            "Ordinal Logistic" = if(input$updy == "Yes") {
              orm(as.formula(input$up_fmla), x=TRUE, y=TRUE, data=new_imputed.si(), data=new_imputed.si())
@@ -5028,7 +5059,7 @@ lrm_miss <- reactive({             #Spline terms
   if (input$MissChoice == "Yes") {
     lrm(miss_fmla(), data=df(), tol=1e-100, maxit=20)  #added "tol" to handle fitting issues
   }                                                    #Added maxit to handle small samples. 
-})                                                     #See https://urldefense.com/v3/__https://stat.ethz.ch/pipermail/r-help/2017-September/449115.html__;!!BZ50a36bapWJ!_bne7hFPjFdIFa0T_9B5HbrEL69oFO3OoedM7D9VwJE7eccwVOokapNQ9LPSXLsFRQ$  
+})                                                     #See https://stat.ethz.ch/pipermail/r-help/2017-September/449115.html  
 #Print regression output
 output$smry_lrm_miss <- renderPrint({
   lrm_miss()
@@ -5038,6 +5069,32 @@ output$anova_lrm_miss <- renderPrint({
   anova(lrm_miss())
 })
 
+################################################################################
+#                           CALCULATOR                                         #
+################################################################################
+#1. Textbox to enter a formula
+output$calculator_box <- renderUI({  
+  textInput("calcBox", "1. Enter a mathematical equation.")
+})
+#1A. Reactive function for textbox to enter a formula
+Calculator_Box_Input <- reactive({
+  input$calcBox
+})                                                     
+#2. Run the formula
+output$calculator_yesno <- renderUI({                                 
+  selectInput("calcYN", "2. Do you want to calculate the results?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")  
+})
+#2A. Reactive function for textbox to enter a formula
+Calculator_YN <- reactive({
+  input$calcYN
+})                                                     
+#Print the calculation 
+output$prnt_calculation <- renderPrint({
+  if (Calculator_YN() == "Yes") {
+    eval(parse(text=Calculator_Box_Input() ))
+  }
+})
 
 ################################################################################
 ##                       Cost analysis with the Cox PH model                  ##

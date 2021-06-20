@@ -318,9 +318,38 @@ tabPanel("PREDs",                                #Creates a new panel named "Tes
 
 ############## Describe and Missing #############################
 tabPanel("Describe",
+         h4("Descriptives on means and missing values. Plot the target variable, stratifying by factors."),
+         br(),
+         h4("Summarize the data."),
          fluidRow(   
-           h4("Descriptives on means and missing values. Plot the target variable, stratifying by factors."),
-           br(),
+           column(3, 
+                  uiOutput("desc_summ_vars")),
+           column(3, offset=1,
+                  uiOutput("des_summ_yesno"))
+         ),
+         verbatimTextOutput("prnt_desc_summ"),
+         br(),
+         #Histogram
+         h4("Histogram of a key variable"),
+         fluidRow(   
+           column(3, 
+                  uiOutput("smry_var_hist_var")),
+           column(3, offset=1,
+                  uiOutput("smry_var_hist_bars")),
+           column(3, offset=1,
+                  uiOutput("smry_var_hist_bar_clr"))
+         ),
+         fluidRow(   
+           column(3, 
+                  uiOutput("smry_hist_mn_med_yesno")),
+           column(3, offset=1,
+                  uiOutput("smry_var_hist_ln_clr")),
+           column(3, offset=1,
+                  uiOutput("smry_var_hist_yesno"))
+         ),
+         plotOutput("summary_var_histogram_out", height = 800, width = "100%"),          
+         #Means by factors
+         fluidRow(   
            h4("Explore the mean values of an outcome variable by factor levels."),
            column(3, 
                 uiOutput("desc_y")),
@@ -330,7 +359,6 @@ tabPanel("Describe",
                   uiOutput("desc_choice"))
          ),
          plotOutput("DescSmryPlt", height = 800, width = 1200),          
-
          ## scatter plot with correlation ## 
          fluidRow(   
            h4("Scatterplot with a lowess smoothed line and a correlation test."),

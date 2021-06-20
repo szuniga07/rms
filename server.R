@@ -4872,7 +4872,9 @@ output$scatter_cor_test_plt_out <- renderPlot({
   }
 })
 
+######################################
 ## Function to get correlation test ##
+######################################
 fncSctrPltCr <- function(DF, X, Y, 
                          sct_plt_alt, 
                          sct_plt_meth , 
@@ -4889,7 +4891,9 @@ fncSctrPltCr <- function(DF, X, Y,
                  na.rm=TRUE)
   return("Correlation.Test"= CT)
 }
+##################################
 ## Function to get scatter plot ##
+##################################
 fncSctrPlt <- function(DF, X, Y, sct_plt_clr, CT) {
   #Scatter plot
     plot(DF[, X], DF[, Y] , main= paste0("Correlation of ", Y, " on ", X, 
@@ -5095,6 +5099,134 @@ output$prnt_calculation <- renderPrint({
     eval(parse(text=Calculator_Box_Input() ))
   }
 })
+
+################################################################################
+#                           Summarize the data                                 #
+################################################################################
+#1. Select the variabes.
+output$desc_summ_vars <- renderUI({
+  selectInput("dscSmmVrs", "1. Select the variables",
+              choices = var(), multiple=TRUE, 
+              selected=var()[1])
+})
+#1A. Reactive function for textbox to enter a formula
+descriptive_summary_variables <- reactive({
+  input$dscSmmVrs
+})                                                     
+#2. Run the formula
+output$des_summ_yesno <- renderUI({                                 
+  selectInput("dscSmYN", "2. Do you want to summarize the data?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")  
+})
+#2A. Reactive function for textbox to enter a formula
+Desc_Summary_YN <- reactive({
+  input$dscSmYN
+})                                                     
+#Print the summary 
+output$prnt_desc_summ <- renderPrint({
+  if (Desc_Summary_YN() == "Yes") {
+    summary(df()[, descriptive_summary_variables()])
+  }
+})
+
+################################################################################
+##                        Summary X Histogram                                 ##
+################################################################################
+#1. Select the histogram variabe.
+output$smry_var_hist_var <- renderUI({
+  selectInput("smryVrHstVr", "1. Select the variable",
+              choices = var(), multiple=FALSE, 
+              selected=var()[1])
+})
+#1A. Reactive function for the variabe
+descriptive_summary_histogram_variable <- reactive({
+  input$smryVrHstVr
+})
+#1B. Summary mean
+smry_var_hist_mean <- reactive({
+  summary(df()[, descriptive_summary_histogram_variable()])["Mean"]
+})
+#1C. Summary median
+smry_var_hist_median <- reactive({
+  summary(df()[, descriptive_summary_histogram_variable()])["Median"]
+})
+#2. Select the approximate number of histogram bars
+output$smry_var_hist_bars <- renderUI({                                 
+  numericInput("smryVrHstBrs", "2. Select the approximate number of histogram bars.", 
+               value = 15, step = 1, min=2)     
+})
+#2A. Object for histogram bars 
+summary_variable_histogram_bars <- reactive({
+  input$smryVrHstBrs
+})
+#3. Bar color
+output$smry_var_hist_bar_clr <- renderUI({                                
+  selectInput("smryVrHstBrClr", "3. Select the bar color.",        
+              choices = c("red","orange","yellow","green","blue","purple","gray","black"), 
+              multiple=FALSE, selected="blue" ) 
+})
+#3A. Reactive function for Bar color
+summary_var_histogram_bar_color <- reactive({
+  input$smryVrHstBrClr
+})
+#4. Indicate if you want to show the mean and median
+output$smry_hist_mn_med_yesno <- renderUI({                                 
+  selectInput("smryHstMnMdYN", "4. Want to show the mean and median?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")     
+})
+#4A. Object for the mean and median 
+summary_hist_mean_median_yes_no <- reactive({
+  input$smryHstMnMdYN
+})
+#5. Line colors
+output$smry_var_hist_ln_clr <- renderUI({                                
+  selectInput("smryVrHstLnClr", "5. Select the line colors.",        
+              choices = c("red","orange","yellow","green","blue","purple","gray","black"), 
+              multiple=TRUE, selected="black" ) 
+})
+#5A. Reactive function for the line color
+summary_var_histogram_line_color <- reactive({
+  input$smryVrHstLnClr
+})
+#6. Indicate if you want the histogram
+output$smry_var_hist_yesno <- renderUI({                                 
+  selectInput("smryVrHstYN", "6. Do you want to run the histogram?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")     
+})
+#6A. Object for classification plot 
+summary_var_hist_yes_no <- reactive({
+  input$smryVrHstYN
+})
+#7. Run the histogram function below
+summary_var_histogram_run <- reactive({
+  if(summary_var_hist_yes_no() == "Yes") {    
+    fncSmryHist(DF=df(), X=descriptive_summary_histogram_variable(), 
+                BNS=summary_variable_histogram_bars(), CLR=summary_var_histogram_bar_color(), 
+                LCLR=summary_var_histogram_line_color(), MN=smry_var_hist_mean(), 
+                MED=smry_var_hist_median(), AddLine=summary_hist_mean_median_yes_no())
+  }  
+})
+#7A.histogram  
+output$summary_var_histogram_out <- renderPlot({
+  if(summary_var_hist_yes_no() == "Yes") {
+    summary_var_histogram_run()
+  }
+})
+
+###############################
+## Function to get histogram ##
+###############################
+fncSmryHist <- function(DF, X, BNS, CLR, LCLR, MN, MED, AddLine) {
+  #main.title <- paste0("Histogram of ", X, " (Median= ",MED,", Mean= ", MN, ")")
+  hist(x=DF[, X], breaks=BNS, col=CLR, xlab= X,
+       main= paste0("Histogram of ", X, " (Median= ",MED,", Mean= ", MN, ")"))
+  #Add mean and median lines
+  if (AddLine== "Yes") {
+    abline(v=MN,  col= tail(LCLR, 1), lwd=3, lty=2)
+    abline(v=MED, col= head(LCLR, 1), lwd=3, lty=2)
+  }
+}
+
 
 ################################################################################
 ##                       Cost analysis with the Cox PH model                  ##

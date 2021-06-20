@@ -3770,8 +3770,13 @@ output$sig_bin <- renderUI({                                #
   numericInput("sigBin", "5. Select the significance level (alpha).",       #
                value = 0.05, min=0, max=1, step=.01 )   #
 })
+output$one_two_side_bin <- renderUI({                                #
+  selectInput("oneTwoSideBin", "6. Select a one- or two-sided test.",       #
+              choices = c("two.sided", "one.sided"), multiple=FALSE, 
+              selected="two.sided" )   #
+})
 output$pwr_smp_bin <- renderUI({                                #
-  selectInput("pwrsmpBin", "6. Do you want to determine power or sample size.",       #
+  selectInput("pwrsmpBin", "7. Do you want to determine power or sample size.",       #
               choices = c("Power", "Sample Size"), multiple=FALSE, selected="Sample Size" )   #
 })
 
@@ -3804,8 +3809,13 @@ output$type_con <- renderUI({                                #
               choices = c("two.sample", "one.sample", "paired"), multiple=FALSE, 
               selected="two.sample" )   #
 })
+output$one_two_side_con <- renderUI({                                #
+  selectInput("oneTwoSideCon", "7. Select a one- or two-sided test.",       #
+              choices = c("two.sided", "one.sided"), multiple=FALSE, 
+              selected="two.sided" )   #
+})
 output$pwr_smp_con <- renderUI({                                #
-  selectInput("pwrsmpCon", "7. Do you want to determine power or sample size.",       #
+  selectInput("pwrsmpCon", "8. Do you want to determine power or sample size.",       #
               choices = c("Power", "Sample Size"), multiple=FALSE, selected="Sample Size" )   #
 })
 
@@ -3832,19 +3842,21 @@ harmonicMn <- reactive({
 ##############
 ## Analysis ##
 ##############
-## Summary ##
+## Summary ##  typeBin
 output$power_summary <- renderPrint({ 
   list("Binary Outcome"= if (input$pwrsmpBin == "Sample Size") {
-    power.prop.test(power=input$powerBin, p1=input$p1Bin, p2=input$p2Bin, sig.level=input$sigBin)
+    power.prop.test(power=input$powerBin, p1=input$p1Bin, p2=input$p2Bin, 
+                    sig.level=input$sigBin, alternative=input$oneTwoSideBin )
   }  else {
-    power.prop.test(n=input$nBin, p1=input$p1Bin, p2=input$p2Bin, sig.level=input$sigBin)
+    power.prop.test(n=input$nBin, p1=input$p1Bin, p2=input$p2Bin, 
+                    sig.level=input$sigBin, alternative=input$oneTwoSideBin)
   },
   "Continuous Outcome"= if (input$pwrsmpCon == "Sample Size") {
     power.t.test(power=input$powerCon, delta=input$deltaCon, sd=input$sdCon, 
-                    sig.level=input$sigCon, type=input$typeCon)
+                    sig.level=input$sigCon, type=input$typeCon, alternative=input$oneTwoSideCon)
   }  else {
     power.t.test(n=input$nCon, delta=input$deltaCon, sd=input$sdCon, 
-                    sig.level=input$sigCon, type=input$typeCon)
+                    sig.level=input$sigCon, type=input$typeCon, alternative=input$oneTwoSideCon)
   }
   
   )
@@ -4705,6 +4717,158 @@ output$DescSmryPlt <- renderPlot({
   }
 #}, height = 700, width = 1000  )
 }, height = 800, width = 1200  )
+
+##########################################################################
+##      Scatter plot with a correlation test and loess smoothing        ##
+##########################################################################
+
+#1. Y variable "Select the response variable"
+output$sctr_crtst_y <- renderUI({                                
+  selectInput("sctrCrtstY", "1. Select the Y-axis variable",        
+              choices = var(), multiple=FALSE, selected=var()[1] ) 
+})
+#1A. Reactive function for the Y variable
+scatter_cor_test_y <- reactive({
+  input$sctrCrtstY
+})
+#2. X formula  "Select the explanatory variable"
+#Select the predictors.
+output$sctr_crtst_x <- renderUI({                                 #Same idea as output$vy
+  selectInput("sctrCrtstX", "2. Select the X-axis variable", 
+              choices = setdiff(var(), scatter_cor_test_y()), multiple=FALSE, selected=var()[2]) 
+})
+#2A. Reactive function for the X variable
+scatter_cor_test_x <- reactive({
+  input$sctrCrtstX
+})
+#3. correlation method
+output$sctr_crtst_meth <- renderUI({                                
+  selectInput("sctrCrtstMth", "3. Select the correlation method.",        
+              choices = c("pearson", "kendall", "spearman"), multiple=FALSE, selected="pearson" ) 
+})
+#3A. Reactive function for the correlation method
+scatter_cor_test_method <- reactive({
+  input$sctrCrtstMth
+})
+#4. Alternative hypothesis test
+output$sctr_crtst_alt <- renderUI({                                
+  selectInput("sctrCrtstAlt", "4. Select a one- or two-sided test.",        
+              choices = c("two.sided", "less", "greater"), multiple=FALSE, selected="two.sided" ) 
+})
+#4A. Reactive function for alternative hypothesis test
+scatter_cor_test_alternative <- reactive({
+  input$sctrCrtstAlt
+})
+#5. 
+output$scatter_cor_test_CI <- renderUI({                                #
+  numericInput("sctrCrtstCI", "5. Select the confidence interval level.",       #
+               value = 0.95, min=0, max=1, step=.01 )   #
+})
+#5A. Reactive function for confidence interval
+Scatter_Cor_Test_Conf_Int <- reactive({
+  input$sctrCrtstCI
+})
+#6. Exact method
+output$scatter_cor_test_exct <- renderUI({  
+  textInput("sctrCrtstEM", "6. Use the exact method?", 
+  #            choices = c("",TRUE, FALSE), multiple=FALSE, selected="")     
+  value = NULL)
+})
+#6A. Reactive function for Exact method
+Scatter_Cor_Test_Exact_Method <- reactive({
+  input$sctrCrtstEM
+})
+#7. Exact method
+output$scatter_cor_test_cnt <- renderUI({  
+  selectInput("sctrCrtstCC", "7. Use the continuity correction?", 
+              choices = c(TRUE, FALSE), multiple=FALSE, selected=FALSE)     
+})
+#7A. Reactive function for Exact method
+Scatter_Cor_Test_Cont_Correct <- reactive({
+  input$sctrCrtstCC
+})
+#8. Line color
+output$sctr_crtst_clr <- renderUI({                                
+  selectInput("sctrCrtstClr", "8. Select the plot's line color.",        
+              choices = c("red","orange","yellow","green","blue","purple","gray","black"), 
+              multiple=FALSE, selected="red" ) 
+})
+#8A. Reactive function for alternative hypothesis test
+scatter_cor_line_color <- reactive({
+  input$sctrCrtstClr
+})
+#9. Exact method
+output$scatter_cor_test_run_YN <- renderUI({  
+  selectInput("sctrCrtstYN", "9. Run the correlation and plot?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")     
+})
+#9A. Reactive function for Exact method
+Scatter_Cor_Test_Run_Yes_No <- reactive({
+  input$sctrCrtstYN
+})
+#10. Run the function below
+scatter_cor_test_cor_run <- reactive({
+  if(Scatter_Cor_Test_Run_Yes_No() == "Yes") {    
+    fncSctrPltCr(DF=df(), X=scatter_cor_test_x(), Y=scatter_cor_test_y(), 
+                 sct_plt_alt=scatter_cor_test_alternative(), 
+                 sct_plt_meth=scatter_cor_test_method() , 
+                 sct_plt_exct= eval(parse(text=Scatter_Cor_Test_Exact_Method() )) , 
+                 
+                 #sct_plt_exct=Scatter_Cor_Test_Exact_Method(), 
+                 sct_plt_ci_lv=Scatter_Cor_Test_Conf_Int(), 
+                 sct_plt_cont=Scatter_Cor_Test_Cont_Correct() 
+    )
+  }  
+})
+#10A.Correlation test output  
+output$scatter_cor_test_cor_test_out <- renderPrint({
+  if(Scatter_Cor_Test_Run_Yes_No() == "Yes") {
+    scatter_cor_test_cor_run()
+  }
+})
+#11. Run the function below
+scatter_cor_test_plt_run <- reactive({
+  if(Scatter_Cor_Test_Run_Yes_No() == "Yes") {    
+    fncSctrPlt(DF=df(), X=scatter_cor_test_x(), Y=scatter_cor_test_y(), 
+                 sct_plt_clr=scatter_cor_line_color(), CT=scatter_cor_test_cor_run()
+    )
+  }  
+})
+#11A.Scatter plot  
+output$scatter_cor_test_plt_out <- renderPlot({
+  if(Scatter_Cor_Test_Run_Yes_No() == "Yes") {
+    scatter_cor_test_plt_run()
+  }
+})
+
+## Function to get correlation test ##
+fncSctrPltCr <- function(DF, X, Y, 
+                         sct_plt_alt, 
+                         sct_plt_meth , 
+                         sct_plt_exct, 
+                         sct_plt_ci_lv, 
+                         sct_plt_cont
+                         ) {
+  #Correlation test
+  CT <- cor.test(x=DF[, X], y=DF[, Y], alternative = sct_plt_alt,
+                 method = sct_plt_meth, 
+                 exact = sct_plt_exct, 
+                 conf.level = sct_plt_ci_lv, 
+                 continuity = sct_plt_cont, 
+                 na.rm=TRUE)
+  return("Correlation.Test"= CT)
+}
+## Function to get scatter plot ##
+fncSctrPlt <- function(DF, X, Y, sct_plt_clr, CT) {
+  #Scatter plot
+    plot(DF[, X], DF[, Y] , main= paste0("Correlation of ", Y, " on ", X, 
+                                        " (correlation= ", round(as.numeric(CT["estimate"]), 3), 
+                                        ", ", "p-value= ", try(round(as.numeric(CT["p.value"]), 4)), ")"),
+         xlab=X, ylab=Y)
+    lw1 <- loess(formula= as.formula(paste(Y, "~", X)), data=DF)
+    j <- order(DF[, X])
+    lines(DF[, X][j], lw1$fitted[j],col= sct_plt_clr,lwd=3)
+}
 
 ##########################################################################
 ## summaryRc plot of continuous Y by continuous X with a stratification ##

@@ -330,7 +330,45 @@ tabPanel("Describe",
                   uiOutput("desc_choice"))
          ),
          plotOutput("DescSmryPlt", height = 800, width = 1200),          
-         #summaryRc plot 
+
+         ## scatter plot with correlation ## 
+         fluidRow(   
+           h4("Scatterplot with a lowess smoothed line and a correlation test."),
+           br(),
+           h5("Method indicates which correlation coefficient is used for the test."),
+           h5("'pearson'= both continuous variables; 'kendall' tau= continuous, ordinal, and binary scales. 'spearman' rho= continuous, ordinal, and binary scales; nonparametric method will detect not only non-linear relationships but non-monotonic ones."),
+           h5("Exact indicates whether an exact p-value should be computed. Used for 'kendall' and 'spearman'. Default is to leave #7 blank."),
+           h5("Continuity correction used for 'kendall' and 'spearman' when not computed exactly."),
+           br(),
+           column(3, 
+                  uiOutput("sctr_crtst_y")),
+           column(3, offset=1,
+                  uiOutput("sctr_crtst_x")),
+           column(3, offset=1,
+                  uiOutput("sctr_crtst_meth"))
+         ),
+         fluidRow(   
+           column(3, 
+                  uiOutput("sctr_crtst_alt")),
+           column(3, offset=1,
+                  uiOutput("scatter_cor_test_CI")),
+           column(3, offset=1,
+                  uiOutput("scatter_cor_test_exct"))
+         ),
+         fluidRow(   
+           column(3, 
+                  uiOutput("scatter_cor_test_cnt")),
+           column(3, offset=1,
+                  uiOutput("sctr_crtst_clr")),
+           column(3, offset=1,
+                  uiOutput("scatter_cor_test_run_YN"))
+         ),
+         plotOutput("scatter_cor_test_plt_out", height = 800, width = 1200),
+         br(),
+         h5("Correlation test results"),
+         verbatimTextOutput("scatter_cor_test_cor_test_out"),
+         
+         ## summaryRc plot ## 
          br(),
          fluidRow(
            h4("Graphical Summarization of Continuous Variables Against a Continuous Response"),
@@ -1455,63 +1493,64 @@ tabPanel("Meta" ,
 ################################################################################
 
 tabPanel("Power" ,
+           h4("Power analysis using a two-sample binomial proportion test or a one- or two-sample t-test"),
+           h5("Demo values are used as defaults, including harmonic mean sample sizes for uneven group Ns."),
          fluidRow(
-           h4("Power analysis using a binomial proportion or t-test"),
-           h6("Demo values are used as defaults, including harmonic mean sample sizes for uneven group Ns."),
-           column(4,
-                  h4("Binary outcomes"),
-                  uiOutput("power_bin"),  #Number of events in the treatment group.
-                  uiOutput("n_bin"),  #Number of events in the control group.
-                  br(),
-                  h4("Continuous outcomes"),
-                  uiOutput("power_con"),  #
-                  uiOutput("n_con"),  #
-                  uiOutput("pwr_smp_con"),  #
-                  br(),                   
-                  h4("Do you have uneven group sizes?"),
-                  uiOutput("grp1_n")  #
+             h4("Binary outcomes"),
+             column(3,
+                    uiOutput("power_bin")),
+             column(3, offset=1,
+                    uiOutput("p1_bin")),
+             column(3, offset=1,
+                    uiOutput("sig_bin"))
+           ),
+           fluidRow(
+             column(3,
+                    uiOutput("n_bin")),
+             column(3, offset=1,
+                    uiOutput("p2_bin")),
+             column(3, offset=1,
+                    uiOutput("one_two_side_bin"))
+           ),
+           fluidRow(
+             column(3, 
+                    uiOutput("pwr_smp_bin"))
+           ),
+           br(),
+           fluidRow(
+             h4("Continuous outcomes"),
+             column(3,
+                    uiOutput("power_con")),
+             column(3, offset=1,
+                    uiOutput("delta_con")),
+             column(3, offset=1,
+                    uiOutput("sig_con"))
+           ),
+           fluidRow(
+             column(3,
+                    uiOutput("n_con")),
+             column(3, offset=1,
+                    uiOutput("sd_Con")),
+             column(3, offset=1,
+                    uiOutput("type_con"))
+           ),
+           fluidRow(
+             column(3, 
+                    uiOutput("one_two_side_con")),
+             column(3, offset=1,
+                    uiOutput("pwr_smp_con"))
+           ),
+           br(),
+           fluidRow(
+             h4("Do you have uneven group sizes?"),
+             column(3,
+                    uiOutput("grp1_n")),
+             column(3, offset=1,
+                    uiOutput("grp2_n")),
+             column(3, offset=1,
+                    uiOutput("harmonic_n"))
            ),
            
-           column(3,  #offset=1,
-                  br(),                   
-                  br(),                   
-                  uiOutput("p1_bin"),  #Number of observations in the treatment group.
-                  uiOutput("p2_bin"),  #Number of observations in the treatment group.
-                  br(),                   
-                  uiOutput("delta_con"),  #
-                  uiOutput("sd_Con"),  #
-                  br(),                   
-                  br(),                   
-                  br(),                   
-                  br(),                   
-                  br(),                   
-                  br(),                   
-                  br(),                   
-                  h4(" "),
-                  uiOutput("grp2_n")  #
-           ),
-
-           column(3, offset=1, 
-                  br(),                   
-                  br(),                   
-                  uiOutput("sig_bin"),  #Number of observations in the treatment group.
-                  uiOutput("pwr_smp_bin"),           
-                  br(),
-                  br(),
-                  uiOutput("sig_con"),  #
-                  uiOutput("type_con"),  #
-                  br(),                   
-                  br(),                   
-                  br(),                   
-                  br(),                   
-                  br(),                   
-                  br(),                   
-                  br(),                   
-                  h4(" "),
-                  uiOutput("harmonic_n")  #
-           )
-         ),
-         
          h4("Power analysis summary"),
          verbatimTextOutput("power_summary"),
          h5("'Delta' represents the difference between the two group's mean."),

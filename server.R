@@ -5217,9 +5217,8 @@ output$summary_var_histogram_out <- renderPlot({
 ## Function to get histogram ##
 ###############################
 fncSmryHist <- function(DF, X, BNS, CLR, LCLR, MN, MED, AddLine) {
-  #main.title <- paste0("Histogram of ", X, " (Median= ",MED,", Mean= ", MN, ")")
   hist(x=DF[, X], breaks=BNS, col=CLR, xlab= X,
-       main= paste0("Histogram of ", X, " (Median= ",MED,", Mean= ", MN, ")"))
+       main= paste0("Histogram of ", X, " (Median= ",round(MED, 3),", Mean= ", round(MN, 3), ")"))
   #Add mean and median lines
   if (AddLine== "Yes") {
     abline(v=MN,  col= tail(LCLR, 1), lwd=3, lty=2)

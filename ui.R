@@ -347,7 +347,9 @@ tabPanel("Describe",
            column(3, offset=1,
                   uiOutput("smry_var_hist_yesno"))
          ),
-         plotOutput("summary_var_histogram_out", height = 800, width = "100%"),          
+         plotOutput("summary_var_histogram_out", height = 800, width = "100%"),
+         h5("Note: Mean= solid vertical line, Median= dashed vertical line."),
+         br(),
          #Means by factors
          fluidRow(   
            h4("Explore the mean values of an outcome variable by factor levels."),
@@ -358,7 +360,7 @@ tabPanel("Describe",
            column(3, offset=1,
                   uiOutput("desc_choice"))
          ),
-         plotOutput("DescSmryPlt", height = 800, width = 1200),          
+         plotOutput("DescSmryPlt", height = 800, width = 1200), 
          ## scatter plot with correlation ## 
          fluidRow(   
            h4("Scatterplot with a lowess smoothed line and a correlation test."),

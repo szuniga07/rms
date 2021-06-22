@@ -5218,11 +5218,11 @@ output$summary_var_histogram_out <- renderPlot({
 ###############################
 fncSmryHist <- function(DF, X, BNS, CLR, LCLR, MN, MED, AddLine) {
   hist(x=DF[, X], breaks=BNS, col=CLR, xlab= X,
-       main= paste0("Histogram of ", X, " (Median= ",round(MED, 3),", Mean= ", round(MN, 3), ")"))
+       main= paste0("Histogram of ", X, " (Mean= ", round(MN, 3),", Median= ", round(MED, 3), ")"))
   #Add mean and median lines
   if (AddLine== "Yes") {
-    abline(v=MN,  col= tail(LCLR, 1), lwd=3, lty=2)
-    abline(v=MED, col= head(LCLR, 1), lwd=3, lty=2)
+    abline(v=MN,  col= head(LCLR, 1), lwd=3, lty=1)
+    abline(v=MED, col= tail(LCLR, 1), lwd=3, lty=2)
   }
 }
 

@@ -320,7 +320,7 @@ tabPanel("PREDs",                                #Creates a new panel named "Tes
 tabPanel("Describe",
          h4("Descriptives on means and missing values. Plot the target variable, stratifying by factors."),
          br(),
-         h4("Summarize the data."),
+         h4("Summarize the data's central tendency and dispersion."),
          fluidRow(   
            column(3, 
                   uiOutput("desc_summ_vars")),
@@ -454,7 +454,7 @@ tabPanel("Describe",
            column(4, offset=1,
                   uiOutput("calculator_yesno"))
          ),
-         h5("Calculation (e.g., sqrt(16) + 6 = 10)"),         
+         h5("Calculation (e.g., sqrt(16) + 6 = 10, sd(mtcars$mpg))"),         
          br(),
          verbatimTextOutput("prnt_calculation"),
          br()

@@ -5122,10 +5122,25 @@ output$des_summ_yesno <- renderUI({
 Desc_Summary_YN <- reactive({
   input$dscSmYN
 })                                                     
+#3. Reactive function to get summary values
+Desc_Summary_Central_Tendency <- reactive({
+  summary(df()[, descriptive_summary_variables()])
+})                                                     
+#4. Reactive function to get summary values
+Desc_Summary_SD <- reactive({
+  apply(df()[, descriptive_summary_variables(), drop=FALSE], 2, sd, na.rm=TRUE)
+})                                                     
+
+Desc_Summary_all <- reactive({
+  list(c("Summary"= Desc_Summary_Central_Tendency(),
+         "Standard.Deviation"= Desc_Summary_SD()))
+})                                                     
+
 #Print the summary 
 output$prnt_desc_summ <- renderPrint({
   if (Desc_Summary_YN() == "Yes") {
-    summary(df()[, descriptive_summary_variables()])
+    list("Summary"= Desc_Summary_Central_Tendency(),
+         "Standard.Deviation"= Desc_Summary_SD())
   }
 })
 

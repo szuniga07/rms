@@ -463,7 +463,7 @@ shinyServer(
       c(spline_rcs(), non_spline())
       })
     
-    mdl_fmla <- reactive({             #Spline terms 
+    mdl_fmla <<- reactive({             #Spline terms 
       as.formula(paste(paste0(input$variableY , "~"),   
                        paste(mdl_vnms(), collapse= "+")))
     })
@@ -599,7 +599,7 @@ shinyServer(
     })
     
     #Creates a formula for the model approximation
-    aprx_mdl_fmla <- reactive({             #Spline terms 
+    aprx_mdl_fmla <<- reactive({             #Spline terms 
       as.formula(paste(paste0(input$variableY , "~"),   
                        paste(mdl_vnms(), collapse= "+")))
     })
@@ -969,7 +969,7 @@ shinyServer(
     
     #Indicate the clustering structure.
     output$clustering <- renderUI({                                 #Same idea as output$vy
-      selectInput("gls_clst", "8. GLS clustering: List level 1 and 2 variables (in order)",     #Will make choices based on my reactive function.
+      selectInput("gls_clst", "8. GLS clustering: List level 1 and 2 variables (e.g., time | id)",     #Will make choices based on my reactive function.
       choices = gls_lev1_2(), multiple=TRUE, selected=gls_lev1_2()[1:2])
     })
 
@@ -999,7 +999,7 @@ shinyServer(
     
     #Update the model formula.
     output$uf <- renderUI({                                 #Same idea as output$vy
-      textInput("up_fmla", "13. Update formula (Interactions: Change \"+\" to \'*\', strat(X) to stratify CPH)", 
+      textInput("up_fmla", "13. Update formula (Interactions: Change \"+\" to \'*\', strat(X) to stratify CPH).", 
                 value= deparse(mdl_fmla(), width.cutoff=500 ))     #Will make choices based on my reactive function.
     })
     
@@ -1882,7 +1882,7 @@ fncDcsnCrvPlt <- function(ThreshQntl, CType, xlim1,xlim2,ylim1,ylim2) {
         #the real name like "state", it should work
         #plot(  do.call("summary", list(fit1(), state=unique(df()[,"state"])[1], est.all=FALSE) )) 
       } else {
-        plot(summary(fit1()), pch=11, col.points=2)
+        plot(summary(fit1()) , pch=11, col.points=2)
       }
     }, height = 600)
 #################################################
@@ -5130,17 +5130,17 @@ Desc_Summary_Central_Tendency <- reactive({
 Desc_Summary_SD <- reactive({
   apply(df()[, descriptive_summary_variables(), drop=FALSE], 2, sd, na.rm=TRUE)
 })                                                     
-
-Desc_Summary_all <- reactive({
-  list(c("Summary"= Desc_Summary_Central_Tendency(),
-         "Standard.Deviation"= Desc_Summary_SD()))
+#5. Reactive function for the coefficient of variation
+Desc_Summary_COV <- reactive({
+  Desc_Summary_SD()/ colMeans(df()[, descriptive_summary_variables()], na.rm=TRUE)
 })                                                     
 
 #Print the summary 
 output$prnt_desc_summ <- renderPrint({
   if (Desc_Summary_YN() == "Yes") {
     list("Summary"= Desc_Summary_Central_Tendency(),
-         "Standard.Deviation"= Desc_Summary_SD())
+         "Standard.Deviation"= Desc_Summary_SD(),
+         "Coefficient.of.Variation"= Desc_Summary_COV() )
   }
 })
 
@@ -9092,13 +9092,13 @@ fncStSpcLegendFactoLev <- function(Model_fit, X_Lev) {
 ##  plot(values$a, values$b)
 ##} )
 
-output$test1 <- renderPrint({
-#  thresh_quant_data_output()
-#summary(new_imputed.si())
+#output$test1 <- renderPrint({
+##  thresh_quant_data_output()
+#print(mean(df()[, descriptive_summary_variables()], na.rm=TRUE))
 #  list("ti"=fit1()$time, "sv"= fit1()$surv)
 #  list( nomo_update_formula(), class(nomo_update_formula() ))
-  thresh_quant_data_output()
-  })
+#  thresh_quant_data_output()
+#  })
 
 
 ################################################################################

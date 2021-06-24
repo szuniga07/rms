@@ -328,7 +328,7 @@ tabPanel("Describe",
                   uiOutput("des_summ_yesno"))
          ),
          verbatimTextOutput("prnt_desc_summ"),
-         h5("Coefficient of variation = Standard Deviation / Mean."),
+         h5("Coefficient of variation = Standard Deviation / Mean. COV returns errors for non-numerical variables."),
          br(),
          #Histogram
          h4("Histogram of a key variable"),
@@ -1671,13 +1671,13 @@ tabPanel("95% CIs",
 
 
 ############## TEST SECTION #############################
- , #THIS COMMA IS COMMENTED OUT IN CASE I EVER NEED THE TEST FUNCTION BELOW    
+# , #THIS COMMA IS COMMENTED OUT IN CASE I EVER NEED THE TEST FUNCTION BELOW    
  
-tabPanel("Test it",                                #Creates a new panel named "Test"
-         fluidRow(                           #Wrapping them in a fluidRow provides easy control over  
-           verbatimTextOutput("test1")
+#tabPanel("Test it",                                #Creates a new panel named "Test"
+#         fluidRow(                           #Wrapping them in a fluidRow provides easy control over  
+#           verbatimTextOutput("test1")
 #           plotOutput("testplot1")
-         ))
+#         ))
 ############## TEST SECTION #############################
 
 

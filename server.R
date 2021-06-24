@@ -5132,7 +5132,7 @@ Desc_Summary_SD <- reactive({
 })                                                     
 #5. Reactive function for the coefficient of variation
 Desc_Summary_COV <- reactive({
-  Desc_Summary_SD()/ colMeans(df()[, descriptive_summary_variables()], na.rm=TRUE)
+  Desc_Summary_SD()/ colMeans(df()[, descriptive_summary_variables(), drop=FALSE], na.rm=TRUE)
 })                                                     
 
 #Print the summary 
@@ -5140,7 +5140,7 @@ output$prnt_desc_summ <- renderPrint({
   if (Desc_Summary_YN() == "Yes") {
     list("Summary"= Desc_Summary_Central_Tendency(),
          "Standard.Deviation"= Desc_Summary_SD(),
-         "Coefficient.of.Variation"= Desc_Summary_COV() )
+         "Coefficient.of.Variation"= try(Desc_Summary_COV()) )
   }
 })
 

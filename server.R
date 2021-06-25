@@ -5132,9 +5132,10 @@ Desc_Summary_SD <- reactive({
 })                                                     
 #5. Reactive function for the coefficient of variation
 Desc_Summary_COV <- reactive({
-  Desc_Summary_SD()/ colMeans(df()[, descriptive_summary_variables(), drop=FALSE], na.rm=TRUE)
+  #Desc_Summary_SD()/ colMeans(df()[, descriptive_summary_variables(), drop=FALSE], na.rm=TRUE)
+  suppressWarnings(fncSmryCOV(DF=df(), X=descriptive_summary_variables(), 
+                              SD= Desc_Summary_SD()))
 })                                                     
-
 #Print the summary 
 output$prnt_desc_summ <- renderPrint({
   if (Desc_Summary_YN() == "Yes") {
@@ -5143,6 +5144,21 @@ output$prnt_desc_summ <- renderPrint({
          "Coefficient.of.Variation"= try(Desc_Summary_COV()) )
   }
 })
+
+###############################################
+##  Function to get coefficient of variation ##
+###############################################
+fncSmryCOV <- function(DF, X, SD) {
+  #Make the SD a matrix
+  aSD <- matrix(SD, nrow=1)
+  #Get the means
+  aMEAN <- lapply(DF[,X],  mean, na.rm=T)
+  #Make the mean a matrix
+  aMEAN <- matrix(unlist(aMEAN), nrow=1)
+  COV <- as.vector(sweep(aSD, 1, unlist(aMEAN), "/") )
+  names(COV) <- X
+  return(COV)
+}
 
 ################################################################################
 ##                        Summary X Histogram                                 ##

@@ -20,7 +20,7 @@
                    tableOutput("view_main_data_out"),
                    br(),
                    h5("Upload R Data."),
-                   ###
+                   ### 
           uiOutput("upload_r_df"),
           verbatimTextOutput("datastr"),
           br(),
@@ -328,7 +328,7 @@ tabPanel("Describe",
                   uiOutput("des_summ_yesno"))
          ),
          verbatimTextOutput("prnt_desc_summ"),
-         h5("Coefficient of variation = Standard Deviation / Mean. COV returns errors for non-numerical variables."),
+         h5("Coefficient of variation = Standard Deviation / Mean. COV returns errors ('NA') for non-numerical variables."),
          br(),
          #Histogram
          h4("Histogram of a key variable"),

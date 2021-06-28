@@ -5257,6 +5257,338 @@ fncSmryHist <- function(DF, X, BNS, CLR, LCLR, MN, MED, AddLine) {
   }
 }
 
+################################################################################
+##           Density plot trend over time by groups                           ##
+################################################################################
+#1. Select the outcome variable.
+output$dnsty_grp_trnd_Yvar <- renderUI({
+  selectInput("dnsGrpTrnY", "1. Select the outcome.",
+              choices = var(), multiple=FALSE, 
+              selected=var()[1])
+})
+#1A. Reactive function for the outcome variable
+density_group_trend_outcome <- reactive({
+  input$dnsGrpTrnY
+})
+#1B. Reactive function for the density of the outcome variable
+density_group_trend_Y_density <- reactive({
+  density(df()[, density_group_trend_outcome()], na.rm=TRUE) 
+})
+#2. Select the grouping variable.
+output$dnsty_grp_trnd_Xvar <- renderUI({
+  selectInput("dnsGrpTrnX", "2. Select the group factor.",
+              choices = setdiff(var(), density_group_trend_outcome()), multiple=FALSE, 
+              selected=var()[2])
+})
+#2A. Reactive function for the variable
+density_group_trend_group <- reactive({
+  input$dnsGrpTrnX
+})
+#2B. Reactive function for the group levels
+density_group_trend_grp_levels <- reactive({
+  unique(df()[, density_group_trend_group()])
+})
+#3. Select the specific groups.
+output$dnsty_grp_trnd_Xlevs <- renderUI({
+  selectInput("dnsGrpTrXlev", "3. Select specific groups.",
+              choices = density_group_trend_grp_levels(), multiple=TRUE)
+})
+#3A. Reactive function for the variable
+density_group_trend_grp_X_levs <- reactive({
+  input$dnsGrpTrXlev
+})
+#4. Select the time indicator.
+output$dnsty_grp_trnd_Zvar <- renderUI({ 
+  selectInput("dnsGrpTrnZ", "4. Select the time indicator.", 
+              choices = setdiff(var(), c(density_group_trend_outcome(), density_group_trend_group() ) ), 
+              multiple=FALSE, selected= setdiff(var(), c(density_group_trend_outcome(), density_group_trend_group() ) )[1])
+})
+#4A. Reactive function for the variable
+density_group_trend_time <- reactive({
+  input$dnsGrpTrnZ
+})
+#4B. Reactive function for the range of time
+density_group_trend_range_time <- reactive({
+  range(as.numeric(df()[, density_group_trend_time()]), na.rm=TRUE)
+})
+#5. Select the rolling time period 
+output$dnsty_grp_trnd_Z_inc <- renderUI({                                 
+  numericInput("dnsGrpTrnZInc", "5. Select time increments (3= 3 months).", 
+               value = 1, step = 1)     
+})
+#5A. Reactive function for the variable
+density_group_trend_Time_Increment <- reactive({
+  input$dnsGrpTrnZInc
+})
+#6. Line color
+output$dnsty_grp_trnd_ln_clr <- renderUI({                                
+  selectInput("dnsGrpTrnLClr", "6. Select the line color.",        
+              choices = c("red","orange","yellow","green","blue","purple","gray","black"), 
+              multiple=FALSE, selected="red" ) 
+})
+#6A. Reactive function for line color
+density_group_trend_line_color <- reactive({
+  input$dnsGrpTrnLClr
+})
+#7. Select the rolling time period 
+output$dnsty_grp_trnd_trgt <- renderUI({                                 
+  numericInput("dnsGrpTrnTrgt", "7. Set a target.", 
+               value = NULL, step = .01)     
+})
+#7A. Reactive function for the variable
+density_group_trend_Target <- reactive({
+  input$dnsGrpTrnTrgt
+})
+#8. Legend location
+output$dnsty_grp_trnd_lgd_loc <- renderUI({                                
+  selectInput("dnsGrpTrnLgdLoc", "8. Select the legend location.",        
+              choices = c("bottomright","bottom","bottomleft","left","topleft","top","topright","right","center"), 
+              multiple=FALSE, selected="red" ) 
+})
+#8A. Reactive function for legend location
+density_group_trend_legend_location <- reactive({
+  input$dnsGrpTrnLgdLoc
+})
+#9. Set the seed 
+output$dnsty_grp_trnd_st_sed <- renderUI({                                 
+  numericInput("dnsGrpTrnStSd", "9. Set (seed) group name randomness.", 
+               value = 1, step = 1, min=1)     
+})
+#9A. Reactive function for the variable
+density_group_trend_set_seed <- reactive({
+  input$dnsGrpTrnStSd
+})
+#10. Indicate if you want to run the trend function
+output$dnsty_grp_trnd_run_yesno <- renderUI({                                 
+  selectInput("dnsGrpTrnRunYN", "10. Run the trend?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")     
+})
+#10A. Object for yes/no running of the plot 
+density_group_trend_run_yes_no <- reactive({
+  input$dnsGrpTrnRunYN
+})
+#11. Speed of the animation play 
+output$dnsty_grp_trnd_sec <- renderUI({                                 
+  numericInput("dnsGrpTrnSec", "11. Play speed (1000= 1 second).", 
+               value = 500, step = 100, min=0)     
+})
+#11A. Reactive function for the variable
+density_group_trend_seconds <- reactive({
+  input$dnsGrpTrnSec
+})
+#12. Play the trend graph
+output$dnsty_grp_trnd_ply <- renderUI({
+  sliderInput("dnsGrpTrnPly", "12. Play the time trend.",   
+              min= density_group_trend_range_time()[1], 
+              max= density_group_trend_range_time()[2] - (density_group_trend_Time_Increment() - 1), 
+              value =1, step=1, animate=list(interval= density_group_trend_seconds() ))  
+})
+#12A. Reactive function for the variable
+density_group_trend_play <- reactive({
+  input$dnsGrpTrnPly
+})
+#13. Indicate lower limit of x-axis
+output$dnsty_grp_trnd_Xlim1 <- renderUI({
+  numericInput("dnsGrpTrnX1", "13. Lower X-axis limit.",
+               value = min(density_group_trend_Y_density()[["x"]], na.rm=TRUE), step = .1)
+})
+#13A. Reactive function for the variable
+density_group_trend_Xlim1 <- reactive({
+  input$dnsGrpTrnX1
+})
+#14. Indicate upper limit of x-axis
+output$dnsty_grp_trnd_Xlim2 <- renderUI({
+  numericInput("dnsGrpTrnX2", "14. Upper X-axis limit.",
+               value = max(density_group_trend_Y_density()[["x"]], na.rm=TRUE), step = .1)
+})
+#14A. Reactive function for the variable
+density_group_trend_Xlim2 <- reactive({
+  input$dnsGrpTrnX2
+})
+#15. Indicate lower limit of y-axis
+output$dnsty_grp_trnd_Ylim1 <- renderUI({
+  numericInput("dnsGrpTrnY1", "15. Lower Y-axis limit.",
+               value = min(density_group_trend_Y_density()[["y"]], na.rm=TRUE), step = .1)
+})
+#15A. Reactive function for the variable
+density_group_trend_Ylim1 <- reactive({
+  input$dnsGrpTrnY1
+})
+#16. Indicate upper limit of Y-axis
+output$dnsty_grp_trnd_Ylim2 <- renderUI({
+  numericInput("dnsGrpTrnY2", "16. Upper Y-axis limit.",
+               value = max(density_group_trend_Y_density()[["y"]], na.rm=TRUE), step = .1)
+})
+#16A. Reactive function for the variable
+density_group_trend_Ylim2 <- reactive({
+  input$dnsGrpTrnY2
+})
+#17. Run trend output function below  
+density_group_trend_output <- reactive({
+  if(density_group_trend_run_yes_no() == "Yes") {    
+    fncTmDnsty(DF=df(), X= density_group_trend_group(), Y= density_group_trend_outcome(), 
+               Z= density_group_trend_time(), Increment= density_group_trend_Time_Increment(), 
+               Seed.Multiplier= density_group_trend_set_seed() )
+  }  
+})
+#17A. Output  
+output$dnsty_grp_trnd_out_print <- renderPrint({
+  if(density_group_trend_run_yes_no() == "Yes") {    
+    density_group_trend_output()
+  }
+})
+#18. Plot function below  
+density_group_trend_plot <- reactive({
+  if(density_group_trend_run_yes_no() == "Yes") {    
+    fncTmDnstPlot(TDList= density_group_trend_output(), X= density_group_trend_group(), 
+                  Y= density_group_trend_outcome(), Z= density_group_trend_time(), 
+                  Period= density_group_trend_play(), Lcol= density_group_trend_line_color(), 
+                  Target= density_group_trend_Target(), Groups= density_group_trend_grp_X_levs(), 
+                  Legend.Loc= density_group_trend_legend_location(), 
+                  Xmin=density_group_trend_Xlim1(), Xmax=density_group_trend_Xlim2(), 
+                  Ymin=density_group_trend_Ylim1(), Ymax= density_group_trend_Ylim2()) 
+  }  
+})
+#18A. Trend plot  
+output$dnsty_grp_trnd_plot <- renderPlot({
+  if(density_group_trend_run_yes_no() == "Yes") {
+    density_group_trend_plot()
+  }
+})
+
+################################################################################
+## Function to create aggregated values and density plot over time increments ##
+################################################################################
+fncTmDnsty <- function(DF, X, Y, Z, Groups, Increment, Period, Xmin, Xmax, Ymax, Seed.Multiplier) {
+  #Get summary of values
+  Group.Names <- unique(DF[, X]) 
+  Group.Names.Length <-  length(Group.Names)
+  Time.Period.Length <- length(unique(DF[, Z]))
+  Increment.Length <- Time.Period.Length - (Increment - 1)
+  Time.Period.Values <- unique(DF[, Z])
+  oTPV <- order(Time.Period.Values)
+  Time.Period.Values <- Time.Period.Values[oTPV]
+  #Get time periods for aggregating rates  
+  i <- 1
+  Time.Periods <- list()
+  while( i <= Increment.Length) {
+    Time.Periods[[i]] <- Time.Period.Values[i:(i + (Increment -1))] 
+    i = i + 1
+  }
+  #Aggregate values
+  AggrY <- list()
+  for (i in 1:length(Time.Periods )) {0
+    AggrY[[i]] <- aggregate(DF[DF[, Z] %in% Time.Periods[[i]], Y] ~ DF[DF[, Z] %in% Time.Periods[[i]], X], FUN=mean)
+    colnames(AggrY[[i]]) <- c(X, Y)
+  }
+  
+  #Overall density values
+  D1 <- density(x = DF[, Y], na.rm=TRUE )
+  XLim <- range(D1[["x"]])
+  YLim <- range(D1[["y"]])
+  
+  #Main title: Get first and last time points
+  Time.Start.Label <- lapply(Time.Periods, `[[`, 1)
+  Time.Stop.Label <- lapply(Time.Periods, `[[`, Increment) 
+  
+  #Values: Lists with each value by time point and group names
+  DXname <- lapply(AggrY, function(x) x[-length(x)])
+  DYvals <- lapply(AggrY, function(x) x[length(x)])
+  
+  #Density values by groups and time
+  DYvals <- lapply(DYvals, unlist)
+  D2 <- lapply(DYvals,density, na.rm=TRUE)
+  
+  #Means and medians by groups
+  YTmean <- lapply(DYvals, mean)
+  YTmedian <- lapply(DYvals, median)
+  
+  
+  #Get X and Y density values for the line to set as boundaries for text names
+  DxDY <- list()
+  for (j in 1:Increment.Length ) {
+    DxDY[j] <- (lapply(D2[j], function(x) x[1:2]))
+  }
+  
+  #I need to create a vector with the exact number of elements I need. Gets matching values within line
+  Dx.Cord <- vector(mode = "list", length = Increment.Length)
+  Dy.Cord <- vector(mode = "list", length = Increment.Length)
+  for (i in 1:nrow(DXname[[i]]) ) {
+    for (j in 1:Increment.Length ) {
+      Dx.Cord[[j]][i] <- DxDY[[j]][[ 1]][which( min(abs(DxDY[[j]][[1]] - DYvals[[j]][i])) == abs(DxDY[[j]][[1]] - DYvals[[j]][i] ))]
+      Dy.Cord[[j]][i] <- DxDY[[j]][[ 2]][which( min(abs(DxDY[[j]][[1]] - DYvals[[j]][i])) == abs(DxDY[[j]][[1]] - DYvals[[j]][i] ))]
+    }
+  }
+  #This creates the random Y coordinate in the density plot
+  Dy.Cord.Random <- vector(mode = "list", length = Increment.Length)
+  for (i in 1:nrow(DXname[[i]] )) {
+    for (j in 1:Increment.Length ) {
+      set.seed(i * Seed.Multiplier)
+      Dy.Cord.Random[[j]][i] <- runif(1, min = 0.015, max = Dy.Cord[[j]][i])
+    }
+  }
+  
+  return(list("AggrY"=AggrY, "Time.Periods"=Time.Periods,
+              "D1"=D1, "D2"=D2, "XLim"=XLim, "YLim"=YLim, "YTmean"=YTmean, "YTmedian"=YTmedian,  
+              "Time.Start.Label"=Time.Start.Label, "Time.Stop.Label"=Time.Stop.Label,
+              "DXname"=DXname, "DYvals"=DYvals, "DxDY"=DxDY, "Dx.Cord"=Dx.Cord, "Dy.Cord"=Dy.Cord, "Dy.Cord.Random"=Dy.Cord.Random,  
+              "Increment"=Increment, "Time.Period.Length"=Time.Period.Length, 
+              "Increment.Length"=Increment.Length, "Seed.Multiplier"=Seed.Multiplier))
+}
+
+################################################################################
+##    Function to Plot density of aggregated values  over time increments     ##
+################################################################################
+fncTmDnstPlot <- function(TDList, X, Y, Z, Period, Lcol, Target, Groups,
+                          Legend.Loc,Xmin, Xmax, Ymin, Ymax) {
+  Increment.Length <- TDList[["Increment.Length"]]
+  #Title
+  if(TDList[["Increment"]] == 1) {
+    Main.Title <- paste(Y," rate by ", Z, ": ", 
+                        TDList[["Time.Start.Label"]][[Period]],  sep= "")
+  } else {
+    Main.Title <- paste(Y," rate by ", Z, ": ", 
+                        TDList[["Time.Start.Label"]][[Period]], " - ",                      
+                        TDList[["Time.Stop.Label"]][[Period]],  sep= "")
+  }
+  #Density plot
+  plot(TDList[["D2"]][[ Period]], xlim=c(Xmin,Xmax), ylim= c(Ymin, Ymax),  
+       col=Lcol, lwd=8  ,
+       main=Main.Title, xlab= "Rate" 
+  )
+  #Add vertical lines
+  abline(v=Target, col="blue", lwd=2)           
+  abline(v= TDList[["YTmean"]][[1]], col=colors()[102], lwd=2)
+  abline(v= TDList[["YTmean"]][[Increment.Length]], col=colors()[102], lwd=2, lty=2)
+  ###Rug and text to identify the med centers.###
+  rug(TDList[["DYvals"]][[Period]], side=1, col=Lcol)
+  #Text for group values
+  if ( is.null(Groups) ) {  
+    text(TDList[["DYvals"]][[Period]], unlist(TDList[["Dy.Cord.Random"]][Period]),   
+         labels= unlist(TDList[["DXname"]][[Period]][X]),
+         cex=2)
+  } else {
+    non_groups <- setdiff(unlist(TDList[["DXname"]][[Period]][[X]]) , Groups)   #Get excluded groups
+    Groups.Temp <- as.character(unlist(TDList[["DXname"]][[Period]][[X]]))      #Get all groups
+    Groups.Temp[which(Groups.Temp %in% non_groups )] <- ""                      #Change non-groups to blanks
+    text(TDList[["DYvals"]][[Period]], unlist(TDList[["Dy.Cord.Random"]][Period]),   
+         labels= Groups.Temp, cex=2)
+  }
+  ###Legend###
+  #This creates a legend for the ablines with and without targets. 
+  if ( !is.numeric(Target) ) {  
+    legend(x=Legend.Loc, legend=c(paste0("Starting mean: ", round(TDList[["YTmean"]][[1]], 3)),
+                                  paste0("Ending mean: ", round(TDList[["YTmean"]][[Increment.Length]], 3) )),
+           col=c(colors()[102], colors()[102], "blue"),
+           lty= c(1,2,1), lwd= 1.5, cex = 1.5, bty="n", inset=c(0, .05))
+  } else {  
+    #legend(Legend.Loc, legend=c("Starting mean","Ending mean", "Target"),
+           legend(Legend.Loc, legend=c(paste0("Starting mean: ", round(TDList[["YTmean"]][[1]], 3)),
+                                       paste0("Ending mean: ", round(TDList[["YTmean"]][[Increment.Length]], 3) ) , "Target"),
+           col=c(colors()[102], colors()[102], "blue"),
+           lty= c(1,2,1), lwd= 1.5, cex = 1.5, bty="n", inset=c(0, .05))
+  }
+}
 
 ################################################################################
 ##                       Cost analysis with the Cox PH model                  ##
@@ -9108,13 +9440,28 @@ fncStSpcLegendFactoLev <- function(Model_fit, X_Lev) {
 ##  plot(values$a, values$b)
 ##} )
 
-#output$test1 <- renderPrint({
+output$test1 <- renderPrint({
+list(
+  density_group_trend_outcome(),
+  density_group_trend_Y_density(),
+  density_group_trend_group(),
+  density_group_trend_grp_levels(),
+  density_group_trend_grp_X_levs(),
+  "density_group_trend_time"=density_group_trend_time(),
+  "density_group_trend_Time_Increment"=density_group_trend_Time_Increment(),
+  "density_group_trend_line_color"=density_group_trend_line_color(),
+  "density_group_trend_Target"=density_group_trend_Target(),
+  "density_group_trend_legend_location"=density_group_trend_legend_location(), 
+  "density_group_trend_set_seed"=density_group_trend_set_seed(),
+  "density_group_trend_run_yes_no"=density_group_trend_run_yes_no(), 
+  "density_group_trend_seconds"=density_group_trend_seconds(), 
+  "density_group_trend_play"=density_group_trend_play() 
+  
+)  
+  
 ##  thresh_quant_data_output()
-#print(mean(df()[, descriptive_summary_variables()], na.rm=TRUE))
-#  list("ti"=fit1()$time, "sv"= fit1()$surv)
-#  list( nomo_update_formula(), class(nomo_update_formula() ))
 #  thresh_quant_data_output()
-#  })
+  })
 
 
 ################################################################################

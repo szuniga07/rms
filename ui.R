@@ -421,6 +421,54 @@ tabPanel("Describe",
          h5("Summary of lowess smoothed X against Y by stratification levels. Percentiles and tick marks below indicate X's data density."),
          plotOutput("summaryRC_plot_function_out", height = 800, width = "100%"),          
          br(),
+         ## Density plot of trend over time by groups ## 
+         h4("Trend over time by groups"),
+         br(),
+         h5("A density plot per time period. Requires complete data for all time periods."),
+         h5("Press the play button to see the trend. Highlight specific groups. Names are above group rates, randomly stacked. Select >1 time increments for rolling average."),
+         fluidRow(   
+           column(3, 
+                  uiOutput("dnsty_grp_trnd_Yvar")),
+           column(3, 
+                  uiOutput("dnsty_grp_trnd_Xvar")),
+           column(3, 
+                  uiOutput("dnsty_grp_trnd_Xlevs")),
+           column(3, 
+                  uiOutput("dnsty_grp_trnd_Zvar"))
+         ),
+         fluidRow(   
+           column(3, 
+                  uiOutput("dnsty_grp_trnd_Z_inc")),
+           column(3, 
+                  uiOutput("dnsty_grp_trnd_ln_clr")),
+           column(3, 
+                  uiOutput("dnsty_grp_trnd_trgt")),
+           column(3, 
+                  uiOutput("dnsty_grp_trnd_lgd_loc"))
+         ),
+         fluidRow(   
+           column(3, 
+                  uiOutput("dnsty_grp_trnd_st_sed")),
+           column(3, 
+                  uiOutput("dnsty_grp_trnd_run_yesno")),
+           column(3, 
+                  uiOutput("dnsty_grp_trnd_sec")),
+           column(3, 
+                  uiOutput("dnsty_grp_trnd_ply"))
+         ),
+         fluidRow(   
+           column(3, 
+                  uiOutput("dnsty_grp_trnd_Xlim1")),
+           column(3, 
+                  uiOutput("dnsty_grp_trnd_Xlim2")),
+           column(3, 
+                  uiOutput("dnsty_grp_trnd_Ylim1")),
+           column(3, 
+                  uiOutput("dnsty_grp_trnd_Ylim2"))
+         ),
+         br(),
+         plotOutput("dnsty_grp_trnd_plot", height = 800, width = "100%"),          
+         br(),
          fluidRow(
            h4("Explore the missingness of a variable by factor levels."),
            br(),
@@ -1671,13 +1719,14 @@ tabPanel("95% CIs",
 
 
 ############## TEST SECTION #############################
-# , #THIS COMMA IS COMMENTED OUT IN CASE I EVER NEED THE TEST FUNCTION BELOW    
+ , #THIS COMMA IS COMMENTED OUT IN CASE I EVER NEED THE TEST FUNCTION BELOW    
  
-#tabPanel("Test it",                                #Creates a new panel named "Test"
-#         fluidRow(                           #Wrapping them in a fluidRow provides easy control over  
-#           verbatimTextOutput("test1")
+tabPanel("Test it",                                #Creates a new panel named "Test"
+         fluidRow(                           #Wrapping them in a fluidRow provides easy control over  
+           #verbatimTextOutput("test1")
+verbatimTextOutput("dnsty_grp_trnd_out_print")
 #           plotOutput("testplot1")
-#         ))
+         ))
 ############## TEST SECTION #############################
 
 

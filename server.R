@@ -9440,28 +9440,14 @@ fncStSpcLegendFactoLev <- function(Model_fit, X_Lev) {
 ##  plot(values$a, values$b)
 ##} )
 
-output$test1 <- renderPrint({
-list(
-  density_group_trend_outcome(),
-  density_group_trend_Y_density(),
-  density_group_trend_group(),
-  density_group_trend_grp_levels(),
-  density_group_trend_grp_X_levs(),
-  "density_group_trend_time"=density_group_trend_time(),
-  "density_group_trend_Time_Increment"=density_group_trend_Time_Increment(),
-  "density_group_trend_line_color"=density_group_trend_line_color(),
-  "density_group_trend_Target"=density_group_trend_Target(),
-  "density_group_trend_legend_location"=density_group_trend_legend_location(), 
-  "density_group_trend_set_seed"=density_group_trend_set_seed(),
-  "density_group_trend_run_yes_no"=density_group_trend_run_yes_no(), 
-  "density_group_trend_seconds"=density_group_trend_seconds(), 
-  "density_group_trend_play"=density_group_trend_play() 
-  
-)  
+#output$test1 <- renderPrint({
+#list(
+#  density_group_trend_outcome()
+#)  
   
 ##  thresh_quant_data_output()
 #  thresh_quant_data_output()
-  })
+#  })
 
 
 ################################################################################

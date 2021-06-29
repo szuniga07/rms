@@ -5431,12 +5431,6 @@ density_group_trend_output <- reactive({
                Seed.Multiplier= density_group_trend_set_seed() )
   }  
 })
-#17A. Output  
-output$dnsty_grp_trnd_out_print <- renderPrint({
-  if(density_group_trend_run_yes_no() == "Yes") {    
-    density_group_trend_output()
-  }
-})
 #18. Plot function below  
 density_group_trend_plot <- reactive({
   if(density_group_trend_run_yes_no() == "Yes") {    
@@ -5453,6 +5447,19 @@ density_group_trend_plot <- reactive({
 output$dnsty_grp_trnd_plot <- renderPlot({
   if(density_group_trend_run_yes_no() == "Yes") {
     density_group_trend_plot()
+  }
+})
+#19. Each period's output  
+density_group_trend_by_time <- reactive({
+  if(density_group_trend_run_yes_no() == "Yes") {    
+    fncTmDnstOut(TDList= density_group_trend_output(), 
+                 Period=density_group_trend_play(), Target= density_group_trend_Target())  
+  }  
+})
+#19A. Each period's output  
+output$dnsty_grp_trnd_out_by_tm <- renderPrint({
+  if(density_group_trend_run_yes_no() == "Yes") {    
+    density_group_trend_by_time()
   }
 })
 
@@ -5589,6 +5596,40 @@ fncTmDnstPlot <- function(TDList, X, Y, Z, Period, Lcol, Target, Groups,
            lty= c(1,2,1), lwd= 1.5, cex = 1.5, bty="n", inset=c(0, .05))
   }
 }
+
+################################################################################
+##           Function to get aggregated values over time increments           ##
+################################################################################
+fncTmDnstOut <- function(TDList, Period, Target) {
+  out.by.period <- TDList[["AggrY"]][[Period]]
+
+  #High Target
+  HT.table <- vector(length=2)
+  if ( is.numeric(Target) ) {  
+    HT.table <- prop.table(table(out.by.period[, 2] < Target))
+    if ( length(HT.table) == 1 ) {  
+      names(HT.table) <- "All"
+      } else {
+        names(HT.table) <- c("At or above target", "Below target")
+      }
+  } else {
+    HT.table <- NA
+  }    
+  #Low Target
+  LT.table <- vector(length=2)
+  if ( is.numeric(Target) ) {  
+    LT.table <- prop.table(table(out.by.period[, 2] >= Target))
+    if ( length(LT.table) == 1 ) {  
+      names(LT.table) <- "All"
+    } else {
+      names(LT.table) <- c("At or below target", "Above target")
+    }
+  } else {
+    LT.table <- NA
+  }
+  return(list("Period Rate"= out.by.period, "High Target"= HT.table, "Low Target"= LT.table))
+}
+
 
 ################################################################################
 ##                       Cost analysis with the Cox PH model                  ##

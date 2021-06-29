@@ -469,6 +469,10 @@ tabPanel("Describe",
          br(),
          plotOutput("dnsty_grp_trnd_plot", height = 800, width = "100%"),          
          br(),
+         h5("Rates by period from the density plot above"),
+         br(),
+         verbatimTextOutput("dnsty_grp_trnd_out_by_tm"),
+         br(),
          fluidRow(
            h4("Explore the missingness of a variable by factor levels."),
            br(),
@@ -1724,7 +1728,7 @@ tabPanel("95% CIs",
 #tabPanel("Test it",                                #Creates a new panel named "Test"
 #         fluidRow(                           #Wrapping them in a fluidRow provides easy control over  
 #           verbatimTextOutput("test1")
-#verbatimTextOutput("dnsty_grp_trnd_out_print")
+#verbatimTextOutput("dnsty_grp_trnd_out_by_tm")
 #           plotOutput("testplot1")
 #         ))
 ############## TEST SECTION #############################

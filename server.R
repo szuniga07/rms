@@ -5565,8 +5565,8 @@ fncTmDnstPlot <- function(TDList, X, Y, Z, Period, Lcol, Target, Groups,
   )
   #Add vertical lines
   abline(v=Target, col="blue", lwd=2)           
-  abline(v= TDList[["YTmean"]][[1]], col=colors()[102], lwd=2)
-  abline(v= TDList[["YTmean"]][[Increment.Length]], col=colors()[102], lwd=2, lty=2)
+  abline(v= mean(TDList[["AggrY"]][[1]][[2]]), col=colors()[102], lwd=2)
+  abline(v= mean(TDList[["AggrY"]][[Increment.Length]][[2]]), col=colors()[102], lwd=2, lty=2)
   ###Rug and text to identify the med centers.###
   rug(TDList[["DYvals"]][[Period]], side=1, col=Lcol)
   #Text for group values
@@ -5582,16 +5582,16 @@ fncTmDnstPlot <- function(TDList, X, Y, Z, Period, Lcol, Target, Groups,
          labels= Groups.Temp, cex=2)
   }
   ###Legend###
-  #This creates a legend for the ablines with and without targets. 
+  #This creates a legend for the ablines with and without targets. TDList[["AggrY"]][[Period]] YTmean
   if ( !is.numeric(Target) ) {  
-    legend(x=Legend.Loc, legend=c(paste0("Starting mean: ", round(TDList[["YTmean"]][[1]], 3)),
-                                  paste0("Ending mean: ", round(TDList[["YTmean"]][[Increment.Length]], 3) )),
+    legend(x=Legend.Loc, legend=c(paste0("Starting pooled mean: ", round(mean(TDList[["AggrY"]][[1]][[2]], na.rm=TRUE), 3)),
+                                  paste0("Ending pooled mean: ", round(mean(TDList[["AggrY"]][[Increment.Length]][[2]], na.rm=TRUE), 3) )),
            col=c(colors()[102], colors()[102], "blue"),
            lty= c(1,2,1), lwd= 1.5, cex = 1.5, bty="n", inset=c(0, .05))
   } else {  
     #legend(Legend.Loc, legend=c("Starting mean","Ending mean", "Target"),
-           legend(Legend.Loc, legend=c(paste0("Starting mean: ", round(TDList[["YTmean"]][[1]], 3)),
-                                       paste0("Ending mean: ", round(TDList[["YTmean"]][[Increment.Length]], 3) ) , "Target"),
+           legend(Legend.Loc, legend=c(paste0("Starting pooled mean: ", round(mean(TDList[["AggrY"]][[1]][[2]], na.rm=TRUE), 3)),
+                                       paste0("Ending pooled mean: ", round(mean(TDList[["AggrY"]][[Increment.Length]][[2]], na.rm=TRUE), 3) ) , "Target"),
            col=c(colors()[102], colors()[102], "blue"),
            lty= c(1,2,1), lwd= 1.5, cex = 1.5, bty="n", inset=c(0, .05))
   }

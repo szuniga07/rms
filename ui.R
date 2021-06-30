@@ -1470,7 +1470,7 @@ tabPanel("Monte Carlo",                                #Creates a new panel name
          verbatimTextOutput("name_dist_type"),
          h4("Morris One-at-a-Time Sensitivity Analysis"),
            verbatimTextOutput("morris_oat"),
-           h4("Monte Carlo Global Sensitivity Analysis"),
+           h4("Monte Carlo Global Uncertainty and Sensitivity Analysis"),
            verbatimTextOutput("mc_gsa")
          ),
          

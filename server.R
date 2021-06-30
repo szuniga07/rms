@@ -2942,7 +2942,7 @@ pcc_rslt <- reactive({
 src_fnc <-  function(df3) {
     #src_gsa <- sort(coef(lm.beta(lm(y ~ . , data= df3))))  #Turned this off so it's not redundant with src_gsa2
     src_gsa <- coef(lm.beta(lm(y ~ . , data= df3)))     #Use for the tornado plot
-    src_gsa_R2 <- summary(lm(y~ ., data=df3))$"r.squared"
+    src_gsa_R2 <- summary(lm(y~ . - 1, data=df3))$"r.squared"
     src_anova <- anova(lm(y ~ ., data= df3))
     #src_gsa <- src(df3, y)
     #  src_gsa <- lm(y ~ ., data= df3)
@@ -2994,7 +2994,7 @@ output$update_mc_sd <- renderUI({
 
 #Select the predictors that will have modified standard deviations.
 output$up_pdf_var <- renderUI({  
-  selectInput("updf", "7. Select one predictor that will have its probability density function modified", 
+  selectInput("updf", "7. Select a FACTOR predictor to modify its probability density function (no '0/1')", 
               #This needs to be fixed so that multiple list values can be used  
               #choices = predictor(), multiple=TRUE, selected=predictor()[1])
              choices = predictor(), multiple=FALSE, selected=predictor()[1])     #NEED TO FIX THIS 
@@ -3918,6 +3918,7 @@ output$morris_oat <- renderPrint({
 output$mc_gsa <- renderPrint({ 
   list("Monte Carlo Uncertainty Mean"= mean(yhat()), 
        "Monte Carlo Uncertainty SD"  = sd(yhat()),
+       "Monte Carlo Coefficient of Variation"  = sd(yhat())/mean(yhat()) ,
        "Monte Carlo Partial Correlation Coefficients: Sensitivity Analysis"= pcc_rslt(),
        "Monte Carlo GSA"=src_rslt()[-2]
   )   

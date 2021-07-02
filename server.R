@@ -1963,63 +1963,158 @@ output$anova_smry <- renderPrint({
       selectInput("XyplotX", "1. Select a continuous predictor.", 
                    choices = predictor(), selected=predictor()[1], multiple=FALSE)     
     })
+    #Continuous predictor
+    XyplotX1 <- reactive({                  
+      input$XyplotX
+    })
     #Select the factor for grouping
     output$xyplot_z <- renderUI({
       selectInput("XyplotZ", "2. Select a factor.", 
-                  choices = setdiff(predictor(), input$XyplotX),  multiple=FALSE)     
+                  choices = setdiff(predictor(), XyplotX1() ),  multiple=FALSE)     
+    })
+    #Factor
+    XyplotZ1 <- reactive({                  
+      input$XyplotZ
     })
     #Make confidence bands for the plot
     output$xyplot_bands <- renderUI({                                 
       selectInput("XyplotBands", "3. Do you want confidence bands?", 
                   choices = c("No", "Yes"), multiple=FALSE, selected="No")
     })
+    #Reactive function for directly above
+    xyplot_Bands_YesNo <- reactive({                 
+      input$XyplotBands 
+    })
+    #Select line colors
+    output$xyplot_line_clrs <- renderUI({                                 
+      selectInput("XypltLnClr", "4. Select line colors.", 
+                  choices = xyplot_Line_Color_Names(), multiple=TRUE)     
+    })
+    #Reactive function for directly above
+    xyplot_Line_Colors <- reactive({                 
+      input$XypltLnClr 
+    })
+    #XYplot line color names
+    xyplot_Line_Color_Names <- reactive({                 
+      colors()[c(552, 498,652, 254, 26,547, 24, 152, 32,66, 68,97, 120,142,   
+                 175, 310, 367,372,399, 485, 589, 615)]    
+    })
     #Create yes/no box to make the XY plot
     output$xyplot_yes_no <- renderUI({                                 
-      selectInput("XyplotYesNo", "4. Do you want to create the plot?", 
+      selectInput("XyplotYesNo", "5. Do you want to create the plot?", 
                   choices = c("No", "Yes"), multiple=FALSE, selected="No")     
     })
-    
-    #Continuous predictor
-    XyplotX1 <- reactive({                  
-      input$XyplotX
+    #Reactive function for directly above
+    xyplot_create_YesNo <- reactive({                 
+      input$XyplotYesNo 
     })
-    #Factor
-    XyplotZ1 <- reactive({                  
-      input$XyplotZ
+
+    #Reactive function to get group levels
+    xyplot_groups <- reactive({                 
+      unique(xyplotData()[, XyplotZ1()]) 
+    })
+    #Select specific groups
+    output$xyplot_grp_levs <- renderUI({                                 
+      selectInput("xyplotGrpLvs", "6. Highlight specific groups?", 
+                  choices = xyplot_groups(), multiple=TRUE)     
+    })
+    #Reactive function to get group levels
+    xyplot_Group_Levels <- reactive({                 
+      input$xyplotGrpLvs 
     })
     #Get the Predicted values needed for the plot
     xyplotData <- reactive({                 
       do.call("Predict", list(fit1(), XyplotX1(), XyplotZ1() )   ) 
     })
-
-#This creates the plot
+    
+    #Set up function to get XY limits from an XYplot
+    xylm_run <- reactive({
+      if(xyplot_create_YesNo() == "Yes") {
+      fncXYpltLmts(xyplotDF=xyplotData(), ContX=XyplotX1(), GroupX=XyplotZ1())
+      }
+    })
+    #Get XY limits from an XYplot
+    xylm <- reactive({                  
+      xylm_run()
+    })
+    
+    #Set up function to create the XYplot
+    Xyplt_setup <- reactive({
+      if(xyplot_create_YesNo() == "Yes") {
+      fncXYpltInt(DF=df(), xyplotDF=xyplotData(), ContX= XyplotX1(), GroupX=XyplotZ1(), 
+                  GroupLevs=xyplot_Group_Levels(), XYlims=xylm(), Clrs=xyplot_Line_Colors(), CIbands=xyplot_Bands_YesNo()) 
+    }
+    })
+    #This creates the plot
     output$xYplot_interaction <- renderPlot({
-      if(input$XyplotYesNo == "Yes") {
-        if(input$XyplotBands == "Yes") {
-          xYplot( Cbind(xyplotData()[[which(names(xyplotData()) =="yhat")]], 
-                        xyplotData()[[which(names(xyplotData()) =="lower")]], 
-                        xyplotData()[[which(names(xyplotData()) =="upper")]]) ~ xyplotData()[[which(names(xyplotData()) ==XyplotX1())]],  
-                  groups=xyplotData()[[which(names(xyplotData()) ==XyplotZ1())]],
-               method='filled bands', type='l', 
-               #col.fill=adjustcolor(1:length(unique(df()[, XyplotZ1() ])), alpha.f = 0.2),
-               col.fill=adjustcolor(colors()[c(175, 33, 26, 254, 499,653, 310, 368, 16, 69,489,97,66,120,400,373)], alpha.f = 0.2),
-               lty=1:length(unique(df()[, XyplotZ1() ])),
-#               lcol=1:length(unique(df()[, XyplotZ1() ])), 
-col=colors()[c(175, 33, 26, 254, 499,653, 310, 368, 16, 69,489,97,66,120,400,373)], 
-lwd=3, ylab="Yhat", xlab=XyplotX1(), cex=1.75,
-               main=paste0("Partial prediction plot of ", XyplotX1(), " by levels of ", XyplotZ1()) )
+      Xyplt_setup()
+    }, height = 800)
+    
+  
+    ################################################################################
+    #                   Function to get X and Y limits for XY plot                 #
+    ################################################################################
+    fncXYpltLmts <- function(xyplotDF, ContX, GroupX) {
+      #Get xlim and ylim values from generic plot
+      p1 <- xYplot(xyplotDF[[which(names(xyplotDF) =="yhat")]] ~ xyplotDF[[which(names(xyplotDF) == ContX )]] ,
+                   groups=xyplotDF[[which(names(xyplotDF) == GroupX )]], main="Partial prediction plot of " )
+      XMin <- p1$x.limits[1]
+      XMax <- p1$x.limits[2]
+      YMin <- p1$y.limits[1]
+      YMax <- p1$y.limits[2]
+      return(list("XMin"=XMin, "XMax"=XMax, "YMin"=YMin, "YMax"=YMax))
+    }
+    
+    ################################################################################
+    #                   Function to create contrast XYplot                         #
+    ################################################################################
+    fncXYpltInt <- function(DF, xyplotDF, ContX, GroupX, GroupLevs, XYlims, Clrs, CIbands, ...) {
+      #Create the X and Y limits
+      XLim <- c(XYlims[["XMin"]], XYlims[["XMax"]])
+      YLim <- c(XYlims[["YMin"]], XYlims[["YMax"]])
+      #Run plots fo different scenarios  
+      if( is.null(GroupLevs) ) {
+        if(CIbands == "Yes") {
+          xYplot( Cbind(xyplotDF[[which(names(xyplotDF) == "yhat")]], 
+                        xyplotDF[[which(names(xyplotDF) == "lower")]], 
+                        xyplotDF[[which(names(xyplotDF) == "upper")]]) ~ xyplotDF[[which(names(xyplotDF) == ContX)]],  
+                  groups=xyplotDF[[which(names(xyplotDF) == GroupX)]],
+                  method= 'filled bands', type= 'l', 
+                  col.fill= adjustcolor(Clrs, alpha.f = 0.2),
+                  lty= 1:length(unique(DF[, GroupX ])), col= Clrs, 
+                  lwd= 3, ylab= "Yhat", xlab= ContX, cex= 1.75,
+                  xlim=XLim, ylim=YLim,
+                  main= paste0("Partial prediction plot of ", ContX, " by levels of ", GroupX) )
         } else {
-          xYplot(xyplotData()[[which(names(xyplotData()) =="yhat")]] ~ xyplotData()[[which(names(xyplotData()) ==XyplotX1())]] ,  
-                 groups=xyplotData()[[which(names(xyplotData()) ==XyplotZ1())]],
-                 type='l',
-                 lty=1:length(unique(df()[, XyplotZ1() ])),
-#                 lcol=1:length(unique(df()[, XyplotZ1() ])), 
-col=colors()[c(175, 33, 26, 254, 499,653, 310, 368, 16, 69,489,97,66,120,400,373)], 
-lwd=3, ylab="Yhat", xlab=XyplotX1(), cex=1.75, 
-                 main=paste0("Partial prediction plot of ", XyplotX1(), " by levels of ", XyplotZ1()) )
-        }
-      } 
-    }, height = 700)
+          xYplot(xyplotDF[[which(names(xyplotDF) == "yhat")]] ~ xyplotDF[[which(names(xyplotDF) == ContX)]] ,  
+                 groups= xyplotDF[[which(names(xyplotDF) == GroupX)]],
+                 type= 'l', lty= 1:length(unique(DF[, GroupX ])), col= Clrs, 
+                 lwd= 3, ylab= "Yhat", xlab= ContX, cex= 1.75, 
+                 xlim=XLim, ylim=YLim,
+                 main= paste0("Partial prediction plot of ", ContX, " by levels of ", GroupX) )
+        } 
+      }  else {
+        if(CIbands == "Yes") {
+          xYplot( Cbind(xyplotDF[[which(names(xyplotDF) == "yhat")]][ xyplotDF[, GroupX ] %in% GroupLevs ] , 
+                        xyplotDF[[which(names(xyplotDF) == "lower")]][ xyplotDF[, GroupX ] %in% GroupLevs ] , 
+                        xyplotDF[[which(names(xyplotDF) == "upper")]][ xyplotDF[, GroupX ] %in% GroupLevs ] ) ~ xyplotDF[[which(names(xyplotDF) == ContX)]][ xyplotDF[, GroupX ] %in% GroupLevs ],  
+                  groups=xyplotDF[[which(names(xyplotDF) == GroupX)]][ xyplotDF[, GroupX ] %in% GroupLevs ],
+                  method= 'filled bands', type= 'l', 
+                  col.fill= adjustcolor(Clrs, alpha.f = 0.2),
+                  lty= 1:length(unique(DF[, GroupX ])), col= Clrs, 
+                  lwd= 3, ylab= "Yhat", xlab= ContX, cex= 1.75, 
+                  xlim=XLim, ylim=YLim,
+                  main= paste0("Partial prediction plot of ", ContX, " by levels of ", GroupX) )
+        } else {
+          xYplot(xyplotDF[xyplotDF[, GroupX ] %in% GroupLevs, which(names(xyplotDF) == "yhat")] ~ xyplotDF[xyplotDF[, GroupX ] %in% GroupLevs, which(names(xyplotDF) == ContX)] ,  
+                 groups= xyplotDF[[which(names(xyplotDF) == GroupX)]][ xyplotDF[, GroupX ] %in% GroupLevs ],
+                 type= 'l', lty= 1:length(unique(DF[, GroupX ])), col= Clrs, 
+                 lwd= 3, ylab= "Yhat", xlab= ContX, cex= 1.75, 
+                 xlim=XLim, ylim=YLim,
+                 main= paste0("Partial prediction plot of ", ContX, " by levels of ", GroupX) )
+        } 
+      }
+    }
      
     ##########################################
     # Contrast plots for partial predictions #
@@ -2074,7 +2169,9 @@ lwd=3, ylab="Yhat", xlab=XyplotX1(), cex=1.75,
       unique(df()[, XyplotZ1()])
     })
     
-    #Function to make contrast data
+    ######################################
+    ##  Function to make contrast data  ##
+    ######################################
     contrastXyDataFnc <- function(model, X, group, lev1, lev2, reg) {
       #Specs to get min and max limit for X
       spcs <- specs(model, long=TRUE)
@@ -9482,14 +9579,16 @@ fncStSpcLegendFactoLev <- function(Model_fit, X_Lev) {
 ##  plot(values$a, values$b)
 ##} )
 
-#output$test1 <- renderPrint({
-#list(
-#  density_group_trend_outcome()
-#)  
-  
+output$test1 <- renderPrint({
+list(
+#  xylm(), c(xylm()[["XMin"]], xylm()[["XMax"]])
+  "sum"=summary(xyplotData()), "ContX1"= XyplotX1(), "GroupX1"=XyplotZ1(), 
+  "GroupLevs1"=xyplot_Group_Levels(), "XYlims1"=xylm(), "Clrs1"=xyplot_Line_Colors(), "CIbands1"=xyplot_Bands_YesNo()
+)  
+
 ##  thresh_quant_data_output()
 #  thresh_quant_data_output()
-#  })
+  })
 
 
 ################################################################################

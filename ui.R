@@ -656,15 +656,21 @@ tabPanel("Impute",
                    fluidRow(
                      column(3, 
                             uiOutput("xyplot_x")),
-                     column(3, 
+                     column(3, offset=1,
                             uiOutput("xyplot_z")),
+                     column(3, offset=1,
+                            uiOutput("xyplot_bands"))
+                   ),
+                   fluidRow(
                      column(3, 
-                            uiOutput("xyplot_bands")),
-                     column(3, 
-                            uiOutput("xyplot_yes_no"))
+                            uiOutput("xyplot_line_clrs")),
+                     column(3, offset=1,
+                            uiOutput("xyplot_yes_no")),
+                     column(3, offset=1,
+                            uiOutput("xyplot_grp_levs"))
                    ),
                    br(),
-                   plotOutput("xYplot_interaction", height=700, width="100%"),
+                   plotOutput("xYplot_interaction", height=800, width="100%"),
                    br(),
 h4("Contrast plots"),
 h5("This graph shows differences between groups (linear differences, odds ratios, hazard ratios) with 95% confidence intervals. Compare 2 groups on predicted values, especially useful for interactions."),                   
@@ -1723,14 +1729,13 @@ tabPanel("95% CIs",
 
 
 ############## TEST SECTION #############################
-# , #THIS COMMA IS COMMENTED OUT IN CASE I EVER NEED THE TEST FUNCTION BELOW    
+, #THIS COMMA IS COMMENTED OUT IN CASE I EVER NEED THE TEST FUNCTION BELOW    
  
-#tabPanel("Test it",                                #Creates a new panel named "Test"
-#         fluidRow(                           #Wrapping them in a fluidRow provides easy control over  
-#           verbatimTextOutput("test1")
-#verbatimTextOutput("dnsty_grp_trnd_out_by_tm")
+tabPanel("Test it",                                #Creates a new panel named "Test"
+         fluidRow(                           #Wrapping them in a fluidRow provides easy control over  
+           verbatimTextOutput("test1")
 #           plotOutput("testplot1")
-#         ))
+         ))
 ############## TEST SECTION #############################
 
 

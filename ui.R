@@ -1399,12 +1399,18 @@ fluidRow(
   column(3, 
          uiOutput("Cxyplot_z")),
   column(3, 
-         uiOutput("Cxyplot_bands")),
+         uiOutput("Cxyplot_bands"))
+),
+fluidRow(
   column(3, 
-         uiOutput("Cxyplot_yes_no"))
+         uiOutput("Cxyplot_line_clrs")),
+  column(3, 
+         uiOutput("Cxyplot_yes_no")),
+  column(3, 
+         uiOutput("Cxyplot_grp_levs"))
 ),
 br(),
-plotOutput("CxYplot_interaction", height=600, width="100%"),
+plotOutput("CxYplot_interaction", height=800, width="100%"),
 br(),
 h4("Contrast plots"),
 h5("This graph shows differences between groups (linear differences, odds ratios, hazard ratios) with 95% confidence intervals. Compare 2 groups on predicted values, especially useful for interactions."),                   
@@ -1697,7 +1703,7 @@ tabPanel("95% CIs",
            column(3, 
                   uiOutput("FCIz")),
            column(3, 
-                  uiOutput("FCI_bands"))
+                  uiOutput("fciplot_grp_levs"))
          ),
          fluidRow(   
            column(3, 
@@ -1705,9 +1711,15 @@ tabPanel("95% CIs",
            column(3, 
                   uiOutput("FCi_Conf_Lev")),
            column(3, 
-                  uiOutput("FCi_create")),
+                  uiOutput("FCI_bands")),
            column(3, 
-                  uiOutput("FCI_nk_knots"))
+                  uiOutput("fci_plot_ln_clrs"))
+         ),
+         fluidRow(   
+           column(3, 
+                  uiOutput("FCI_nk_knots")),
+           column(3, 
+                  uiOutput("FCi_create"))
          ),
          fluidRow(   
            column(3, 
@@ -1719,7 +1731,7 @@ tabPanel("95% CIs",
            column(3, 
                   uiOutput("FCI__Ylim2"))
          ),
-         h5("Modify the plot space in #9-12."),
+         h5("Modify the plot space in #11-14."),
          br(),
          plotOutput("Plot_Fci_output", height = 800, width="100%"),
          h5("These are point estimates and confidence intervals. These may not match up with smoothed lines."),
@@ -1729,13 +1741,13 @@ tabPanel("95% CIs",
 
 
 ############## TEST SECTION #############################
-, #THIS COMMA IS COMMENTED OUT IN CASE I EVER NEED THE TEST FUNCTION BELOW    
+#, #THIS COMMA IS COMMENTED OUT IN CASE I EVER NEED THE TEST FUNCTION BELOW    
  
-tabPanel("Test it",                                #Creates a new panel named "Test"
-         fluidRow(                           #Wrapping them in a fluidRow provides easy control over  
-           verbatimTextOutput("test1")
+#tabPanel("Test it",                                #Creates a new panel named "Test"
+#         fluidRow(                           #Wrapping them in a fluidRow provides easy control over  
+#           verbatimTextOutput("test1")
 #           plotOutput("testplot1")
-         ))
+#         ))
 ############## TEST SECTION #############################
 
 

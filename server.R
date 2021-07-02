@@ -1957,8 +1957,10 @@ output$anova_smry <- renderPrint({
                   choices = predictor(), multiple=FALSE, selected=predictor()[1])     #Will make choices based on my reactive function.
     })
 
+###################################################################    
 ## Creates a plot for an interaction of continuous X by a factor ##
-#Select the continuous predictor
+###################################################################    
+    #Select the continuous predictor
     output$xyplot_x <- renderUI({
       selectInput("XyplotX", "1. Select a continuous predictor.", 
                    choices = predictor(), selected=predictor()[1], multiple=FALSE)     
@@ -2011,7 +2013,9 @@ output$anova_smry <- renderPrint({
 
     #Reactive function to get group levels
     xyplot_groups <- reactive({                 
-      unique(xyplotData()[, XyplotZ1()]) 
+      if(xyplot_create_YesNo() == "Yes") {
+        unique(xyplotData()[, XyplotZ1()]) 
+      }
     })
     #Select specific groups
     output$xyplot_grp_levs <- renderUI({                                 
@@ -4241,10 +4245,13 @@ output$Ci_create <- renderUI({                                #Creates a UI func
 #######################################
 
 #Binomial
-fbconf <- function(x, y, z, dataf, conf_lev) {
+fbconf <- function(x, xlev, y, z, dataf, conf_lev) {
   #Aggregates outcome by factor 
-#  agr_sum <- aggregate(dataf[, y] ~ dataf[, x] + dataf[, z], FUN="sum", data= dataf)
-#  agr_n <- aggregate(dataf[, y] ~ dataf[, x] + dataf[, z], FUN="length", data= dataf)
+  if( is.null(xlev)) {
+    dataf <- dataf
+  } else {
+    dataf <- dataf[ dataf[, x] %in% xlev,  ]
+  }
   agr_sum <- aggregate(dataf[, y], list(dataf[, x] , dataf[, z]), FUN="sum")
   agr_n <- aggregate(dataf[, y], list(dataf[, x] , dataf[, z]), FUN="length")
   agr_df <- data.frame(x_lev=agr_sum[, 1], z_lev=agr_sum[, 2], agr_sum=agr_sum[, 3], agr_n=agr_n[, 3])
@@ -4254,11 +4261,13 @@ fbconf <- function(x, y, z, dataf, conf_lev) {
 }
 
 #Continuous outcomes
-ftconf <- function(x, y, z, dataf, conf_lev) {
+ftconf <- function(x, xlev, y, z, dataf, conf_lev) {
   #Aggregates outcome by factor 
-#  agr_m <- aggregate(dataf[, y] ~ dataf[, x]+ dataf[, z], FUN="mean", data= dataf)
-#  agr_sd <- aggregate(dataf[, y] ~ dataf[, x]+ dataf[, z], FUN="sd", data= dataf)
-#  agr_n <- aggregate(dataf[, y] ~ dataf[, x]+ dataf[, z], FUN="length", data= dataf)
+  if( is.null(xlev)) {
+    dataf <- dataf
+  } else {
+    dataf <- dataf[ dataf[, x] %in% xlev,  ]
+  }
   agr_m <- aggregate(dataf[, y], list(dataf[, x] , dataf[, z]), FUN="mean")
   agr_sd <- aggregate(dataf[, y], list(dataf[, x] , dataf[, z]), FUN="sd")
   agr_n <- aggregate(dataf[, y], list(dataf[, x] , dataf[, z]), FUN="length")
@@ -4273,10 +4282,13 @@ ftconf <- function(x, y, z, dataf, conf_lev) {
 }
 
 #Exact Poisson
-fpconf <- function(x, y, z, dataf, conf_lev) {
+fpconf <- function(x, xlev, y, z, dataf, conf_lev) {
   #Aggregates outcome by factor 
-#  agr_sum <- aggregate(dataf[, y] ~ dataf[, x]+ dataf[, z], FUN="sum", data= dataf)
-#  agr_n <- aggregate(dataf[, y] ~ dataf[, x]+ dataf[, z], FUN="length", data= dataf)
+  if( is.null(XLeV)) {
+    dataf <- dataf
+  } else {
+    dataf <- dataf[ dataf[, x] %in% xlev,  ]
+  }
   agr_sum <- aggregate(dataf[, y] ~ dataf[, x]+ dataf[, z], FUN="sum")
   agr_n <- aggregate(dataf[, y] ~ dataf[, x]+ dataf[, z], FUN="length")
   agr_df <- data.frame(x_lev=agr_sum[, 1], z_lev=agr_sum[, 2], agr_sum=agr_sum[, 3], agr_n=agr_n[, 3])
@@ -4291,19 +4303,18 @@ fpconf <- function(x, y, z, dataf, conf_lev) {
   return(agr_df=agr_df ) 
 }
 
-fconf <- function(x=xcivar, y=ycivar, z=zcivar, dataf, conf_lev=ciconf_lev) {
-  #fconf <- function(x=xcivar, y=ycivar, z=zcivar, dataf=df(), conf_lev=ciconf_lev) {
+fconf <- function(x=xcivar, xlev=xlev, y=ycivar, z=zcivar, dataf, conf_lev=ciconf_lev) {
   switch(input$fci_type,                #"var" and can be used anywhere in server.r.
-         "Mean (t)" =  ftconf(x, y, z, dataf, conf_lev), 
-         "Proportion (binomial)" =  fbconf(x, y, z, dataf, conf_lev), 
-         "Poisson (exact)" =  fpconf(x, y, z, dataf, conf_lev) 
+         "Mean (t)" =  ftconf(x, xlev, y, z, dataf, conf_lev), 
+         "Proportion (binomial)" =  fbconf(x, xlev, y, z, dataf, conf_lev), 
+         "Poisson (exact)" =  fpconf(x, xlev, y, z, dataf, conf_lev) 
   )
 }
 
 #Reactive function that runs fconf above
 fcidf <- reactive({                  #This indicates the data frame I will use.
   if(input$FCiCreate == "Yes") {
-  fconf(x=input$fxcivar, y=input$fycivar, z=input$fzcivar, dataf=df(), conf_lev=input$fciconf_lev)
+  fconf(x=input$fxcivar, xlev=fci_plot_Group_Levels(), y=input$fycivar, z=input$fzcivar, dataf=df(), conf_lev=input$fciconf_lev)
   }
 })
 
@@ -4377,13 +4388,13 @@ fci_fac <- reactive({                  #This indicates the data frame I will use
 ########################################
 
 #This creates the time plot
-plot_fci_fnc <- function(x, y, z, xcivar, ycivar, zcivar, dataf, ci_p, ci_l, ci_u, 
+plot_fci_fnc <- function(x, y, z, xcivar, ycivar, zcivar, dataf, LCol, ci_p, ci_l, ci_u, 
                          max_pest, min_pest, max_ci, min_ci, ctrs, cibands, fCiXLim1, fCiXLim2, fCiYLim1, fCiYLim2) {
   #Set up colors
-  my_clr <- c(175, 33, 26, 9,76,119, 310, 45, 368, 653, 69, 96,  145, 451, 500)
+  my_clr <- LCol
+  #my_clr <- c(175, 33, 26, 9,76,119, 310, 45, 368, 653, 69, 96,  145, 451, 500)
   plot(unique(dataf[, z]), seq(min(min_ci, na.rm=T), max(max_ci, na.rm=T), length.out=length(unique(dataf[, z]))), type="n",  
        cex.lab=1.35,cex.main=1.35,cex.sub=1.35, 
-#       ylab=ycivar, xlab=zcivar, ylim=c(min(min_ci, na.rm=T)*.95, max(max_ci, na.rm=T)*1.05),
        ylab=ycivar, xlab=zcivar, xlim=c(fCiXLim1, fCiXLim2), ylim=c(fCiYLim1, fCiYLim2),
        main= paste0( ycivar, " trajectories of ", xcivar,  " by ", zcivar))
   #Plot point estimate lines
@@ -4393,22 +4404,22 @@ plot_fci_fnc <- function(x, y, z, xcivar, ycivar, zcivar, dataf, ci_p, ci_l, ci_
   xx_t <- list() 
   yy_t <- list() 
   for (i in 1:length(ctrs)) {
-    lines(ci_p[[i]][, "x"], ci_p[[i]][, "y_p"], lty=i, col=colors()[my_clr[i]],lwd=2)
+    lines(ci_p[[i]][, "x"], ci_p[[i]][, "y_p"], lty=i, col= my_clr[i],lwd=2)
     text(ci_p[[i]][1, "x"], ci_p[[i]][1, "y_p"], ctrs[i])
     text(ci_p[[i]][nrow(ci_p[[i]]), "x"], ci_p[[i]][nrow(ci_p[[i]]), "y_p"], ctrs[i])
   }
   if(cibands == "Yes") {
     for (i in 1:length(ctrs)) {
-    ci_time[[i]] <- ci_l[[i]][,1]
-    l95[[i]] <- ci_l[[i]][,2]
-    u95[[i]] <- ci_u[[i]][,2]
-    
-    xx_t[[i]] <- c(ci_time[[i]], rev(ci_time[[i]]))
-    yy_t[[i]] <- c(l95[[i]], rev(u95[[i]]))
-    polygon(unlist(xx_t[[i]]), unlist(yy_t[[i]]), col = adjustcolor(colors()[my_clr[i]], alpha.f = 0.1), 
-            border=adjustcolor(colors()[my_clr[i]], alpha.f = 0.1))
-  }
-  #return(list(ci_p=ci_p, ci_l=ci_l, ci_u=ci_u, l95=l95, u95=u95, xx_t=xx_t, yy_t=yy_t))
+      ci_time[[i]] <- ci_l[[i]][,1]
+      l95[[i]] <- ci_l[[i]][,2]
+      u95[[i]] <- ci_u[[i]][,2]
+      
+      xx_t[[i]] <- c(ci_time[[i]], rev(ci_time[[i]]))
+      yy_t[[i]] <- c(l95[[i]], rev(u95[[i]]))
+      polygon(unlist(xx_t[[i]]), unlist(yy_t[[i]]), col = adjustcolor(my_clr[i], alpha.f = 0.2), 
+              border=adjustcolor(my_clr[i], alpha.f = 0.2))
+    }
+    #return(list(ci_p=ci_p, ci_l=ci_l, ci_u=ci_u, l95=l95, u95=u95, xx_t=xx_t, yy_t=yy_t))
   }
 }
 
@@ -4416,7 +4427,7 @@ plot_fci_fnc <- function(x, y, z, xcivar, ycivar, zcivar, dataf, ci_p, ci_l, ci_
 plot_fci <- reactive({                  #This indicates the data frame I will use.
   if(input$FCiCreate == "Yes") {
     plot_fci_fnc(x="x_lev", y="PointEst", z="z_lev", xcivar=input$fxcivar, ycivar=input$fycivar, zcivar=input$fzcivar,
-                 dataf=fcidf(), ci_p=fci_fac()$ci_p, ci_l=fci_fac()$ci_l, ci_u=fci_fac()$ci_u,
+                 dataf=fcidf(), LCol= fci_plot_Line_Colors(), ci_p=fci_fac()$ci_p, ci_l=fci_fac()$ci_l, ci_u=fci_fac()$ci_u,
     max_pest=fci_fac()$max_pest, min_pest=fci_fac()$min_pest, max_ci=fci_fac()$max_ci, min_ci=fci_fac()$min_ci, 
     ctrs=fci_fac()$ctrs, cibands=input$fcibands, fCiXLim1=input$fCiXLim1, fCiXLim2=input$fCiXLim2, fCiYLim1=input$fCiYLim1, fCiYLim2=input$fCiYLim2)
     }
@@ -4440,12 +4451,20 @@ output$FCIx <- renderUI({                                 #Same idea as output$v
 #Select the predictors.
 output$FCIz <- renderUI({                                 #Same idea as output$vy
   selectInput("fzcivar", "3. Select a time variable.", 
-              choices = setdiff(var(), input$fycivar), multiple=FALSE, selected=var()[2])     #Will make choices based on my reactive function.
+              choices = setdiff(var(), c(input$fycivar, input$fxcivar)), multiple=FALSE, selected=var()[2])     #Will make choices based on my reactive function.
 })
-#Select the Confidence bands.
-output$FCI_bands <- renderUI({                                 #Same idea as output$vy
-  selectInput("fcibands", "4. Do you want confidence bands?", 
-              choices = c("No", "Yes"), multiple=FALSE, selected="No")     #Will make choices based on my reactive function.
+#Select specific groups
+output$fciplot_grp_levs <- renderUI({                                 
+  selectInput("fciPlotGrpLvs", "4. Highlight specific groups?", 
+              choices = fci_plot_groups(), multiple=TRUE)     
+})
+#Reactive function to get group levels
+fci_plot_Group_Levels <- reactive({                 
+  input$fciPlotGrpLvs 
+})
+#Reactive function to get group levels
+fci_plot_groups <- reactive({                 
+    unique(df()[, input$fxcivar]) 
 })
 #Select the CI type
 output$FCi_Choice_Type <- renderUI({                                
@@ -4459,16 +4478,30 @@ output$FCi_Conf_Lev <- renderUI({
   numericInput("fciconf_lev", "6. Enter the confidence level.",
                value = .95, min=.01, max = .99, step = .01)
 })
-#Select whether to run the 95% confidence interval or not
-output$FCi_create <- renderUI({                                
-  selectInput("FCiCreate", "7. Create the time plot?",
-              choices = c("No", "Yes"),
-              selected="No")
+#Select the Confidence bands.
+output$FCI_bands <- renderUI({                                 #Same idea as output$vy
+  selectInput("fcibands", "7. Do you want confidence bands?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")     #Will make choices based on my reactive function.
+})
+#Select line colors
+output$fci_plot_ln_clrs <- renderUI({                                 
+  selectInput("fciPltLnClr", "8. Select line colors.", 
+              choices = xyplot_Line_Color_Names(), multiple=TRUE)     
+})
+#Reactive function for directly above
+fci_plot_Line_Colors <- reactive({                 
+  input$fciPltLnClr 
 })
 #Select how many knots I want
 output$FCI_nk_knots <- renderUI({                                
-      numericInput("FciNkKnots", "8. Select the number of spline knots.",
+      numericInput("FciNkKnots", "9. Select the number of spline knots.",
        value = 3, min=3, max = 10, step = 1)
+})
+#Select whether to run the 95% confidence interval or not
+output$FCi_create <- renderUI({                                
+  selectInput("FCiCreate", "10. Create the time plot?",
+              choices = c("No", "Yes"),
+              selected="No")
 })
 ## Code for plot range
 #Range of X value
@@ -4481,22 +4514,22 @@ range_fycivar <- reactive({
 })
 #9. Indicate lower limit of x-axis
 output$FCI__Xlim1 <- renderUI({
-  numericInput("fCiXLim1", "9. Lower X-axis limit.",
+  numericInput("fCiXLim1", "11. Lower X-axis limit.",
                value = range_fzcivar()[1], step = 1)
 })
 #10. Indicate upper limit of x-axis
 output$FCI__Xlim2 <- renderUI({
-  numericInput("fCiXLim2", "10. Upper X-axis limit.",
+  numericInput("fCiXLim2", "12. Upper X-axis limit.",
                value = range_fzcivar()[2], step = 1)
 })
 #11. Indicate lower limit of y-axis
 output$FCI__Ylim1 <- renderUI({
-  numericInput("fCiYLim1", "11. Lower Y-axis limit.",
+  numericInput("fCiYLim1", "13. Lower Y-axis limit.",
                value = range_fycivar()[1], step = 1)
 })
 #12. Indicate upper limit of x-axis
 output$FCI__Ylim2 <- renderUI({
-  numericInput("fCiYLim2", "12. Upper Y-axis limit.",
+  numericInput("fCiYLim2", "14. Upper Y-axis limit.",
                value = range_fycivar()[2], step = 1)
 })
 
@@ -6081,63 +6114,87 @@ output$Cxyplot_x <- renderUI({
   selectInput("CXyplotX", "1. Select a continuous predictor.", 
               choices = predictor(), selected=predictor()[1], multiple=FALSE)     
 })
+#Continuous predictor
+CXyplotX1 <- reactive({                  
+  input$CXyplotX
+})
 #Select the factor for grouping
 output$Cxyplot_z <- renderUI({
   selectInput("CXyplotZ", "2. Select a factor.", 
               choices = setdiff(predictor(), input$CXyplotX),  multiple=FALSE)     
+})
+#Factor
+CXyplotZ1 <- reactive({                  
+  input$CXyplotZ
 })
 #Make confidence bands for the plot
 output$Cxyplot_bands <- renderUI({                                 
   selectInput("CXyplotBands", "3. Do you want confidence bands?", 
               choices = c("No", "Yes"), multiple=FALSE, selected="No")
 })
+#Reactive function for directly above
+Cxyplot_Bands_YesNo <- reactive({                 
+  input$CXyplotBands 
+})
+#Select line colors
+output$Cxyplot_line_clrs <- renderUI({                                 
+  selectInput("CXypltLnClr", "4. Select line colors.", 
+              choices = xyplot_Line_Color_Names(), multiple=TRUE)     
+})
+#Reactive function for directly above
+Cxyplot_Line_Colors <- reactive({                 
+  input$CXypltLnClr 
+})
 #Create yes/no box to make the XY plot
 output$Cxyplot_yes_no <- renderUI({                                 
-  selectInput("CXyplotYesNo", "4. Do you want to create the plot?", 
+  selectInput("CXyplotYesNo", "5. Do you want to create the plot?", 
               choices = c("No", "Yes"), multiple=FALSE, selected="No")     
 })
-
-#Continuous predictor
-CXyplotX1 <- reactive({                  
-  input$CXyplotX
+#Reactive function for directly above
+Cxyplot_create_YesNo <- reactive({                 
+  input$CXyplotYesNo 
 })
-#Factor
-CXyplotZ1 <- reactive({                  
-  input$CXyplotZ
+#Reactive function to get group levels
+Cxyplot_groups <- reactive({                 
+  if(Cxyplot_create_YesNo() == "Yes") {
+    unique(CxyplotData()[, CXyplotZ1()]) 
+  }
 })
-#Get the Predicted values needed for the plot
+#Select specific groups
+output$Cxyplot_grp_levs <- renderUI({                                 
+  selectInput("CxyplotGrpLvs", "6. Highlight specific groups?", 
+              choices = Cxyplot_groups(), multiple=TRUE)     
+})
+#Reactive function to get group levels
+Cxyplot_Group_Levels <- reactive({                 
+  input$CxyplotGrpLvs 
+})
+## Get the Predicted values needed for the plot ##
 CxyplotData <- reactive({                 
   do.call("Predict", list(fit1(), CXyplotX1(), CXyplotZ1(), fun= function(x)x*-1) )    
 })
+#Set up function to get XY limits from an XYplot
+Cxylm_run <- reactive({
+  if(Cxyplot_create_YesNo() == "Yes") {
+    fncXYpltLmts(xyplotDF=CxyplotData(), ContX=CXyplotX1(), GroupX=CXyplotZ1())
+  }
+})
+#Get XY limits from an XYplot
+Cxylm <- reactive({                  
+  Cxylm_run()
+})
 
+#Set up function to create the XYplot
+CXyplt_setup <- reactive({
+  if(Cxyplot_create_YesNo() == "Yes") {
+    fncXYpltInt(DF=df(), xyplotDF=CxyplotData(), ContX= CXyplotX1(), GroupX= CXyplotZ1(), 
+                GroupLevs= Cxyplot_Group_Levels(), XYlims= Cxylm(), Clrs= Cxyplot_Line_Colors(), CIbands=Cxyplot_Bands_YesNo()) 
+  }
+})
 #This creates the plot
 output$CxYplot_interaction <- renderPlot({
-  if(input$CXyplotYesNo == "Yes") {
-    if(input$CXyplotBands == "Yes") {
-      xYplot( Cbind(CxyplotData()[[which(names(CxyplotData()) =="yhat")]], 
-                    CxyplotData()[[which(names(CxyplotData()) =="lower")]], 
-                    CxyplotData()[[which(names(CxyplotData()) =="upper")]]) ~ CxyplotData()[[which(names(CxyplotData()) ==CXyplotX1())]],  
-              groups=CxyplotData()[[which(names(CxyplotData()) == CXyplotZ1())]],
-              method='filled bands', type='l', 
-              #col.fill=adjustcolor(1:length(unique(df()[, CXyplotZ1() ])), alpha.f = 0.2),
-              col.fill=adjustcolor(colors()[c(175, 33, 26, 254, 499,653, 310, 368, 16, 69,489,97,66,120,400,373)], alpha.f = 0.2),
-              lty=1:length(unique(df()[, CXyplotZ1() ])),
-#              lcol=1:length(unique(df()[, CXyplotZ1() ])), 
-              col=colors()[c(175, 33, 26, 254, 499,653, 310, 368, 16, 69,489,97,66,120,400,373)], 
-              lwd=3, ylab="Yhat", xlab=CXyplotX1(), cex=1.75,
-              main=paste0("Partial prediction plot of ", CXyplotX1(), " by levels of ", CXyplotZ1()) )
-    } else {
-      xYplot(CxyplotData()[[which(names(CxyplotData()) =="yhat")]] ~ CxyplotData()[[which(names(CxyplotData()) == CXyplotX1())]] ,  
-              groups=CxyplotData()[[which(names(CxyplotData()) == CXyplotZ1())]],
-              type='l',
-              lty=1:length(unique(df()[, CXyplotZ1() ])),
-             col=colors()[c(175, 33, 26, 254, 499,653, 310, 368, 16, 69,489,97,66,120,400,373)], 
-             #lcol=1:length(unique(df()[, CXyplotZ1() ])), 
-              lwd=3, ylab="Yhat", xlab=CXyplotX1(), cex=1.75, 
-              main=paste0("Partial prediction plot of ", CXyplotX1(), " by levels of ", CXyplotZ1()) )
-    }
-  } 
-}, height = 600)
+  CXyplt_setup()
+}, height = 800)
 
 ##########################################
 # Contrast plots for partial predictions #
@@ -9579,16 +9636,16 @@ fncStSpcLegendFactoLev <- function(Model_fit, X_Lev) {
 ##  plot(values$a, values$b)
 ##} )
 
-output$test1 <- renderPrint({
-list(
+#output$test1 <- renderPrint({
+#list(
 #  xylm(), c(xylm()[["XMin"]], xylm()[["XMax"]])
-  "sum"=summary(xyplotData()), "ContX1"= XyplotX1(), "GroupX1"=XyplotZ1(), 
-  "GroupLevs1"=xyplot_Group_Levels(), "XYlims1"=xylm(), "Clrs1"=xyplot_Line_Colors(), "CIbands1"=xyplot_Bands_YesNo()
-)  
+#  "sum"=summary(xyplotData()), "ContX1"= XyplotX1(), "GroupX1"=XyplotZ1(), 
+#  "GroupLevs1"=xyplot_Group_Levels(), "XYlims1"=xylm(), "Clrs1"=xyplot_Line_Colors(), "CIbands1"=xyplot_Bands_YesNo()
+#)  
 
 ##  thresh_quant_data_output()
 #  thresh_quant_data_output()
-  })
+#  })
 
 
 ################################################################################

@@ -4318,8 +4318,9 @@ fcidf <- reactive({                  #This indicates the data frame I will use.
   }
 })
 
-########################################
-#Put a function here for the point estimate, lower, upper bounds
+###############################################################
+## Function here for the point estimate, lower, upper bounds ##
+###############################################################
 ci_fac_fnc <- function(x_lev, z_lev, agr_df, NK) {
   #ci_fac_fnc <- function(x_lev, z_lev, agr_df) {
   prmtrs <- c("PointEst", "Lower", "Upper")
@@ -4385,18 +4386,53 @@ fci_fac <- reactive({                  #This indicates the data frame I will use
   }
 })
 
-########################################
+######################################################
+## Function to get the point overall point estimate ##
+######################################################
+fncFciTotMn <- function(y, z, dataf) {
+  agr_mean <- aggregate(dataf[, y], list(dataf[, z]), FUN="mean")
+  return(agr_mean) 
+}
 
-#This creates the time plot
+################################################
+## Function to get the overall point estimate ##
+################################################
+fncAllTrndSpln <- function( agr_df, NK) {
+  #Point est 
+  ci_p <- list()
+  x <- agr_df[ ,1]
+  y <- agr_df[ ,2]
+  xx <- rcspline.eval(x, inclx=TRUE, nk=NK)
+  knots <- attr(xx, "knots")
+  coef <- lsfit(xx, y)$coef
+  w <- rcspline.restate(knots, coef[-1], x="{\\rm BP}")
+  xtrans <- eval(attr(w, "function"))
+  ci_p <- cbind(x, y_p=coef[1] + xtrans(x))
+  return("ci_p"=ci_p )
+}
+
+############################################################
+##            Function to create the time plot            ##
+############################################################
 plot_fci_fnc <- function(x, y, z, xcivar, ycivar, zcivar, dataf, LCol, ci_p, ci_l, ci_u, 
-                         max_pest, min_pest, max_ci, min_ci, ctrs, cibands, fCiXLim1, fCiXLim2, fCiYLim1, fCiYLim2) {
+                         max_pest, min_pest, max_ci, min_ci, ctrs, cibands, 
+                         fCiXLim1, fCiXLim2, fCiYLim1, fCiYLim2, Tot.Line, FCI.Tot, Conf.Intrv) {
+  #Make text out of the confidence level
+  ConINT <- paste0(as.character(Conf.Intrv*100), "%")
+  #Main title
+  if(cibands == "Yes") {
+    Main.Title <- paste0( ycivar, " trajectories of ", xcivar,  " by ", zcivar, " with ", ConINT, " confidence bands")
+  } else {
+    Main.Title <- paste0( ycivar, " trajectories of ", xcivar,  " by ", zcivar)
+  }
+  
   #Set up colors
   my_clr <- LCol
   #my_clr <- c(175, 33, 26, 9,76,119, 310, 45, 368, 653, 69, 96,  145, 451, 500)
   plot(unique(dataf[, z]), seq(min(min_ci, na.rm=T), max(max_ci, na.rm=T), length.out=length(unique(dataf[, z]))), type="n",  
        cex.lab=1.35,cex.main=1.35,cex.sub=1.35, 
        ylab=ycivar, xlab=zcivar, xlim=c(fCiXLim1, fCiXLim2), ylim=c(fCiYLim1, fCiYLim2),
-       main= paste0( ycivar, " trajectories of ", xcivar,  " by ", zcivar))
+       main= Main.Title )
   #Plot point estimate lines
   ci_time <- list() 
   l95 <- list() 
@@ -4416,10 +4452,13 @@ plot_fci_fnc <- function(x, y, z, xcivar, ycivar, zcivar, dataf, LCol, ci_p, ci_
       
       xx_t[[i]] <- c(ci_time[[i]], rev(ci_time[[i]]))
       yy_t[[i]] <- c(l95[[i]], rev(u95[[i]]))
-      polygon(unlist(xx_t[[i]]), unlist(yy_t[[i]]), col = adjustcolor(my_clr[i], alpha.f = 0.2), 
-              border=adjustcolor(my_clr[i], alpha.f = 0.2))
+      polygon(unlist(xx_t[[i]]), unlist(yy_t[[i]]), col = adjustcolor(my_clr[i], alpha.f = 0.25), 
+              border=adjustcolor(my_clr[i], alpha.f = 0.25))
     }
-    #return(list(ci_p=ci_p, ci_l=ci_l, ci_u=ci_u, l95=l95, u95=u95, xx_t=xx_t, yy_t=yy_t))
+  }
+  #Add overall line
+  if (Tot.Line == "Yes") {
+  lines(FCI.Tot, col="black", lty=1, lwd=7)  
   }
 }
 
@@ -4429,8 +4468,18 @@ plot_fci <- reactive({                  #This indicates the data frame I will us
     plot_fci_fnc(x="x_lev", y="PointEst", z="z_lev", xcivar=input$fxcivar, ycivar=input$fycivar, zcivar=input$fzcivar,
                  dataf=fcidf(), LCol= fci_plot_Line_Colors(), ci_p=fci_fac()$ci_p, ci_l=fci_fac()$ci_l, ci_u=fci_fac()$ci_u,
     max_pest=fci_fac()$max_pest, min_pest=fci_fac()$min_pest, max_ci=fci_fac()$max_ci, min_ci=fci_fac()$min_ci, 
-    ctrs=fci_fac()$ctrs, cibands=input$fcibands, fCiXLim1=input$fCiXLim1, fCiXLim2=input$fCiXLim2, fCiYLim1=input$fCiYLim1, fCiYLim2=input$fCiYLim2)
+    ctrs=fci_fac()$ctrs, cibands=input$fcibands, fCiXLim1=input$fCiXLim1, fCiXLim2=input$fCiXLim2, 
+    fCiYLim1=input$fCiYLim1, fCiYLim2=input$fCiYLim2, Tot.Line=fci_overall_line(), FCI.Tot=fci_all_line(), Conf.Intrv=input$fciconf_lev )
     }
+})
+
+## Get the overall group trend rates ##
+fci_tot_group_aggr <- reactive({
+  fncFciTotMn(y=input$fycivar, z=input$fzcivar, dataf=df())
+})
+## Get the overall group trend line ##
+fci_all_line <- reactive({
+   fncAllTrndSpln(agr_df=fci_tot_group_aggr(), NK=input$FciNkKnots)
 })
 
 ############
@@ -4503,6 +4552,17 @@ output$FCi_create <- renderUI({
               choices = c("No", "Yes"),
               selected="No")
 })
+#Select whether to run the 95% confidence interval or not
+output$FCi_ovral_line <- renderUI({                                
+  selectInput("fciOvrLn", "11. Add the overall group line?",
+              choices = c("No", "Yes"),
+              selected="No")
+})
+#Reactive function for above
+fci_overall_line <- reactive({ 
+  input$fciOvrLn  
+})
+
 ## Code for plot range
 #Range of X value
 range_fzcivar <- reactive({ 
@@ -4512,24 +4572,24 @@ range_fzcivar <- reactive({
 range_fycivar <- reactive({ 
   range(as.numeric(df()[, input$fycivar]), na.rm=TRUE )  
 })
-#9. Indicate lower limit of x-axis
+#12. Indicate lower limit of x-axis
 output$FCI__Xlim1 <- renderUI({
-  numericInput("fCiXLim1", "11. Lower X-axis limit.",
+  numericInput("fCiXLim1", "12. Lower X-axis limit.",
                value = range_fzcivar()[1], step = 1)
 })
-#10. Indicate upper limit of x-axis
+#13. Indicate upper limit of x-axis
 output$FCI__Xlim2 <- renderUI({
-  numericInput("fCiXLim2", "12. Upper X-axis limit.",
+  numericInput("fCiXLim2", "13. Upper X-axis limit.",
                value = range_fzcivar()[2], step = 1)
 })
-#11. Indicate lower limit of y-axis
+#14. Indicate lower limit of y-axis
 output$FCI__Ylim1 <- renderUI({
-  numericInput("fCiYLim1", "13. Lower Y-axis limit.",
+  numericInput("fCiYLim1", "14. Lower Y-axis limit.",
                value = range_fycivar()[1], step = 1)
 })
-#12. Indicate upper limit of x-axis
+#15. Indicate upper limit of x-axis
 output$FCI__Ylim2 <- renderUI({
-  numericInput("fCiYLim2", "14. Upper Y-axis limit.",
+  numericInput("fCiYLim2", "15. Upper Y-axis limit.",
                value = range_fycivar()[2], step = 1)
 })
 
@@ -9638,13 +9698,10 @@ fncStSpcLegendFactoLev <- function(Model_fit, X_Lev) {
 
 #output$test1 <- renderPrint({
 #list(
-#  xylm(), c(xylm()[["XMin"]], xylm()[["XMax"]])
-#  "sum"=summary(xyplotData()), "ContX1"= XyplotX1(), "GroupX1"=XyplotZ1(), 
-#  "GroupLevs1"=xyplot_Group_Levels(), "XYlims1"=xylm(), "Clrs1"=xyplot_Line_Colors(), "CIbands1"=xyplot_Bands_YesNo()
+#  fci_tot_group_aggr=fci_tot_group_aggr(),
+#  fci_all_line=fci_all_line()
 #)  
 
-##  thresh_quant_data_output()
-#  thresh_quant_data_output()
 #  })
 
 

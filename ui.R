@@ -1692,7 +1692,7 @@ tabPanel("95% CIs",
          verbatimTextOutput("Cidf_output"),
          h6("Note: The values above are point estimates and confidence limits that are sorted alphabetically and numerically."),
          br(),
-         h4("Performance of groups over time (need >= 5 time points)"),
+         h4("Performance of groups over time (need >= 6 time points)"),
          h5("This plot has smoothed spline trajectories, with or without confidence bands. \"Trend\" lines may not have cooridnate values that equal rates."),
          br(),
          fluidRow(   
@@ -1719,7 +1719,9 @@ tabPanel("95% CIs",
            column(3, 
                   uiOutput("FCI_nk_knots")),
            column(3, 
-                  uiOutput("FCi_create"))
+                  uiOutput("FCi_create")),
+           column(3, 
+                  uiOutput("FCi_ovral_line"))  
          ),
          fluidRow(   
            column(3, 
@@ -1731,7 +1733,7 @@ tabPanel("95% CIs",
            column(3, 
                   uiOutput("FCI__Ylim2"))
          ),
-         h5("Modify the plot space in #11-14."),
+         h5("Modify the plot space in #12-15."),
          br(),
          plotOutput("Plot_Fci_output", height = 800, width="100%"),
          h5("These are point estimates and confidence intervals. These may not match up with smoothed lines."),

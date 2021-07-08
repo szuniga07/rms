@@ -4472,7 +4472,7 @@ fncAllTrndSpln <- function( agr_df, NK) {
 ############################################################
 plot_fci_fnc <- function(x, y, z, xcivar, ycivar, zcivar, dataf, LCol, ci_p, ci_l, ci_u, 
                          max_pest, min_pest, max_ci, min_ci, ctrs, cibands, 
-                         fCiXLim1, fCiXLim2, fCiYLim1, fCiYLim2, Tot.Line, FCI.Tot, Conf.Intrv) {
+                         fCiXLim1, fCiXLim2, fCiYLim1, fCiYLim2, Tot.Line, FCI.Tot, Conf.Intrv, Tgt.Line) {
   #Make text out of the confidence level
   ConINT <- paste0(as.character(Conf.Intrv*100), "%")
   #Main title
@@ -4516,6 +4516,8 @@ plot_fci_fnc <- function(x, y, z, xcivar, ycivar, zcivar, dataf, LCol, ci_p, ci_
   if (Tot.Line == "Yes") {
   lines(FCI.Tot, col="black", lty=1, lwd=7)  
   }
+  #Add target line
+  abline(h=Tgt.Line, col="gray", lty=3, lwd=7)
 }
 
 #Confidence interval plot reactive function
@@ -4525,7 +4527,8 @@ plot_fci <- reactive({                  #This indicates the data frame I will us
                  dataf=fcidf(), LCol= fci_plot_Line_Colors(), ci_p=fci_fac()$ci_p, ci_l=fci_fac()$ci_l, ci_u=fci_fac()$ci_u,
     max_pest=fci_fac()$max_pest, min_pest=fci_fac()$min_pest, max_ci=fci_fac()$max_ci, min_ci=fci_fac()$min_ci, 
     ctrs=fci_fac()$ctrs, cibands=input$fcibands, fCiXLim1=input$fCiXLim1, fCiXLim2=input$fCiXLim2, 
-    fCiYLim1=input$fCiYLim1, fCiYLim2=input$fCiYLim2, Tot.Line=fci_overall_line(), FCI.Tot=fci_all_line(), Conf.Intrv=input$fciconf_lev )
+    fCiYLim1=input$fCiYLim1, fCiYLim2=input$fCiYLim2, Tot.Line=fci_overall_line(), FCI.Tot=fci_all_line(), 
+    Conf.Intrv=input$fciconf_lev, Tgt.Line=fCi_target_line() )
     }
 })
 
@@ -4618,6 +4621,15 @@ output$FCi_ovral_line <- renderUI({
 fci_overall_line <- reactive({ 
   input$fciOvrLn  
 })
+#Add a target line
+output$FCi_Tgt_Line <- renderUI({                                 
+  numericInput("fciTgtLn", "12. Add a target line.",
+               value = NULL, step = .1)
+})
+#Reactive function for above
+fCi_target_line <- reactive({ 
+  input$fciTgtLn  
+})
 
 ## Code for plot range
 #Range of X value
@@ -4630,22 +4642,22 @@ range_fycivar <- reactive({
 })
 #12. Indicate lower limit of x-axis
 output$FCI__Xlim1 <- renderUI({
-  numericInput("fCiXLim1", "12. Lower X-axis limit.",
+  numericInput("fCiXLim1", "13. Lower X-axis limit.",
                value = range_fzcivar()[1], step = 1)
 })
 #13. Indicate upper limit of x-axis
 output$FCI__Xlim2 <- renderUI({
-  numericInput("fCiXLim2", "13. Upper X-axis limit.",
+  numericInput("fCiXLim2", "14. Upper X-axis limit.",
                value = range_fzcivar()[2], step = 1)
 })
 #14. Indicate lower limit of y-axis
 output$FCI__Ylim1 <- renderUI({
-  numericInput("fCiYLim1", "14. Lower Y-axis limit.",
+  numericInput("fCiYLim1", "15. Lower Y-axis limit.",
                value = range_fycivar()[1], step = 1)
 })
 #15. Indicate upper limit of x-axis
 output$FCI__Ylim2 <- renderUI({
-  numericInput("fCiYLim2", "15. Upper Y-axis limit.",
+  numericInput("fCiYLim2", "16. Upper Y-axis limit.",
                value = range_fycivar()[2], step = 1)
 })
 

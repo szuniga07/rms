@@ -591,7 +591,7 @@ tabPanel("Impute",
                    h4("Create a parsimonious model with an equivalent level of prediction as the \"Full Model\" ."  ),
                    uiOutput("MIForAprx"),
                    h5("If you will answer \"Yes\", also click \"Yes\" to #2 in the 'Model builder' tab before imputing and approximating if you want to compare the imputed/non-imputed results."  ),
-                   plotOutput("approximate_plot"),                  #Creates a new panel named "Summary"
+                   plotOutput("approximate_plot", height=500, width = "100%"),                  #Creates a new panel named "Summary"
                    br(),
                    h5("Proportion of \"Full Model\" R2 remaining after deletion of each predictor. Select a stopping rule that makes approximation inadequate (e.g., 0.95)."),
                    h6("Note: There is nothing gained in parsimony when removing nonlinear terms, gains come from removing predictors."),

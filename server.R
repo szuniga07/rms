@@ -2970,14 +2970,20 @@ yhat <- reactive ({
 yhat_plot_fnc <- function(yhat, reg_yhat) {
   switch(reg_yhat,                
          "Linear"   = plot_yhat <- yhat, 
-         "Logistic" = plot_yhat <- 1/(1+exp(-yhat)),
-         "Ordinal Logistic"          = plot_yhat <- 1/(1+exp(-yhat)),
+#         "Logistic" = plot_yhat <- 1/(1+exp(-yhat)),
+         "Logistic" = plot_yhat <- plogis(yhat),
+#"Ordinal Logistic"          = plot_yhat <- 1/(1+exp(-yhat)),
+"Ordinal Logistic"          = plot_yhat <- plogis(yhat),
          "Poisson"  = plot_yhat <- exp(yhat),
          "Quantile" = plot_yhat <- yhat,
-         "Cox PH"   = plot_yhat <- 1/(1+exp(-yhat)),
-         "Cox PH with censoring"     = plot_yhat <- 1/(1+exp(-yhat)),
-         "AFT"   = plot_yhat <- 1/(1+exp(-yhat)),
-         "AFT with censoring"     = plot_yhat <- 1/(1+exp(-yhat)),
+#"Cox PH"   = plot_yhat <- 1/(1+exp(-yhat)),
+"Cox PH"   = plot_yhat <- plogis(yhat),
+#"Cox PH with censoring"     = plot_yhat <- 1/(1+exp(-yhat)),
+"Cox PH with censoring"     = plot_yhat <- plogis(yhat),
+#"AFT"   = plot_yhat <- 1/(1+exp(-yhat)),
+"AFT"   = plot_yhat <- yhat,
+#"AFT with censoring"     = plot_yhat <- 1/(1+exp(-yhat)),
+"AFT with censoring"     = plot_yhat <- yhat,
          "Generalized Least Squares" = plot_yhat <- yhat)
   return(plot_yhat)
 }

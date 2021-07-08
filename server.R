@@ -2775,7 +2775,7 @@ vlfnc <- function(xdf) {
                                        #to change it to names(), didn't help. I get MC data ok, but 
                                        #it gives it the name as the command
     v_ls$typ[[i]]  <- typeof(xdf[,i])  #This is used to work with 'labelled' class in RMS data
-    v_ls$pdf_lbl[[i]]  <- as.character(unique(xdf[,i]))[!is.na(as.character(unique(xdf[,i])))]  #Gives me the correct PDF value labels, removes "NA"    names(v_ls$mn)[[i]] <- colnames(xdf)[i]
+    v_ls$pdf_lbl[[i]]  <- sort(as.character(unique(xdf[,i]))[!is.na(as.character(unique(xdf[,i])))])  #Gives me the correct PDF value labels, removes "NA"    names(v_ls$mn)[[i]] <- colnames(xdf)[i]
     names(v_ls$mn)[[i]] <- colnames(xdf)[i]
     names(v_ls$sd)[[i]] <- colnames(xdf)[i]
     names(v_ls$pdf)[i] <- colnames(xdf)[i]
@@ -2855,8 +2855,15 @@ mc_sim_fix_fnc1 <- function(McSimDf) {
   for (i in 1:nrow(McSimDf)) {
     mc_sim_fnc1_arg2[[i]] <- McSimDf[i, 2 + i]
     mc_sim_fnc1_arg3[[i]] <- McSimDf[i, 2 + i + nrow(McSimDf)]
-  }
-  mcSimFixLs <-  cbind("arg2"=unlist(mc_sim_fnc1_arg2), "arg3"=unlist(mc_sim_fnc1_arg3))
+  }  
+  #I added the if()/else() commands to to fix the problem with sole character/factor X crashing Monte Carlo 
+  ALLrunif <- all(McSimDf$input_dist == "runif") #Check to see if all distributions are "runif"
+  if ( ALLrunif == FALSE ) {
+    mcSimFixLs <- cbind("arg2"=unlist(mc_sim_fnc1_arg2), "arg3"=unlist(mc_sim_fnc1_arg3))
+  } else {
+    mcSimFixLs <- cbind("arg2"= McSimDf$input_arg2, "arg3"=McSimDf$input_arg3)
+  } 
+#  mcSimFixLs <- cbind("arg2"=unlist(mc_sim_fnc1_arg2), "arg3"=unlist(mc_sim_fnc1_arg3))
   return(mcSimFixLs)
 }
 
@@ -2888,28 +2895,54 @@ input_mc_df1 <- reactive({
   input_mc_fnc1(mc_sim=mc_sim_fnc2()) #Uses the "fixed" data
 })
 
+## Function to identify single or multiple groups with a value ##
+fncMCUnifLev <- function(Up.Lev.Prop, Lbls, X) {
+  X.Var.Num <- which(predictor() == X) 
+  Up.Lev.Prop <- Up.Lev.Prop[[X.Var.Num]]
+  Lbls <- Lbls[[X.Var.Num]]
+  None.Levs <- length(Up.Lev.Prop [Up.Lev.Prop == 0])
+  Lev.Not.0 <- which(Up.Lev.Prop != 0)
+  #Create new labels and values for just those with data
+  New.Lbls <- Lbls[Lev.Not.0]
+  New.PDF <- Up.Lev.Prop[Lev.Not.0]
+  return(list(Lev.Not.0=Lev.Not.0,  None.Levs=None.Levs,
+              New.Lbls=New.Lbls, New.PDF=New.PDF))
+}
+
+#Reactive plot that runs fncMCUnifLev()
+mc_unif_df <- reactive({
+  fncMCUnifLev(Up.Lev.Prop= vls2()[["pdf"]], Lbls= vls2()[["pdf_lbl"]],
+               X= input$updf) 
+}) 
 
 #4
-  #Function that loops through the simulated data and coverts the 0-1 values to factors
-  #based on the original values so that it will work with the formula function
-input_mc_fnc2 <- function(input_dist, input_mc_df, PDF, LBL) {
-  for(i in 1:length(input_dist))
+#Function that loops through the simulated data and coverts the 0-1 values to factors
+#based on the original values so that it will work with the formula function
+input_mc_fnc2 <- function(input_dist, input_mc_df, PDF, LBL, Unif.Update, Unif.Df) {
+  
+  for(i in 1:length(input_dist)) {
     if(input_dist[i] == "runif") {
-      input_mc_df[[i]] <- cut(input_mc_df[[i]],breaks=c(-.01, cumsum(PDF[[i]])),  
-#                              labels=names(PDF[[i]]))
-                           labels=LBL[[i]])
-      
+      if(Unif.Update == "Yes") {
+        input_mc_df[[i]] <- cut(input_mc_df[[i]], breaks=c(-.01, cumsum(Unif.Df[["New.PDF"]] )) , 
+                                labels=Unif.Df[["New.Lbls"]]
+        )
+      } else {
+        input_mc_df[[i]] <- cut(input_mc_df[[i]],breaks=c(-.01, cumsum(PDF[[i]])), 
+                                labels=LBL[[i]])
+      }
     }
+  }
   return(input_mc_df)
 }
 
 #4A
 #Reactive function that runs input_mc_fnc2() above
 input_mc_df2 <- reactive({
-#  input_mc_fnc1(input_dist=mc_sim_fnc()[["input_dist"]], input_mc_df=input_mc_df1(), PDF=vls1()[["pdf"]])
-   input_mc_fnc2(input_dist=mc_sim_fnc1()[[1]], input_mc_df=input_mc_df1(), 
-                PDF=vls2()[[6]], LBL=vls2()[["pdf_lbl"]])
+  #  input_mc_fnc1(input_dist=mc_sim_fnc()[["input_dist"]], input_mc_df=input_mc_df1(), PDF=vls1()[["pdf"]])
+  input_mc_fnc2(input_dist=mc_sim_fnc1()[[1]], input_mc_df=input_mc_df1(),
+                PDF=vls2()[[6]], LBL=vls2()[["pdf_lbl"]], Unif.Update= input$updpdf, Unif.Df=mc_unif_df())
 })
+
 
 #5
   #Function that converts the list object to a data frame
@@ -3216,14 +3249,14 @@ output$desc_YhatPlotRslt <- renderPrint({
 
 ## Cobweb plot ##
 #Function that converts non-numeric variables to numeric variables
-recode_mc_fnc1 <- function(df, dists, cvls) {
-  df[, 1] <- as.numeric(cut(df[, 1], breaks=quantile(df[, 1], probs=seq(0,1, .01)), include.lowest=T, right=FALSE))
+recode_mc_fnc1 <- function(df, dists, cvls, By.Seq) {
+  df[, 1] <- as.numeric(cut(df[, 1], breaks=quantile(df[, 1], probs=seq(0,1, By.Seq)), include.lowest=T, right=FALSE))
     for (i in 1:ncol(df[,-1])) {
     if (dists[i] %in% c("runif", "rbinom")) {
       df[, i+1] <- as.numeric(as.factor(df[, i+1]))
       df[, i+1] <- round((df[, i+1] / cvls[[i]])*100, 0)
     } else {
-      df[, i+1] <- as.numeric(cut(df[, i+1], breaks=quantile(df[, i+1], probs=seq(0,1, .01)), include.lowest=T, right=FALSE))
+      df[, i+1] <- as.numeric(cut(df[, i+1], breaks=quantile(df[, i+1], probs=seq(0,1, By.Seq)), include.lowest=T, right=FALSE))
     }
       #if (dists[i] == "rnorm") {
       #if (!dists[i] %in% c("runif", "rbinom")) {
@@ -3234,7 +3267,7 @@ recode_mc_fnc1 <- function(df, dists, cvls) {
 }
 #This runs the recode_mc_fnc1 function above.
 mc_df_y2 <- reactive({
-  recode_mc_fnc1(mc_df_y(), mc_arg_fnc1()[["input_dist"]], cvls=vls2()[["levs"]])
+  recode_mc_fnc1(mc_df_y(), mc_arg_fnc1()[["input_dist"]], cvls=vls2()[["levs"]], By.Seq=cobweb_by_sequence())
 })
 
 #This function creates the cobweb plot
@@ -3242,6 +3275,20 @@ cobweb_fnc <- function(df) {
   plot(1:ncol(df), seq(1, 100, length.out = ncol(df)), type="n",
        axes=F, xlab="Predictors", ylab="Percentiles")
   apply(df[df[, 1] >= 1,], 1, lines, col="gray")
+  #Generic color for top and bottom 10-20%
+  if ("Top 20%" %in% input$topbottom)  {
+    apply(df[df[, 1] >= 81,], 1, lines, col="yellow")
+  } 
+  if ("Bottom 20%" %in% input$topbottom )  {
+    apply(df[df[, 1] < 21,], 1, lines, col="yellow")
+  }
+  if ("Top 10%" %in% input$topbottom)  {
+    apply(df[df[, 1] >= 91,], 1, lines, col="orange") 
+  } 
+  if ("Bottom 10%" %in% input$topbottom )  {
+    apply(df[df[, 1] < 11,], 1, lines, col="orange")
+  }
+  #Lines are coded from highest to lowest so lower percentages will show on top of higher ones
   if ("Bottom 5%" %in% input$topbottom )  {
     apply(df[df[, 1] < 6,], 1, lines, col="blue")
   }
@@ -3264,10 +3311,19 @@ cobweb_plot <- reactive({
 
 #Input box to ask for top or bottom 5%
 output$top_bottom_5 <- renderUI({
-  selectInput("topbottom", "Do you want to look at the top or bottom 5%", 
-              choices = c("Top 1%","Top 5%", "Bottom 1%", "Bottom 5%"), multiple=TRUE, selected="Top 5%")     
+  selectInput("topbottom", "1, Highlight top or bottom outcome scores.", 
+              choices = c("Top 1%","Top 5%","Top 10%", "Top 20%", "Bottom 1%", "Bottom 5%", "Bottom 10%", "Bottom 20%"), 
+              multiple=TRUE, selected="Top 5%")     
 })
-
+#Indicate the R2 level value to use as a stopping rule for redundancy analysis
+output$cobweb_seq <- renderUI({ 
+  numericInput("cwebSeq", "2. Select the percentile level for all lines.",
+               value=0.01, min=0, max=1, step=.01) 
+})
+#Reactive function for cobweb_seq 
+cobweb_by_sequence <- reactive({ 
+    input$cwebSeq
+})
 #Add in labels to binomial or categorical variables
 cobweb_fctr_fnc <- function(df, dists) {
   facdf <- list()
@@ -4034,12 +4090,12 @@ output$oat_mn_sd <- renderPlot({
 
 output$tornadoplot <- renderPlot({ 
   src_plot_rslt()
-}, height = 700, width = 1000 )
+}, height = 800 )
 
 output$cutoffplot <- renderPlot({ 
   #  hist(yhat_plot_rslt())
   cutoff_plot_rslt()
-}, height = 400, width = 800 )
+}, height = 600)
 
 output$cobwebplot <- renderPlot({ 
   cobweb_plot()
@@ -9698,8 +9754,14 @@ fncStSpcLegendFactoLev <- function(Model_fit, X_Lev) {
 
 #output$test1 <- renderPrint({
 #list(
-#  fci_tot_group_aggr=fci_tot_group_aggr(),
-#  fci_all_line=fci_all_line()
+#  vls1=vls1(), 
+  #vls2=vls2(), input_mc_df2=head(input_mc_df2()[[1]]),
+#  mc_df_y2=mc_df_y2(),
+#  str_input_mc_df2= str(input_mc_df2()),
+#  name_input_mc_df2= names(input_mc_df2()), class_input_mc_df2= class(input_mc_df2()),
+#  length_input_mc_df2= length(input_mc_df2()), mc_unif_df=mc_unif_df(),
+#  mc_df_y=head(mc_df_y()), 
+#    mc_df1= head(mc_df1()),  "mc_sim_fnc1"= mc_sim_fnc1() 
 #)  
 
 #  })

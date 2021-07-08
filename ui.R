@@ -1447,9 +1447,9 @@ br()
 
 
 tabPanel("Monte Carlo",                                #Creates a new panel named "Test"
+         h4(" Monte Carlo Simulation"),
+         h6(" Note: Open this tab first to unlock the plots in the following tabs. For #7, select a categorical variable. For #8, grouped alphabetically, see 'Describe' tab."),
          fluidRow(                           #Wrapping them in a fluidRow provides easy control over  
-           h4(" Monte Carlo Simulation"),
-           h6(" Note: Open this tab first to unlock the plots in the following tabs."),
            column(3,
            uiOutput("s_seed"),  #Sets the seed for the random number.
            uiOutput("up_mn_var"),
@@ -1487,19 +1487,21 @@ tabPanel("Monte Carlo",                                #Creates a new panel name
          ),
          
 tabPanel("OAT M/SD plot",                                #Creates a new panel named "Test Plot"
-         fluidRow(                           #Wrapping them in a fluidRow provides easy control over  
-           h4("Morris One-at-a-Time plot of Yhat means by Yhat SDs for each predictor (holding other predictors constant)"),
-           h5("High means indicate high Elementary Effects. High SDs may indicate non-linearity and/or interactions."),
-           h5("Red line= sample mean; Blue line= sample median. Lines not always visible."),
-           plotOutput("oat_mn_sd", height = 600)   
-         )),              
+         h4("Morris One-at-a-Time plot of Yhat means by Yhat SDs for each predictor (holding other predictors constant)"),
+         h5("High means indicate high Elementary Effects. High SDs may indicate non-linearity and/or interactions."),
+         h5("Red line= sample mean; Blue line= sample median. Lines not always visible."),
+#         fluidRow(                           #Wrapping them in a fluidRow provides easy control over  
+           plotOutput("oat_mn_sd", height = 600, width="100%")   
+#         )
+         ),              
 
 tabPanel("Tornado plot",                                #Creates a new panel named "Test Plot"
-         fluidRow(                           #Wrapping them in a fluidRow provides easy control over  
-           h4("Tornado plot of absolute value standardized regression coefficients."),
-           h5("Wider bands indicate that the outcome is more sensitive to the predictor (i.e., it's more important)."),
-           plotOutput("tornadoplot")   
-         )),              
+         h4("Tornado plot of absolute value standardized regression coefficients."),
+         h5("Wider bands indicate that the outcome is more sensitive to the predictor (i.e., it's more important)."),
+#         fluidRow(                           #Wrapping them in a fluidRow provides easy control over  
+           plotOutput("tornadoplot", height = 800, width="100%")   
+#         )
+),              
 
 tabPanel("Cutoff plot",
          h4("This plot allows us to see the proportion of expected values above/below a cutoff"),
@@ -1510,23 +1512,28 @@ tabPanel("Cutoff plot",
          column(5, 
                 uiOutput("cutoff_val")
                 )),
-         plotOutput("cutoffplot"),
+         plotOutput("cutoffplot", height = 600, width="100%"),
          verbatimTextOutput("cutoff_smry"),
          h5("Descibe the simulated values"),
          verbatimTextOutput("desc_YhatPlotRslt")
 ),    
 
 tabPanel("Cobweb plot",                                #Creates a new panel named "Test Plot"
+         h4("Cobeweb plot of best 1% or 5% of predicted outcome scores (\"best\" can be top or bottom values.)"),
+         h5("Shows responses of predictors with best predicted outcome values. Narrower spread indicates greater predictor importance."),
+         h5("Note: Requires at least 2 predictors."),
+         h6("For all categorical predictor models, increase #2 until lines appear. Lines won't reach 100 on y-axis because of limited number of unique Y predictions. Select bottom 1% or 5%, gray lines will indicate highest values."),
          fluidRow(                           #Wrapping them in a fluidRow provides easy control over  
-           h4("Cobeweb plot of best 1% or 5% of predicted outcome scores (\"best\" can be top or bottom values.)"),
-           h5("Shows responses of predictors with best predicted outcome values. Narrower spread indicates greater predictor importance."),
-           h6("Note: Requires at least 2 predictors, 1 of which needs to be continuous. If not, produces error message."),
-           uiOutput("top_bottom_5"),
-           plotOutput("cobwebplot", height=600),
-           h5("Response level names and \"approximate\" associated percentiles for binomial and categorical factors (in order)."),
-           h5("Binomial and categorical percentiles are 1/N *100 (e.g., 3 levels= 1/3, 2/3, 3/3= 33, 68, 100)."),
-           verbatimTextOutput("cobweb_lev_nm")
-         )),              
+           column(3, 
+                  uiOutput("top_bottom_5")),
+           column(3, 
+                  uiOutput("cobweb_seq"))
+         ),
+         plotOutput("cobwebplot", height=800, width="100%"),
+         h5("Response level names and \"approximate\" associated percentiles for binomial and categorical factors (in order)."),
+         h5("Binomial and categorical percentiles are 1/N *100 (e.g., 3 levels= 1/3, 2/3, 3/3= 33, 68, 100)."),
+         verbatimTextOutput("cobweb_lev_nm")
+         ),              
 
 
 #### META ANALYSIS ##########

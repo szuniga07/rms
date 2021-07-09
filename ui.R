@@ -507,9 +507,10 @@ tabPanel("Describe",
            column(4, offset=1,
                   uiOutput("calculator_yesno"))
          ),
-         h5("Calculation (e.g., sqrt(16) + 6 = 10, sd(mtcars$mpg))"),         
+         h5("Basic mathematical functions (+, -, *, /) and runs other commands (e.g., sqrt(16) + 6 = 10, sd(mtcars$mpg))."),         
          br(),
          verbatimTextOutput("prnt_calculation"),
+         h5("To load an object to the global environment, use assign(), e.g., assign(\"my_data\", (my_data[1:5000, ], envir=globalenv() )."),
          br()
 ),    
 

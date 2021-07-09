@@ -5785,18 +5785,14 @@ fncTmDnsty <- function(DF, X, Y, Z, Groups, Increment, Period, Xmin, Xmax, Ymax,
   #I need to create a vector with the exact number of elements I need. Gets matching values within line
   Dx.Cord <- vector(mode = "list", length = Increment.Length)
   Dy.Cord <- vector(mode = "list", length = Increment.Length)
+  Dy.Cord.Random <- vector(mode = "list", length = Increment.Length)
   for (i in 1:nrow(DXname[[i]]) ) {
     for (j in 1:Increment.Length ) {
       Dx.Cord[[j]][i] <- DxDY[[j]][[ 1]][which( min(abs(DxDY[[j]][[1]] - DYvals[[j]][i])) == abs(DxDY[[j]][[1]] - DYvals[[j]][i] ))]
       Dy.Cord[[j]][i] <- DxDY[[j]][[ 2]][which( min(abs(DxDY[[j]][[1]] - DYvals[[j]][i])) == abs(DxDY[[j]][[1]] - DYvals[[j]][i] ))]
-    }
-  }
-  #This creates the random Y coordinate in the density plot
-  Dy.Cord.Random <- vector(mode = "list", length = Increment.Length)
-  for (i in 1:nrow(DXname[[i]] )) {
-    for (j in 1:Increment.Length ) {
       set.seed(i * Seed.Multiplier)
       Dy.Cord.Random[[j]][i] <- runif(1, min = 0.015, max = Dy.Cord[[j]][i])
+      
     }
   }
   

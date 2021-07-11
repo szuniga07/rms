@@ -4369,8 +4369,8 @@ fpconf <- function(x, xlev, y, z, dataf, conf_lev) {
   return(agr_df=agr_df ) 
 }
 
-fconf <- function(x=xcivar, xlev=xlev, y=ycivar, z=zcivar, dataf, conf_lev=ciconf_lev) {
-  switch(input$fci_type,                #"var" and can be used anywhere in server.r.
+fconf <- function(x=xcivar, xlev=xlev, y=ycivar, z=zcivar, dataf, conf_lev=ciconf_lev, Fci_type) {
+  switch(Fci_type,                #"var" and can be used anywhere in server.r.
          "Mean (t)" =  ftconf(x, xlev, y, z, dataf, conf_lev), 
          "Proportion (binomial)" =  fbconf(x, xlev, y, z, dataf, conf_lev), 
          "Poisson (exact)" =  fpconf(x, xlev, y, z, dataf, conf_lev) 
@@ -4380,7 +4380,8 @@ fconf <- function(x=xcivar, xlev=xlev, y=ycivar, z=zcivar, dataf, conf_lev=cicon
 #Reactive function that runs fconf above
 fcidf <- reactive({                  #This indicates the data frame I will use.
   if(input$FCiCreate == "Yes") {
-  fconf(x=input$fxcivar, xlev=fci_plot_Group_Levels(), y=input$fycivar, z=input$fzcivar, dataf=df(), conf_lev=input$fciconf_lev)
+    fconf(x=input$fxcivar, xlev=fci_plot_Group_Levels(), y=input$fycivar, z=input$fzcivar, 
+          dataf=df(), conf_lev=input$fciconf_lev, Fci_type=input$fci_type)
   }
 })
 
@@ -4401,7 +4402,7 @@ ci_fac_fnc <- function(x_lev, z_lev, agr_df, NK) {
     coef <- lsfit(xx, y)$coef
     w <- rcspline.restate(knots, coef[-1], x="{\\rm BP}")
     xtrans <- eval(attr(w, "function"))
-    ci_p[[i]] <- cbind(x, y_p=coef[1] + xtrans(x))
+    ci_p[[i]] <- cbind(x, y_p=coef[1] + xtrans(x), y)
   }
   #Lower CI
   ci_l <- list()
@@ -4413,7 +4414,7 @@ ci_fac_fnc <- function(x_lev, z_lev, agr_df, NK) {
     coef <- lsfit(xx, y)$coef
     w <- rcspline.restate(knots, coef[-1], x="{\\rm BP}")
     xtrans <- eval(attr(w, "function"))
-    ci_l[[i]] <- cbind(x, y_l=coef[1] + xtrans(x))
+    ci_l[[i]] <- cbind(x, y_l=coef[1] + xtrans(x), y)
   }
   #Upper CI
   ci_u <- list()
@@ -4425,7 +4426,7 @@ ci_fac_fnc <- function(x_lev, z_lev, agr_df, NK) {
     coef <- lsfit(xx, y)$coef
     w <- rcspline.restate(knots, coef[-1], x="{\\rm BP}")
     xtrans <- eval(attr(w, "function"))
-    ci_u[[i]] <- cbind(x, y_u=coef[1] + xtrans(x))
+    ci_u[[i]] <- cbind(x, y_u=coef[1] + xtrans(x), y)
   }
   #For point estimtaes only
   max_pest <- vector() 
@@ -4480,9 +4481,10 @@ fncAllTrndSpln <- function( agr_df, NK) {
 ############################################################
 ##            Function to create the time plot            ##
 ############################################################
-plot_fci_fnc <- function(x, y, z, xcivar, ycivar, zcivar, dataf, LCol, ci_p, ci_l, ci_u, 
-                         max_pest, min_pest, max_ci, min_ci, ctrs, cibands, 
-                         fCiXLim1, fCiXLim2, fCiYLim1, fCiYLim2, Tot.Line, FCI.Tot, Conf.Intrv, Tgt.Line) {
+plot_fci_fnc <- function(x, y, z, xcivar, ycivar, zcivar, dataf, LCol, Fci.Fac, 
+                         ci_p, ci_l, ci_u,max_pest, min_pest, max_ci, min_ci, ctrs, 
+                         cibands, fCiXLim1, fCiXLim2, fCiYLim1, fCiYLim2, Tot.Line, FCI.Tot,
+                         FCI.Tot.Straight, Conf.Intrv, Tgt.Line, Straight.Line) {
   #Make text out of the confidence level
   ConINT <- paste0(as.character(Conf.Intrv*100), "%")
   #Main title
@@ -4494,7 +4496,6 @@ plot_fci_fnc <- function(x, y, z, xcivar, ycivar, zcivar, dataf, LCol, ci_p, ci_
   
   #Set up colors
   my_clr <- LCol
-  #my_clr <- c(175, 33, 26, 9,76,119, 310, 45, 368, 653, 69, 96,  145, 451, 500)
   plot(unique(dataf[, z]), seq(min(min_ci, na.rm=T), max(max_ci, na.rm=T), length.out=length(unique(dataf[, z]))), type="n",  
        cex.lab=1.35,cex.main=1.35,cex.sub=1.35, 
        ylab=ycivar, xlab=zcivar, xlim=c(fCiXLim1, fCiXLim2), ylim=c(fCiYLim1, fCiYLim2),
@@ -4505,26 +4506,49 @@ plot_fci_fnc <- function(x, y, z, xcivar, ycivar, zcivar, dataf, LCol, ci_p, ci_
   u95 <- list() 
   xx_t <- list() 
   yy_t <- list() 
-  for (i in 1:length(ctrs)) {
-    lines(ci_p[[i]][, "x"], ci_p[[i]][, "y_p"], lty=i, col= my_clr[i],lwd=2)
-    text(ci_p[[i]][1, "x"], ci_p[[i]][1, "y_p"], ctrs[i])
-    text(ci_p[[i]][nrow(ci_p[[i]]), "x"], ci_p[[i]][nrow(ci_p[[i]]), "y_p"], ctrs[i])
+  if(Straight.Line == "Yes") {
+    for (i in 1:length(ctrs)) {
+      lines(ci_p[[i]][, "x"], ci_p[[i]][, "y"], lty=i, col= my_clr[i],lwd=2)
+      text(ci_p[[i]][1, "x"], ci_p[[i]][1, "y"], ctrs[i])
+      text(ci_p[[i]][nrow(ci_p[[i]]), "x"], ci_p[[i]][nrow(ci_p[[i]]), "y"], ctrs[i])
+    }
+  } else {
+    for (i in 1:length(ctrs)) {
+      lines(ci_p[[i]][, "x"], ci_p[[i]][, "y_p"], lty=i, col= my_clr[i],lwd=2)
+      text(ci_p[[i]][1, "x"], ci_p[[i]][1, "y_p"], ctrs[i])
+      text(ci_p[[i]][nrow(ci_p[[i]]), "x"], ci_p[[i]][nrow(ci_p[[i]]), "y_p"], ctrs[i])
+    }
   }
   if(cibands == "Yes") {
-    for (i in 1:length(ctrs)) {
-      ci_time[[i]] <- ci_l[[i]][,1]
-      l95[[i]] <- ci_l[[i]][,2]
-      u95[[i]] <- ci_u[[i]][,2]
-      
-      xx_t[[i]] <- c(ci_time[[i]], rev(ci_time[[i]]))
-      yy_t[[i]] <- c(l95[[i]], rev(u95[[i]]))
-      polygon(unlist(xx_t[[i]]), unlist(yy_t[[i]]), col = adjustcolor(my_clr[i], alpha.f = 0.25), 
-              border=adjustcolor(my_clr[i], alpha.f = 0.25))
-    }
+    if(Straight.Line == "Yes") {
+      for (i in 1:length(ctrs)) {
+        ci_time[[i]] <- ci_l[[i]][,1]
+        l95[[i]] <- ci_l[[i]][, "y"]
+        u95[[i]] <- ci_u[[i]][, "y"]
+        xx_t[[i]] <- c(ci_time[[i]], rev(ci_time[[i]]))
+        yy_t[[i]] <- c(l95[[i]], rev(u95[[i]]))
+        polygon(unlist(xx_t[[i]]), unlist(yy_t[[i]]), col = adjustcolor(my_clr[i], alpha.f = 0.25), 
+                border=adjustcolor(my_clr[i], alpha.f = 0.25))
+      }   
+      } else {
+        for (i in 1:length(ctrs)) {
+          ci_time[[i]] <- ci_l[[i]][,1]
+          l95[[i]] <- ci_l[[i]][, 2] #"y_p"
+          u95[[i]] <- ci_u[[i]][, 2] #"y_p"
+          xx_t[[i]] <- c(ci_time[[i]], rev(ci_time[[i]]))
+          yy_t[[i]] <- c(l95[[i]], rev(u95[[i]]))
+          polygon(unlist(xx_t[[i]]), unlist(yy_t[[i]]), col = adjustcolor(my_clr[i], alpha.f = 0.25), 
+                  border=adjustcolor(my_clr[i], alpha.f = 0.25))
+        }
+    } 
   }
   #Add overall line
   if (Tot.Line == "Yes") {
-  lines(FCI.Tot, col="black", lty=1, lwd=7)  
+    if(Straight.Line == "Yes") {
+      lines(FCI.Tot.Straight, col="black", lty=1, lwd=7)  
+    } else {
+      lines(FCI.Tot, col="black", lty=1, lwd=7)  
+    }
   }
   #Add target line
   abline(h=Tgt.Line, col="gray", lty=3, lwd=7)
@@ -4538,7 +4562,7 @@ plot_fci <- reactive({                  #This indicates the data frame I will us
     max_pest=fci_fac()$max_pest, min_pest=fci_fac()$min_pest, max_ci=fci_fac()$max_ci, min_ci=fci_fac()$min_ci, 
     ctrs=fci_fac()$ctrs, cibands=input$fcibands, fCiXLim1=input$fCiXLim1, fCiXLim2=input$fCiXLim2, 
     fCiYLim1=input$fCiYLim1, fCiYLim2=input$fCiYLim2, Tot.Line=fci_overall_line(), FCI.Tot=fci_all_line(), 
-    Conf.Intrv=input$fciconf_lev, Tgt.Line=fCi_target_line() )
+    FCI.Tot.Straight=fci_tot_group_aggr(), Conf.Intrv=input$fciconf_lev, Tgt.Line=fCi_target_line(), Straight.Line= fCi_straight_line() )
     }
 })
 
@@ -4650,24 +4674,35 @@ range_fzcivar <- reactive({
 range_fycivar <- reactive({ 
   range(as.numeric(df()[, input$fycivar]), na.rm=TRUE )  
 })
-#12. Indicate lower limit of x-axis
+
+#13. Indicate if you want a straight line
+output$FCi_strght_ln <- renderUI({                                
+  selectInput("fciStrtLn", "13. Use straight trend lines?",
+              choices = c("No", "Yes"),
+              selected="No")
+})
+#13A. Reactive function for above
+fCi_straight_line <- reactive({ 
+  input$fciStrtLn  
+})
+#14. Indicate lower limit of x-axis
 output$FCI__Xlim1 <- renderUI({
-  numericInput("fCiXLim1", "13. Lower X-axis limit.",
+  numericInput("fCiXLim1", "14. Lower X-axis limit.",
                value = range_fzcivar()[1], step = 1)
 })
-#13. Indicate upper limit of x-axis
+#15. Indicate upper limit of x-axis
 output$FCI__Xlim2 <- renderUI({
-  numericInput("fCiXLim2", "14. Upper X-axis limit.",
+  numericInput("fCiXLim2", "15. Upper X-axis limit.",
                value = range_fzcivar()[2], step = 1)
 })
-#14. Indicate lower limit of y-axis
+#16. Indicate lower limit of y-axis
 output$FCI__Ylim1 <- renderUI({
-  numericInput("fCiYLim1", "15. Lower Y-axis limit.",
+  numericInput("fCiYLim1", "16. Lower Y-axis limit.",
                value = range_fycivar()[1], step = 1)
 })
-#15. Indicate upper limit of x-axis
+#17. Indicate upper limit of x-axis
 output$FCI__Ylim2 <- renderUI({
-  numericInput("fCiYLim2", "16. Upper Y-axis limit.",
+  numericInput("fCiYLim2", "17. Upper Y-axis limit.",
                value = range_fycivar()[2], step = 1)
 })
 

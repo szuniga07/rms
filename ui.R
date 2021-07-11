@@ -352,8 +352,8 @@ tabPanel("Describe",
          h5("Note: Mean= solid vertical line, Median= dashed vertical line."),
          br(),
          #Means by factors
+         h4("Explore the mean values of an outcome variable by factor levels."),
          fluidRow(   
-           h4("Explore the mean values of an outcome variable by factor levels."),
            column(3, 
                 uiOutput("desc_y")),
            column(3, offset=1,
@@ -363,14 +363,14 @@ tabPanel("Describe",
          ),
          plotOutput("DescSmryPlt", height = 800, width = 1200), 
          ## scatter plot with correlation ## 
+         h4("Scatterplot with a lowess smoothed line and a correlation test."),
+         br(),
+         h5("Method indicates which correlation coefficient is used for the test."),
+         h5("'pearson'= both continuous variables; 'kendall' tau= continuous, ordinal, and binary scales. 'spearman' rho= continuous, ordinal, and binary scales; nonparametric method will detect not only non-linear relationships but non-monotonic ones."),
+         h5("Exact indicates whether an exact p-value should be computed. Used for 'kendall' and 'spearman'. Default is to leave #7 blank."),
+         h5("Continuity correction used for 'kendall' and 'spearman' when not computed exactly."),
+         br(),
          fluidRow(   
-           h4("Scatterplot with a lowess smoothed line and a correlation test."),
-           br(),
-           h5("Method indicates which correlation coefficient is used for the test."),
-           h5("'pearson'= both continuous variables; 'kendall' tau= continuous, ordinal, and binary scales. 'spearman' rho= continuous, ordinal, and binary scales; nonparametric method will detect not only non-linear relationships but non-monotonic ones."),
-           h5("Exact indicates whether an exact p-value should be computed. Used for 'kendall' and 'spearman'. Default is to leave #7 blank."),
-           h5("Continuity correction used for 'kendall' and 'spearman' when not computed exactly."),
-           br(),
            column(3, 
                   uiOutput("sctr_crtst_y")),
            column(3, offset=1,
@@ -401,8 +401,8 @@ tabPanel("Describe",
          
          ## summaryRc plot ## 
          br(),
+         h4("Graphical Summarization of Continuous Variables Against a Continuous Response"),
          fluidRow(
-           h4("Graphical Summarization of Continuous Variables Against a Continuous Response"),
            br(),
            column(3, 
                   uiOutput("smryRc_y")),
@@ -473,9 +473,9 @@ tabPanel("Describe",
          br(),
          verbatimTextOutput("dnsty_grp_trnd_out_by_tm"),
          br(),
+         h4("Explore the missingness of a variable by factor levels."),
+         br(),
          fluidRow(
-           h4("Explore the missingness of a variable by factor levels."),
-           br(),
            column(3, 
                   uiOutput("miss_y")),
            column(3, offset=1,
@@ -500,8 +500,8 @@ tabPanel("Describe",
          h5("ANOVA summary table of the logistic regression."),
          verbatimTextOutput("anova_lrm_miss"),
          br(),
+         h4("Calculator"),
          fluidRow(
-           h4("Calculator"),
            column(4, 
                   uiOutput("calculator_box")),
            column(4, offset=1,
@@ -1449,7 +1449,7 @@ br()
 
 tabPanel("Monte Carlo",                                #Creates a new panel named "Test"
          h4(" Monte Carlo Simulation"),
-         h6(" Note: Open this tab first to unlock the plots in the following tabs. For #7, select a categorical variable. For #8, grouped alphabetically, see 'Describe' tab."),
+         h6(" Note: Open this tab first to unlock the plots in the following tabs. For #7, select a categorical variable."),
          fluidRow(                           #Wrapping them in a fluidRow provides easy control over  
            column(3,
            uiOutput("s_seed"),  #Sets the seed for the random number.

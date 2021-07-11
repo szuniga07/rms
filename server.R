@@ -681,11 +681,12 @@ shinyServer(
         
         #Function that plots the model approximation
         aprx_plot_fnc <- function(r2) {
-          plot(r2, r2, type='p', col= "red", cex=1.5, xlim= c(min(r2)*0.98, max(r2)*1.02), ylim= c(min(r2)*0.98, max(r2)*1.02), 
+          plot(r2, r2, type='p', col= "red", cex=3, pch=20,
+               xlim= c(min(r2)*0.98, max(r2)*1.02), ylim= c(min(r2)*0.98, max(r2)*1.02), 
                main="Approximate model predictability after deletion of N predictors",
                xlab=expression(paste('Approximation ', R^2)),
                ylab=expression(paste('Approximation ', R^2)))
-          text(r2, r2*.98, 1:length(r2))
+          text(r2, r2*.98, 1:length(r2), cex=2)
           abline(h=.95, col=gray(.83)); abline(v=.95, col=gray(.83))
           abline(h=.90, col=gray(.83)); abline(v=.90, col=gray(.83))
           abline(h=.85, col=gray(.83)); abline(v=.85, col=gray(.83))
@@ -2770,12 +2771,15 @@ vlfnc <- function(xdf) {
     v_ls$mn[[i]]   <- mean(as.numeric(as.character(xdf[, i])), na.rm=T)
     v_ls$sd[[i]]   <- sd(as.numeric(as.character(xdf[, i])), na.rm=T)
     #v_ls$pdf[[i]]  <- table(xdf[, i])/sum(table(xdf[, i]))
-    v_ls$pdf[[i]]  <- as.vector(table(xdf[, i])/sum(table(xdf[, i])))
+    #v_ls$pdf[[i]]  <- as.vector(table(xdf[, i])/sum(table(xdf[, i])))
+    v_ls$pdf[[i]]  <- as.vector(prop.table(table(xdf[, i])))
+    names(v_ls$pdf[[i]]) <- names(prop.table(table(xdf[, i])))
     v_ls$cnm[[i]] <- colnames(xdf)[i]  #Seems to have an issue with a 1 column data frame. Tried
                                        #to change it to names(), didn't help. I get MC data ok, but 
                                        #it gives it the name as the command
     v_ls$typ[[i]]  <- typeof(xdf[,i])  #This is used to work with 'labelled' class in RMS data
-    v_ls$pdf_lbl[[i]]  <- sort(as.character(unique(xdf[,i]))[!is.na(as.character(unique(xdf[,i])))])  #Gives me the correct PDF value labels, removes "NA"    names(v_ls$mn)[[i]] <- colnames(xdf)[i]
+#    v_ls$pdf_lbl[[i]]  <- sort(as.character(unique(xdf[,i]))[!is.na(as.character(unique(xdf[,i])))])  #Gives me the correct PDF value labels, removes "NA"    names(v_ls$mn)[[i]] <- colnames(xdf)[i]
+    v_ls$pdf_lbl[[i]]  <- names(v_ls$pdf[[i]])
     names(v_ls$mn)[[i]] <- colnames(xdf)[i]
     names(v_ls$sd)[[i]] <- colnames(xdf)[i]
     names(v_ls$pdf)[i] <- colnames(xdf)[i]
@@ -9769,7 +9773,7 @@ fncStSpcLegendFactoLev <- function(Model_fit, X_Lev) {
 #output$test1 <- renderPrint({
 #list(
 #  vls1=vls1(), 
-  #vls2=vls2(), input_mc_df2=head(input_mc_df2()[[1]]),
+#  vls2=vls2(), input_mc_df2=head(input_mc_df2()[[1]]),
 #  mc_df_y2=mc_df_y2(),
 #  str_input_mc_df2= str(input_mc_df2()),
 #  name_input_mc_df2= names(input_mc_df2()), class_input_mc_df2= class(input_mc_df2()),

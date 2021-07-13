@@ -670,6 +670,16 @@ tabPanel("Impute",
                      column(3, offset=1,
                             uiOutput("xyplot_grp_levs"))
                    ),
+                   fluidRow(
+                     column(3, 
+                            uiOutput("xyplot_Xlim1")),
+                     column(3, 
+                            uiOutput("xyplot_Xlim2")),
+                     column(3, 
+                            uiOutput("xyplot_Ylim1")),
+                     column(3, 
+                            uiOutput("xyplot_Ylim2"))
+                   ),
                    br(),
                    plotOutput("xYplot_interaction", height=800, width="100%"),
                    br(),
@@ -680,15 +690,19 @@ fluidRow(
   column(3,
          uiOutput("xyplot_con_lev1")),
   column(3,
-         uiOutput("xyplot_con_lev2"))
+         uiOutput("xyplot_con_lev2")),
+  column(3,
+         uiOutput("xyp_yes_no"))
 ),
 fluidRow(
   column(3,
+         uiOutput("xyplot_con_xlim0")),
+  column(3,
+         uiOutput("xyplot_con_xlim1")),
+  column(3,
          uiOutput("xyplot_con_ylim0")),
   column(3,
-         uiOutput("xyplot_con_ylim1")),
-  column(3,
-         uiOutput("xyp_yes_no"))
+         uiOutput("xyplot_con_ylim1"))
 ),
 h5("Contrasts require 'factor' data types for groups. Convert variables into factors in the \"Data\" tab."),                   
 br(),
@@ -1410,6 +1424,16 @@ fluidRow(
   column(3, 
          uiOutput("Cxyplot_grp_levs"))
 ),
+fluidRow(
+  column(3, 
+         uiOutput("Cxyplot_Xlim1")),
+  column(3, 
+         uiOutput("Cxyplot_Xlim2")),
+  column(3, 
+         uiOutput("Cxyplot_Ylim1")),
+  column(3, 
+         uiOutput("Cxyplot_Ylim2"))
+),
 br(),
 plotOutput("CxYplot_interaction", height=800, width="100%"),
 br(),
@@ -1420,19 +1444,23 @@ fluidRow(
   column(3,
          uiOutput("Cxyplot_con_lev1")),
   column(3,
-         uiOutput("Cxyplot_con_lev2"))
-),
-fluidRow(
-  column(3,
-         uiOutput("Cxyplot_con_ylim0")),
-  column(3,
-         uiOutput("Cxyplot_con_ylim1")),
+         uiOutput("Cxyplot_con_lev2")),
   column(3,
          uiOutput("Cxyp_yes_no"))
 ),
+fluidRow(
+  column(3,
+         uiOutput("Cxyplot_con_xlim0")),
+  column(3,
+         uiOutput("Cxyplot_con_xlim1")),
+  column(3,
+         uiOutput("Cxyplot_con_ylim0")),
+  column(3,
+         uiOutput("Cxyplot_con_ylim1"))
+),
 h5("Contrasts require 'factor' data types for groups. Convert variables into factors in the \"Data\" tab."),                   
 br(),
-plotOutput("Cxyplot_contrast_plot", height=600, width="100%"),
+plotOutput("Cxyplot_contrast_plot", height=700, width="100%"),
 h6("The portions of the red horizontal line at 1 corresponds to no significant predictor effect when contained within the 95% CI."),
 h6("The blue line represents the contrast level you selected (e.g., 'Female')."),
 h6("For example, women may have higher rates of death before age 58, equal with men from 58-88, and have lower rates after 88 years."),

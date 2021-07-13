@@ -1961,7 +1961,7 @@ output$anova_smry <- renderPrint({
 ###################################################################    
 ## Creates a plot for an interaction of continuous X by a factor ##
 ###################################################################    
-    #Select the continuous predictor
+    #1. Select the continuous predictor
     output$xyplot_x <- renderUI({
       selectInput("XyplotX", "1. Select a continuous predictor.", 
                    choices = predictor(), selected=predictor()[1], multiple=FALSE)     
@@ -1970,7 +1970,7 @@ output$anova_smry <- renderPrint({
     XyplotX1 <- reactive({                  
       input$XyplotX
     })
-    #Select the factor for grouping
+    #2. Select the factor for grouping
     output$xyplot_z <- renderUI({
       selectInput("XyplotZ", "2. Select a factor.", 
                   choices = setdiff(predictor(), XyplotX1() ),  multiple=FALSE)     
@@ -1979,7 +1979,7 @@ output$anova_smry <- renderPrint({
     XyplotZ1 <- reactive({                  
       input$XyplotZ
     })
-    #Make confidence bands for the plot
+    #3. Make confidence bands for the plot
     output$xyplot_bands <- renderUI({                                 
       selectInput("XyplotBands", "3. Do you want confidence bands?", 
                   choices = c("No", "Yes"), multiple=FALSE, selected="No")
@@ -1988,7 +1988,7 @@ output$anova_smry <- renderPrint({
     xyplot_Bands_YesNo <- reactive({                 
       input$XyplotBands 
     })
-    #Select line colors
+    #4. Select line colors
     output$xyplot_line_clrs <- renderUI({                                 
       selectInput("XypltLnClr", "4. Select line colors.", 
                   choices = xyplot_Line_Color_Names(), multiple=TRUE)     
@@ -2002,7 +2002,7 @@ output$anova_smry <- renderPrint({
       colors()[c(552, 498,652, 254, 26,547, 24, 152, 32,66, 68,97, 120,142,   
                  175, 310, 367,372,399, 485, 589, 615)]    
     })
-    #Create yes/no box to make the XY plot
+    #5. Create yes/no box to make the XY plot
     output$xyplot_yes_no <- renderUI({                                 
       selectInput("XyplotYesNo", "5. Do you want to create the plot?", 
                   choices = c("No", "Yes"), multiple=FALSE, selected="No")     
@@ -2011,14 +2011,13 @@ output$anova_smry <- renderPrint({
     xyplot_create_YesNo <- reactive({                 
       input$XyplotYesNo 
     })
-
     #Reactive function to get group levels
     xyplot_groups <- reactive({                 
       if(xyplot_create_YesNo() == "Yes") {
         unique(xyplotData()[, XyplotZ1()]) 
       }
     })
-    #Select specific groups
+    #6. Select specific groups
     output$xyplot_grp_levs <- renderUI({                                 
       selectInput("xyplotGrpLvs", "6. Highlight specific groups?", 
                   choices = xyplot_groups(), multiple=TRUE)     
@@ -2027,11 +2026,53 @@ output$anova_smry <- renderPrint({
     xyplot_Group_Levels <- reactive({                 
       input$xyplotGrpLvs 
     })
+    #7. Indicate lower limit of x-axis
+    output$xyplot_Xlim1 <- renderUI({
+      numericInput("xyplotLmX1", "7. Lower X-axis limit.",
+                   value = xylm()$XMin, step = .1)
+    })
+    #7A. Reactive function for the variable
+    xyplot_X_limit_1 <- reactive({
+      input$xyplotLmX1
+    })
+    #8. Indicate upper limit of x-axis
+    output$xyplot_Xlim2 <- renderUI({
+      numericInput("xyplotLmX2", "8. Upper X-axis limit.",
+                   value = xylm()$XMax, step = .1)
+    })
+    #8A. Reactive function for the variable
+    xyplot_X_limit_2 <- reactive({
+      input$xyplotLmX2
+    })
+    #9. Indicate lower limit of y-axis
+    output$xyplot_Ylim1 <- renderUI({
+      numericInput("xyplotLmY1", "9. Lower Y-axis limit.",
+                   value = xylm()$YMin, step = .1)
+    })
+    #9A. Reactive function for the variable
+    xyplot_Y_limit_1 <- reactive({
+      input$xyplotLmY1
+    })
+    #10. Indicate upper limit of Y-axis
+    output$xyplot_Ylim2 <- renderUI({
+      numericInput("xyplotLmY2", "10. Upper Y-axis limit.",
+                   value = xylm()$YMax, step = .1)
+    })
+    #10A. Reactive function for the variable
+    xyplot_Y_limit_2 <- reactive({
+      input$xyplotLmY2
+    })
+    #Place all XY limits in a list reactive function
+    xylm_all <- reactive({
+      if(xyplot_create_YesNo() == "Yes") {
+        list( "XMin"=xyplot_X_limit_1(), "XMax"=xyplot_X_limit_2(),
+              "YMin"=xyplot_Y_limit_1(),"YMax"=xyplot_Y_limit_2() )
+      }
+    })
     #Get the Predicted values needed for the plot
     xyplotData <- reactive({                 
       do.call("Predict", list(fit1(), XyplotX1(), XyplotZ1() )   ) 
     })
-    
     #Set up function to get XY limits from an XYplot
     xylm_run <- reactive({
       if(xyplot_create_YesNo() == "Yes") {
@@ -2047,7 +2088,7 @@ output$anova_smry <- renderPrint({
     Xyplt_setup <- reactive({
       if(xyplot_create_YesNo() == "Yes") {
       fncXYpltInt(DF=df(), xyplotDF=xyplotData(), ContX= XyplotX1(), GroupX=XyplotZ1(), 
-                  GroupLevs=xyplot_Group_Levels(), XYlims=xylm(), Clrs=xyplot_Line_Colors(), CIbands=xyplot_Bands_YesNo()) 
+                  GroupLevs=xyplot_Group_Levels(), XYlims=xylm_all(), Clrs=xyplot_Line_Colors(), CIbands=xyplot_Bands_YesNo()) 
     }
     })
     #This creates the plot
@@ -2137,11 +2178,32 @@ output$anova_smry <- renderPrint({
                   choices = xy_contrast_levs() , multiple=FALSE,
                   selected= setdiff(xy_contrast_levs(), input$xyplotConLev1)[1] )
     })
-    #Create the y-asix limits for the XY plot group argument
+    #Yes/No on running the plots
+    output$xyp_yes_no <- renderUI({ #Same idea as output$vy
+      selectInput("XypYesNo", "3. Do you want to run the contrast plot?",
+                  choices = c("No", "Yes"), multiple=FALSE,
+                  selected="No")     #Will make choices based on my reactive function.
+    })
+    #Create the x-axis limits for the XY plot group argument
+    #Lower X
+    output$xyplot_con_xlim0 <- renderUI({
+      if (input$XyplotYesNo=="Yes") {
+        numericInput("xyplotConXlim0", "4. Select the lower x-axis limit",
+                     value=con_xy_data()[["xlim0"]], step=1)
+      }
+    })
+    #Upper X
+    output$xyplot_con_xlim1 <- renderUI({
+      if (input$XyplotYesNo=="Yes") {
+        numericInput("xyplotConXlim1", "5. Select the upper x-axis limit",
+                     value=con_xy_data()[["xlim1"]], step=1)
+      }
+    })
+    #Create the y-axis limits for the XY plot group argument
     #Lower
     output$xyplot_con_ylim0 <- renderUI({
       if (input$XyplotYesNo=="Yes") {
-        numericInput("xyplotConYlim0", "3. Select the lower y-axis limit",
+        numericInput("xyplotConYlim0", "6. Select the lower y-axis limit",
                      #value=0, step=1)
                      value=con_xy_data()[["ylim0"]], step=1)
       }
@@ -2149,16 +2211,10 @@ output$anova_smry <- renderPrint({
     #Upper
     output$xyplot_con_ylim1 <- renderUI({
       if (input$XyplotYesNo=="Yes") {
-        numericInput("xyplotConYlim1", "4. Select the upper y-axis limit",
+        numericInput("xyplotConYlim1", "7. Select the upper y-axis limit",
                      #value=1, step=1)
                      value=con_xy_data()[["ylim1"]], step=1)
       }
-    })
-    #Yes/No on running the plots
-    output$xyp_yes_no <- renderUI({ #Same idea as output$vy
-      selectInput("XypYesNo", "5. Do you want to run the contrast plot?",
-                  choices = c("No", "Yes"), multiple=FALSE,
-                  selected="No")     #Will make choices based on my reactive function.
     })
     ## Create the contrast xyplot
     output$xyplot_contrast_plot <- renderPlot({
@@ -2229,7 +2285,8 @@ output$anova_smry <- renderPrint({
       #Get the upper and lower limits of the Y-axis
       ylim0 <- min(w[["Lower"]])
       ylim1 <- max(w[["Upper"]])
-      return(list(w=w, xyplot_ylab=xyplot_ylab, abline_01=abline_01,ylim0=ylim0, ylim1=ylim1))
+      return(list(w=w, xyplot_ylab=xyplot_ylab, abline_01=abline_01,
+                  xlim0=x_min, xlim1=x_max, ylim0=ylim0, ylim1=ylim1))
       }
     ## Get the contrast data
     con_xy_data <- reactive({
@@ -2239,11 +2296,11 @@ output$anova_smry <- renderPrint({
       }
     })
     ## Function to run contrast xyplot
-    xypContrastFnc <- function(data, ylim0, ylim1, X, Z, Lev1, Lev2) {
+    xypContrastFnc <- function(data, xlim0, xlim1, ylim0, ylim1, X, Z, Lev1, Lev2) {
       xYplot(Cbind(data[["w"]][["Contrast"]], data[["w"]][["Lower"]],
                    data[["w"]][["Upper"]]) ~ data[["w"]][[X]] ,
              ylab=data[["xyplot_ylab"]], type='l', method='filled bands', abline=list(h=data[["abline_01"]], col=2,lwd=2),
-             col.fill=gray(.95), ylim=c(ylim0, ylim1), xlab=X, lwd=2,
+             col.fill=gray(.95), xlim=c(xlim0, xlim1) , ylim=c(ylim0, ylim1), xlab=X, lwd=2,
              main=paste0("Partial prediction plot of ", X, " contrasting ", Z,  
                          " levels of ", Lev1, " to ", Lev2 ),
              sub=paste0(Z," effect: ",Lev1))
@@ -2252,8 +2309,9 @@ output$anova_smry <- renderPrint({
     #Run the plot
     xyp_contrast <- reactive({
       if (input$XypYesNo=="Yes") {
-        xypContrastFnc(data=con_xy_data(), ylim0=input$xyplotConYlim0, ylim1=input$xyplotConYlim1, X=XyplotX1(),
-                       Z=XyplotZ1() , Lev1=input$xyplotConLev1, Lev2=input$xyplotConLev2)
+        xypContrastFnc(data=con_xy_data(), xlim0=input$xyplotConXlim0, xlim1=input$xyplotConXlim1,
+                       ylim0=input$xyplotConYlim0, ylim1=input$xyplotConYlim1, 
+                       X=XyplotX1(), Z=XyplotZ1() , Lev1=input$xyplotConLev1, Lev2=input$xyplotConLev2)
       }
     })
     
@@ -6277,7 +6335,7 @@ output$obsdfmqt_out1 <- renderTable({
 }, rownames = TRUE)
 
 #################################### Begin here
-## Creates a plot for an interaction of continuous X by a factor ##
+##1. Creates a plot for an interaction of continuous X by a factor ##
 #Select the continuous predictor
 output$Cxyplot_x <- renderUI({
   selectInput("CXyplotX", "1. Select a continuous predictor.", 
@@ -6287,7 +6345,7 @@ output$Cxyplot_x <- renderUI({
 CXyplotX1 <- reactive({                  
   input$CXyplotX
 })
-#Select the factor for grouping
+#2. Select the factor for grouping
 output$Cxyplot_z <- renderUI({
   selectInput("CXyplotZ", "2. Select a factor.", 
               choices = setdiff(predictor(), input$CXyplotX),  multiple=FALSE)     
@@ -6296,7 +6354,7 @@ output$Cxyplot_z <- renderUI({
 CXyplotZ1 <- reactive({                  
   input$CXyplotZ
 })
-#Make confidence bands for the plot
+#3. Make confidence bands for the plot
 output$Cxyplot_bands <- renderUI({                                 
   selectInput("CXyplotBands", "3. Do you want confidence bands?", 
               choices = c("No", "Yes"), multiple=FALSE, selected="No")
@@ -6305,7 +6363,7 @@ output$Cxyplot_bands <- renderUI({
 Cxyplot_Bands_YesNo <- reactive({                 
   input$CXyplotBands 
 })
-#Select line colors
+#4. Select line colors
 output$Cxyplot_line_clrs <- renderUI({                                 
   selectInput("CXypltLnClr", "4. Select line colors.", 
               choices = xyplot_Line_Color_Names(), multiple=TRUE)     
@@ -6314,7 +6372,7 @@ output$Cxyplot_line_clrs <- renderUI({
 Cxyplot_Line_Colors <- reactive({                 
   input$CXypltLnClr 
 })
-#Create yes/no box to make the XY plot
+#5. Create yes/no box to make the XY plot
 output$Cxyplot_yes_no <- renderUI({                                 
   selectInput("CXyplotYesNo", "5. Do you want to create the plot?", 
               choices = c("No", "Yes"), multiple=FALSE, selected="No")     
@@ -6338,6 +6396,50 @@ output$Cxyplot_grp_levs <- renderUI({
 Cxyplot_Group_Levels <- reactive({                 
   input$CxyplotGrpLvs 
 })
+#7. Indicate lower limit of x-axis
+output$Cxyplot_Xlim1 <- renderUI({
+  numericInput("CxyplotLmX1", "7. Lower X-axis limit.",
+               value = Cxylm()$XMin, step = .1)
+})
+#7A. Reactive function for the variable
+Cxyplot_X_limit_1 <- reactive({
+  input$CxyplotLmX1
+})
+#8. Indicate upper limit of x-axis
+output$Cxyplot_Xlim2 <- renderUI({
+  numericInput("CxyplotLmX2", "8. Upper X-axis limit.",
+               value = Cxylm()$XMax, step = .1)
+})
+#8A. Reactive function for the variable
+Cxyplot_X_limit_2 <- reactive({
+  input$CxyplotLmX2
+})
+#9. Indicate lower limit of y-axis
+output$Cxyplot_Ylim1 <- renderUI({
+  numericInput("CxyplotLmY1", "9. Lower Y-axis limit.",
+               value = Cxylm()$YMin, step = .1)
+})
+#9A. Reactive function for the variable
+Cxyplot_Y_limit_1 <- reactive({
+  input$CxyplotLmY1
+})
+#10. Indicate upper limit of Y-axis
+output$Cxyplot_Ylim2 <- renderUI({
+  numericInput("CxyplotLmY2", "10. Upper Y-axis limit.",
+               value = Cxylm()$YMax, step = .1)
+})
+#10A. Reactive function for the variable
+Cxyplot_Y_limit_2 <- reactive({
+  input$CxyplotLmY2
+})
+#Place all XY limits in a list reactive function
+Cxylm_all <- reactive({
+  if(Cxyplot_create_YesNo() == "Yes") {
+    list( "XMin"=Cxyplot_X_limit_1(), "XMax"=Cxyplot_X_limit_2(),
+          "YMin"=Cxyplot_Y_limit_1(),"YMax"=Cxyplot_Y_limit_2() )
+  }
+})
+
 ## Get the Predicted values needed for the plot ##
 CxyplotData <- reactive({                 
   do.call("Predict", list(fit1(), CXyplotX1(), CXyplotZ1(), fun= function(x)x*-1) )    
@@ -6357,7 +6459,7 @@ Cxylm <- reactive({
 CXyplt_setup <- reactive({
   if(Cxyplot_create_YesNo() == "Yes") {
     fncXYpltInt(DF=df(), xyplotDF=CxyplotData(), ContX= CXyplotX1(), GroupX= CXyplotZ1(), 
-                GroupLevs= Cxyplot_Group_Levels(), XYlims= Cxylm(), Clrs= Cxyplot_Line_Colors(), CIbands=Cxyplot_Bands_YesNo()) 
+                GroupLevs= Cxyplot_Group_Levels(), XYlims= Cxylm_all(), Clrs= Cxyplot_Line_Colors(), CIbands=Cxyplot_Bands_YesNo()) 
   }
 })
 #This creates the plot
@@ -6381,11 +6483,32 @@ output$Cxyplot_con_lev2 <- renderUI({
               choices = Cxy_contrast_levs() , multiple=FALSE,
               selected= setdiff(Cxy_contrast_levs(), input$CxyplotConLev1)[1] )
 })
-#Create the y-asix limits for the XY plot group argument
+#Yes/No on running the plots
+output$Cxyp_yes_no <- renderUI({ #Same idea as output$vy
+  selectInput("CXypYesNo", "3. Do you want to run the contrast plot?",
+              choices = c("No", "Yes"), multiple=FALSE,
+              selected="No")     #Will make choices based on my reactive function.
+})
+#Create the x-axis limits for the XY plot group argument
+#Lower X
+output$Cxyplot_con_xlim0 <- renderUI({
+  if (input$CXyplotYesNo=="Yes") {
+    numericInput("CxyplotConXlim0", "4. Select the lower x-axis limit",
+                 value=Ccon_xy_data()[["xlim0"]], step=1)
+  }
+})
+#Upper X
+output$Cxyplot_con_xlim1 <- renderUI({
+  if (input$CXyplotYesNo=="Yes") {
+    numericInput("CxyplotConXlim1", "5. Select the upper x-axis limit",
+                 value=Ccon_xy_data()[["xlim1"]], step=1)
+  }
+})
+#Create the y-axis limits for the XY plot group argument
 #Lower
 output$Cxyplot_con_ylim0 <- renderUI({
   if (input$CXyplotYesNo=="Yes") {
-    numericInput("CxyplotConYlim0", "3. Select the lower y-axis limit",
+    numericInput("CxyplotConYlim0", "6. Select the lower y-axis limit",
                  #value=0, step=1)
                  value=Ccon_xy_data()[["ylim0"]], step=1)
   }
@@ -6393,23 +6516,17 @@ output$Cxyplot_con_ylim0 <- renderUI({
 #Upper
 output$Cxyplot_con_ylim1 <- renderUI({
   if (input$CXyplotYesNo=="Yes") {
-    numericInput("CxyplotConYlim1", "4. Select the upper y-axis limit",
+    numericInput("CxyplotConYlim1", "7. Select the upper y-axis limit",
                  #value=1, step=1)
                  value=Ccon_xy_data()[["ylim1"]], step=1)
   }
-})
-#Yes/No on running the plots
-output$Cxyp_yes_no <- renderUI({ #Same idea as output$vy
-  selectInput("CXypYesNo", "5. Do you want to run the contrast plot?",
-              choices = c("No", "Yes"), multiple=FALSE,
-              selected="No")     #Will make choices based on my reactive function.
 })
 ## Create the contrast xyplot
 output$Cxyplot_contrast_plot <- renderPlot({
   if (input$CXypYesNo=="Yes") {
     Cxyp_contrast()
   }
-}, height = 600)
+}, height = 700)
 
 
 #Reactive functions
@@ -6493,7 +6610,7 @@ CcontrastXyDataFnc <- function(model, X, group, lev1, lev2, reg) {
   #Get the upper and lower limits of the Y-axis
   ylim0 <- min(w[["Lower"]])
   ylim1 <- max(w[["Upper"]])
-  return(list(w=w, xyplot_ylab=xyplot_ylab, abline_01=abline_01,ylim0=ylim0, ylim1=ylim1))
+  return(list(w=w, xyplot_ylab=xyplot_ylab, abline_01=abline_01, xlim0=x_min, xlim1=x_max,ylim0=ylim0, ylim1=ylim1))
   }
 ## Get the contrast data
 Ccon_xy_data <- reactive({
@@ -6503,11 +6620,11 @@ Ccon_xy_data <- reactive({
   }
 })
 ## Function to run contrast xyplot
-CxypContrastFnc <- function(data, ylim0, ylim1, X, Z, Lev1, Lev2) {
+CxypContrastFnc <- function(data, xlim0, xlim1, ylim0, ylim1, X, Z, Lev1, Lev2) {
   xYplot(Cbind(data[["w"]][["Contrast"]], data[["w"]][["Lower"]],
                data[["w"]][["Upper"]]) ~ data[["w"]][[X]] ,
          ylab=data[["xyplot_ylab"]], type='l', method='filled bands', abline=list(h=data[["abline_01"]], col=2,lwd=2),
-         col.fill=gray(.95), ylim=c(ylim0, ylim1), xlab=X, lwd=2,
+         col.fill=gray(.95), xlim=c(xlim0, xlim1), ylim=c(ylim0, ylim1), xlab=X, lwd=2,
          main=paste0("Partial prediction plot of ", X, " contrasting ", Z,  
                      " levels of ", Lev1, " to ", Lev2 ),
          sub=paste0(Z," effect: ",Lev1))
@@ -6516,7 +6633,8 @@ CxypContrastFnc <- function(data, ylim0, ylim1, X, Z, Lev1, Lev2) {
 #Run the plot
 Cxyp_contrast <- reactive({
   if (input$CXypYesNo=="Yes") {
-    CxypContrastFnc(data=Ccon_xy_data(), ylim0=input$CxyplotConYlim0, ylim1=input$CxyplotConYlim1, X=CXyplotX1(),
+    CxypContrastFnc(data=Ccon_xy_data(), xlim0=input$CxyplotConXlim0, xlim1=input$CxyplotConXlim1,
+                    ylim0=input$CxyplotConYlim0, ylim1=input$CxyplotConYlim1, X=CXyplotX1(),
                     Z=CXyplotZ1() , Lev1=input$CxyplotConLev1, Lev2=input$CxyplotConLev2)
   }
 })

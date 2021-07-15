@@ -6638,7 +6638,7 @@ Cxyp_contrast <- reactive({
                     Z=CXyplotZ1() , Lev1=input$CxyplotConLev1, Lev2=input$CxyplotConLev2)
   }
 })
-
+ 
 ## Table of contrast at percentiles to show where the interaction occurs ##
 #Function that gets contrasts quantiles
 CcontrastQuantFnc <- function(w, sp1, X) {

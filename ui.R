@@ -318,6 +318,17 @@ tabPanel("PREDs",                                #Creates a new panel named "Tes
 
 ############## Describe and Missing #############################
 tabPanel("Describe",
+         h4("Calculator"),
+         fluidRow(
+           column(4, 
+                  uiOutput("calculator_box")),
+           column(4, offset=1,
+                  uiOutput("calculator_yesno"))
+         ),
+         h5("Basic mathematical functions (+, -, *, /) and runs other commands (e.g., sqrt(16) + 6 = 10, sd(mtcars$mpg) )."),         
+         h5("To load an object to the global environment, use assign(), e.g., assign(\"my_data\", (my_data[1:5000, ], envir=globalenv() )."),
+         verbatimTextOutput("prnt_calculation"),
+         br(),
          h4("Descriptives on means and missing values. Plot the target variable, stratifying by factors."),
          br(),
          h4("Summarize the data's central tendency and dispersion."),
@@ -499,18 +510,6 @@ tabPanel("Describe",
          br(),
          h5("ANOVA summary table of the logistic regression."),
          verbatimTextOutput("anova_lrm_miss"),
-         br(),
-         h4("Calculator"),
-         fluidRow(
-           column(4, 
-                  uiOutput("calculator_box")),
-           column(4, offset=1,
-                  uiOutput("calculator_yesno"))
-         ),
-         h5("Basic mathematical functions (+, -, *, /) and runs other commands (e.g., sqrt(16) + 6 = 10, sd(mtcars$mpg))."),         
-         br(),
-         verbatimTextOutput("prnt_calculation"),
-         h5("To load an object to the global environment, use assign(), e.g., assign(\"my_data\", (my_data[1:5000, ], envir=globalenv() )."),
          br()
 ),    
 

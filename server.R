@@ -4814,6 +4814,12 @@ output$time_ci_out1 <- renderTable({
     fcidf()
   }
 }, rownames = TRUE)
+#This prints the point estimates and confidence intervals
+output$all_time_ci_out1 <- renderTable({
+  if(input$FCiCreate == "Yes") {
+    fci_tot_group_aggr()
+  }
+}, rownames = TRUE)
 
 
 ############

@@ -1780,7 +1780,9 @@ tabPanel("95% CIs",
          br(),
          plotOutput("Plot_Fci_output", height = 800, width="100%"),
          h5("These are point estimates and confidence intervals. These may not match up with smoothed lines."),
-         tableOutput("time_ci_out1")
+         tableOutput("time_ci_out1"),
+         h5("Overall rates. Uses all data and used for the 'overall group trend line'."),
+         tableOutput("all_time_ci_out1")
 )
 ###
  

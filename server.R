@@ -4590,19 +4590,7 @@ plot_fci_fnc <- function(x, y, z, xcivar, ycivar, zcivar, dataf, LCol, Fci.Fac,
   u95 <- list() 
   xx_t <- list() 
   yy_t <- list() 
-  if(Straight.Line == "Yes") {
-    for (i in 1:length(ctrs)) {
-      lines(ci_p[[i]][, "x"], ci_p[[i]][, "y"], lty=i, col= my_clr[i],lwd=2)
-      text(ci_p[[i]][1, "x"], ci_p[[i]][1, "y"], ctrs[i])
-      text(ci_p[[i]][nrow(ci_p[[i]]), "x"], ci_p[[i]][nrow(ci_p[[i]]), "y"], ctrs[i])
-    }
-  } else {
-    for (i in 1:length(ctrs)) {
-      lines(ci_p[[i]][, "x"], ci_p[[i]][, "y_p"], lty=i, col= my_clr[i],lwd=2)
-      text(ci_p[[i]][1, "x"], ci_p[[i]][1, "y_p"], ctrs[i])
-      text(ci_p[[i]][nrow(ci_p[[i]]), "x"], ci_p[[i]][nrow(ci_p[[i]]), "y_p"], ctrs[i])
-    }
-  }
+  #Confidence bands
   if(cibands == "Yes") {
     if(Straight.Line == "Yes") {
       for (i in 1:length(ctrs)) {
@@ -4611,8 +4599,8 @@ plot_fci_fnc <- function(x, y, z, xcivar, ycivar, zcivar, dataf, LCol, Fci.Fac,
         u95[[i]] <- ci_u[[i]][, "y"]
         xx_t[[i]] <- c(ci_time[[i]], rev(ci_time[[i]]))
         yy_t[[i]] <- c(l95[[i]], rev(u95[[i]]))
-        polygon(unlist(xx_t[[i]]), unlist(yy_t[[i]]), col = adjustcolor(my_clr[i], alpha.f = 0.25), 
-                border=adjustcolor(my_clr[i], alpha.f = 0.25))
+        polygon(unlist(xx_t[[i]]), unlist(yy_t[[i]]), col = adjustcolor(my_clr[i], alpha.f = 0.4), 
+                border=adjustcolor(my_clr[i], alpha.f = 0.4))
       }   
       } else {
         for (i in 1:length(ctrs)) {
@@ -4621,8 +4609,8 @@ plot_fci_fnc <- function(x, y, z, xcivar, ycivar, zcivar, dataf, LCol, Fci.Fac,
           u95[[i]] <- ci_u[[i]][, 2] #"y_p"
           xx_t[[i]] <- c(ci_time[[i]], rev(ci_time[[i]]))
           yy_t[[i]] <- c(l95[[i]], rev(u95[[i]]))
-          polygon(unlist(xx_t[[i]]), unlist(yy_t[[i]]), col = adjustcolor(my_clr[i], alpha.f = 0.25), 
-                  border=adjustcolor(my_clr[i], alpha.f = 0.25))
+          polygon(unlist(xx_t[[i]]), unlist(yy_t[[i]]), col = adjustcolor(my_clr[i], alpha.f = 0.4), 
+                  border=adjustcolor(my_clr[i], alpha.f = 0.4))
         }
     } 
   }
@@ -4636,6 +4624,20 @@ plot_fci_fnc <- function(x, y, z, xcivar, ycivar, zcivar, dataf, LCol, Fci.Fac,
   }
   #Add target line
   abline(h=Tgt.Line, col="gray", lty=3, lwd=7)
+  #Add text names
+  if(Straight.Line == "Yes") {
+    for (i in 1:length(ctrs)) {
+      lines(ci_p[[i]][, "x"], ci_p[[i]][, "y"], lty=i, col= my_clr[i],lwd=2)
+      text(ci_p[[i]][1, "x"], ci_p[[i]][1, "y"], ctrs[i])
+      text(ci_p[[i]][nrow(ci_p[[i]]), "x"], ci_p[[i]][nrow(ci_p[[i]]), "y"], ctrs[i])
+    }
+  } else {
+    for (i in 1:length(ctrs)) {
+      lines(ci_p[[i]][, "x"], ci_p[[i]][, "y_p"], lty=i, col= my_clr[i],lwd=2)
+      text(ci_p[[i]][1, "x"], ci_p[[i]][1, "y_p"], ctrs[i])
+      text(ci_p[[i]][nrow(ci_p[[i]]), "x"], ci_p[[i]][nrow(ci_p[[i]]), "y_p"], ctrs[i])
+    }
+  }
 }
 
 #Confidence interval plot reactive function
@@ -4791,12 +4793,12 @@ output$FCI__Xlim2 <- renderUI({
 #16. Indicate lower limit of y-axis
 output$FCI__Ylim1 <- renderUI({
   numericInput("fCiYLim1", "17. Lower Y-axis limit.",
-               value = range_fycivar()[1], step = 1)
+               value = range_fycivar()[1], step = .1)
 })
 #17. Indicate upper limit of x-axis
 output$FCI__Ylim2 <- renderUI({
   numericInput("fCiYLim2", "18. Upper Y-axis limit.",
-               value = range_fycivar()[2], step = 1)
+               value = range_fycivar()[2], step = .1)
 })
 
 #Confidence interval plot for time

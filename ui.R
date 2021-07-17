@@ -1738,23 +1738,23 @@ tabPanel("95% CIs",
            column(3, 
                   uiOutput("FCIz")),
            column(3, 
-                  uiOutput("fciplot_grp_levs"))
+                  uiOutput("FCIzInc"))
          ),
          fluidRow(   
+           column(3, 
+                  uiOutput("fciplot_grp_levs")),
            column(3, 
                   uiOutput("FCi_Choice_Type")),
            column(3, 
                   uiOutput("FCi_Conf_Lev")),
            column(3, 
-                  uiOutput("FCI_bands")),
-           column(3, 
-                  uiOutput("fci_plot_ln_clrs"))
+                  uiOutput("FCI_bands"))
          ),
          fluidRow(   
            column(3, 
-                  uiOutput("FCI_nk_knots")),
+                  uiOutput("fci_plot_ln_clrs")),
            column(3, 
-                  uiOutput("FCi_create")),
+                  uiOutput("FCI_nk_knots")),
            column(3, 
                   uiOutput("FCi_ovral_line")),
            column(3, 
@@ -1762,7 +1762,9 @@ tabPanel("95% CIs",
          ),
          fluidRow(   
            column(3, 
-                  uiOutput("FCi_strght_ln"))
+                  uiOutput("FCi_strght_ln")),
+           column(3, 
+                  uiOutput("FCi_create"))
          ),
          fluidRow(   
            column(3, 
@@ -1774,7 +1776,7 @@ tabPanel("95% CIs",
            column(3, 
                   uiOutput("FCI__Ylim2"))
          ),
-         h5("Modify the plot space in #14-17."),
+         h5("Modify the plot space in #15-18."),
          br(),
          plotOutput("Plot_Fci_output", height = 800, width="100%"),
          h5("These are point estimates and confidence intervals. These may not match up with smoothed lines."),

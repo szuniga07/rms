@@ -4369,33 +4369,46 @@ output$Ci_create <- renderUI({                                #Creates a UI func
 #######################################
 
 #Binomial
-fbconf <- function(x, xlev, y, z, dataf, conf_lev) {
+fbconf <- function(x, xlev, y, z, dataf, conf_lev, Increment) {
   #Aggregates outcome by factor 
   if( is.null(xlev)) {
     dataf <- dataf
   } else {
     dataf <- dataf[ dataf[, x] %in% xlev,  ]
   }
-  agr_sum <- aggregate(dataf[, y], list(dataf[, x] , dataf[, z]), FUN="sum")
-  agr_n <- aggregate(dataf[, y], list(dataf[, x] , dataf[, z]), FUN="length")
+  #Calculates confidence intervals for single units or in increments
+  if(Increment == 1) {
+    agr_sum <- aggregate(dataf[, y], list(dataf[, x] , dataf[, z]), FUN="sum")
+    agr_n <- aggregate(dataf[, y], list(dataf[, x] , dataf[, z]), FUN="length")
+  } else {
+    agr_sum <- aggregate(dataf[, y], list(dataf[, x] , ceiling(dataf[, z]/Increment) ), FUN="sum")
+    agr_n <- aggregate(dataf[, y], list(dataf[, x] , ceiling(dataf[, z]/Increment) ), FUN="length")
+  }
   agr_df <- data.frame(x_lev=agr_sum[, 1], z_lev=agr_sum[, 2], agr_sum=agr_sum[, 3], agr_n=agr_n[, 3])
-  #Calculates confidence intervals
   agr_df <- cbind(agr_df, binconf(x=agr_df[,3], n=agr_df[,4], alpha=1 - conf_lev))
   return(agr_df) 
 }
 
 #Continuous outcomes
-ftconf <- function(x, xlev, y, z, dataf, conf_lev) {
+ftconf <- function(x, xlev, y, z, dataf, conf_lev, Increment) {
   #Aggregates outcome by factor 
   if( is.null(xlev)) {
     dataf <- dataf
   } else {
     dataf <- dataf[ dataf[, x] %in% xlev,  ]
   }
-  agr_m <- aggregate(dataf[, y], list(dataf[, x] , dataf[, z]), FUN="mean")
-  agr_sd <- aggregate(dataf[, y], list(dataf[, x] , dataf[, z]), FUN="sd")
-  agr_n <- aggregate(dataf[, y], list(dataf[, x] , dataf[, z]), FUN="length")
-  agr_df <- data.frame(x_lev=agr_m[, 1], z_lev=agr_m[, 2], agr_m=agr_m[, 3], agr_sd=agr_sd[, 3], agr_n=agr_n[, 3])
+  #Confidence interval data for increments
+  if(Increment == 1) {
+    agr_m <- aggregate(dataf[, y], list(dataf[, x] , dataf[, z]), FUN="mean")
+    agr_sd <- aggregate(dataf[, y], list(dataf[, x] , dataf[, z]), FUN="sd")
+    agr_n <- aggregate(dataf[, y], list(dataf[, x] , dataf[, z]), FUN="length")
+    agr_df <- data.frame(x_lev=agr_m[, 1], z_lev=agr_m[, 2], agr_m=agr_m[, 3], agr_sd=agr_sd[, 3], agr_n=agr_n[, 3])
+  } else {
+    agr_m <- aggregate(dataf[, y], list(dataf[, x] , ceiling(dataf[, z]/Increment) ), FUN="mean")
+    agr_sd <- aggregate(dataf[, y], list(dataf[, x] , ceiling(dataf[, z]/Increment) ), FUN="sd")
+    agr_n <- aggregate(dataf[, y], list(dataf[, x] , ceiling(dataf[, z]/Increment) ), FUN="length")
+    agr_df <- data.frame(x_lev=agr_m[, 1], z_lev=agr_m[, 2], agr_m=agr_m[, 3], agr_sd=agr_sd[, 3], agr_n=agr_n[, 3])
+  }
   #Calculates confidence intervals
   MOE <- qt((conf_lev/2)+.5, df=agr_df$agr_n - 1) * agr_df$agr_sd/sqrt(agr_df$agr_n)
   Lower <- agr_df$agr_m - MOE
@@ -4406,16 +4419,23 @@ ftconf <- function(x, xlev, y, z, dataf, conf_lev) {
 }
 
 #Exact Poisson
-fpconf <- function(x, xlev, y, z, dataf, conf_lev) {
+fpconf <- function(x, xlev, y, z, dataf, conf_lev, Increment) {
   #Aggregates outcome by factor 
-  if( is.null(XLeV)) {
+  if( is.null(xlev)) {
     dataf <- dataf
   } else {
     dataf <- dataf[ dataf[, x] %in% xlev,  ]
   }
-  agr_sum <- aggregate(dataf[, y] ~ dataf[, x]+ dataf[, z], FUN="sum")
-  agr_n <- aggregate(dataf[, y] ~ dataf[, x]+ dataf[, z], FUN="length")
-  agr_df <- data.frame(x_lev=agr_sum[, 1], z_lev=agr_sum[, 2], agr_sum=agr_sum[, 3], agr_n=agr_n[, 3])
+  #Confidence interval data for increments
+  if(Increment == 1) {
+    agr_sum <- aggregate(dataf[, y] ~ dataf[, x]+ dataf[, z], FUN="sum")
+    agr_n <- aggregate(dataf[, y] ~ dataf[, x]+ dataf[, z], FUN="length")
+    agr_df <- data.frame(x_lev=agr_sum[, 1], z_lev=agr_sum[, 2], agr_sum=agr_sum[, 3], agr_n=agr_n[, 3])
+  } else {
+    agr_sum <- aggregate(dataf[, y] ~ dataf[, x]+ ceiling(dataf[, z]/Increment), FUN="sum")
+    agr_n <- aggregate(dataf[, y] ~ dataf[, x]+ ceiling(dataf[, z]/Increment), FUN="length")
+    agr_df <- data.frame(x_lev=agr_sum[, 1], z_lev=agr_sum[, 2], agr_sum=agr_sum[, 3], agr_n=agr_n[, 3])
+  }
   #Calculates confidence intervals
   adf_alpha <- matrix(ncol= 3, nrow= nrow(agr_df), byrow = TRUE)
   for (i in 1:nrow(agr_df)) {
@@ -4427,11 +4447,11 @@ fpconf <- function(x, xlev, y, z, dataf, conf_lev) {
   return(agr_df=agr_df ) 
 }
 
-fconf <- function(x=xcivar, xlev=xlev, y=ycivar, z=zcivar, dataf, conf_lev=ciconf_lev, Fci_type) {
+fconf <- function(x=xcivar, xlev=xlev, y=ycivar, z=zcivar, dataf, conf_lev=ciconf_lev, Increment, Fci_type) {
   switch(Fci_type,                #"var" and can be used anywhere in server.r.
-         "Mean (t)" =  ftconf(x, xlev, y, z, dataf, conf_lev), 
-         "Proportion (binomial)" =  fbconf(x, xlev, y, z, dataf, conf_lev), 
-         "Poisson (exact)" =  fpconf(x, xlev, y, z, dataf, conf_lev) 
+         "Mean (t)" =  ftconf(x, xlev, y, z, dataf, conf_lev, Increment), 
+         "Proportion (binomial)" =  fbconf(x, xlev, y, z, dataf, conf_lev, Increment), 
+         "Poisson (exact)" =  fpconf(x, xlev, y, z, dataf, conf_lev, Increment) 
   )
 }
 
@@ -4439,7 +4459,7 @@ fconf <- function(x=xcivar, xlev=xlev, y=ycivar, z=zcivar, dataf, conf_lev=cicon
 fcidf <- reactive({                  #This indicates the data frame I will use.
   if(input$FCiCreate == "Yes") {
     fconf(x=input$fxcivar, xlev=fci_plot_Group_Levels(), y=input$fycivar, z=input$fzcivar, 
-          dataf=df(), conf_lev=input$fciconf_lev, Fci_type=input$fci_type)
+          dataf=df(), conf_lev=input$fciconf_lev, Increment=fci_Z_Increment(), Fci_type=input$fci_type)
   }
 })
 
@@ -4514,8 +4534,14 @@ fci_fac <- reactive({                  #This indicates the data frame I will use
 ######################################################
 ## Function to get the point overall point estimate ##
 ######################################################
-fncFciTotMn <- function(y, z, dataf) {
+fncFciTotMn <- function(y, z, dataf, Increment) {
   agr_mean <- aggregate(dataf[, y], list(dataf[, z]), FUN="mean")
+  #Gives data aggregated into single units or in bigger time increments
+  if(Increment == 1) {
+    agr_mean <- aggregate(dataf[, y], list(dataf[, z]), FUN="mean")
+  } else {
+    agr_mean <- aggregate(dataf[, y], list( ceiling(dataf[, z]/Increment) ), FUN="mean")
+  }
   return(agr_mean) 
 }
 
@@ -4626,7 +4652,7 @@ plot_fci <- reactive({                  #This indicates the data frame I will us
 
 ## Get the overall group trend rates ##
 fci_tot_group_aggr <- reactive({
-  fncFciTotMn(y=input$fycivar, z=input$fzcivar, dataf=df())
+  fncFciTotMn(y=input$fycivar, z=input$fzcivar, dataf=df(), Increment= fci_Z_Increment())
 })
 ## Get the overall group trend line ##
 fci_all_line <- reactive({
@@ -4653,9 +4679,17 @@ output$FCIz <- renderUI({                                 #Same idea as output$v
   selectInput("fzcivar", "3. Select a time variable.", 
               choices = setdiff(var(), c(input$fycivar, input$fxcivar)), multiple=FALSE, selected=var()[2])     #Will make choices based on my reactive function.
 })
+#4. Select the rolling time period 
+output$FCIzInc <- renderUI({                                 
+  numericInput("fciZinc", "4. Select time increments (3= 3 months).", 
+               value = 1, step = 1, min=1)     
+})
+fci_Z_Increment <- reactive({                 
+  input$fciZinc 
+})
 #Select specific groups
 output$fciplot_grp_levs <- renderUI({                                 
-  selectInput("fciPlotGrpLvs", "4. Highlight specific groups?", 
+  selectInput("fciPlotGrpLvs", "5. Highlight specific groups?", 
               choices = fci_plot_groups(), multiple=TRUE)     
 })
 #Reactive function to get group levels
@@ -4668,24 +4702,24 @@ fci_plot_groups <- reactive({
 })
 #Select the CI type
 output$FCi_Choice_Type <- renderUI({                                
-  selectInput("fci_type", "5. Select the type of confidence interval.",
+  selectInput("fci_type", "6. Select the type of confidence interval.",
               choices = c("Proportion (binomial)", "Mean (t)", "Poisson (exact)"),
               selected= "Mean (t)", multiple=FALSE)
 })
 
 #Select the confidence interval level
 output$FCi_Conf_Lev <- renderUI({                                 
-  numericInput("fciconf_lev", "6. Enter the confidence level.",
+  numericInput("fciconf_lev", "7. Enter the confidence level.",
                value = .95, min=.01, max = .99, step = .01)
 })
 #Select the Confidence bands.
 output$FCI_bands <- renderUI({                                 #Same idea as output$vy
-  selectInput("fcibands", "7. Do you want confidence bands?", 
+  selectInput("fcibands", "8. Do you want confidence bands?", 
               choices = c("No", "Yes"), multiple=FALSE, selected="No")     #Will make choices based on my reactive function.
 })
 #Select line colors
 output$fci_plot_ln_clrs <- renderUI({                                 
-  selectInput("fciPltLnClr", "8. Select line colors.", 
+  selectInput("fciPltLnClr", "9. Select line colors.", 
               choices = xyplot_Line_Color_Names(), multiple=TRUE)     
 })
 #Reactive function for directly above
@@ -4694,12 +4728,12 @@ fci_plot_Line_Colors <- reactive({
 })
 #Select how many knots I want
 output$FCI_nk_knots <- renderUI({                                
-      numericInput("FciNkKnots", "9. Select the number of spline knots.",
+      numericInput("FciNkKnots", "10. Select the number of spline knots.",
        value = 3, min=3, max = 10, step = 1)
 })
 #Select whether to run the 95% confidence interval or not
 output$FCi_create <- renderUI({                                
-  selectInput("FCiCreate", "10. Create the time plot?",
+  selectInput("FCiCreate", "14. Create the time plot?",
               choices = c("No", "Yes"),
               selected="No")
 })
@@ -4745,22 +4779,23 @@ fCi_straight_line <- reactive({
 })
 #14. Indicate lower limit of x-axis
 output$FCI__Xlim1 <- renderUI({
-  numericInput("fCiXLim1", "14. Lower X-axis limit.",
+  numericInput("fCiXLim1", "15. Lower X-axis limit.",
                value = range_fzcivar()[1], step = 1)
 })
 #15. Indicate upper limit of x-axis
 output$FCI__Xlim2 <- renderUI({
-  numericInput("fCiXLim2", "15. Upper X-axis limit.",
-               value = range_fzcivar()[2], step = 1)
+  numericInput("fCiXLim2", "16. Upper X-axis limit.",
+               value = if(fci_Z_Increment() ==1) { range_fzcivar()[2] } else {ceiling(range_fzcivar()[2]/fci_Z_Increment() ) } , 
+               step = 1)
 })
 #16. Indicate lower limit of y-axis
 output$FCI__Ylim1 <- renderUI({
-  numericInput("fCiYLim1", "16. Lower Y-axis limit.",
+  numericInput("fCiYLim1", "17. Lower Y-axis limit.",
                value = range_fycivar()[1], step = 1)
 })
 #17. Indicate upper limit of x-axis
 output$FCI__Ylim2 <- renderUI({
-  numericInput("fCiYLim2", "17. Upper Y-axis limit.",
+  numericInput("fCiYLim2", "18. Upper Y-axis limit.",
                value = range_fycivar()[2], step = 1)
 })
 

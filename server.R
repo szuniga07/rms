@@ -2000,7 +2000,7 @@ output$anova_smry <- renderPrint({
     #XYplot line color names
     xyplot_Line_Color_Names <- reactive({                 
       colors()[c(552, 498,652, 254, 26,547, 24, 152, 32,66, 68,97, 120,142,   
-                 175, 310, 367,372,399, 485, 589, 615)]    
+                 175, 310, 367,372,399, 485, 589, 615, 630)]    
     })
     #5. Create yes/no box to make the XY plot
     output$xyplot_yes_no <- renderUI({                                 
@@ -5226,7 +5226,7 @@ Scatter_Cor_Test_Cont_Correct <- reactive({
 #8. Line color
 output$sctr_crtst_clr <- renderUI({                                
   selectInput("sctrCrtstClr", "8. Select the plot's line color.",        
-              choices = c("red","orange","yellow","green","blue","purple","gray","black"), 
+              choices = xyplot_Line_Color_Names(), 
               multiple=FALSE, selected="red" ) 
 })
 #8A. Reactive function for alternative hypothesis test
@@ -5597,8 +5597,8 @@ summary_variable_histogram_bars <- reactive({
 })
 #3. Bar color
 output$smry_var_hist_bar_clr <- renderUI({                                
-  selectInput("smryVrHstBrClr", "3. Select the bar color.",        
-              choices = c("red","orange","yellow","green","blue","purple","gray","black"), 
+  selectInput("smryVrHstBrClr", "3. Select the bar colors.",        
+              choices = xyplot_Line_Color_Names(), 
               multiple=FALSE, selected="blue" ) 
 })
 #3A. Reactive function for Bar color
@@ -5617,7 +5617,7 @@ summary_hist_mean_median_yes_no <- reactive({
 #5. Line colors
 output$smry_var_hist_ln_clr <- renderUI({                                
   selectInput("smryVrHstLnClr", "5. Select the line colors.",        
-              choices = c("red","orange","yellow","green","blue","purple","gray","black"), 
+              choices = xyplot_Line_Color_Names(), 
               multiple=TRUE, selected="black" ) 
 })
 #5A. Reactive function for the line color
@@ -5696,7 +5696,7 @@ density_group_trend_grp_levels <- reactive({
 #3. Select the specific groups.
 output$dnsty_grp_trnd_Xlevs <- renderUI({
   selectInput("dnsGrpTrXlev", "3. Select specific groups.",
-              choices = density_group_trend_grp_levels(), multiple=TRUE)
+              choices = sort(density_group_trend_grp_levels()), multiple=TRUE)
 })
 #3A. Reactive function for the variable
 density_group_trend_grp_X_levs <- reactive({
@@ -5728,7 +5728,7 @@ density_group_trend_Time_Increment <- reactive({
 #6. Line color
 output$dnsty_grp_trnd_ln_clr <- renderUI({                                
   selectInput("dnsGrpTrnLClr", "6. Select the line color.",        
-              choices = c("red","orange","yellow","green","blue","purple","gray","black"), 
+              choices = xyplot_Line_Color_Names(), 
               multiple=FALSE, selected="red" ) 
 })
 #6A. Reactive function for line color
@@ -5748,7 +5748,7 @@ density_group_trend_Target <- reactive({
 output$dnsty_grp_trnd_lgd_loc <- renderUI({                                
   selectInput("dnsGrpTrnLgdLoc", "8. Select the legend location.",        
               choices = c("bottomright","bottom","bottomleft","left","topleft","top","topright","right","center"), 
-              multiple=FALSE, selected="red" ) 
+              multiple=FALSE, selected="topleft" ) 
 })
 #8A. Reactive function for legend location
 density_group_trend_legend_location <- reactive({
@@ -5871,10 +5871,8 @@ output$dnsty_grp_trnd_out_by_tm <- renderPrint({
 ################################################################################
 ## Function to create aggregated values and density plot over time increments ##
 ################################################################################
-fncTmDnsty <- function(DF, X, Y, Z, Groups, Increment, Period, Xmin, Xmax, Ymax, Seed.Multiplier) {
+fncTmDnsty <- function(DF, X, Y, Z, Increment, Seed.Multiplier) {
   #Get summary of values
-  Group.Names <- unique(DF[, X]) 
-  Group.Names.Length <-  length(Group.Names)
   Time.Period.Length <- length(unique(DF[, Z]))
   Increment.Length <- Time.Period.Length - (Increment - 1)
   Time.Period.Values <- unique(DF[, Z])
@@ -5889,7 +5887,7 @@ fncTmDnsty <- function(DF, X, Y, Z, Groups, Increment, Period, Xmin, Xmax, Ymax,
   }
   #Aggregate values
   AggrY <- list()
-  for (i in 1:length(Time.Periods )) {0
+  for (i in 1:length(Time.Periods )) {
     AggrY[[i]] <- aggregate(DF[DF[, Z] %in% Time.Periods[[i]], Y] ~ DF[DF[, Z] %in% Time.Periods[[i]], X], FUN=mean)
     colnames(AggrY[[i]]) <- c(X, Y)
   }
@@ -5928,10 +5926,10 @@ fncTmDnsty <- function(DF, X, Y, Z, Groups, Increment, Period, Xmin, Xmax, Ymax,
   Dy.Cord.Random <- vector(mode = "list", length = Increment.Length)
   for (i in 1:nrow(DXname[[i]]) ) {
     for (j in 1:Increment.Length ) {
-      Dx.Cord[[j]][i] <- DxDY[[j]][[ 1]][which( min(abs(DxDY[[j]][[1]] - DYvals[[j]][i])) == abs(DxDY[[j]][[1]] - DYvals[[j]][i] ))]
-      Dy.Cord[[j]][i] <- DxDY[[j]][[ 2]][which( min(abs(DxDY[[j]][[1]] - DYvals[[j]][i])) == abs(DxDY[[j]][[1]] - DYvals[[j]][i] ))]
+      Dx.Cord[[j]][[i]] <- DxDY[[j]][[ 1]][which( min(abs(DxDY[[j]][[1]] - DYvals[[j]][i])) == abs(DxDY[[j]][[1]] - DYvals[[j]][i] ))]
+      Dy.Cord[[j]][[i]] <- DxDY[[j]][[ 2]][which( min(abs(DxDY[[j]][[1]] - DYvals[[j]][i])) == abs(DxDY[[j]][[1]] - DYvals[[j]][i] ))]
       set.seed(i * Seed.Multiplier)
-      Dy.Cord.Random[[j]][i] <- runif(1, min = 0.015, max = Dy.Cord[[j]][i])
+      Dy.Cord.Random[[j]][[i]] <- runif(1, min = 0.001, max = Dy.Cord[[j]][[i]])
       
     }
   }
@@ -6003,16 +6001,16 @@ fncTmDnstPlot <- function(TDList, X, Y, Z, Period, Lcol, Target, Groups,
 ################################################################################
 fncTmDnstOut <- function(TDList, Period, Target) {
   out.by.period <- TDList[["AggrY"]][[Period]]
-
+  
   #High Target
   HT.table <- vector(length=2)
   if ( is.numeric(Target) ) {  
     HT.table <- prop.table(table(out.by.period[, 2] < Target))
     if ( length(HT.table) == 1 ) {  
       names(HT.table) <- "All"
-      } else {
-        names(HT.table) <- c("At or above target", "Below target")
-      }
+    } else {
+      names(HT.table) <- c("At or above target", "Below target")
+    }
   } else {
     HT.table <- NA
   }    
@@ -6028,9 +6026,10 @@ fncTmDnstOut <- function(TDList, Period, Target) {
   } else {
     LT.table <- NA
   }
-  return(list("Period Rate"= out.by.period, "High Target"= HT.table, "Low Target"= LT.table))
+  return(list("Period Rate"= out.by.period, "High Target"= HT.table, "Low Target"= LT.table, 
+              "Pooled.Mean"= mean(as.numeric(unlist(out.by.period[[2]])) ,na.rm=TRUE),
+              "Pooled.Median"= median(as.numeric(unlist(out.by.period[[2]])) ,na.rm=TRUE)))
 }
-
 
 ################################################################################
 ##                       Cost analysis with the Cox PH model                  ##

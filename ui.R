@@ -10,7 +10,7 @@
                       ),       
       
       mainPanel(
-        tabsetPanel(                                      #Creates multiple tabs.
+        tabsetPanel(                                      #Creates multiple tabs. 
           tabPanel("Data",  
                    h4("Download, Upload and Save Data."),
                    fluidRow(

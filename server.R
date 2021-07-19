@@ -8,7 +8,7 @@
 #install.packages("meta")
 #install.packages("rpart")
 #install.packages("coxme")
-
+ 
 library(shiny)
 library(jsonlite)
 library(rms)
@@ -4692,7 +4692,7 @@ fci_Z_Increment <- reactive({
 #Select specific groups
 output$fciplot_grp_levs <- renderUI({                                 
   selectInput("fciPlotGrpLvs", "5. Highlight specific groups?", 
-              choices = fci_plot_groups(), multiple=TRUE)     
+              choices = sort(fci_plot_groups()), multiple=TRUE)     
 })
 #Reactive function to get group levels
 fci_plot_Group_Levels <- reactive({                 

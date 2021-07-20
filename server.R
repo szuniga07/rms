@@ -1999,8 +1999,8 @@ output$anova_smry <- renderPrint({
     })
     #XYplot line color names
     xyplot_Line_Color_Names <- reactive({                 
-      colors()[c(552, 498,652, 254, 26,547, 24, 152, 32,66, 68,97, 120,142,   
-                 175, 310, 367,372,399, 485, 589, 615, 630)]    
+      colors()[c(552, 498,652, 254, 26,547, 24, 152,32,66, 68, 85,97, 120, 128,139,
+                 142, 175, 310, 367,372,393, 448, 399,450, 485, 514, 562,589, 610, 615, 630,657)]    
     })
     #5. Create yes/no box to make the XY plot
     output$xyplot_yes_no <- renderUI({                                 

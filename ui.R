@@ -1762,6 +1762,8 @@ tabPanel("95% CIs",
          ),
          fluidRow(   
            column(3, 
+                  uiOutput("FCi_Tm_Pt_Line")),
+           column(3, 
                   uiOutput("FCi_strght_ln")),
            column(3, 
                   uiOutput("FCi_create"))
@@ -1776,7 +1778,7 @@ tabPanel("95% CIs",
            column(3, 
                   uiOutput("FCI__Ylim2"))
          ),
-         h5("Modify the plot space in #15-18."),
+         h5("Modify the plot space in #16-19."),
          br(),
          plotOutput("Plot_Fci_output", height = 800, width="100%"),
          h5("These are point estimates and confidence intervals. These may not match up with smoothed lines."),

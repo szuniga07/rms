@@ -4568,7 +4568,7 @@ fncAllTrndSpln <- function( agr_df, NK) {
 plot_fci_fnc <- function(x, y, z, xcivar, ycivar, zcivar, dataf, LCol, Fci.Fac, 
                          ci_p, ci_l, ci_u,max_pest, min_pest, max_ci, min_ci, ctrs, 
                          cibands, fCiXLim1, fCiXLim2, fCiYLim1, fCiYLim2, Tot.Line, FCI.Tot,
-                         FCI.Tot.Straight, Conf.Intrv, Tgt.Line, Straight.Line) {
+                         FCI.Tot.Straight, Conf.Intrv, Tgt.Line, Straight.Line, Time.Pt.Line) {
   #Make text out of the confidence level
   ConINT <- paste0(as.character(Conf.Intrv*100), "%")
   #Main title
@@ -4622,8 +4622,6 @@ plot_fci_fnc <- function(x, y, z, xcivar, ycivar, zcivar, dataf, LCol, Fci.Fac,
       lines(FCI.Tot, col="black", lty=1, lwd=7)  
     }
   }
-  #Add target line
-  abline(h=Tgt.Line, col="gray", lty=3, lwd=7)
   #Add text names
   if(Straight.Line == "Yes") {
     for (i in 1:length(ctrs)) {
@@ -4638,6 +4636,10 @@ plot_fci_fnc <- function(x, y, z, xcivar, ycivar, zcivar, dataf, LCol, Fci.Fac,
       text(ci_p[[i]][nrow(ci_p[[i]]), "x"], ci_p[[i]][nrow(ci_p[[i]]), "y_p"], ctrs[i])
     }
   }
+  #Add target line
+  abline(h=Tgt.Line, col="gray", lty=3, lwd=7)
+  #Add time point line
+  abline(v=Time.Pt.Line, col="gray", lty=1, lwd=5)
 }
 
 #Confidence interval plot reactive function
@@ -4648,7 +4650,8 @@ plot_fci <- reactive({                  #This indicates the data frame I will us
     max_pest=fci_fac()$max_pest, min_pest=fci_fac()$min_pest, max_ci=fci_fac()$max_ci, min_ci=fci_fac()$min_ci, 
     ctrs=fci_fac()$ctrs, cibands=input$fcibands, fCiXLim1=input$fCiXLim1, fCiXLim2=input$fCiXLim2, 
     fCiYLim1=input$fCiYLim1, fCiYLim2=input$fCiYLim2, Tot.Line=fci_overall_line(), FCI.Tot=fci_all_line(), 
-    FCI.Tot.Straight=fci_tot_group_aggr(), Conf.Intrv=input$fciconf_lev, Tgt.Line=fCi_target_line(), Straight.Line= fCi_straight_line() )
+    FCI.Tot.Straight=fci_tot_group_aggr(), Conf.Intrv=input$fciconf_lev, 
+    Tgt.Line=fCi_target_line(), Straight.Line= fCi_straight_line(), Time.Pt.Line= fCi_time_point_line() )
     }
 })
 
@@ -4735,7 +4738,7 @@ output$FCI_nk_knots <- renderUI({
 })
 #Select whether to run the 95% confidence interval or not
 output$FCi_create <- renderUI({                                
-  selectInput("FCiCreate", "14. Create the time plot?",
+  selectInput("FCiCreate", "15. Create the time plot?",
               choices = c("No", "Yes"),
               selected="No")
 })
@@ -4758,6 +4761,15 @@ output$FCi_Tgt_Line <- renderUI({
 fCi_target_line <- reactive({ 
   input$fciTgtLn  
 })
+#Add a time point line
+output$FCi_Tm_Pt_Line <- renderUI({                                 
+  numericInput("fciTmPtLn", "13. Add a time point line.",
+               value = NULL, step = .1)
+})
+#Reactive function for above
+fCi_time_point_line <- reactive({ 
+  input$fciTmPtLn  
+})
 
 ## Code for plot range
 #Range of X value
@@ -4771,7 +4783,7 @@ range_fycivar <- reactive({
 
 #13. Indicate if you want a straight line
 output$FCi_strght_ln <- renderUI({                                
-  selectInput("fciStrtLn", "13. Use straight trend lines?",
+  selectInput("fciStrtLn", "14. Use straight trend lines?",
               choices = c("No", "Yes"),
               selected="No")
 })
@@ -4781,23 +4793,23 @@ fCi_straight_line <- reactive({
 })
 #14. Indicate lower limit of x-axis
 output$FCI__Xlim1 <- renderUI({
-  numericInput("fCiXLim1", "15. Lower X-axis limit.",
+  numericInput("fCiXLim1", "16. Lower X-axis limit.",
                value = range_fzcivar()[1], step = 1)
 })
 #15. Indicate upper limit of x-axis
 output$FCI__Xlim2 <- renderUI({
-  numericInput("fCiXLim2", "16. Upper X-axis limit.",
+  numericInput("fCiXLim2", "17. Upper X-axis limit.",
                value = if(fci_Z_Increment() ==1) { range_fzcivar()[2] } else {ceiling(range_fzcivar()[2]/fci_Z_Increment() ) } , 
                step = 1)
 })
 #16. Indicate lower limit of y-axis
 output$FCI__Ylim1 <- renderUI({
-  numericInput("fCiYLim1", "17. Lower Y-axis limit.",
+  numericInput("fCiYLim1", "18. Lower Y-axis limit.",
                value = range_fycivar()[1], step = .1)
 })
 #17. Indicate upper limit of x-axis
 output$FCI__Ylim2 <- renderUI({
-  numericInput("fCiYLim2", "18. Upper Y-axis limit.",
+  numericInput("fCiYLim2", "19. Upper Y-axis limit.",
                value = range_fycivar()[2], step = .1)
 })
 

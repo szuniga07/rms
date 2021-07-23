@@ -4507,7 +4507,7 @@ cidf <- reactive({                  #This indicates the data frame I will use.
 ##########################################
 # Plot function for confidence intervals #
 ##########################################
-plot_ci_fnc <- function(xcivar, ycivar, ydf, cidf, ciconf_lev, alpha_num) {
+plot_ci_fnc <- function(xcivar, ycivar, ydf, cidf, ciconf_lev, alpha_num, Lcol, Pcol) {
   if (alpha_num=="Alphabetical") {
     adf <- cidf$adf_alpha
   }
@@ -4522,8 +4522,8 @@ plot_ci_fnc <- function(xcivar, ycivar, ydf, cidf, ciconf_lev, alpha_num) {
        xlab= paste0("Value (the grey vertical line is the overall mean of ", round(mainYmn, 3), ")"),
        main=main_ttl, axes=F ) 
     for (i in 1:nrow(adf)) {
-    lines(c(adf[,'Lower'][i], adf[,'Upper'][i]), c(i,i), lwd=4, col=4) 
-    points(adf[,'PointEst'][i],i, pch=24, col=2, lwd=1, bg=7, cex=1.75) 
+    lines(c(adf[,'Lower'][i], adf[,'Upper'][i]), c(i,i), lwd=4, col=Lcol) 
+    points(adf[,'PointEst'][i],i, pch=24, col=Pcol, lwd=1, bg=7, cex=1.75) 
   }
   abline(v=mainYmn, lwd=3, col="grey", lty=3)
   axis(1) 
@@ -4537,7 +4537,8 @@ plot_ci_fnc <- function(xcivar, ycivar, ydf, cidf, ciconf_lev, alpha_num) {
 plot_ci <- reactive({                  #This indicates the data frame I will use.
   if(input$CiCreate == "Yes") {
   plot_ci_fnc(xcivar=input$xcivar, ycivar=input$ycivar, ydf=df(), cidf=cidf(), 
-              ciconf_lev=input$ciconf_lev, alpha_num=input$alpha_num)
+              ciconf_lev=input$ciconf_lev, alpha_num=input$alpha_num, 
+              Lcol=ci_plot_Line_Colors() , Pcol=ci_plot_Point_Colors() )
   }
 })
 
@@ -4553,26 +4554,26 @@ output$CIy <- renderUI({                                #Creates a UI function h
 
 #Select the predictors.
 output$CIx <- renderUI({                                 #Same idea as output$vy
-  selectInput("xcivar", "2. Select the factor.", 
+  selectInput("xcivar", "4. Select the factor.", 
               choices = setdiff(var(), input$ycivar), multiple=FALSE, selected=var()[2])     #Will make choices based on my reactive function.
 })
 
 #Select the CI type
 output$Ci_Choice_Type <- renderUI({                                
-  selectInput("ci_type", "3. Select the type of confidence interval.",
+  selectInput("ci_type", "2. Select the type of confidence interval.",
               choices = c("Proportion (binomial)", "Mean (t)", "Poisson (exact)"),
               selected= "Mean (t)", multiple=FALSE)
 })
 
 #Select the confidence interval level
 output$Ci_Conf_Lev <- renderUI({                                 
-  numericInput("ciconf_lev", "4. Enter the confidence level.",
+  numericInput("ciconf_lev", "5. Enter the confidence level.",
                value = .95, min=.01, max = .99, step = .01)
 })
 
 #Select the sorting order.
 output$Ci_Alpha_Num <- renderUI({                                #Creates a UI function here but it will
-  radioButtons("alpha_num", "5. Sort alphabetically or numerically?",
+  radioButtons("alpha_num", "3. Sort alphabetically or numerically?",
                choices = c("Alphabetical", "Numerical"),
                selected="Alphabetical")
 })
@@ -4598,6 +4599,24 @@ output$Ci_create <- renderUI({                                #Creates a UI func
   radioButtons("CiCreate", "6. Create confidence intervals?",
                choices = c("No", "Yes"),
                selected="No")
+})
+#Select line colors
+output$ci_plot_ln_clrs <- renderUI({                                 
+  selectInput("ciPltLnClr", "7. Select line color.", 
+              choices = xyplot_Line_Color_Names(), multiple=FALSE, selected="blue")     
+})
+#Reactive function for directly above
+ci_plot_Line_Colors <- reactive({                 
+  input$ciPltLnClr 
+})
+#Select point colors
+output$ci_plot_pt_clrs <- renderUI({                                 
+  selectInput("ciPltPtClr", "8. Select point color.", 
+              choices = xyplot_Line_Color_Names(), multiple=FALSE, selected="gold")     
+})
+#Reactive function for directly above
+ci_plot_Point_Colors <- reactive({                 
+  input$ciPltPtClr 
 })
 
 

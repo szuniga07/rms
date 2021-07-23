@@ -1751,21 +1751,28 @@ tabPanel("Power" ,
 ###
 tabPanel("95% CIs",
          h4("This plot produces unadjusted confidence intervals for each level of a factor."),
-         fluidRow(
+         fluidRow(   
            column(3, 
-                  uiOutput("CIy"),
-                  br(),                                                 
-                  uiOutput("CIx")
-           ),
+                  uiOutput("CIy")),
            column(3, offset=1,
-                  uiOutput("Ci_Choice_Type"),
-                  br(),                                                 
-                  uiOutput("Ci_Conf_Lev")
-           ),
+                  uiOutput("Ci_Choice_Type")),
            column(3, offset=1,
-                  uiOutput("Ci_Alpha_Num"),
-                  uiOutput("Ci_create")
-           )),
+                  uiOutput("Ci_Alpha_Num"))
+         ),
+         fluidRow(   
+           column(3, 
+                  uiOutput("CIx")),
+           column(3, offset=1,
+                  uiOutput("Ci_Conf_Lev")),
+           column(3, offset=1,
+                  uiOutput("Ci_create"))
+         ),
+         fluidRow(   
+           column(3, 
+                  uiOutput("ci_plot_ln_clrs")),
+           column(3, offset=1,
+                  uiOutput("ci_plot_pt_clrs"))
+         ),
          plotOutput("Plot_Ci_output", height = 800, width="100%"),
          h6("Note: You can sort alphabetically by the factor level name or numerically by the point estimate. Left side = factor level, right side = point estimate."),
          verbatimTextOutput("Cidf_output"),

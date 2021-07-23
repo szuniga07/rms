@@ -3379,7 +3379,7 @@ cobweb_plot <- reactive({
 
 #Input box to ask for top or bottom 5%
 output$top_bottom_5 <- renderUI({
-  selectInput("topbottom", "1, Highlight top or bottom outcome scores.", 
+  selectInput("topbottom", "1. Highlight top or bottom outcome scores.", 
               choices = c("Top 1%","Top 5%","Top 10%", "Top 20%", "Bottom 1%", "Bottom 5%", "Bottom 10%", "Bottom 20%"), 
               multiple=TRUE, selected="Top 5%")     
 })

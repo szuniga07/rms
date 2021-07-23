@@ -254,22 +254,19 @@ br()
 
 ############## PREDs SECTION #############################
 tabPanel("PREDs",                                #Creates a new panel named "Test"
+         h4("Download, Upload, Save and make Predictions from model fits."),
+         br(),
+         h5("Save model."),
+         h5("Note: Save ANY file name with '.RData' at the end."),
          fluidRow(                           #Wrapping them in a fluidRow provides easy control over  
-           h4("Download, Upload, Save and make Predictions from model fits."),
-           br(),
-           h5("Save model."),
-           h5("Note: Save ANY file name with '.RData' at the end."),
            column(3,
-           uiOutput("SaveModelFit"),
-           br(),
-           h5("Upload a model fit.")
-           ),
+           uiOutput("SaveModelFit")),
            column(3, offset=1,
-           uiOutput("mdl_fit_name")
-           ),
+           uiOutput("mdl_fit_name")),
            column(4, 
                   downloadLink('model', '3. Click to download the model.')
-                  ),
+                  )),
+         h5("Upload a model fit."),
            uiOutput("upload_model_fit"),
            verbatimTextOutput("mdl_print"),
            br(),
@@ -278,41 +275,35 @@ tabPanel("PREDs",                                #Creates a new panel named "Tes
            verbatimTextOutput("PREDdatastr"),
            br(),
            h5("Get predicitions using the current model."),
+         fluidRow(
            column(3,
-                  uiOutput("curr_fit_df"),
-                  br(),
-                  h5("Get predicitions using a previous model.")
-                  ), #1
+                  uiOutput("curr_fit_df")),
            column(3,
-                  uiOutput("fit_curr_mdl")
-                  ), #2
+                  uiOutput("fit_curr_mdl")),
            column(3,
-                  uiOutput("curr_mdl_pred_df")
-                  ), #3
+                  uiOutput("curr_mdl_pred_df")),
+           column(3, 
+                  downloadLink('pred_curr', '4. Click to download the PREDs.'))
+           ),
+         br(),
+         h5("Get predicitions using a previous model."),
+         fluidRow(
            column(3,
-                  downloadLink('pred_curr', '4. Click to download the PREDs.')
-                  ),
-           uiOutput("primary_fit"),
-           column(3, 
-                  uiOutput("new_fit_df")
-                  ), #2
-           column(3, 
-                  uiOutput("fit_new_mdl")
-                  ), #3
-           column(3, 
-                  uiOutput("new_mdl_pred_df") #4
-           ), #1
-           column(3, 
-                  downloadLink('pred_new', '5. Click to download the PREDs.')
-           ), #4
-           
-           column(12, 
-                  br(),
+                  uiOutput("primary_fit")),
+           column(3,
+                  uiOutput("new_fit_df")),
+           column(4,
+                  uiOutput("fit_new_mdl"))
+         ),
+         fluidRow(
+           column(3,
+                  uiOutput("new_mdl_pred_df")),
+           column(3,
+                  downloadLink('pred_new', '5. Click to download the PREDs.'))
+         ),
                   h5("Summary of the selected model fit"),
                   verbatimTextOutput("prime_mdl_smry")
-           ) 
-           
-         )),
+         ),
 
 ############## End PREDs #############################
 
@@ -563,13 +554,14 @@ tabPanel("Describe",
           ),    #Creates a new panel named "Summary"
 
 tabPanel("Impute",  
+         h4("Modeling with Multiple Imputation (MI)."),
+         h6("Note: After starting the multiple imputation, all graphs and tables will include MI results."),
+         h6("However, the 'Calibration' and 'Validation' tab results use single imputation."),
+         h6("To calculate Calibration/Validation stats, first go to \"Reduce\" tab and answer #1 & #2 under \"Transformation and Imputation of predictors\"."),
+         h6("Single imputation is used because of the issue of random sampling of random sampling from multiple imputed datasets. Consider selecting all model X and Y when imputing."),
+         h6("To update the 'Approximate' tab, answer 'Yes' to the '2. Begin modeling?' in the 'Model builder' after running the MI."),
+         br(),
          fluidRow(   
-           h4("Modeling with Multiple Imputation (MI)."),
-           h6("Note: After starting the multiple imputation, all graphs and tables will include MI results."),
-           h6("However, the 'Calibration' and 'Validation' tab results use single imputation."),
-           h6("To calculate Calibration/Validation stats, first go to \"Reduce\" tab and answer #1 & #2 under \"Transformation and Imputation of predictors\"."),
-           h6("Single imputation is used because of the issue of random sampling of random sampling from multiple imputed datasets. Consider selecting all model X and Y when imputing."),
-           h6("To update the 'Approximate' tab, answer 'Yes' to the '2. Begin modeling?' in the 'Model builder' after running the MI."),
            column(6, 
                   uiOutput("MIx"),
                   uiOutput("MIks")),
@@ -1069,9 +1061,9 @@ h6("6. Reduction in the between group variance: The proportion of the random eff
 h6("reduced after fitting full model (i.e., has covariates). Includes the null model variance and SD."),
 h6("Note: The reduction in variance can be negative if the impact of level 1 predictors was relatively higher than level 2 predictors."),
          br(),
+h4("Download mixed effects cox model fit"),
+h5("Note: Save ANY file name with '.RData' at the end."),
          fluidRow(                           #Wrapping them in a fluidRow provides easy control over  
-           h4("Download mixed effects cox model fit"),
-           h5("Note: Save ANY file name with '.RData' at the end."),
            column(3,
                   uiOutput("SaveModelFitCme")
            ),
@@ -1372,8 +1364,8 @@ tabPanel("Cost",
          h5("Partial effects plots: Plot the mean or various quantile effects. For quantile regression, get individual plots in the 'Partial PREDs' tab."),
          plotOutput("cox_prt_prd", height = 700, width="100%"),
          br(),
+         h5("The following questions are to modify the partial effects plots above."),
 fluidRow(
-  h5("The following questions are to modify the partial effects plots above."),
   column(3, 
          uiOutput("CoxMnMed"),
          uiOutput("prt_one_cox_x")
@@ -1551,6 +1543,7 @@ tabPanel("Cobweb plot",                                #Creates a new panel name
          h5("Shows responses of predictors with best predicted outcome values. Narrower spread indicates greater predictor importance."),
          h5("Note: Requires at least 2 predictors."),
          h6("For all categorical predictor models, increase #2 until lines appear. Lines won't reach 100 on y-axis because of limited number of unique Y predictions. Select bottom 1% or 5%, gray lines will indicate highest values."),
+         br(),
          fluidRow(                           #Wrapping them in a fluidRow provides easy control over  
            column(3, 
                   uiOutput("top_bottom_5")),
@@ -1566,9 +1559,9 @@ tabPanel("Cobweb plot",                                #Creates a new panel name
 
 #### META ANALYSIS ##########
 tabPanel("Meta" ,
+         h4("Meta analysis for binary or continuous outcomes"),
+         h6("Demo values are used as defaults. For a continuous outcome example, data(Fleiss93Cont)."),
          fluidRow(
-           h4("Meta analysis for binary or continuous outcomes"),
-           h6("Demo values are used as defaults. For a continuous outcome example, data(Fleiss93Cont)."),
            column(4,
                   textInput("meta_dataframe", "A. Enter the data frame name",   #Meta analysis data frame"
                             value="lungcancer"),                            #Default is lungcancer data.
@@ -1635,7 +1628,9 @@ tabPanel("Meta" ,
 
 tabPanel("Power" ,
          h4("One- and two-sample binomial proportion tests or a one- and two-sample and paired t-tests"),
-         h5("Proportion tests"),
+         h5("One-sample tests compare data with a hypothetical value (e.g., heads from a coin toss vs. 0.50 rate). Two-sample tests compare independent groups (e.g., group 1's age vs. group 2's age). Paired t-test compares dependent samples (e.g., treatment group's time 1 vs time 2 scores)."),
+         br(),
+         h4("Proportion tests"),
          fluidRow(
            column(3,
                   uiOutput("prp_tst_y")),
@@ -1657,8 +1652,8 @@ tabPanel("Power" ,
                   uiOutput("prp_tst_YN"))
          ),
          verbatimTextOutput("proportion_test_out"),
-         ##
-         h5("t-tests"),
+         br(),
+         h4("t-tests"),
          fluidRow(
            column(3,
                   uiOutput("t_tst_y")),

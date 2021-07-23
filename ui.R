@@ -1634,10 +1634,59 @@ tabPanel("Meta" ,
 ################################################################################
 
 tabPanel("Power" ,
-           h4("Power analysis using a two-sample binomial proportion test or a one- or two-sample t-test"),
-           h5("Demo values are used as defaults, including harmonic mean sample sizes for uneven group Ns."),
+         h4("One- and two-sample binomial proportion tests or a one- and two-sample and paired t-tests"),
+         h5("Proportion tests"),
          fluidRow(
-             h4("Binary outcomes"),
+           column(3,
+                  uiOutput("prp_tst_y")),
+           column(3, 
+                  uiOutput("prp_tst_x")),
+           column(3, 
+                  uiOutput("prp_tst_1_smpl")),
+           column(3, 
+                  uiOutput("prp_tst_prp"))
+         ),
+         fluidRow(  
+           column(3, 
+                  uiOutput("prp_tst_alt")),
+           column(3,
+                  uiOutput("prp_tst_CI")),
+           column(3, 
+                  uiOutput("prp_tst_yts")),
+           column(3, 
+                  uiOutput("prp_tst_YN"))
+         ),
+         verbatimTextOutput("proportion_test_out"),
+         ##
+         h5("t-tests"),
+         fluidRow(
+           column(3,
+                  uiOutput("t_tst_y")),
+           column(3, 
+                  uiOutput("t_tst_x")),
+           column(3, 
+                  uiOutput("t_tst_1_smpl")),
+           column(3, 
+                  uiOutput("t_tst_mn"))
+         ),
+         fluidRow(  
+           column(3, 
+                  uiOutput("t_tst_alt")),
+           column(3, 
+                  uiOutput("t_tst_pr")),
+           column(3,
+                  uiOutput("t_tst_CI")),
+           column(3, 
+                  uiOutput("t_tst_YN")) 
+         ),
+         verbatimTextOutput("t_test_out"),
+         br(),
+         ##
+         br(),
+         h4("Power analysis using a two-sample binomial proportion test or a one- or two-sample t-test"),
+           h5("Demo values are used as defaults, including harmonic mean sample sizes for uneven group Ns."),
+         h4("Binary outcomes"),
+         fluidRow(
              column(3,
                     uiOutput("power_bin")),
              column(3, offset=1,
@@ -1658,8 +1707,8 @@ tabPanel("Power" ,
                     uiOutput("pwr_smp_bin"))
            ),
            br(),
-           fluidRow(
-             h4("Continuous outcomes"),
+         h4("Continuous outcomes"),
+         fluidRow(
              column(3,
                     uiOutput("power_con")),
              column(3, offset=1,
@@ -1682,8 +1731,8 @@ tabPanel("Power" ,
                     uiOutput("pwr_smp_con"))
            ),
            br(),
-           fluidRow(
-             h4("Do you have uneven group sizes?"),
+         h4("Do you have uneven group sizes?"),
+         fluidRow(
              column(3,
                     uiOutput("grp1_n")),
              column(3, offset=1,

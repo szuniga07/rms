@@ -3968,8 +3968,201 @@ output$forestplot <- renderPlot({
 
 
 ################################################################################
-#                          POWER ANALYSIS                                      #
+#               Proportion and t-tests and POWER ANALYSIS                      #
 ################################################################################
+
+#####################
+## Proportion test ##
+#####################
+
+#1. Y variable "Select the response variable"
+output$prp_tst_y <- renderUI({                                
+  selectInput("prpTstY", "1. Select the outcome",        
+              choices = var(), multiple=FALSE, selected=var()[1] ) 
+})
+#1A. Reactive function for the Y variable
+proportion_test_y <- reactive({
+  input$prpTstY
+})
+#2. X formula  "Select the explanatory variable"
+#Select the predictors.
+output$prp_tst_x <- renderUI({                                 #Same idea as output$vy
+  selectInput("prpTstX", "2. Select the group", 
+              choices = setdiff(var(), proportion_test_y()), multiple=FALSE) 
+})
+#2A. Reactive function for the X variable
+proportion_test_x <- reactive({
+  input$prpTstX
+})
+
+#3. 1-sample test 
+output$prp_tst_1_smpl <- renderUI({                                #
+  selectInput("prpTst1s", "3. Is this a 1 sample test?",       #
+              choices = c("No","Yes"), multiple=FALSE, selected= "No")
+})
+#3A. Reactive function for proportion level
+proportion_test_one_sample <- reactive({
+  input$prpTst1s
+})
+
+#4. Select 1-sample test probability
+output$prp_tst_prp <- renderUI({                                #
+  numericInput("prpTstPrp", "4. Select 1-sample test probability",       #
+               value = 0.5, min=0, max=1, step=.01 )   #
+})
+#5A. Reactive function for proportion level
+proportion_test_prop <- reactive({
+  input$prpTstPrp
+})
+#5. Alternative hypothesis test
+output$prp_tst_alt <- renderUI({                                
+  selectInput("prpTstAlt", "5. Select a one- or two-sided test",        
+              choices = c("two.sided", "less", "greater"), multiple=FALSE, selected="two.sided" ) 
+})
+#5A. Reactive function for alternative hypothesis test
+proportion_test_alternative <- reactive({
+  input$prpTstAlt
+})
+#6. 
+output$prp_tst_CI <- renderUI({                               
+  numericInput("prpTstCI", "6. Select the confidence interval level", 
+               value = 0.95, min=0, max=1, step=.01 )   
+})
+#6A. Reactive function for confidence interval
+proportion_test_Conf_Int <- reactive({
+  input$prpTstCI
+})
+#7. Yates' correction
+output$prp_tst_yts <- renderUI({  
+  selectInput("prpTstYC", "7. Use the Yates' correction?", 
+            choices = c(TRUE, FALSE), multiple=FALSE, selected=TRUE)
+})
+#7A. Reactive function for Exact method
+proportion_test_Yates <- reactive({
+  input$prpTstYC
+})
+#8. Exact method
+output$prp_tst_YN <- renderUI({  
+  selectInput("prpTstYN", "8. Run the proportion test?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")     
+})
+#8A. Reactive function for Exact method
+proportion_test_Yes_No <- reactive({
+  input$prpTstYN
+})
+#9. Run the function below
+proportion_test_run <- reactive({
+  if(proportion_test_Yes_No() == "Yes") {    
+    fncPrpTst(DF=df(), Y=proportion_test_y(), X=proportion_test_x(), P=proportion_test_prop(), 
+              Alt=proportion_test_alternative(), CI=proportion_test_Conf_Int(), 
+              Correct=proportion_test_Yates(), Samp1= proportion_test_one_sample())
+  }  
+})
+#9A. proportion test output  
+output$proportion_test_out <- renderPrint({
+  if(proportion_test_Yes_No() == "Yes") {
+    proportion_test_run()
+  }
+})
+
+#############
+## t-tests ##
+#############
+#1. Y variable "Select the response variable"
+output$t_tst_y <- renderUI({                                
+  selectInput("tTstY", "1. Select the outcome",        
+              choices = var(), multiple=FALSE, selected=var()[1] ) 
+})
+#1A. Reactive function for the Y variable
+t_test_y <- reactive({
+  input$tTstY
+})
+#2. X formula  "Select the explanatory variable"
+#Select the predictors.
+output$t_tst_x <- renderUI({                                 #Same idea as output$vy
+  selectInput("tTstX", "2. Select the group", 
+              choices = setdiff(var(), t_test_y()), multiple=FALSE) 
+})
+#2A. Reactive function for the X variable
+t_test_x <- reactive({
+  input$tTstX
+})
+
+#3. 1-sample test 
+output$t_tst_1_smpl <- renderUI({                                #
+  selectInput("tTst1s", "3. Is this a 1 sample test?",       #
+              choices = c("No","Yes"), multiple=FALSE, selected= "No")
+})
+#3A. Reactive function for proportion level
+t_test_one_sample <- reactive({
+  input$tTst1s
+})
+
+#4. Select 1-sample test mean
+output$t_tst_mn <- renderUI({                                #
+  numericInput("tTstMn", "4. Select 1-sample test mean",       #
+               value = 1, step=1 )   #
+})
+#5A. Reactive function for proportion level
+t_test_mean <- reactive({
+  input$tTstMn
+})
+#5. Alternative hypothesis test
+output$t_tst_alt <- renderUI({                                
+  selectInput("tTstAlt", "5. Select a one- or two-sided test",        
+              choices = c("two.sided", "less", "greater"), multiple=FALSE, selected="two.sided" ) 
+})
+#5A. Reactive function for alternative hypothesis test
+t_test_alternative <- reactive({
+  input$tTstAlt
+})
+
+#6. Paired sample
+output$t_tst_pr <- renderUI({  
+  selectInput("tTstPr", "6. Is this a paired sample test?", 
+              choices = c(TRUE, FALSE), multiple=FALSE, selected=FALSE)
+})
+#6A. Reactive function for Exact method
+t_test_pair <- reactive({
+  input$tTstPr
+})
+
+#7. 
+output$t_tst_CI <- renderUI({                               
+  numericInput("tTstCI", "7. Select the confidence interval level", 
+               value = 0.95, min=0, max=1, step=.01 )   
+})
+#7A. Reactive function for confidence interval
+t_test_Conf_Int <- reactive({
+  input$tTstCI
+})
+#8. Run the test
+output$t_tst_YN <- renderUI({  
+  selectInput("tTstYN", "8. Run the t-test?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")     
+})
+#8A. Reactive function for above
+t_test_Yes_No <- reactive({
+  input$tTstYN
+})
+#9. Run the function below
+t_test_run <- reactive({
+  if(t_test_Yes_No() == "Yes") {    
+    fncTTst(DF=df(), Y=t_test_y(), X=t_test_x(), M=t_test_mean(), 
+            Pair=t_test_pair(), Alt=t_test_alternative(), CI=t_test_Conf_Int(), 
+              Samp1= t_test_one_sample())
+  }  
+})
+#9A. proportion test output  
+output$t_test_out <- renderPrint({
+  if(t_test_Yes_No() == "Yes") {
+    t_test_run()
+  }
+})
+
+#####################
+## Power analysis  ##
+#####################
 
 ############
 ## Binary ##
@@ -4125,6 +4318,50 @@ output$effect_size_summary <- renderPrint({
   
 })
 
+########################################
+## Function to create proportion test ##
+########################################
+fncPrpTst <- function(DF, Y, X, P, Alt, CI, Correct, Samp1) {
+  #Determine if it is 1 or 2 sample test
+  if(Samp1 == "Yes" ) {
+    Tbl <- table(DF[, Y])
+    #Conduct proportion test
+    P.Test <- prop.test(Tbl, p=P, alternative = Alt,
+                        conf.level = CI, correct = Correct)
+  } else {
+    Tbl <- table(DF[, X], DF[, Y])
+    Tbl <- Tbl[, 2:1]
+    #Conduct proportion test
+    P.Test <- prop.test(Tbl, alternative = Alt,
+                        conf.level = CI, correct = Correct)
+  }
+  return("Results"= P.Test)
+}
+
+#################################
+## Function to create a t-test ##
+#################################
+fncTTst <- function(DF, Y, X, M, Pair, Alt, CI, Samp1) {
+  #Determine if it is 1 or 2 sample test
+  if(Pair ==FALSE)  {
+    if(Samp1 == "Yes" ) {
+      #Make formula
+      FMLA <- as.formula( paste0(Y, "~1") )
+      #Conduct proportion test
+      T.Tst <- t.test(formula=FMLA, data=DF, mu=M, alternative = Alt, conf.level = CI)
+    } else {
+      #Make formula
+      FMLA <- as.formula(paste(Y, "~", X))
+      #Conduct proportion test
+      T.Tst <- t.test(formula=FMLA, data=DF,  alternative = Alt, conf.level = CI)
+    } 
+  } else {
+    FMLA <- as.formula( paste0("Pair(", Y, ",",X, ")", "~1") )
+    #Conduct proportion test
+    T.Tst <- t.test(formula=FMLA, data=DF, alternative = Alt, conf.level = CI)
+  }
+  return("Results"=T.Tst)
+}
 
 ###############################
 ## Output FOR TABS ##

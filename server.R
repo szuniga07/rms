@@ -4116,25 +4116,23 @@ output$t_tst_alt <- renderUI({
 t_test_alternative <- reactive({
   input$tTstAlt
 })
-
-#6. Paired sample
-output$t_tst_pr <- renderUI({  
-  selectInput("tTstPr", "6. Is this a paired sample test?", 
-              choices = c(TRUE, FALSE), multiple=FALSE, selected=FALSE)
-})
-#6A. Reactive function for Exact method
-t_test_pair <- reactive({
-  input$tTstPr
-})
-
-#7. 
+#6. 
 output$t_tst_CI <- renderUI({                               
-  numericInput("tTstCI", "7. Select the confidence interval level", 
+  numericInput("tTstCI", "6. Select the confidence interval level", 
                value = 0.95, min=0, max=1, step=.01 )   
 })
-#7A. Reactive function for confidence interval
+#6A. Reactive function for confidence interval
 t_test_Conf_Int <- reactive({
   input$tTstCI
+})
+#7. Paired sample
+output$t_tst_pr <- renderUI({  
+  selectInput("tTstPr", "7. Is this a paired sample test?", 
+              choices = c(TRUE, FALSE), multiple=FALSE, selected=FALSE)
+})
+#7A. Reactive function for Exact method
+t_test_pair <- reactive({
+  input$tTstPr
 })
 #8. Run the test
 output$t_tst_YN <- renderUI({  

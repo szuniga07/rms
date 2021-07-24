@@ -4523,7 +4523,7 @@ plot_ci_fnc <- function(xcivar, ycivar, ydf, cidf, ciconf_lev, alpha_num, Lcol, 
        main=main_ttl, axes=F ) 
     for (i in 1:nrow(adf)) {
     lines(c(adf[,'Lower'][i], adf[,'Upper'][i]), c(i,i), lwd=4, col=Lcol) 
-    points(adf[,'PointEst'][i],i, pch=24, col=Pcol, lwd=1, bg=7, cex=1.75) 
+    points(adf[,'PointEst'][i],i, pch=24, col=Pcol, lwd=1, bg=Pcol, cex=1.75) 
   }
   abline(v=mainYmn, lwd=3, col="grey", lty=3)
   axis(1) 
@@ -4603,7 +4603,7 @@ output$Ci_create <- renderUI({                                #Creates a UI func
 #Select line colors
 output$ci_plot_ln_clrs <- renderUI({                                 
   selectInput("ciPltLnClr", "7. Select line color.", 
-              choices = xyplot_Line_Color_Names(), multiple=FALSE, selected="blue")     
+              choices = xyplot_Line_Color_Names(), multiple=FALSE, selected= "blue")     
 })
 #Reactive function for directly above
 ci_plot_Line_Colors <- reactive({                 

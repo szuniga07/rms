@@ -10365,7 +10365,7 @@ fncStSpcLegendFactoLev <- function(Model_fit, X_Lev) {
 #)  
 
 #  })
-
+ 
 
 ################################################################################
 ## Testing section: End ##

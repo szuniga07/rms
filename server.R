@@ -255,21 +255,21 @@ shinyServer(
       df_mod <- DF[, which(colnames(DF) %in% X), drop = FALSE]
       for(i in 1:length(X)) {
         switch(Format[i], 
-               "31JAN2021" = df_mod[, X] <- as.Date(df_mod[, X], format="%d%b%Y"), 
-               "31JAN21" = df_mod[, X] <- as.Date(df_mod[, X], format="%d%b%y"), 
-               "31-JAN-2021" =  df_mod[, X] <- as.Date(df_mod[, X], format="%d-%b-%Y"),
-               "31-JAN-21" = df_mod[, X] <- as.Date(df_mod[, X], format="%d-%b-%y"),
-               "01/31/2021" = df_mod[, X] <- as.Date(df_mod[, X], format="%m/%d/%Y"),
-               "01/31/21" = df_mod[, X] <- as.Date(df_mod[, X], format="%m/%d/%y"),
-               "01-31-2021" = df_mod[, X] <- as.Date(df_mod[, X], format="%m-%d-%Y"),
-               "01-31-21" = df_mod[, X] <- as.Date(df_mod[, X], format="%m-%d-%y"),
+               "31JAN2021" = df_mod[, X[i]] <- as.Date(df_mod[, X[i]], format="%d%b%Y"), 
+               "31JAN21" = df_mod[, X[i]] <- as.Date(df_mod[, X[i]], format="%d%b%y"), 
+               "31-JAN-2021" =  df_mod[, X[i]] <- as.Date(df_mod[, X[i]], format="%d-%b-%Y"),
+               "31-JAN-21" = df_mod[, X[i]] <- as.Date(df_mod[, X[i]], format="%d-%b-%y"),
+               "01/31/2021" = df_mod[, X[i]] <- as.Date(df_mod[, X[i]], format="%m/%d/%Y"),
+               "01/31/21" = df_mod[, X[i]] <- as.Date(df_mod[, X[i]], format="%m/%d/%y"),
+               "01-31-2021" = df_mod[, X[i]] <- as.Date(df_mod[, X[i]], format="%m-%d-%Y"),
+               "01-31-21" = df_mod[, X[i]] <- as.Date(df_mod[, X[i]], format="%m-%d-%y"),
                "2021-01-31" = df_mod[, X[i]] <- as.Date(df_mod[, X[i]], format="%Y-%m-%d"),
                "21-01-31" = df_mod[, X[i]] <- as.Date(df_mod[, X[i]], format="%y-%m-%d"),
-               "1/31/2021 21:15:30" = df_mod[, X] <- strptime(as.character(df_mod[, X]), format="%m/%d/%Y %H:%M:%S"),
-               "1/31/2021 21:15:30 as 1/31/2021" = df_mod[, X] <- as.Date(strptime(as.character(df_mod[, X]), format="%m/%d/%Y %H:%M:%S")),
-               "1/31/2021 12:00:00 AM" = df_mod[, X] <- strptime(as.character(df_mod[, X]), format="%m/%d/%Y %H:%M:%S %p"),
-               "1/31/2021 12:00:00 AM as 1/31/2021" = df_mod[, X] <- as.Date(strptime(as.character(df_mod[, X]), format="%m/%d/%Y %H:%M:%S %p")),
-               "44227 in Excel" = df_mod[, X] <- as.Date(df_mod[, X], origin="1899-12-30")) 
+               "1/31/2021 21:15:30" = df_mod[, X[i]] <- strptime(as.character(df_mod[, X[i]]), format="%m/%d/%Y %H:%M:%S"),
+               "1/31/2021 21:15:30 as 1/31/2021" = df_mod[, X[i]] <- as.Date(strptime(as.character(df_mod[, X[i]]), format="%m/%d/%Y %H:%M:%S")),
+               "1/31/2021 12:00:00 AM" = df_mod[, X[i]] <- strptime(as.character(df_mod[, X[i]]), format="%m/%d/%Y %H:%M:%S %p"),
+               "1/31/2021 12:00:00 AM as 1/31/2021" = df_mod[, X[i]] <- as.Date(strptime(as.character(df_mod[, X[i]]), format="%m/%d/%Y %H:%M:%S %p")),
+               "44227 in Excel" = df_mod[, X[i]] <- as.Date(df_mod[, X[i]], origin="1899-12-30")) 
       }
       return(df_mod)
     }
@@ -10361,7 +10361,7 @@ fncStSpcLegendFactoLev <- function(Model_fit, X_Lev) {
 
 #output$test1 <- renderPrint({
 #list( modifiedDf1(),
-#      modifiedYMmonthCrt()
+#      modifiedDf()
 #)  
 
 #  })

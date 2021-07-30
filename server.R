@@ -1,7 +1,7 @@
 #Install these packages to run this Shiny App
 #install.packages("shiny")
 #install.packages("jsonlite")
-#install.packages("rms")
+#install.packages("rms") 
 #install.packages("nlme")
 #install.packages("lm.beta")
 #install.packages("sensitivity")
@@ -101,42 +101,75 @@ shinyServer(
     #Change the data type
     #Character
     output$modify_character <- renderUI({                                 #Same idea as output$vy
-      selectInput("ModifyCharacter", "1. Select variables to convert to a 'character'.", 
+      selectInput("ModifyCharacter", "1. Select variables to convert to 'character'.", 
                   choices = var(), multiple=TRUE)
     })
     #Factor
     output$modify_factor <- renderUI({                                 #Same idea as output$vy
-      selectInput("ModifyFactor", "2. Select variables to convert to a 'factor'.", 
+      selectInput("ModifyFactor", "2. Select variables to convert to 'factor'.", 
                   choices = var(), multiple=TRUE)
     })
     #Numeric
     output$modify_numeric <- renderUI({                                 
-      selectInput("ModifyNumeric", "3. Select variables to convert to a 'numeric'.", 
+      selectInput("ModifyNumeric", "3. Select variables to convert to 'numeric'.", 
                   choices = var(), multiple=TRUE)
     })
-
+    #4. Time
+    output$modify_time_X <- renderUI({                                 
+      selectInput("ModifyTimeX", "4. Select variables to format as 'Date'.", 
+                  choices = var(), multiple=TRUE)
+    })
+    #5. Select Time format
+    output$modify_time_format <- renderUI({  
+      selectInput("ModifyTimeFmt", "5. Choose the correct time format.", 
+                  choices = c("31JAN2021", "31JAN21","31-JAN-2021","31-JAN-21","01/31/2021", "01/31/21", 
+                              "01-31-2021", "01-31-21", "2021-01-31", "21-01-31", "1/31/2021 21:15:30",
+                              "01/31/2021 21:15:30 as 01/31/2021", "44227 in Excel"), 
+                  multiple=TRUE, selected="01-31-2021")
+    })
+    #6. Number of replications per format used
+    output$modify_tm_fmt_rep <- renderUI({ 
+      textInput("ModifyTimeFmtReps", "6. Number of variables per format.", 
+                value= paste0('c(', length(input$ModifyTimeX), ')') )     
+    })
+    
     ## Modify the dataset ##
-    #Subset the dataset
+    #7. Subset the dataset
     output$subset_df_yes_no <- renderUI({                                 
-      selectInput("SubsetYesNo", "4. Want to subset the data?", 
+      selectInput("SubsetYesNo", "7. Want to subset the data?", 
                   choices = c("No", "Yes"), multiple=FALSE, selected="No")
     })
-    #Formula for the subset
+    #8. Formula for the subset
     output$subset_args <- renderUI({ 
-      textInput("SubsetArgs", "5. Enter the formula to subset data.", 
+      textInput("SubsetArgs", "8. Enter the formula to subset data.", 
                 value= "subset= , select=")     
     })
-    #Modify the dataset
+    #9. Modify the dataset
     output$modify_df_yes_no <- renderUI({                                 
-      selectInput("ModifyDfYesNo", "6. Want to create the modified dataset?", 
+      selectInput("ModifyDfYesNo", "9. Want to create the modified dataset?", 
                   choices = c("No", "Yes"), multiple=FALSE, selected="No")
     })
-
+    #10. Time
+    output$modify_2_var_Time <- renderUI({                                 
+      selectInput("Modify2VrTm", "10. Create 'Time': Select 2 variables.", 
+                  choices = var(), multiple=TRUE)
+    })
+    #11. Make month indicators
+    output$modify_Time_add_month <- renderUI({                                 
+      selectInput("ModifyTmAddMth", "11. Select X to create 'YYMM' and 'Month'.", 
+                  choices = var(), multiple=FALSE)
+    })
+    #12. Add time variables to dataset
+    output$modify_add_time_YN <- renderUI({                                 
+      selectInput("ModAddTmYN", "12. Add time variables to modified data?", 
+                  choices = c("No", "Yes"), multiple=FALSE, selected="No")
+    })
+    
     #####################
     # Save modified data #
     #####################
     output$modified_df_save <- renderUI({  
-      selectInput("ModifiedDfSave", "7. Save the modified data?", 
+      selectInput("ModifiedDfSave", "13. Save the modified data?", 
                   choices = c("No", "Yes"), multiple=FALSE, selected="No")     #Will make choices based on my reactive function.
     })
     
@@ -202,26 +235,118 @@ shinyServer(
       modifiedNumFnc(df=modifySubsetDf(), ModifyNumeric=input$ModifyNumeric)
       }
     })
+    ## Date formats ##
+    #Create formats
+    fncFmtVec <- function(Format, CntVec) {
+      Full.Format <- rep(Format, CntVec )
+      return(Full.Format)
+    }
+    #Runs the function above
+    modifiedFullFormat <- reactive({
+      if(input$ModifyDfYesNo == "Yes") {
+        fncFmtVec(Format= input$ModifyTimeFmt, 
+                  CntVec= eval(parse(text=input$ModifyTimeFmtReps  )) )
+      }
+    })
     
-    #Variables that are not modified
+    ## FUnction to create formatted data ##
+    fncDateFmt <- function(DF, X, Format) {
+      df_mod <- DF[, which(colnames(DF) %in% X), drop = FALSE]
+      for(i in 1:length(X)) {
+        switch(Format[i], 
+               "31JAN2021" = df_mod[, X] <- as.Date(df_mod[, X], format="%d%b%Y"), 
+               "31JAN21" = df_mod[, X] <- as.Date(df_mod[, X], format="%d%b%y"), 
+               "31-JAN-2021" =  df_mod[, X] <- as.Date(df_mod[, X], format="%d-%b-%Y"),
+               "31-JAN-21" = df_mod[, X] <- as.Date(df_mod[, X], format="%d-%b-%y"),
+               "01/31/2021" = df_mod[, X] <- as.Date(df_mod[, X], format="%m/%d/%Y"),
+               "01/31/21" = df_mod[, X] <- as.Date(df_mod[, X], format="%m/%d/%y"),
+               "01-31-2021" = df_mod[, X] <- as.Date(df_mod[, X], format="%m-%d-%Y"),
+               "01-31-21" = df_mod[, X] <- as.Date(df_mod[, X], format="%m-%d-%y"),
+               "2021-01-31" = df_mod[, X[i]] <- as.Date(df_mod[, X[i]], format="%Y-%m-%d"),
+               "21-01-31" = df_mod[, X[i]] <- as.Date(df_mod[, X[i]], format="%y-%m-%d"),
+               "1/31/2021 21:15:30" = df_mod[, X] <- strptime(as.character(df_mod[, X]), format="%m/%d/%Y %H:%M:%S"),
+               "01/31/2021 21:15:30 as 01/31/2021" = df_mod[, X] <- as.Date(strptime(as.character(df_mod[, X]), format="%m/%d/%Y %H:%M:%S")),
+               "44227 in Excel" = df_mod[, X] <- as.Date(df_mod[, X], origin="1899-12-30")) 
+      }
+      return(df_mod)
+    }
+    #Runs the function above
+    modifiedDateDf <- reactive({
+      if(input$ModifyDfYesNo == "Yes") {
+        fncDateFmt(DF=modifySubsetDf(),  X=input$ModifyTimeX, Format= modifiedFullFormat() )
+      }
+    })
+    
+    ## Variables that are not modified ##
     non_modified_vars <- reactive({
       if(input$ModifyDfYesNo == "Yes") {
-        setdiff(var(),  c(input$ModifyCharacter,input$ModifyFactor, input$ModifyNumeric))
+        setdiff(var(),  c(input$ModifyCharacter,input$ModifyFactor, 
+                          input$ModifyNumeric, input$ModifyTimeX ))
       }
+    })
+
+    #Runs the function above
+    modifiedDateDf <- reactive({
+      if(input$ModifyDfYesNo == "Yes") {
+        fncDateFmt(DF=modifySubsetDf(),  X=input$ModifyTimeX, Format= modifiedFullFormat() )
+      }
+    })
+    #Create modified dataset, without time variables
+    modifiedDf1 <- reactive({
+      #if(input$ModifiedDfSave == "Yes") {
+        if(input$ModifyDfYesNo == "Yes") {
+        cbind(modifySubsetDf()[, which(colnames(modifySubsetDf()) %in% non_modified_vars()), drop = FALSE], 
+              modifiedCharDf(), modifiedFacDf(), modifiedNumDf(), modifiedDateDf() ) 
+      }
+    })
+    
+    ## FUnction to create time variable ##
+    fncTimeCrt <- function(DF, X) {
+      df_mod <- DF[, which(colnames(DF) %in% X), drop = FALSE]
+      df_mod[, "Time"] <- as.numeric(difftime(DF[, X[2]] , DF[, X[1]], units = "days"))
+      #Make final data frame
+      df_mod <- df_mod[, "Time", drop = FALSE] 
+      return(df_mod)
+    }
+    #Runs the function above
+    modifiedTimeVarCrt <- reactive({
+      if(input$ModAddTmYN == "Yes") {
+        fncTimeCrt(DF=modifiedDf1(),  X=input$Modify2VrTm )
+      }
+    })
+    ## FUnction to create YYMM and Month variables ##
+    fncYYMMmthCrt <- function(DF, X) {
+      df_mod <- DF[, which(colnames(DF) %in% X), drop = FALSE]
+      df_mod[, "YYMM"] <- (as.numeric(format(df_mod[, X], "%Y")) * 100) + as.numeric(format(df_mod[, X], "%m"))
+      #Create Month
+      df_mod[, "Month"] <- as.numeric(ordered( df_mod[, "YYMM"] ))
+      #Make final data frame
+      df_mod <- df_mod[, which(colnames(df_mod) %in% c("YYMM", "Month") )] 
+      return(df_mod)
+    }
+    #Runs the function above
+    modifiedYMmonthCrt <- reactive({
+      if(input$ModAddTmYN == "Yes") {
+        fncYYMMmthCrt(DF=modifiedDf1(),  X=input$ModifyTmAddMth )
+      }
+    })
+    
+    output$modified_df_name <- renderUI({ 
+      textInput("ModifiedDfName", "14. Enter the data frame name.", 
+                value= "mod_df")     
     })
     
     #Create modified dataset
     modifiedDf <- reactive({
       if(input$ModifiedDfSave == "Yes") {
-        cbind(modifySubsetDf()[, which(colnames(modifySubsetDf()) %in% non_modified_vars()), drop = FALSE], 
-              modifiedCharDf(), modifiedFacDf(), modifiedNumDf()) 
+      if(input$ModAddTmYN == "Yes") {
+        cbind(modifiedDf1(), modifiedTimeVarCrt(), modifiedYMmonthCrt() ) 
+      } else {
+        modifiedDf1()
+      }
       }
     })
-
-    output$modified_df_name <- renderUI({ 
-      textInput("ModifiedDfName", "8. Enter the data frame name.", 
-                value= "mod_df")     
-    })
+    #Save data
     output$download_modified_df <- downloadHandler(
       filename = "modified_df.RData",
       content = function(con) {
@@ -10232,15 +10357,8 @@ fncStSpcLegendFactoLev <- function(Model_fit, X_Lev) {
 ##} )
 
 #output$test1 <- renderPrint({
-#list(
-#  vls1=vls1(), 
-#  vls2=vls2(), input_mc_df2=head(input_mc_df2()[[1]]),
-#  mc_df_y2=mc_df_y2(),
-#  str_input_mc_df2= str(input_mc_df2()),
-#  name_input_mc_df2= names(input_mc_df2()), class_input_mc_df2= class(input_mc_df2()),
-#  length_input_mc_df2= length(input_mc_df2()), mc_unif_df=mc_unif_df(),
-#  mc_df_y=head(mc_df_y()), 
-#    mc_df1= head(mc_df1()),  "mc_sim_fnc1"= mc_sim_fnc1() 
+#list( modifiedDf1(),
+#      modifiedYMmonthCrt()
 #)  
 
 #  })

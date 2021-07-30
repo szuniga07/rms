@@ -60,7 +60,17 @@ fluidRow(
          uiOutput("modify_numeric"))  
   ),
 br(),
-h6("Subset the data you need. In #5, 'subset' indicates rows, 'select' indicates columns (e.g., subset= gender==male, select= 1:7)."),
+h6("Create date formats. For #4, group variables by format type if multiple types. For #5, format examples for JAN 1, 2021. For #6, indicate how many X per format (e.g., c(3,1))."),
+fluidRow(
+  column(3,
+         uiOutput("modify_time_X")),  
+  column(3, offset=1,
+         uiOutput("modify_time_format")),  
+  column(3, offset=1,
+         uiOutput("modify_tm_fmt_rep"))  
+),
+br(),
+h6("Subset the data you need. In #8, 'subset' indicates rows, 'select' indicates columns (e.g., subset= gender==male, select= 1:7)."),
 fluidRow(
   column(3,
          uiOutput("subset_df_yes_no")),  
@@ -70,13 +80,23 @@ fluidRow(
          uiOutput("modify_df_yes_no")) 
 ),
 br(),
+h6("Create 'Time' as the difference between 2 dates, select 'Time1', 'Time2'. Create numeric 'YYMM' as month + year: 202101. And 'Month': ordered(YYMM)."),
+fluidRow(
+  column(3,
+         uiOutput("modify_2_var_Time")),  
+  column(3, offset=1,
+         uiOutput("modify_Time_add_month")),
+  column(3, offset=1,
+         uiOutput("modify_add_time_YN")) 
+),
+br(),
 fluidRow(
   column(3,
          uiOutput("modified_df_save")),  
   column(3, offset=1,
          uiOutput("modified_df_name")),  
   column(3, offset=1,
-         downloadLink('download_modified_df', '9. Click to download data.'))
+         downloadLink('download_modified_df', '15. Click to download data.'))
 ),
 
 ################# End here
@@ -317,7 +337,8 @@ tabPanel("Describe",
                   uiOutput("calculator_yesno"))
          ),
          h5("Basic mathematical functions (+, -, *, /) and runs other commands (e.g., sqrt(16) + 6 = 10, sd(mtcars$mpg) )."),         
-         h5("To load an object to the global environment, use assign(), e.g., assign(\"my_data\", (my_data[1:5000, ], envir=globalenv() )."),
+         h5("To load an object to the global environment, use assign(), e.g., assign(\"my_data\", my_data[1:5000, ], envir=globalenv() )"),
+         h5("Add leading 0s to a numeric X: assign(\"airquality\", within(airquality, {Temp <- sprintf(\"%012d\", Temp) }), envir=globalenv() )"),
          verbatimTextOutput("prnt_calculation"),
          br(),
          h4("Descriptives on means and missing values. Plot the target variable, stratifying by factors."),

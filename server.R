@@ -123,7 +123,8 @@ shinyServer(
     output$modify_time_format <- renderUI({  
       selectInput("ModifyTimeFmt", "5. Choose the correct time format.", 
                   choices = c("31JAN2021", "31JAN21","31-JAN-2021","31-JAN-21","01/31/2021", "01/31/21", 
-                              "01-31-2021", "01-31-21", "2021-01-31", "21-01-31", "1/31/2021 21:15:30",
+                              "01-31-2021", "01-31-21", "2021-01-31", "21-01-31", 
+                              "1/31/2021 21:15","1/31/2021 21:15 as 1/31/2021","1/31/2021 21:15:30",
                               "1/31/2021 21:15:30 as 1/31/2021", "1/31/2021 12:00:00 AM", 
                               "1/31/2021 12:00:00 AM as 1/31/2021", "44227 in Excel"), 
                   multiple=TRUE, selected="01-31-2021")
@@ -265,6 +266,8 @@ shinyServer(
                "01-31-21" = df_mod[, X[i]] <- as.Date(df_mod[, X[i]], format="%m-%d-%y"),
                "2021-01-31" = df_mod[, X[i]] <- as.Date(df_mod[, X[i]], format="%Y-%m-%d"),
                "21-01-31" = df_mod[, X[i]] <- as.Date(df_mod[, X[i]], format="%y-%m-%d"),
+               "1/31/2021 21:15" = df_mod[, X[i]] <- strptime(as.character(df_mod[, X[i]]), format="%m/%d/%Y %H:%M"),
+               "1/31/2021 21:15 as 1/31/2021" = df_mod[, X[i]] <- as.Date(strptime(as.character(df_mod[, X[i]]), format="%m/%d/%Y %H:%M")),
                "1/31/2021 21:15:30" = df_mod[, X[i]] <- strptime(as.character(df_mod[, X[i]]), format="%m/%d/%Y %H:%M:%S"),
                "1/31/2021 21:15:30 as 1/31/2021" = df_mod[, X[i]] <- as.Date(strptime(as.character(df_mod[, X[i]]), format="%m/%d/%Y %H:%M:%S")),
                "1/31/2021 12:00:00 AM" = df_mod[, X[i]] <- strptime(as.character(df_mod[, X[i]]), format="%m/%d/%Y %H:%M:%S %p"),
@@ -457,7 +460,7 @@ shinyServer(
     
     #This gives the data structure of the text file
     output$datastr_txt <- renderPrint({
-      if (is.null(dataInput_txt()))  return()  else str(dataInput_txt())
+      if (is.null(dataInput_txt()))  return()  else names(dataInput_txt())
     })
 
     #R data file upload

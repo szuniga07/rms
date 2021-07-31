@@ -13,6 +13,8 @@
         tabsetPanel(                                      #Creates multiple tabs. 
           tabPanel("Data",  
                    h4("Download, Upload and Save Data."),
+                   br(),
+                   h5("Whenever saving R data file names, use the '.RData' extension in the name (e.g., myData.RData)."),
                    fluidRow(
                      column(3, 
                             uiOutput("View_main_df"))  

@@ -4947,7 +4947,7 @@ fncAllTrndSpln <- function( agr_df, NK) {
 ############################################################
 ##            Function to create the time plot            ##
 ############################################################
-plot_fci_fnc <- function(x, y, z, xcivar, ycivar, zcivar, dataf, LCol, Fci.Fac, 
+plot_fci_fnc <- function(x, y, z, xcivar, ycivar, zcivar, dataf, LCol, LWd, Fci.Fac, 
                          ci_p, ci_l, ci_u,max_pest, min_pest, max_ci, min_ci, ctrs, 
                          cibands, fCiXLim1, fCiXLim2, fCiYLim1, fCiYLim2, Tot.Line, FCI.Tot,
                          FCI.Tot.Straight, Conf.Intrv, Tgt.Line, Straight.Line, Time.Pt.Line) {
@@ -5007,13 +5007,13 @@ plot_fci_fnc <- function(x, y, z, xcivar, ycivar, zcivar, dataf, LCol, Fci.Fac,
   #Add text names
   if(Straight.Line == "Yes") {
     for (i in 1:length(ctrs)) {
-      lines(ci_p[[i]][, "x"], ci_p[[i]][, "y"], lty=i, col= my_clr[i],lwd=2)
+      lines(ci_p[[i]][, "x"], ci_p[[i]][, "y"], lty=i, col= my_clr[i], lwd=LWd)
       text(ci_p[[i]][1, "x"], ci_p[[i]][1, "y"], ctrs[i])
       text(ci_p[[i]][nrow(ci_p[[i]]), "x"], ci_p[[i]][nrow(ci_p[[i]]), "y"], ctrs[i])
     }
   } else {
     for (i in 1:length(ctrs)) {
-      lines(ci_p[[i]][, "x"], ci_p[[i]][, "y_p"], lty=i, col= my_clr[i],lwd=2)
+      lines(ci_p[[i]][, "x"], ci_p[[i]][, "y_p"], lty=i, col= my_clr[i], lwd=LWd)
       text(ci_p[[i]][1, "x"], ci_p[[i]][1, "y_p"], ctrs[i])
       text(ci_p[[i]][nrow(ci_p[[i]]), "x"], ci_p[[i]][nrow(ci_p[[i]]), "y_p"], ctrs[i])
     }
@@ -5028,7 +5028,8 @@ plot_fci_fnc <- function(x, y, z, xcivar, ycivar, zcivar, dataf, LCol, Fci.Fac,
 plot_fci <- reactive({                  #This indicates the data frame I will use.
   if(input$FCiCreate == "Yes") {
     plot_fci_fnc(x="x_lev", y="PointEst", z="z_lev", xcivar=input$fxcivar, ycivar=input$fycivar, zcivar=input$fzcivar,
-                 dataf=fcidf(), LCol= fci_plot_Line_Colors(), ci_p=fci_fac()$ci_p, ci_l=fci_fac()$ci_l, ci_u=fci_fac()$ci_u,
+                 dataf=fcidf(), LCol= fci_plot_Line_Colors(), LWd=fci_plot_Line_Width(), ci_p=fci_fac()$ci_p, 
+                 ci_l=fci_fac()$ci_l, ci_u=fci_fac()$ci_u,
     max_pest=fci_fac()$max_pest, min_pest=fci_fac()$min_pest, max_ci=fci_fac()$max_ci, min_ci=fci_fac()$min_ci, 
     ctrs=fci_fac()$ctrs, cibands=input$fcibands, fCiXLim1=input$fCiXLim1, fCiXLim2=input$fCiXLim2, 
     fCiYLim1=input$fCiYLim1, fCiYLim2=input$fCiYLim2, Tot.Line=fci_overall_line(), FCI.Tot=fci_all_line(), 
@@ -5113,20 +5114,31 @@ output$fci_plot_ln_clrs <- renderUI({
 fci_plot_Line_Colors <- reactive({                 
   input$fciPltLnClr 
 })
+
+#Select line width
+output$fci_plot_ln_wdth <- renderUI({                                 
+  numericInput("fciPltLnWd", "10. Select the line width.", 
+               value = 2, min=0, step = .25)     
+})
+#Reactive function for directly above
+fci_plot_Line_Width <- reactive({                 
+  input$fciPltLnWd 
+})
+
 #Select how many knots I want
 output$FCI_nk_knots <- renderUI({                                
-      numericInput("FciNkKnots", "10. Select the number of spline knots.",
+      numericInput("FciNkKnots", "11. Select the number of spline knots.",
        value = 3, min=3, max = 10, step = 1)
 })
 #Select whether to run the 95% confidence interval or not
 output$FCi_create <- renderUI({                                
-  selectInput("FCiCreate", "15. Create the time plot?",
+  selectInput("FCiCreate", "16. Create the time plot?",
               choices = c("No", "Yes"),
               selected="No")
 })
 #Select whether to run the 95% confidence interval or not
 output$FCi_ovral_line <- renderUI({                                
-  selectInput("fciOvrLn", "11. Add the overall group line?",
+  selectInput("fciOvrLn", "12. Add the overall group line?",
               choices = c("No", "Yes"),
               selected="No")
 })
@@ -5136,7 +5148,7 @@ fci_overall_line <- reactive({
 })
 #Add a target line
 output$FCi_Tgt_Line <- renderUI({                                 
-  numericInput("fciTgtLn", "12. Add a target line.",
+  numericInput("fciTgtLn", "13. Add a target line.",
                value = NULL, step = .1)
 })
 #Reactive function for above
@@ -5145,7 +5157,7 @@ fCi_target_line <- reactive({
 })
 #Add a time point line
 output$FCi_Tm_Pt_Line <- renderUI({                                 
-  numericInput("fciTmPtLn", "13. Add a time point line.",
+  numericInput("fciTmPtLn", "14. Add a time point line.",
                value = NULL, step = .1)
 })
 #Reactive function for above
@@ -5165,7 +5177,7 @@ range_fycivar <- reactive({
 
 #13. Indicate if you want a straight line
 output$FCi_strght_ln <- renderUI({                                
-  selectInput("fciStrtLn", "14. Use straight trend lines?",
+  selectInput("fciStrtLn", "15. Use straight trend lines?",
               choices = c("No", "Yes"),
               selected="No")
 })
@@ -5175,23 +5187,23 @@ fCi_straight_line <- reactive({
 })
 #14. Indicate lower limit of x-axis
 output$FCI__Xlim1 <- renderUI({
-  numericInput("fCiXLim1", "16. Lower X-axis limit.",
+  numericInput("fCiXLim1", "17. Lower X-axis limit.",
                value = range_fzcivar()[1], step = 1)
 })
 #15. Indicate upper limit of x-axis
 output$FCI__Xlim2 <- renderUI({
-  numericInput("fCiXLim2", "17. Upper X-axis limit.",
+  numericInput("fCiXLim2", "18. Upper X-axis limit.",
                value = if(fci_Z_Increment() ==1) { range_fzcivar()[2] } else {ceiling(range_fzcivar()[2]/fci_Z_Increment() ) } , 
                step = 1)
 })
 #16. Indicate lower limit of y-axis
 output$FCI__Ylim1 <- renderUI({
-  numericInput("fCiYLim1", "18. Lower Y-axis limit.",
+  numericInput("fCiYLim1", "19. Lower Y-axis limit.",
                value = range_fycivar()[1], step = .1)
 })
 #17. Indicate upper limit of x-axis
 output$FCI__Ylim2 <- renderUI({
-  numericInput("fCiYLim2", "19. Upper Y-axis limit.",
+  numericInput("fCiYLim2", "20. Upper Y-axis limit.",
                value = range_fycivar()[2], step = .1)
 })
 

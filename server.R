@@ -119,13 +119,13 @@ shinyServer(
       selectInput("ModifyTimeX", "4. Select variables to format as 'Date'.", 
                   choices = var(), multiple=TRUE)
     })
-    #5. Select Time format
+    #5. Select Time format. Not using pure strptime ("1/31/2021 21:15")
     output$modify_time_format <- renderUI({  
       selectInput("ModifyTimeFmt", "5. Choose the correct time format.", 
                   choices = c("31JAN2021", "31JAN21","31-JAN-2021","31-JAN-21","01/31/2021", "01/31/21", 
-                              "01-31-2021", "01-31-21", "2021-01-31", "21-01-31", 
-                              "1/31/2021 21:15","1/31/2021 21:15 as 1/31/2021","1/31/2021 21:15:30",
-                              "1/31/2021 21:15:30 as 1/31/2021", "1/31/2021 12:00:00 AM", 
+                              "01-31-2021", "01-31-21", "2021-01-31", "21-01-31", #"1/31/2021 21:15",
+                              "1/31/2021 21:15 as 1/31/2021", #"1/31/2021 21:15:30",
+                              "1/31/2021 21:15:30 as 1/31/2021", #"1/31/2021 12:00:00 AM", 
                               "1/31/2021 12:00:00 AM as 1/31/2021", "44227 in Excel"), 
                   multiple=TRUE, selected="01-31-2021")
     })
@@ -196,7 +196,7 @@ shinyServer(
     modifiedCharFnc <- function(df, ModifyCharacter) {
       df_mod <- df
         if (!is.null(ModifyCharacter)) {
-          df_mod[, which(colnames(df_mod) %in% ModifyCharacter)] <- sapply(df_mod[which(colnames(df_mod) %in% ModifyCharacter)], as.character)
+          df_mod[, which(colnames(df_mod) %in% ModifyCharacter)] <- lapply(df_mod[which(colnames(df_mod) %in% ModifyCharacter)], as.character)
       }
       return(df_mod[, which(colnames(df_mod) %in% ModifyCharacter), drop = FALSE])
     }
@@ -209,9 +209,6 @@ shinyServer(
     #Factor
     modifiedFacFnc <- function(df, ModifyFactor) {
       df_mod <- df
-        if (!is.null(ModifyFactor)) {
-        df_mod[, which(colnames(df_mod) %in% ModifyFactor)] <- sapply(df_mod[which(colnames(df_mod) %in% ModifyFactor)], as.character)
-      }
       if (!is.null(ModifyFactor)) {
         df_mod[, which(colnames(df_mod) %in% ModifyFactor)] <- lapply(df_mod[which(colnames(df_mod) %in% ModifyFactor)], as.factor)
       }
@@ -227,9 +224,9 @@ shinyServer(
     modifiedNumFnc <- function(df, ModifyNumeric) {
       df_mod <- df
         if (!is.null(ModifyNumeric)) {
-        df_mod[, which(colnames(df_mod) %in% ModifyNumeric),drop = FALSE] <- sapply(df_mod[which(colnames(df_mod) %in% ModifyNumeric)], as.numeric)
+        df_mod[, which(colnames(df_mod) %in% ModifyNumeric)] <- lapply(df_mod[which(colnames(df_mod) %in% ModifyNumeric)], as.numeric)
       }
-      return(df_mod[, which(colnames(df_mod) %in% ModifyNumeric) ,drop = FALSE])
+      return(df_mod[, which(colnames(df_mod) %in% ModifyNumeric) ,drop=FALSE])
     }
     #Runs the function above
     modifiedNumDf <- reactive({
@@ -301,7 +298,7 @@ shinyServer(
     modifiedDf1 <- reactive({
       #if(input$ModifiedDfSave == "Yes") {
         if(input$ModifyDfYesNo == "Yes") {
-        cbind(modifySubsetDf()[, which(colnames(modifySubsetDf()) %in% non_modified_vars()), drop = FALSE], 
+        cbind(modifySubsetDf()[, which(colnames(modifySubsetDf()) %in% non_modified_vars()), drop=FALSE], 
               modifiedCharDf(), modifiedFacDf(), modifiedNumDf(), modifiedDateDf() ) 
       }
     })
@@ -10363,7 +10360,11 @@ fncStSpcLegendFactoLev <- function(Model_fit, X_Lev) {
 ##} )
 
 #output$test1 <- renderPrint({
-#list( modifiedDf1(),
+#list( #head(modifiedDf1()),
+      #head(modifiedFacDf()), 
+#      non_modified_vars() ,
+#      modifiedNumDf()
+#      head(modifiedTimeVarCrt()), head(modifiedYMmonthCrt())
 #      modifiedDf()
 #)  
 

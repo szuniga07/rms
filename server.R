@@ -945,10 +945,10 @@ shinyServer(
                    } else {
                      psm(aft_mdl_fmla2(), x=TRUE, y=TRUE, data=df(), dist=AFT_PSM_Dist())},
                    "Generalized Least Squares" = if(input$updy == "Yes") {
-                     Gls(as.formula(input$up_fmla), x=TRUE, data=df(), correlation=corCAR1(form= gls_cor()))
+                     Gls(as.formula(input$up_fmla), x=TRUE, data=df(), correlation=corCompSymm(form= gls_cor()))
                    } else {
                      Gls(mdl_fmla(), x=TRUE, data=df(),
-                         correlation=corCAR1(form= gls_cor()))}
+                         correlation=corCompSymm(form= gls_cor()))}
                    #correlation= do.call("corCAR1", list(form=~week|uid)) )})
                    #as.formula(paste(paste0("~"), paste(gls_clst1(), collapse= "|")))
             )
@@ -5498,10 +5498,10 @@ fit.si <<- reactive({
            } else {
              psm(aft_mdl_fmla2(), data=new_imputed.si(),  x=TRUE, y=TRUE, dist=AFT_PSM_Dist())},
            "Generalized Least Squares" = if(input$updy == "Yes") {
-             Gls(as.formula(input$up_fmla), x=TRUE, data=new_imputed.si(), correlation=corCAR1(form= gls_cor()))
+             Gls(as.formula(input$up_fmla), x=TRUE, data=new_imputed.si(), correlation=corCompSymm(form= gls_cor()))
            } else {
              Gls(mdl_fmla(), x=TRUE, data=new_imputed.si(),
-                 correlation=corCAR1(form= gls_cor()))}
+                 correlation=corCompSymm(form= gls_cor()))}
     )
   }
 })

@@ -4848,45 +4848,69 @@ fcidf <- reactive({                  #This indicates the data frame I will use.
 ###############################################################
 ## Function here for the point estimate, lower, upper bounds ##
 ###############################################################
-ci_fac_fnc <- function(x_lev, z_lev, agr_df, NK) {
+ci_fac_fnc <- function(x_lev, z_lev, agr_df, NK, Straight.Line) {
   #ci_fac_fnc <- function(x_lev, z_lev, agr_df) {
   prmtrs <- c("PointEst", "Lower", "Upper")
   ctrs <- as.vector(unique(agr_df[, x_lev]))
   #Point est 
   ci_p <- list()
-  for (i in 1:length(ctrs)) {
-    x <- agr_df[agr_df[, x_lev] ==ctrs[i], z_lev]
-    y <- agr_df[agr_df[, x_lev] ==ctrs[i], prmtrs[1]]
-    xx <- rcspline.eval(x, inclx=TRUE, nk=NK)
-    knots <- attr(xx, "knots")
-    coef <- lsfit(xx, y)$coef
-    w <- rcspline.restate(knots, coef[-1], x="{\\rm BP}")
-    xtrans <- eval(attr(w, "function"))
-    ci_p[[i]] <- cbind(x, y_p=coef[1] + xtrans(x), y)
+  if(Straight.Line== "No") {
+    for (i in 1:length(ctrs)) {
+      x <- agr_df[agr_df[, x_lev] ==ctrs[i], z_lev]
+      y <- agr_df[agr_df[, x_lev] ==ctrs[i], prmtrs[1]]
+      xx <- rcspline.eval(x, inclx=TRUE, nk=NK)
+      knots <- attr(xx, "knots")
+      coef <- lsfit(xx, y)$coef
+      w <- rcspline.restate(knots, coef[-1], x="{\\rm BP}")
+      xtrans <- eval(attr(w, "function"))
+      ci_p[[i]] <- cbind(x, y_p=coef[1] + xtrans(x), y)
+    } 
+  } else {
+    for (i in 1:length(ctrs)) {
+      x <- agr_df[agr_df[, x_lev] ==ctrs[i], z_lev]
+      y <- agr_df[agr_df[, x_lev] ==ctrs[i], prmtrs[1]]
+      ci_p[[i]] <- cbind(x, y_p=y, y)
+    }
   }
   #Lower CI
   ci_l <- list()
-  for (i in 1:length(ctrs)) {
-    x <- agr_df[agr_df[, x_lev]==ctrs[i], z_lev]
-    y <- agr_df[agr_df[, x_lev]==ctrs[i], prmtrs[2]]
-    xx <- rcspline.eval(x, inclx=TRUE, nk=NK)
-    knots <- attr(xx, "knots")
-    coef <- lsfit(xx, y)$coef
-    w <- rcspline.restate(knots, coef[-1], x="{\\rm BP}")
-    xtrans <- eval(attr(w, "function"))
-    ci_l[[i]] <- cbind(x, y_l=coef[1] + xtrans(x), y)
+  if(Straight.Line== "No") {
+    for (i in 1:length(ctrs)) {
+      x <- agr_df[agr_df[, x_lev]==ctrs[i], z_lev]
+      y <- agr_df[agr_df[, x_lev]==ctrs[i], prmtrs[2]]
+      xx <- rcspline.eval(x, inclx=TRUE, nk=NK)
+      knots <- attr(xx, "knots")
+      coef <- lsfit(xx, y)$coef
+      w <- rcspline.restate(knots, coef[-1], x="{\\rm BP}")
+      xtrans <- eval(attr(w, "function"))
+      ci_l[[i]] <- cbind(x, y_l=coef[1] + xtrans(x), y)
+    }
+  } else {
+    for (i in 1:length(ctrs)) {
+      x <- agr_df[agr_df[, x_lev]==ctrs[i], z_lev]
+      y <- agr_df[agr_df[, x_lev]==ctrs[i], prmtrs[2]]
+      ci_l[[i]] <- cbind(x, y_l=y, y)
+    }
   }
   #Upper CI
   ci_u <- list()
-  for (i in 1:length(ctrs)) {
-    x <- agr_df[agr_df[, x_lev]==ctrs[i], z_lev]
-    y <- agr_df[agr_df[, x_lev]==ctrs[i], prmtrs[3]]
-    xx <- rcspline.eval(x, inclx=TRUE, nk=NK)
-    knots <- attr(xx, "knots")
-    coef <- lsfit(xx, y)$coef
-    w <- rcspline.restate(knots, coef[-1], x="{\\rm BP}")
-    xtrans <- eval(attr(w, "function"))
-    ci_u[[i]] <- cbind(x, y_u=coef[1] + xtrans(x), y)
+  if(Straight.Line== "No") {
+    for (i in 1:length(ctrs)) {
+      x <- agr_df[agr_df[, x_lev]==ctrs[i], z_lev]
+      y <- agr_df[agr_df[, x_lev]==ctrs[i], prmtrs[3]]
+      xx <- rcspline.eval(x, inclx=TRUE, nk=NK)
+      knots <- attr(xx, "knots")
+      coef <- lsfit(xx, y)$coef
+      w <- rcspline.restate(knots, coef[-1], x="{\\rm BP}")
+      xtrans <- eval(attr(w, "function"))
+      ci_u[[i]] <- cbind(x, y_u=coef[1] + xtrans(x), y)
+    }
+  } else {
+    for (i in 1:length(ctrs)) {
+      x <- agr_df[agr_df[, x_lev]==ctrs[i], z_lev]
+      y <- agr_df[agr_df[, x_lev]==ctrs[i], prmtrs[3]]
+      ci_u[[i]] <- cbind(x, y_u=y, y)
+    }
   }
   #For point estimtaes only
   max_pest <- vector() 
@@ -4909,7 +4933,7 @@ ci_fac_fnc <- function(x_lev, z_lev, agr_df, NK) {
 #Reactive function that runs ci_fac_fnc() above
 fci_fac <- reactive({                  #This indicates the data frame I will use.
   if(input$FCiCreate == "Yes") {
-  ci_fac_fnc(x_lev="x_lev", z_lev="z_lev", agr_df=fcidf(), NK=input$FciNkKnots)
+  ci_fac_fnc(x_lev="x_lev", z_lev="z_lev", agr_df=fcidf(), NK=input$FciNkKnots, Straight.Line= fCi_straight_line())
   }
 })
 
@@ -4930,17 +4954,22 @@ fncFciTotMn <- function(y, z, dataf, Increment) {
 ################################################
 ## Function to get the overall point estimate ##
 ################################################
-fncAllTrndSpln <- function( agr_df, NK) {
+fncAllTrndSpln <- function( agr_df, NK, Straight.Line) {
   #Point est 
   ci_p <- list()
-  x <- agr_df[ ,1]
-  y <- agr_df[ ,2]
-  xx <- rcspline.eval(x, inclx=TRUE, nk=NK)
-  knots <- attr(xx, "knots")
-  coef <- lsfit(xx, y)$coef
-  w <- rcspline.restate(knots, coef[-1], x="{\\rm BP}")
-  xtrans <- eval(attr(w, "function"))
-  ci_p <- cbind(x, y_p=coef[1] + xtrans(x))
+  if (Straight.Line=="Yes") {
+    ci_p <- agr_df
+    colnames(ci_p) <- c("x","y_p") 
+  } else {
+    x <- agr_df[ ,1]
+    y <- agr_df[ ,2]
+    xx <- rcspline.eval(x, inclx=TRUE, nk=NK)
+    knots <- attr(xx, "knots")
+    coef <- lsfit(xx, y)$coef
+    w <- rcspline.restate(knots, coef[-1], x="{\\rm BP}")
+    xtrans <- eval(attr(w, "function"))
+    ci_p <- cbind(x, y_p=coef[1] + xtrans(x))
+  }
   return("ci_p"=ci_p )
 }
 
@@ -5044,7 +5073,7 @@ fci_tot_group_aggr <- reactive({
 })
 ## Get the overall group trend line ##
 fci_all_line <- reactive({
-   fncAllTrndSpln(agr_df=fci_tot_group_aggr(), NK=input$FciNkKnots)
+   fncAllTrndSpln(agr_df=fci_tot_group_aggr(), NK=input$FciNkKnots, Straight.Line= fCi_straight_line())
 })
 
 ############

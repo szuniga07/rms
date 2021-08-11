@@ -1801,7 +1801,7 @@ tabPanel("95% CIs",
          verbatimTextOutput("Cidf_output"),
          h6("Note: The values above are point estimates and confidence limits that are sorted alphabetically and numerically."),
          br(),
-         h4("Performance of groups over time (need >= 6 time points for spline knots)"),
+         h4("Performance of groups over time (need >= 6 time points for spline knots, use 'straight trend lines' when < 6)"),
          h5("This plot has straight or smoothed spline trajectories, with or without confidence bands. Smoothed \"trend\" lines may not have cooridnate values that equal rates."),
          br(),
          fluidRow(   

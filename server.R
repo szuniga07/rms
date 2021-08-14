@@ -5028,9 +5028,9 @@ plot_fci_fnc <- function(x, y, z, xcivar, ycivar, zcivar, dataf, LCol, LWd, Fci.
   #Add overall line
   if (Tot.Line == "Yes") {
     if(Straight.Line == "Yes") {
-      lines(FCI.Tot.Straight, col="black", lty=1, lwd=7)  
+      lines(FCI.Tot.Straight, col="black", lty=1, lwd=10)  
     } else {
-      lines(FCI.Tot, col="black", lty=1, lwd=7)  
+      lines(FCI.Tot, col="black", lty=1, lwd=10)  
     }
   }
   #Add text names
@@ -5147,7 +5147,7 @@ fci_plot_Line_Colors <- reactive({
 #Select line width
 output$fci_plot_ln_wdth <- renderUI({                                 
   numericInput("fciPltLnWd", "10. Select the line width.", 
-               value = 2, min=0, step = .25)     
+               value = 2, min=0, step = 1)     
 })
 #Reactive function for directly above
 fci_plot_Line_Width <- reactive({                 

@@ -105,6 +105,7 @@ fluidRow(
 
           ## Transformed/Imputed ##
           br(),
+h5("Once data is downloaded, it can be uploaded and entered at the top for analysis. Make sure #3 at top is 'No'."),
           br(),
           h4("Transformed and Imputed data"),
           br(),

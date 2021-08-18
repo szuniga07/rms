@@ -250,26 +250,30 @@ shinyServer(
     
     ## FUnction to create formatted data ##
     fncDateFmt <- function(DF, X, Format) {
-      df_mod <- DF[, which(colnames(DF) %in% X), drop = FALSE]
-      for(i in 1:length(X)) {
-        switch(Format[i], 
-               "31JAN2021" = df_mod[, X[i]] <- as.Date(df_mod[, X[i]], format="%d%b%Y"), 
-               "31JAN21" = df_mod[, X[i]] <- as.Date(df_mod[, X[i]], format="%d%b%y"), 
-               "31-JAN-2021" =  df_mod[, X[i]] <- as.Date(df_mod[, X[i]], format="%d-%b-%Y"),
-               "31-JAN-21" = df_mod[, X[i]] <- as.Date(df_mod[, X[i]], format="%d-%b-%y"),
-               "01/31/2021" = df_mod[, X[i]] <- as.Date(df_mod[, X[i]], format="%m/%d/%Y"),
-               "01/31/21" = df_mod[, X[i]] <- as.Date(df_mod[, X[i]], format="%m/%d/%y"),
-               "01-31-2021" = df_mod[, X[i]] <- as.Date(df_mod[, X[i]], format="%m-%d-%Y"),
-               "01-31-21" = df_mod[, X[i]] <- as.Date(df_mod[, X[i]], format="%m-%d-%y"),
-               "2021-01-31" = df_mod[, X[i]] <- as.Date(df_mod[, X[i]], format="%Y-%m-%d"),
-               "21-01-31" = df_mod[, X[i]] <- as.Date(df_mod[, X[i]], format="%y-%m-%d"),
-               "1/31/2021 21:15" = df_mod[, X[i]] <- strptime(as.character(df_mod[, X[i]]), format="%m/%d/%Y %H:%M"),
-               "1/31/2021 21:15 as 1/31/2021" = df_mod[, X[i]] <- as.Date(strptime(as.character(df_mod[, X[i]]), format="%m/%d/%Y %H:%M")),
-               "1/31/2021 21:15:30" = df_mod[, X[i]] <- strptime(as.character(df_mod[, X[i]]), format="%m/%d/%Y %H:%M:%S"),
-               "1/31/2021 21:15:30 as 1/31/2021" = df_mod[, X[i]] <- as.Date(strptime(as.character(df_mod[, X[i]]), format="%m/%d/%Y %H:%M:%S")),
-               "1/31/2021 12:00:00 AM" = df_mod[, X[i]] <- strptime(as.character(df_mod[, X[i]]), format="%m/%d/%Y %H:%M:%S %p"),
-               "1/31/2021 12:00:00 AM as 1/31/2021" = df_mod[, X[i]] <- as.Date(strptime(as.character(df_mod[, X[i]]), format="%m/%d/%Y %H:%M:%S %p")),
-               "44227 in Excel" = df_mod[, X[i]] <- as.Date(df_mod[, X[i]], origin="1899-12-30")) 
+      if(is.null(X)) {
+        df_mod <- DF[, which(colnames(DF) %in% X), drop = FALSE]
+      } else {
+        df_mod <- DF[, which(colnames(DF) %in% X), drop = FALSE]
+        for(i in 1:length(X)) {
+          switch(Format[i], 
+                 "31JAN2021" = df_mod[, X[i]] <- as.Date(df_mod[, X[i]], format="%d%b%Y"), 
+                 "31JAN21" = df_mod[, X[i]] <- as.Date(df_mod[, X[i]], format="%d%b%y"), 
+                 "31-JAN-2021" =  df_mod[, X[i]] <- as.Date(df_mod[, X[i]], format="%d-%b-%Y"),
+                 "31-JAN-21" = df_mod[, X[i]] <- as.Date(df_mod[, X[i]], format="%d-%b-%y"),
+                 "01/31/2021" = df_mod[, X[i]] <- as.Date(df_mod[, X[i]], format="%m/%d/%Y"),
+                 "01/31/21" = df_mod[, X[i]] <- as.Date(df_mod[, X[i]], format="%m/%d/%y"),
+                 "01-31-2021" = df_mod[, X[i]] <- as.Date(df_mod[, X[i]], format="%m-%d-%Y"),
+                 "01-31-21" = df_mod[, X[i]] <- as.Date(df_mod[, X[i]], format="%m-%d-%y"),
+                 "2021-01-31" = df_mod[, X[i]] <- as.Date(df_mod[, X[i]], format="%Y-%m-%d"),
+                 "21-01-31" = df_mod[, X[i]] <- as.Date(df_mod[, X[i]], format="%y-%m-%d"),
+                 "1/31/2021 21:15" = df_mod[, X[i]] <- strptime(as.character(df_mod[, X[i]]), format="%m/%d/%Y %H:%M"),
+                 "1/31/2021 21:15 as 1/31/2021" = df_mod[, X[i]] <- as.Date(strptime(as.character(df_mod[, X[i]]), format="%m/%d/%Y %H:%M")),
+                 "1/31/2021 21:15:30" = df_mod[, X[i]] <- strptime(as.character(df_mod[, X[i]]), format="%m/%d/%Y %H:%M:%S"),
+                 "1/31/2021 21:15:30 as 1/31/2021" = df_mod[, X[i]] <- as.Date(strptime(as.character(df_mod[, X[i]]), format="%m/%d/%Y %H:%M:%S")),
+                 "1/31/2021 12:00:00 AM" = df_mod[, X[i]] <- strptime(as.character(df_mod[, X[i]]), format="%m/%d/%Y %H:%M:%S %p"),
+                 "1/31/2021 12:00:00 AM as 1/31/2021" = df_mod[, X[i]] <- as.Date(strptime(as.character(df_mod[, X[i]]), format="%m/%d/%Y %H:%M:%S %p")),
+                 "44227 in Excel" = df_mod[, X[i]] <- as.Date(df_mod[, X[i]], origin="1899-12-30")) 
+        }
       }
       return(df_mod)
     }
@@ -285,13 +289,6 @@ shinyServer(
       if(input$ModifyDfYesNo == "Yes") {
         setdiff(var(),  c(input$ModifyCharacter,input$ModifyFactor, 
                           input$ModifyNumeric, input$ModifyTimeX ))
-      }
-    })
-
-    #Runs the function above
-    modifiedDateDf <- reactive({
-      if(input$ModifyDfYesNo == "Yes") {
-        fncDateFmt(DF=modifySubsetDf(),  X=input$ModifyTimeX, Format= modifiedFullFormat() )
       }
     })
     #Create modified dataset, without time variables
@@ -2128,7 +2125,8 @@ output$anova_smry <- renderPrint({
     #XYplot line color names
     xyplot_Line_Color_Names <- reactive({                 
       colors()[c(552, 498,652, 254, 26,547, 24, 152,32,66, 68, 85,97, 120, 128,139,
-                 142, 175, 310, 367,372,393, 448, 399,450, 485, 514, 562,589, 610, 615, 630,657)]    
+                 142, 175, 310, 367,372,393, 448, 399,450, 485, 514, 529,562,568,
+                 584, 589, 610, 615, 620, 625, 630, 635,640,646,651,657)]    
     })
     #5. Create yes/no box to make the XY plot
     output$xyplot_yes_no <- renderUI({                                 

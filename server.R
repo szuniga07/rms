@@ -4869,8 +4869,8 @@ ftotBconf <- function(y, z, dataf, conf_lev, Increment) {
     agr_sum <- aggregate(dataf[, y], list(ceiling(dataf[, z]/Increment) ), FUN="sum")
     agr_n <- aggregate(dataf[, y], list(ceiling(dataf[, z]/Increment) ), FUN="length")
   }
-  agr_df <- data.frame(z_lev=agr_sum[, 2], agr_n=agr_n[, 2])
-  agr_df <- cbind(agr_df, binconf(x=agr_df[,1], n=agr_df[,2], alpha=1 - conf_lev))
+  agr_df <- data.frame(z_lev=agr_sum[, 1], agr_sum=agr_sum[, 2], agr_n=agr_n[, 2])
+  agr_df <- cbind(agr_df, binconf(x=agr_df[,2], n=agr_df[,3], alpha=1 - conf_lev))
   return(agr_df) 
 }
 
@@ -5083,16 +5083,6 @@ ci_tot_fac_fnc <- function(z_lev, agr_df, NK, Straight.Line) {
     y <- agr_df[, prmtrs[3]]
     ci_u <- cbind(x, y_u=y, y)
   }
-  #For point estimtaes only
-  #  max_pest <- vector() 
-  #  min_pest <- vector() 
-  #  max_pest <- max(ci_p[,2])
-  #  min_pest <- min(ci_p[,2])
-  #For CIs only
-  #  max_ci <- vector() 
-  #  min_ci <- vector() 
-  #  max_ci <- max(ci_u[,2])
-  #  min_ci <- min(ci_l[,2])
   return(list(ci_p=ci_p, ci_l=ci_l, ci_u=ci_u #, 
               #max_pest=max_pest, min_pest=min_pest, max_ci=max_ci, min_ci=min_ci
   ))
@@ -5106,41 +5096,6 @@ fci_tot_fac <- reactive({                  #This indicates the data frame I will
   }
 })
 
-######################################################
-## Function to get the point overall point estimate ##
-######################################################
-fncFciTotMn <- function(y, z, dataf, Increment) {
-  agr_mean <- aggregate(dataf[, y], list(dataf[, z]), FUN="mean")
-  #Gives data aggregated into single units or in bigger time increments
-  if(Increment == 1) {
-    agr_mean <- aggregate(dataf[, y], list(dataf[, z]), FUN="mean")
-  } else {
-    agr_mean <- aggregate(dataf[, y], list( ceiling(dataf[, z]/Increment) ), FUN="mean")
-  }
-  return(agr_mean) 
-}
-
-################################################
-## Function to get the overall point estimate ##
-################################################
-fncAllTrndSpln <- function( agr_df, NK, Straight.Line) {
-  #Point est 
-  ci_p <- list()
-  if (Straight.Line=="Yes") {
-    ci_p <- agr_df
-    colnames(ci_p) <- c("x","y_p") 
-  } else {
-    x <- agr_df[ ,1]
-    y <- agr_df[ ,2]
-    xx <- rcspline.eval(x, inclx=TRUE, nk=NK)
-    knots <- attr(xx, "knots")
-    coef <- lsfit(xx, y)$coef
-    w <- rcspline.restate(knots, coef[-1], x="{\\rm BP}")
-    xtrans <- eval(attr(w, "function"))
-    ci_p <- cbind(x, y_p=coef[1] + xtrans(x))
-  }
-  return("ci_p"=ci_p )
-}
 
 ############################################################
 ##            Function to create the time plot            ##
@@ -5199,14 +5154,14 @@ plot_fci_fnc <- function(x, y, z, xcivar, ycivar, zcivar, dataf, LCol, LWd, Fci.
   if(Straight.Line == "Yes") {
     for (i in 1:length(ctrs)) {
       lines(ci_p[[i]][, "x"], ci_p[[i]][, "y"], lty=i, col= my_clr[i], lwd=LWd)
-      text(ci_p[[i]][1, "x"], ci_p[[i]][1, "y"], ctrs[i])
-      text(ci_p[[i]][nrow(ci_p[[i]]), "x"], ci_p[[i]][nrow(ci_p[[i]]), "y"], ctrs[i])
+      text(ci_p[[i]][1, "x"], ci_p[[i]][1, "y"], ctrs[i], cex=2)
+      text(ci_p[[i]][nrow(ci_p[[i]]), "x"], ci_p[[i]][nrow(ci_p[[i]]), "y"], ctrs[i], cex=2)
     }
   } else {
     for (i in 1:length(ctrs)) {
       lines(ci_p[[i]][, "x"], ci_p[[i]][, "y_p"], lty=i, col= my_clr[i], lwd=LWd)
-      text(ci_p[[i]][1, "x"], ci_p[[i]][1, "y_p"], ctrs[i])
-      text(ci_p[[i]][nrow(ci_p[[i]]), "x"], ci_p[[i]][nrow(ci_p[[i]]), "y_p"], ctrs[i])
+      text(ci_p[[i]][1, "x"], ci_p[[i]][1, "y_p"], ctrs[i], cex=2)
+      text(ci_p[[i]][nrow(ci_p[[i]]), "x"], ci_p[[i]][nrow(ci_p[[i]]), "y_p"], ctrs[i], cex=2)
     }
   }
 
@@ -5244,15 +5199,6 @@ plot_fci_fnc <- function(x, y, z, xcivar, ycivar, zcivar, dataf, LCol, LWd, Fci.
   lines(ci_p_tot[, "x"], ci_p_tot[, "y_p"], lty=1, col= Tot.Color, lwd=T3.Line.Width)
 }
   }
-  #Add overall line
-#  if (Tot.Line == "Yes") {
-#    if(Straight.Line == "Yes") {
-#      lines(FCI.Tot.Straight, col="black", lty=1, lwd=10)  
-#    } else {
-#      lines(FCI.Tot, col="black", lty=1, lwd=10)  
-#    }
-#  }
-  
   #Add target line
   abline(h=Tgt.Line, col=Tgt.Color, lty=3, lwd=T3.Line.Width)
   #Add time point line
@@ -5355,7 +5301,7 @@ fci_plot_Line_Colors <- reactive({
 
 #Select line width
 output$fci_plot_ln_wdth <- renderUI({                                 
-  numericInput("fciPltLnWd", "10. Select the line width.", 
+  numericInput("fciPltLnWd", "10. Select the group line width.", 
                value = 2, min=0, step = 1)     
 })
 #Reactive function for directly above
@@ -5426,7 +5372,7 @@ fCi_straight_line <- reactive({
 })
 #Select target and time line width
 output$fci_plot_TgtTpt_ln_wdth <- renderUI({                                 
-  numericInput("fciPlTgTpLnWd", "16. Select target/time line width.", 
+  numericInput("fciPlTgTpLnWd", "16. Select other line's width.", 
                value = 2, min=0, step = 1)     
 })
 #Reactive function for directly above

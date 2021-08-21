@@ -1867,7 +1867,7 @@ tabPanel("95% CIs",
            column(3, 
                   uiOutput("FCI__Ylim2"))
          ),
-         h5("Modify the plot space in #21-24."),
+         h5("Modify the plot space in #21-24. Enter values into #13 and #14 when needed."),
          br(),
          plotOutput("Plot_Fci_output", height = 800, width="100%"),
          h5("These are point estimates and confidence intervals. These may not match up with smoothed lines."),

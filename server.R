@@ -1214,14 +1214,13 @@ nm_x_var <- reactive({
       fncTrnsfYhatSmry(YhatRslt=describeYhatHistRslt(), RegType= input$regress_type)
     })
     
-output$desc_YhatHistRslt <- renderPrint({ 
-#  if (input$begin_mdl == "Yes") {
-  list( "Predicted.Values"=try( describeYhatHistRslt() ), 
-        "Transformed.Yhat"=try(describeYhatHistRsltTrnsf()[["Transformed.Yhat"]] ),
-        "Transformed.Full.Range"=try(describeYhatHistRsltTrnsf()[["Transformed.Full.Range"]] )
-  )
-#  }
-})  
+    output$desc_YhatHistRslt <- renderPrint({
+      list( "Predicted.Values"=try( describeYhatHistRslt() ),
+            "Transformed.Yhat"=try(describeYhatHistRsltTrnsf()[["Transformed.Yhat"]] ),
+            "Transformed.Full.Range"=try(describeYhatHistRsltTrnsf()[["Transformed.Full.Range"]]),
+            "Standard.Deviation.Yhat"= sd(yhat_hist_rslt(), na.rm=TRUE)
+      )
+    })
 
 ################################
 ## Function to transform Yhat ##

@@ -5104,7 +5104,7 @@ plot_fci_fnc <- function(x, y, z, xcivar, ycivar, zcivar, dataf, LCol, LWd, Fci.
                          ci_p, ci_l, ci_u,max_pest, min_pest, max_ci, min_ci, ctrs, 
                          cibands, fCiXLim1, fCiXLim2, fCiYLim1, fCiYLim2, Tot.Line, FCI.Tot,
                          FCI.Tot.Straight, Conf.Intrv, Tgt.Line, Straight.Line, Time.Pt.Line,
-                         ci_p_tot, ci_l_tot, ci_u_tot, Tot.Color, Tgt.Color, Tpt.Color, T3.Line.Width) {
+                         ci_p_tot, ci_l_tot, ci_u_tot, Tot.Color, Tgt.Color, Tpt.Color, T3.Line.Width, Text.Size) {
   #Make text out of the confidence level
   ConINT <- paste0(as.character(Conf.Intrv*100), "%")
   #Main title
@@ -5154,14 +5154,14 @@ plot_fci_fnc <- function(x, y, z, xcivar, ycivar, zcivar, dataf, LCol, LWd, Fci.
   if(Straight.Line == "Yes") {
     for (i in 1:length(ctrs)) {
       lines(ci_p[[i]][, "x"], ci_p[[i]][, "y"], lty=i, col= my_clr[i], lwd=LWd)
-      text(ci_p[[i]][1, "x"], ci_p[[i]][1, "y"], ctrs[i], cex=2)
-      text(ci_p[[i]][nrow(ci_p[[i]]), "x"], ci_p[[i]][nrow(ci_p[[i]]), "y"], ctrs[i], cex=2)
+      text(ci_p[[i]][1, "x"], ci_p[[i]][1, "y"], ctrs[i], cex= Text.Size)
+      text(ci_p[[i]][nrow(ci_p[[i]]), "x"], ci_p[[i]][nrow(ci_p[[i]]), "y"], ctrs[i], cex= Text.Size)
     }
   } else {
     for (i in 1:length(ctrs)) {
       lines(ci_p[[i]][, "x"], ci_p[[i]][, "y_p"], lty=i, col= my_clr[i], lwd=LWd)
-      text(ci_p[[i]][1, "x"], ci_p[[i]][1, "y_p"], ctrs[i], cex=2)
-      text(ci_p[[i]][nrow(ci_p[[i]]), "x"], ci_p[[i]][nrow(ci_p[[i]]), "y_p"], ctrs[i], cex=2)
+      text(ci_p[[i]][1, "x"], ci_p[[i]][1, "y_p"], ctrs[i], cex= Text.Size)
+      text(ci_p[[i]][nrow(ci_p[[i]]), "x"], ci_p[[i]][nrow(ci_p[[i]]), "y_p"], ctrs[i], cex= Text.Size)
     }
   }
 
@@ -5218,7 +5218,8 @@ plot_fci <- reactive({                  #This indicates the data frame I will us
     Tgt.Line=fCi_target_line(), Straight.Line= fCi_straight_line(), Time.Pt.Line= fCi_time_point_line(), 
     ci_p_tot=fci_tot_fac()$ci_p, ci_l_tot=fci_tot_fac()$ci_l, ci_u_tot=fci_tot_fac()$ci_u,
     Tot.Color=fci_plot_Overall_Line_Colors(), Tgt.Color=fci_plot_Target_Line_Colors(), 
-    Tpt.Color=fci_plot_Time_Point_Line_Colors(), T3.Line.Width=fci_plot_targ_time_Line_Wd() )
+    Tpt.Color=fci_plot_Time_Point_Line_Colors(), T3.Line.Width=fci_plot_targ_time_Line_Wd(), 
+    Text.Size= fci_plot_text_label_size())
     }
 })
 
@@ -5407,29 +5408,36 @@ output$fci_plot_time_pt_ln_clrs <- renderUI({
 fci_plot_Time_Point_Line_Colors <- reactive({                 
   input$fciPltTPLnClr 
 })
-
+#21. Select the line label size
+output$fci_plot_txt_lbl_sz <- renderUI({                                 
+  numericInput("fciPlTxtLblSz", "21. Select the line label size.", 
+               value = 2, min=0, step = .1)     
+})
+#Reactive function for directly above
+fci_plot_text_label_size <- reactive({                 
+  input$fciPlTxtLblSz 
+})
 #14. Indicate lower limit of x-axis
 output$FCI__Xlim1 <- renderUI({
-  numericInput("fCiXLim1", "21. Lower X-axis limit.",
+  numericInput("fCiXLim1", "22. Lower X-axis limit.",
                value = range_fzcivar()[1], step = 1)
 })
 #15. Indicate upper limit of x-axis
 output$FCI__Xlim2 <- renderUI({
-  numericInput("fCiXLim2", "22. Upper X-axis limit.",
+  numericInput("fCiXLim2", "23. Upper X-axis limit.",
                value = if(fci_Z_Increment() ==1) { range_fzcivar()[2] } else {ceiling(range_fzcivar()[2]/fci_Z_Increment() ) } , 
                step = 1)
 })
 #16. Indicate lower limit of y-axis
 output$FCI__Ylim1 <- renderUI({
-  numericInput("fCiYLim1", "23. Lower Y-axis limit.",
+  numericInput("fCiYLim1", "24. Lower Y-axis limit.",
                value = range_fycivar()[1], step = .1)
 })
 #17. Indicate upper limit of x-axis
 output$FCI__Ylim2 <- renderUI({
-  numericInput("fCiYLim2", "24. Upper Y-axis limit.",
+  numericInput("fCiYLim2", "25. Upper Y-axis limit.",
                value = range_fycivar()[2], step = .1)
 })
-
 #Confidence interval plot for time
 output$Plot_Fci_output <- renderPlot({ 
   if(input$FCiCreate == "Yes") {

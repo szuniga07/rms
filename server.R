@@ -4554,7 +4554,8 @@ tconf <- function(x, y, dataf, conf_lev) {
   Upper <- agr_df$agr_m + MOE
   adf_alpha <- data.frame(cbind(PointEst=agr_df$agr_m, Lower=Lower, Upper=Upper))
   rownames(adf_alpha) <- agr_df$x_lev
-  alpha_o <- order(rownames(adf_alpha), decreasing = T) 
+#  alpha_o <- order(rownames(adf_alpha), decreasing = T) 
+  alpha_o <- order(agr_df$x_lev, decreasing = T) 
   adf_alpha <- adf_alpha[alpha_o, ] 
   adf_o <- order(adf_alpha[, "PointEst"], decreasing = T) 
   adf_numeric <- adf_alpha[adf_o, ] 
@@ -4566,8 +4567,8 @@ tconf <- function(x, y, dataf, conf_lev) {
 #Binary outcomes
 bconf <- function(x, y, dataf, conf_lev) {
   #Aggregates outcome by factor 
-#  agr_sum <- aggregate(dataf[, y] ~ dataf[, x], FUN="sum", data= dataf)
-#  agr_n <- aggregate(dataf[, y] ~ dataf[, x], FUN="length", data= dataf)
+  #  agr_sum <- aggregate(dataf[, y] ~ dataf[, x], FUN="sum", data= dataf)
+  #  agr_n <- aggregate(dataf[, y] ~ dataf[, x], FUN="length", data= dataf)
   agr_sum <- aggregate(dataf[, y], list(dataf[, x]),  FUN="sum", na.rm=T)
   agr_n <- aggregate(dataf[, y], list(dataf[, x]), FUN="length")
   agr_df <- data.frame(x_lev=agr_sum[, 1], agr_sum=agr_sum[, 2], agr_n=agr_n[, 2])
@@ -4575,7 +4576,8 @@ bconf <- function(x, y, dataf, conf_lev) {
   adf_alpha <- binconf(x=agr_df[,2], n=agr_df[,3], alpha=1 - conf_lev)
   adf_alpha <- data.frame(adf_alpha)
   rownames(adf_alpha) <- agr_df$x_lev
-  alpha_o <- order(rownames(adf_alpha), decreasing = T) 
+  #  alpha_o <- order(rownames(adf_alpha), decreasing = T) 
+  alpha_o <- order(agr_df$x_lev, decreasing = T) 
   adf_alpha <- adf_alpha[alpha_o, ] 
   adf_o <- order(adf_alpha[, "PointEst"], decreasing = T) 
   adf_numeric <- adf_alpha[adf_o, ] 
@@ -4587,8 +4589,8 @@ bconf <- function(x, y, dataf, conf_lev) {
 #Exact Poisson
 pconf <- function(x, y, dataf, conf_lev) {
   #Aggregates outcome by factor 
-#  agr_sum <- aggregate(dataf[, y] ~ dataf[, x], FUN="sum", data= dataf)
-#  agr_n <- aggregate(dataf[, y] ~ dataf[, x], FUN="length", data= dataf)
+  #  agr_sum <- aggregate(dataf[, y] ~ dataf[, x], FUN="sum", data= dataf)
+  #  agr_n <- aggregate(dataf[, y] ~ dataf[, x], FUN="length", data= dataf)
   agr_sum <- aggregate(dataf[, y], list(dataf[, x]), FUN="sum", na.rm=T)
   agr_n <- aggregate(dataf[, y], list(dataf[, x]), FUN="length")
   agr_df <- data.frame(x_lev=agr_sum[, 1], agr_sum=agr_sum[, 2], agr_n=agr_n[, 2])
@@ -4600,7 +4602,8 @@ pconf <- function(x, y, dataf, conf_lev) {
   adf_alpha <- data.frame(adf_alpha)
   colnames(adf_alpha) <- c("PointEst", "Lower", "Upper")
   rownames(adf_alpha) <- agr_df$x_lev
-  alpha_o <- order(rownames(adf_alpha), decreasing = T) 
+  #  alpha_o <- order(rownames(adf_alpha), decreasing = T) 
+  alpha_o <- order(agr_df$x_lev, decreasing = T) 
   adf_alpha <- adf_alpha[alpha_o, ] 
   adf_o <- order(adf_alpha[, "PointEst"], decreasing = T) 
   adf_numeric <- adf_alpha[adf_o, ] 
@@ -4631,7 +4634,7 @@ cidf <- reactive({                  #This indicates the data frame I will use.
 ##########################################
 # Plot function for confidence intervals #
 ##########################################
-plot_ci_fnc <- function(xcivar, ycivar, ydf, cidf, ciconf_lev, alpha_num, Lcol, Pcol) {
+plot_ci_fnc <- function(xcivar, ycivar, ydf, cidf, ciconf_lev, alpha_num, Lcol, Pcol, tgt) {
   if (alpha_num=="Alphabetical") {
     adf <- cidf$adf_alpha
   }
@@ -4645,14 +4648,17 @@ plot_ci_fnc <- function(xcivar, ycivar, ydf, cidf, ciconf_lev, alpha_num, Lcol, 
   plot(rng, 1:nrow(adf), type="n", ylab="", 
        xlab= paste0("Value (the grey vertical line is the overall mean of ", round(mainYmn, 3), ")"),
        main=main_ttl, axes=F ) 
-    for (i in 1:nrow(adf)) {
+  for (i in 1:nrow(adf)) {
     lines(c(adf[,'Lower'][i], adf[,'Upper'][i]), c(i,i), lwd=4, col=Lcol) 
     points(adf[,'PointEst'][i],i, pch=24, col=Pcol, lwd=1, bg=Pcol, cex=1.75) 
   }
+  #Mean line
   abline(v=mainYmn, lwd=3, col="grey", lty=3)
+  #Target line
+  abline(v=tgt, lwd=3, col="green", lty=1)
   axis(1) 
   axis(2,at=1:nrow(adf),labels=substr(rownames(adf), 1, 10), las=1, cex.axis=1)
-#  axis(2,at=1:nrow(adf),labels=rownames(adf), las=1, cex.axis=1)
+  #  axis(2,at=1:nrow(adf),labels=rownames(adf), las=1, cex.axis=1)
   axis(4,at=1:nrow(adf),labels=round(adf[, "PointEst"],2), las=1, cex.axis=1)
   box()
 }
@@ -4660,9 +4666,9 @@ plot_ci_fnc <- function(xcivar, ycivar, ydf, cidf, ciconf_lev, alpha_num, Lcol, 
 #Confidence interval plot reactive function
 plot_ci <- reactive({                  #This indicates the data frame I will use.
   if(input$CiCreate == "Yes") {
-  plot_ci_fnc(xcivar=input$xcivar, ycivar=input$ycivar, ydf=df(), cidf=cidf(), 
-              ciconf_lev=input$ciconf_lev, alpha_num=input$alpha_num, 
-              Lcol=ci_plot_Line_Colors() , Pcol=ci_plot_Point_Colors() )
+    plot_ci_fnc(xcivar=input$xcivar, ycivar=input$ycivar, ydf=df(), cidf=cidf(), 
+                ciconf_lev=input$ciconf_lev, alpha_num=input$alpha_num, 
+                Lcol=ci_plot_Line_Colors() , Pcol=ci_plot_Point_Colors(), tgt=ci_target_line() )
   }
 })
 
@@ -4678,26 +4684,34 @@ output$CIy <- renderUI({                                #Creates a UI function h
 
 #Select the predictors.
 output$CIx <- renderUI({                                 #Same idea as output$vy
-  selectInput("xcivar", "4. Select the factor.", 
+  selectInput("xcivar", "2. Select the factor.", 
               choices = setdiff(var(), input$ycivar), multiple=FALSE, selected=var()[2])     #Will make choices based on my reactive function.
 })
 
 #Select the CI type
 output$Ci_Choice_Type <- renderUI({                                
-  selectInput("ci_type", "2. Select the type of confidence interval.",
+  selectInput("ci_type", "3. Select the type of confidence interval.",
               choices = c("Proportion (binomial)", "Mean (t)", "Poisson (exact)"),
               selected= "Mean (t)", multiple=FALSE)
 })
 
 #Select the confidence interval level
 output$Ci_Conf_Lev <- renderUI({                                 
-  numericInput("ciconf_lev", "5. Enter the confidence level.",
+  numericInput("ciconf_lev", "4. Enter the confidence level.",
                value = .95, min=.01, max = .99, step = .01)
 })
-
+#Add a target line
+output$Ci_Tgt_Line <- renderUI({                                 
+  numericInput("ciTgtLn", "5. Add a target line.",
+               value = NULL, step = .1)
+})
+#Reactive function for directly above
+ci_target_line <- reactive({                 
+  input$ciTgtLn 
+})
 #Select the sorting order.
 output$Ci_Alpha_Num <- renderUI({                                #Creates a UI function here but it will
-  radioButtons("alpha_num", "3. Sort alphabetically or numerically?",
+  radioButtons("alpha_num", "9. Sort by factor name or numerical value?",
                choices = c("Alphabetical", "Numerical"),
                selected="Alphabetical")
 })
@@ -4705,17 +4719,17 @@ output$Ci_Alpha_Num <- renderUI({                                #Creates a UI f
 #Confidence interval plot
 output$Plot_Ci_output <- renderPlot({ 
   if(input$CiCreate == "Yes") {
-  plot_ci()
+    plot_ci()
   }
-  }, height = 700)
+}, height = 700)
 
 #Confidence interval values
 output$Cidf_output <- renderPrint({ 
   #cidf2()
   if(input$CiCreate == "Yes") {
-    list("Alphabetical"=cidf()[["adf_alpha"]][order(rownames(cidf()[["adf_alpha"]]), decreasing = F), ], 
-       "Numerical"=cidf()[["adf_numeric"]][order(cidf()[["adf_numeric"]][["PointEst"]], decreasing = F), ])
-    }
+    list("Alphabetical"=cidf()[["adf_alpha"]][nrow(cidf()[["adf_alpha"]]):1,], 
+         "Numerical"=cidf()[["adf_numeric"]][nrow(cidf()[["adf_numeric"]]):1,])
+  }
 })
 
 #Select whether to run the 95% confidence interval or not
@@ -4747,7 +4761,6 @@ ci_plot_Point_Colors <- reactive({
 #######################################
 # Graphs for trajectories by time     #
 #######################################
-
 #Binomial
 fbconf <- function(x, xlev, y, z, dataf, conf_lev, Increment) {
   #Aggregates outcome by factor 
@@ -4843,6 +4856,86 @@ fcidf <- reactive({                  #This indicates the data frame I will use.
   }
 })
 
+################################################################################
+#      Function to get overall trend confidence intervals, no grouping         # 
+################################################################################
+#Binomial
+ftotBconf <- function(y, z, dataf, conf_lev, Increment) {
+  #Calculates confidence intervals for single units or in increments
+  if(Increment == 1) {
+    agr_sum <- aggregate(dataf[, y], list(dataf[, z]), FUN="sum")
+    agr_n <- aggregate(dataf[, y], list(dataf[, z]), FUN="length")
+  } else {
+    agr_sum <- aggregate(dataf[, y], list(ceiling(dataf[, z]/Increment) ), FUN="sum")
+    agr_n <- aggregate(dataf[, y], list(ceiling(dataf[, z]/Increment) ), FUN="length")
+  }
+  agr_df <- data.frame(z_lev=agr_sum[, 2], agr_n=agr_n[, 2])
+  agr_df <- cbind(agr_df, binconf(x=agr_df[,1], n=agr_df[,2], alpha=1 - conf_lev))
+  return(agr_df) 
+}
+
+#Continuous outcomes
+ftotTconf <- function(y, z, dataf, conf_lev, Increment) {
+  #Confidence interval data for increments
+  if(Increment == 1) {
+    agr_m <- aggregate(dataf[, y], list( dataf[, z]), FUN="mean")
+    agr_sd <- aggregate(dataf[, y], list(dataf[, z]), FUN="sd")
+    agr_n <- aggregate(dataf[, y], list(dataf[, z]), FUN="length")
+    agr_df <- data.frame(z_lev=agr_m[, 1], agr_m=agr_m[, 2], agr_sd=agr_sd[, 2], agr_n=agr_n[, 2])
+  } else {
+    agr_m <- aggregate(dataf[, y], list(ceiling(dataf[, z]/Increment) ), FUN="mean")
+    agr_sd <- aggregate(dataf[, y], list(ceiling(dataf[, z]/Increment) ), FUN="sd")
+    agr_n <- aggregate(dataf[, y], list(ceiling(dataf[, z]/Increment) ), FUN="length")
+    agr_df <- data.frame(z_lev=agr_m[, 1], agr_m=agr_m[, 2], agr_sd=agr_sd[, 2], agr_n=agr_n[, 2])
+  }
+  #Calculates confidence intervals
+  MOE <- qt((conf_lev/2)+.5, df=agr_df$agr_n - 1) * agr_df$agr_sd/sqrt(agr_df$agr_n)
+  Lower <- agr_df$agr_m - MOE
+  Upper <- agr_df$agr_m + MOE
+  adf_alpha <- data.frame(cbind(PointEst=agr_df$agr_m, Lower=Lower, Upper=Upper))
+  agr_df <- cbind(agr_df, adf_alpha)
+  return(agr_df ) 
+}
+
+#Exact Poisson
+ftotPconf <- function(y, z, dataf, conf_lev, Increment) {
+  #Confidence interval data for increments
+  if(Increment == 1) {
+    agr_sum <- aggregate(dataf[, y] ~ dataf[, z], FUN="sum")
+    agr_n <- aggregate(dataf[, y] ~ dataf[, z], FUN="length")
+    agr_df <- data.frame(z_lev=agr_sum[, 1], agr_sum=agr_sum[, 2], agr_n=agr_n[, 2])
+  } else {
+    agr_sum <- aggregate(dataf[, y] ~ ceiling(dataf[, z]/Increment), FUN="sum")
+    agr_n <- aggregate(dataf[, y] ~ ceiling(dataf[, z]/Increment), FUN="length")
+    agr_df <- data.frame(z_lev=agr_sum[, 1], agr_sum=agr_sum[, 2], agr_n=agr_n[, 2])
+  }
+  #Calculates confidence intervals
+  adf_alpha <- matrix(ncol= 3, nrow= nrow(agr_df), byrow = TRUE)
+  for (i in 1:nrow(agr_df)) {
+    adf_alpha[i, ] <- unlist(poisson.test(x=agr_df[i,2], T=agr_df[i, 3], conf.level= conf_lev)[c("estimate","conf.int")])
+  }
+  adf_alpha <- data.frame(adf_alpha)
+  colnames(adf_alpha) <- c("PointEst", "Lower", "Upper")
+  agr_df <- cbind(agr_df, adf_alpha)
+  return(agr_df=agr_df ) 
+}
+
+ftotconf <- function(y=ycivar, z=zcivar, dataf, conf_lev=ciconf_lev, Increment, Fci_type) {
+  switch(Fci_type,                #"var" and can be used anywhere in server.r.
+         "Mean (t)" =  ftotTconf(y, z, dataf, conf_lev, Increment), 
+         "Proportion (binomial)" =  ftotBconf(y, z, dataf, conf_lev, Increment), 
+         "Poisson (exact)" =  ftotPconf(y, z, dataf, conf_lev, Increment) 
+  )
+}
+
+#Reactive function that runs ftotconf above
+ftotCidf <- reactive({                  #This indicates the data frame I will use.
+  if(input$FCiCreate == "Yes") {
+    ftotconf(y=input$fycivar, z=input$fzcivar, dataf=df(), conf_lev=input$fciconf_lev, 
+          Increment=fci_Z_Increment(), Fci_type=input$fci_type)
+  }
+})
+
 ###############################################################
 ## Function here for the point estimate, lower, upper bounds ##
 ###############################################################
@@ -4935,6 +5028,84 @@ fci_fac <- reactive({                  #This indicates the data frame I will use
   }
 })
 
+
+############################################################
+## Function for total point estimate, lower, upper bounds ##
+############################################################ 
+ci_tot_fac_fnc <- function(z_lev, agr_df, NK, Straight.Line) {
+  #Parameters
+  prmtrs <- c("PointEst", "Lower", "Upper")
+  #Point est 
+  ci_p <- list()
+  if(Straight.Line== "No") {
+    x <- agr_df[, z_lev]
+    y <- agr_df[, prmtrs[1]]
+    xx <- rcspline.eval(x, inclx=TRUE, nk=NK)
+    knots <- attr(xx, "knots")
+    coef <- lsfit(xx, y)$coef
+    w <- rcspline.restate(knots, coef[-1], x="{\\rm BP}")
+    xtrans <- eval(attr(w, "function"))
+    ci_p <- cbind(x, y_p=coef[1] + xtrans(x), y)
+  } else {
+    x <- agr_df[, z_lev]
+    y <- agr_df[, prmtrs[1]]
+    ci_p <- cbind(x, y_p=y, y)
+  }
+  #Lower CI
+  ci_l <- list()
+  if(Straight.Line== "No") {
+    x <- agr_df[, z_lev]
+    y <- agr_df[, prmtrs[2]]
+    xx <- rcspline.eval(x, inclx=TRUE, nk=NK)
+    knots <- attr(xx, "knots")
+    coef <- lsfit(xx, y)$coef
+    w <- rcspline.restate(knots, coef[-1], x="{\\rm BP}")
+    xtrans <- eval(attr(w, "function"))
+    ci_l <- cbind(x, y_l=coef[1] + xtrans(x), y)
+  } else {
+    x <- agr_df[, z_lev]
+    y <- agr_df[, prmtrs[2]]
+    ci_l <- cbind(x, y_l=y, y)
+  }
+  #Upper CI
+  ci_u <- list()
+  if(Straight.Line== "No") {
+    x <- agr_df[, z_lev]
+    y <- agr_df[, prmtrs[3]]
+    xx <- rcspline.eval(x, inclx=TRUE, nk=NK)
+    knots <- attr(xx, "knots")
+    coef <- lsfit(xx, y)$coef
+    w <- rcspline.restate(knots, coef[-1], x="{\\rm BP}")
+    xtrans <- eval(attr(w, "function"))
+    ci_u <- cbind(x, y_u=coef[1] + xtrans(x), y)
+  } else {
+    x <- agr_df[, z_lev]
+    y <- agr_df[, prmtrs[3]]
+    ci_u <- cbind(x, y_u=y, y)
+  }
+  #For point estimtaes only
+  #  max_pest <- vector() 
+  #  min_pest <- vector() 
+  #  max_pest <- max(ci_p[,2])
+  #  min_pest <- min(ci_p[,2])
+  #For CIs only
+  #  max_ci <- vector() 
+  #  min_ci <- vector() 
+  #  max_ci <- max(ci_u[,2])
+  #  min_ci <- min(ci_l[,2])
+  return(list(ci_p=ci_p, ci_l=ci_l, ci_u=ci_u #, 
+              #max_pest=max_pest, min_pest=min_pest, max_ci=max_ci, min_ci=min_ci
+  ))
+}
+
+#Reactive function that runs ci_fac_fnc() above
+fci_tot_fac <- reactive({                  #This indicates the data frame I will use.
+  if(input$FCiCreate == "Yes") {
+    ci_tot_fac_fnc(z_lev="z_lev", agr_df=ftotCidf(), NK=input$FciNkKnots, 
+               Straight.Line= fCi_straight_line())
+  }
+})
+
 ######################################################
 ## Function to get the point overall point estimate ##
 ######################################################
@@ -4977,7 +5148,8 @@ fncAllTrndSpln <- function( agr_df, NK, Straight.Line) {
 plot_fci_fnc <- function(x, y, z, xcivar, ycivar, zcivar, dataf, LCol, LWd, Fci.Fac, 
                          ci_p, ci_l, ci_u,max_pest, min_pest, max_ci, min_ci, ctrs, 
                          cibands, fCiXLim1, fCiXLim2, fCiYLim1, fCiYLim2, Tot.Line, FCI.Tot,
-                         FCI.Tot.Straight, Conf.Intrv, Tgt.Line, Straight.Line, Time.Pt.Line) {
+                         FCI.Tot.Straight, Conf.Intrv, Tgt.Line, Straight.Line, Time.Pt.Line,
+                         ci_p_tot, ci_l_tot, ci_u_tot, Tot.Color, Tgt.Color, Tpt.Color, T3.Line.Width) {
   #Make text out of the confidence level
   ConINT <- paste0(as.character(Conf.Intrv*100), "%")
   #Main title
@@ -5023,14 +5195,6 @@ plot_fci_fnc <- function(x, y, z, xcivar, ycivar, zcivar, dataf, LCol, LWd, Fci.
         }
     } 
   }
-  #Add overall line
-  if (Tot.Line == "Yes") {
-    if(Straight.Line == "Yes") {
-      lines(FCI.Tot.Straight, col="black", lty=1, lwd=10)  
-    } else {
-      lines(FCI.Tot, col="black", lty=1, lwd=10)  
-    }
-  }
   #Add text names
   if(Straight.Line == "Yes") {
     for (i in 1:length(ctrs)) {
@@ -5045,10 +5209,54 @@ plot_fci_fnc <- function(x, y, z, xcivar, ycivar, zcivar, dataf, LCol, LWd, Fci.
       text(ci_p[[i]][nrow(ci_p[[i]]), "x"], ci_p[[i]][nrow(ci_p[[i]]), "y_p"], ctrs[i])
     }
   }
+
+  #Plot point estimate lines for the overall trend
+  ci_time_tot <- list() 
+  l95_tot <- list() 
+  u95_tot <- list() 
+  xx_t_tot <- list() 
+  yy_t_tot <- list() 
+  #Confidence bands
+  if (Tot.Line == "Line with band") {
+    if(Straight.Line == "Yes") {
+      ci_time_tot <- ci_l_tot[,1]
+      l95_tot <- ci_l_tot[, "y"]
+      u95_tot <- ci_u_tot[, "y"]
+      xx_t_tot <- c(ci_time_tot, rev(ci_time_tot))
+      yy_t_tot <- c(l95_tot, rev(u95_tot))
+      polygon(unlist(xx_t_tot), unlist(yy_t_tot), col = adjustcolor(Tot.Color, alpha.f = 0.4), 
+              border=adjustcolor(Tot.Color, alpha.f = 0.4))
+    } else {
+      ci_time_tot <- ci_l_tot[,1]
+      l95_tot <- ci_l_tot[, 2] #"y_p"
+      u95_tot <- ci_u_tot[, 2] #"y_p"
+      xx_t_tot <- c(ci_time_tot, rev(ci_time_tot))
+      yy_t_tot <- c(l95_tot, rev(u95_tot))
+      polygon(unlist(xx_t_tot), unlist(yy_t_tot), col = adjustcolor(Tot.Color, alpha.f = 0.4), 
+              border=adjustcolor(Tot.Color, alpha.f = 0.4))
+    } 
+  }
+  #Add overall lines
+  if (Tot.Line %in% c("Line", "Line with band") ) {
+  if(Straight.Line == "Yes") {
+    lines(ci_p_tot[, "x"], ci_p_tot[, "y"], lty=1, col= Tot.Color, lwd=T3.Line.Width)
+} else {
+  lines(ci_p_tot[, "x"], ci_p_tot[, "y_p"], lty=1, col= Tot.Color, lwd=T3.Line.Width)
+}
+  }
+  #Add overall line
+#  if (Tot.Line == "Yes") {
+#    if(Straight.Line == "Yes") {
+#      lines(FCI.Tot.Straight, col="black", lty=1, lwd=10)  
+#    } else {
+#      lines(FCI.Tot, col="black", lty=1, lwd=10)  
+#    }
+#  }
+  
   #Add target line
-  abline(h=Tgt.Line, col="gray", lty=3, lwd=7)
+  abline(h=Tgt.Line, col=Tgt.Color, lty=3, lwd=T3.Line.Width)
   #Add time point line
-  abline(v=Time.Pt.Line, col="gray", lty=1, lwd=5)
+  abline(v=Time.Pt.Line, col=Tpt.Color, lty=1, lwd=T3.Line.Width)
 }
 
 #Confidence interval plot reactive function
@@ -5061,7 +5269,10 @@ plot_fci <- reactive({                  #This indicates the data frame I will us
     ctrs=fci_fac()$ctrs, cibands=input$fcibands, fCiXLim1=input$fCiXLim1, fCiXLim2=input$fCiXLim2, 
     fCiYLim1=input$fCiYLim1, fCiYLim2=input$fCiYLim2, Tot.Line=fci_overall_line(), FCI.Tot=fci_all_line(), 
     FCI.Tot.Straight=fci_tot_group_aggr(), Conf.Intrv=input$fciconf_lev, 
-    Tgt.Line=fCi_target_line(), Straight.Line= fCi_straight_line(), Time.Pt.Line= fCi_time_point_line() )
+    Tgt.Line=fCi_target_line(), Straight.Line= fCi_straight_line(), Time.Pt.Line= fCi_time_point_line(), 
+    ci_p_tot=fci_tot_fac()$ci_p, ci_l_tot=fci_tot_fac()$ci_l, ci_u_tot=fci_tot_fac()$ci_u,
+    Tot.Color=fci_plot_Overall_Line_Colors(), Tgt.Color=fci_plot_Target_Line_Colors(), 
+    Tpt.Color=fci_plot_Time_Point_Line_Colors(), T3.Line.Width=fci_plot_targ_time_Line_Wd() )
     }
 })
 
@@ -5159,14 +5370,15 @@ output$FCI_nk_knots <- renderUI({
 })
 #Select whether to run the 95% confidence interval or not
 output$FCi_create <- renderUI({                                
-  selectInput("FCiCreate", "16. Create the time plot?",
+  selectInput("FCiCreate", "20. Create the time plot?",
               choices = c("No", "Yes"),
               selected="No")
 })
 #Select whether to run the 95% confidence interval or not
-output$FCi_ovral_line <- renderUI({                                
+output$FCi_ovral_line <- renderUI({
   selectInput("fciOvrLn", "12. Add the overall group line?",
-              choices = c("No", "Yes"),
+              #              choices = c("No", "Yes"),
+              choices = c("No", "Line", "Line with band"),
               selected="No")
 })
 #Reactive function for above
@@ -5212,25 +5424,63 @@ output$FCi_strght_ln <- renderUI({
 fCi_straight_line <- reactive({ 
   input$fciStrtLn  
 })
+#Select target and time line width
+output$fci_plot_TgtTpt_ln_wdth <- renderUI({                                 
+  numericInput("fciPlTgTpLnWd", "16. Select target/time line width.", 
+               value = 2, min=0, step = 1)     
+})
+#Reactive function for directly above
+fci_plot_targ_time_Line_Wd <- reactive({                 
+  input$fciPlTgTpLnWd 
+})
+
+#17. Select overall line color
+output$fci_plot_ovral_ln_clrs <- renderUI({                                 
+  selectInput("fciPltOLnClr", "17. Select 'overall' line color.", 
+              choices = xyplot_Line_Color_Names(), multiple=FALSE, selected="black")     
+})
+#Reactive function for directly above
+fci_plot_Overall_Line_Colors <- reactive({                 
+  input$fciPltOLnClr 
+})
+#18. Select target line color
+output$fci_plot_tgt_ln_clrs <- renderUI({                                 
+  selectInput("fciPltTLnClr", "18. Select target line color.", 
+              choices = xyplot_Line_Color_Names(), multiple=FALSE, selected="black")     
+})
+#Reactive function for directly above
+fci_plot_Target_Line_Colors <- reactive({                 
+  input$fciPltTLnClr 
+})
+#19. Select time point line color
+output$fci_plot_time_pt_ln_clrs <- renderUI({                                 
+  selectInput("fciPltTPLnClr", "19. Select time point line color.", 
+              choices = xyplot_Line_Color_Names(), multiple=FALSE, selected="black")     
+})
+#Reactive function for directly above
+fci_plot_Time_Point_Line_Colors <- reactive({                 
+  input$fciPltTPLnClr 
+})
+
 #14. Indicate lower limit of x-axis
 output$FCI__Xlim1 <- renderUI({
-  numericInput("fCiXLim1", "17. Lower X-axis limit.",
+  numericInput("fCiXLim1", "21. Lower X-axis limit.",
                value = range_fzcivar()[1], step = 1)
 })
 #15. Indicate upper limit of x-axis
 output$FCI__Xlim2 <- renderUI({
-  numericInput("fCiXLim2", "18. Upper X-axis limit.",
+  numericInput("fCiXLim2", "22. Upper X-axis limit.",
                value = if(fci_Z_Increment() ==1) { range_fzcivar()[2] } else {ceiling(range_fzcivar()[2]/fci_Z_Increment() ) } , 
                step = 1)
 })
 #16. Indicate lower limit of y-axis
 output$FCI__Ylim1 <- renderUI({
-  numericInput("fCiYLim1", "19. Lower Y-axis limit.",
+  numericInput("fCiYLim1", "23. Lower Y-axis limit.",
                value = range_fycivar()[1], step = .1)
 })
 #17. Indicate upper limit of x-axis
 output$FCI__Ylim2 <- renderUI({
-  numericInput("fCiYLim2", "20. Upper Y-axis limit.",
+  numericInput("fCiYLim2", "24. Upper Y-axis limit.",
                value = range_fycivar()[2], step = .1)
 })
 
@@ -5250,7 +5500,7 @@ output$time_ci_out1 <- renderTable({
 #This prints the point estimates and confidence intervals
 output$all_time_ci_out1 <- renderTable({
   if(input$FCiCreate == "Yes") {
-    fci_tot_group_aggr()
+    ftotCidf()
   }
 }, rownames = TRUE)
 
@@ -10400,13 +10650,9 @@ fncStSpcLegendFactoLev <- function(Model_fit, X_Lev) {
 
 #output$test1 <- renderPrint({
 #list( #head(modifiedDf1()),
-      #head(modifiedFacDf()), 
-#      non_modified_vars() ,
-#      modifiedNumDf()
-#      head(modifiedTimeVarCrt()), head(modifiedYMmonthCrt())
-#      modifiedDf()
+#  fci_tot_fac(),
+#  ftotCidf()
 #)  
-
 #  }) 
  
 

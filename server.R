@@ -1218,7 +1218,8 @@ nm_x_var <- reactive({
       list( "Predicted.Values"=try( describeYhatHistRslt() ),
             "Transformed.Yhat"=try(describeYhatHistRsltTrnsf()[["Transformed.Yhat"]] ),
             "Transformed.Full.Range"=try(describeYhatHistRsltTrnsf()[["Transformed.Full.Range"]]),
-            "Standard.Deviation.Yhat"= sd(yhat_hist_rslt(), na.rm=TRUE)
+            "Variation"=c("Standard.Deviation.Yhat"= sd(yhat_hist_rslt(), na.rm=TRUE), 
+              "Coefficient.of.Variation"= sd(yhat_hist_rslt(), na.rm=TRUE)/mean(yhat_hist_rslt(), na.rm=TRUE) )
       )
     })
 

@@ -4777,8 +4777,9 @@ fbconf <- function(x, xlev, y, z, dataf, conf_lev, Increment) {
     agr_sum <- aggregate(dataf[, y], list(dataf[, x] , ceiling(dataf[, z]/Increment) ), FUN="sum")
     agr_n <- aggregate(dataf[, y], list(dataf[, x] , ceiling(dataf[, z]/Increment) ), FUN="length")
   }
-  agr_df <- data.frame(x_lev=agr_sum[, 1], z_lev=agr_sum[, 2], agr_sum=agr_sum[, 3], agr_n=agr_n[, 3])
+  agr_df <- data.frame(x_lev=agr_sum[, 1], z_lev=as.integer(c(agr_sum[, 2])), agr_sum=agr_sum[, 3], agr_n=agr_n[, 3])
   agr_df <- cbind(agr_df, binconf(x=agr_df[,3], n=agr_df[,4], alpha=1 - conf_lev))
+  rownames(agr_df) <- 1:nrow(agr_df)
   return(agr_df) 
 }
 
@@ -4795,12 +4796,12 @@ ftconf <- function(x, xlev, y, z, dataf, conf_lev, Increment) {
     agr_m <- aggregate(dataf[, y], list(dataf[, x] , dataf[, z]), FUN="mean")
     agr_sd <- aggregate(dataf[, y], list(dataf[, x] , dataf[, z]), FUN="sd")
     agr_n <- aggregate(dataf[, y], list(dataf[, x] , dataf[, z]), FUN="length")
-    agr_df <- data.frame(x_lev=agr_m[, 1], z_lev=agr_m[, 2], agr_m=agr_m[, 3], agr_sd=agr_sd[, 3], agr_n=agr_n[, 3])
+    agr_df <- data.frame(x_lev=agr_m[, 1], z_lev=as.integer(c(agr_m[, 2])) , agr_m=agr_m[, 3], agr_sd=agr_sd[, 3], agr_n=agr_n[, 3])
   } else {
     agr_m <- aggregate(dataf[, y], list(dataf[, x] , ceiling(dataf[, z]/Increment) ), FUN="mean")
     agr_sd <- aggregate(dataf[, y], list(dataf[, x] , ceiling(dataf[, z]/Increment) ), FUN="sd")
     agr_n <- aggregate(dataf[, y], list(dataf[, x] , ceiling(dataf[, z]/Increment) ), FUN="length")
-    agr_df <- data.frame(x_lev=agr_m[, 1], z_lev=agr_m[, 2], agr_m=agr_m[, 3], agr_sd=agr_sd[, 3], agr_n=agr_n[, 3])
+    agr_df <- data.frame(x_lev=agr_m[, 1], z_lev=as.integer(c(agr_m[, 2])), agr_m=agr_m[, 3], agr_sd=agr_sd[, 3], agr_n=agr_n[, 3])
   }
   #Calculates confidence intervals
   MOE <- qt((conf_lev/2)+.5, df=agr_df$agr_n - 1) * agr_df$agr_sd/sqrt(agr_df$agr_n)
@@ -4823,11 +4824,11 @@ fpconf <- function(x, xlev, y, z, dataf, conf_lev, Increment) {
   if(Increment == 1) {
     agr_sum <- aggregate(dataf[, y] ~ dataf[, x]+ dataf[, z], FUN="sum")
     agr_n <- aggregate(dataf[, y] ~ dataf[, x]+ dataf[, z], FUN="length")
-    agr_df <- data.frame(x_lev=agr_sum[, 1], z_lev=agr_sum[, 2], agr_sum=agr_sum[, 3], agr_n=agr_n[, 3])
+    agr_df <- data.frame(x_lev=agr_sum[, 1], z_lev=as.integer(c(agr_sum[, 2])), agr_sum=agr_sum[, 3], agr_n=agr_n[, 3])
   } else {
     agr_sum <- aggregate(dataf[, y] ~ dataf[, x]+ ceiling(dataf[, z]/Increment), FUN="sum")
     agr_n <- aggregate(dataf[, y] ~ dataf[, x]+ ceiling(dataf[, z]/Increment), FUN="length")
-    agr_df <- data.frame(x_lev=agr_sum[, 1], z_lev=agr_sum[, 2], agr_sum=agr_sum[, 3], agr_n=agr_n[, 3])
+    agr_df <- data.frame(x_lev=agr_sum[, 1], z_lev=as.integer(c(agr_sum[, 2])), agr_sum=agr_sum[, 3], agr_n=agr_n[, 3])
   }
   #Calculates confidence intervals
   adf_alpha <- matrix(ncol= 3, nrow= nrow(agr_df), byrow = TRUE)
@@ -4869,8 +4870,9 @@ ftotBconf <- function(y, z, dataf, conf_lev, Increment) {
     agr_sum <- aggregate(dataf[, y], list(ceiling(dataf[, z]/Increment) ), FUN="sum")
     agr_n <- aggregate(dataf[, y], list(ceiling(dataf[, z]/Increment) ), FUN="length")
   }
-  agr_df <- data.frame(z_lev=agr_sum[, 1], agr_sum=agr_sum[, 2], agr_n=agr_n[, 2])
+  agr_df <- data.frame(z_lev=as.integer(c(agr_sum[, 1])), agr_sum=agr_sum[, 2], agr_n=agr_n[, 2])
   agr_df <- cbind(agr_df, binconf(x=agr_df[,2], n=agr_df[,3], alpha=1 - conf_lev))
+  rownames(agr_df) <- 1:nrow(agr_df)
   return(agr_df) 
 }
 
@@ -4881,12 +4883,12 @@ ftotTconf <- function(y, z, dataf, conf_lev, Increment) {
     agr_m <- aggregate(dataf[, y], list( dataf[, z]), FUN="mean")
     agr_sd <- aggregate(dataf[, y], list(dataf[, z]), FUN="sd")
     agr_n <- aggregate(dataf[, y], list(dataf[, z]), FUN="length")
-    agr_df <- data.frame(z_lev=agr_m[, 1], agr_m=agr_m[, 2], agr_sd=agr_sd[, 2], agr_n=agr_n[, 2])
+    agr_df <- data.frame(z_lev=as.integer(c(agr_m[, 1])), agr_m=agr_m[, 2], agr_sd=agr_sd[, 2], agr_n=agr_n[, 2])
   } else {
     agr_m <- aggregate(dataf[, y], list(ceiling(dataf[, z]/Increment) ), FUN="mean")
     agr_sd <- aggregate(dataf[, y], list(ceiling(dataf[, z]/Increment) ), FUN="sd")
     agr_n <- aggregate(dataf[, y], list(ceiling(dataf[, z]/Increment) ), FUN="length")
-    agr_df <- data.frame(z_lev=agr_m[, 1], agr_m=agr_m[, 2], agr_sd=agr_sd[, 2], agr_n=agr_n[, 2])
+    agr_df <- data.frame(z_lev= as.integer(c(agr_m[, 1])), agr_m=agr_m[, 2], agr_sd=agr_sd[, 2], agr_n=agr_n[, 2])
   }
   #Calculates confidence intervals
   MOE <- qt((conf_lev/2)+.5, df=agr_df$agr_n - 1) * agr_df$agr_sd/sqrt(agr_df$agr_n)
@@ -4903,11 +4905,11 @@ ftotPconf <- function(y, z, dataf, conf_lev, Increment) {
   if(Increment == 1) {
     agr_sum <- aggregate(dataf[, y] ~ dataf[, z], FUN="sum")
     agr_n <- aggregate(dataf[, y] ~ dataf[, z], FUN="length")
-    agr_df <- data.frame(z_lev=agr_sum[, 1], agr_sum=agr_sum[, 2], agr_n=agr_n[, 2])
+    agr_df <- data.frame(z_lev= as.integer(c(agr_sum[, 1])), agr_sum=agr_sum[, 2], agr_n=agr_n[, 2])
   } else {
     agr_sum <- aggregate(dataf[, y] ~ ceiling(dataf[, z]/Increment), FUN="sum")
     agr_n <- aggregate(dataf[, y] ~ ceiling(dataf[, z]/Increment), FUN="length")
-    agr_df <- data.frame(z_lev=agr_sum[, 1], agr_sum=agr_sum[, 2], agr_n=agr_n[, 2])
+    agr_df <- data.frame(z_lev= as.integer(c(agr_sum[, 1])), agr_sum=agr_sum[, 2], agr_n=agr_n[, 2])
   }
   #Calculates confidence intervals
   adf_alpha <- matrix(ncol= 3, nrow= nrow(agr_df), byrow = TRUE)
@@ -5450,13 +5452,13 @@ output$time_ci_out1 <- renderTable({
   if(input$FCiCreate == "Yes") {
     fcidf()
   }
-}, rownames = TRUE)
+}, rownames = TRUE, digits =3)
 #This prints the point estimates and confidence intervals
 output$all_time_ci_out1 <- renderTable({
   if(input$FCiCreate == "Yes") {
     ftotCidf()
   }
-}, rownames = TRUE)
+}, rownames = TRUE, digits =3)
 
 
 ############

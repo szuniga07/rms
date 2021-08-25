@@ -1874,7 +1874,7 @@ tabPanel("95% CIs",
          h5("Modify the plot space in #22-25. Enter values into #13 and #14 when needed."),
          br(),
          plotOutput("Plot_Fci_output", height = 800, width="100%"),
-         h5("These are point estimates and confidence intervals. These may not match up with smoothed lines."),
+         h5("These are point estimates and confidence intervals. These may not match up with smoothed lines. x_lev and z_lev match with #2 and #3 above."),
          tableOutput("time_ci_out1"),
          h5("Overall rates. Uses all data and used for the 'overall group trend line'."),
          tableOutput("all_time_ci_out1")

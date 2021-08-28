@@ -5201,10 +5201,18 @@ plot_fci_fnc <- function(x, y, z, xcivar, ycivar, zcivar, dataf, LCol, LWd, Fci.
   lines(ci_p_tot[, "x"], ci_p_tot[, "y_p"], lty=1, col= Tot.Color, lwd=T3.Line.Width)
 }
   }
+  
   #Add target line
-  abline(h=Tgt.Line, col=Tgt.Color, lty=3, lwd=T3.Line.Width)
+  for (i in 1:length(Tgt.Line)) {
+    abline(h= as.numeric(eval(parse(text=Tgt.Line[i] )) ), 
+           col=Tgt.Color, lty=3, lwd=T3.Line.Width)
+  }
   #Add time point line
-  abline(v=Time.Pt.Line, col=Tpt.Color, lty=1, lwd=T3.Line.Width)
+  for (i in 1:length(Time.Pt.Line)) {
+    abline(v= as.numeric(eval(parse(text=Time.Pt.Line[i] )) ), 
+           col=Tpt.Color, lty=1, lwd=T3.Line.Width)
+  }
+  
 }
 
 #Confidence interval plot reactive function
@@ -5336,8 +5344,8 @@ fci_overall_line <- reactive({
 })
 #Add a target line
 output$FCi_Tgt_Line <- renderUI({                                 
-  numericInput("fciTgtLn", "13. Add a target line.",
-               value = NULL, step = .1)
+  textInput("fciTgtLn", "13. Add a target line.",
+            value = paste0('c( ', ')') )
 })
 #Reactive function for above
 fCi_target_line <- reactive({ 
@@ -5345,8 +5353,8 @@ fCi_target_line <- reactive({
 })
 #Add a time point line
 output$FCi_Tm_Pt_Line <- renderUI({                                 
-  numericInput("fciTmPtLn", "14. Add a time point line.",
-               value = NULL, step = .1)
+  textInput("fciTmPtLn", "14. Add a time point line.",
+            value = paste0('c( ', ')'))
 })
 #Reactive function for above
 fCi_time_point_line <- reactive({ 

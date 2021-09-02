@@ -332,7 +332,7 @@ tabPanel("PREDs",                                #Creates a new panel named "Tes
 
 ############## Describe and Missing #############################
 tabPanel("Describe",
-         h4("Calculator"),
+         h4("Calculator/Grapher"),
          fluidRow(
            column(4, 
                   uiOutput("calculator_box")),
@@ -343,6 +343,7 @@ tabPanel("Describe",
          h5("To load an object to the global environment, use assign(), e.g., assign(\"my_data\", my_data[1:5000, ], envir=globalenv() )"),
          h5("Add leading 0s to a numeric X: assign(\"airquality\", within(airquality, {Temp <- sprintf(\"%012d\", Temp) }), envir=globalenv() )"),
          verbatimTextOutput("prnt_calculation"),
+         plotOutput("plt_calculation", height = 500, width = "100%"),
          br(),
          h4("Descriptives on means and missing values. Plot the target variable, stratifying by factors."),
          br(),

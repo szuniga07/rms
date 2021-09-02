@@ -5948,13 +5948,11 @@ fncSctrPltCr <- function(DF, X, Y,
 ##################################
 fncSctrPlt <- function(DF, X, Y, sct_plt_clr, CT) {
   #Scatter plot
-    plot(DF[, X], DF[, Y] , main= paste0("Correlation of ", Y, " on ", X, 
+  scatter.smooth(DF[, X], DF[, Y] , main= paste0("Correlation of ", Y, " on ", X, 
                                         " (correlation= ", round(as.numeric(CT["estimate"]), 3), 
                                         ", ", "p-value= ", try(round(as.numeric(CT["p.value"]), 4)), ")"),
-         xlab=X, ylab=Y)
-    lw1 <- loess(formula= as.formula(paste(Y, "~", X)), data=DF)
-    j <- order(DF[, X])
-    lines(DF[, X][j], lw1$fitted[j],col= sct_plt_clr,lwd=3)
+         xlab=X, ylab=Y,
+         lpars =list(col = "red", lwd = 3, lty = 3))
 }
 
 ##########################################################################
@@ -6138,8 +6136,8 @@ Calculator_Box_Input <- reactive({
 })                                                     
 #2. Run the formula
 output$calculator_yesno <- renderUI({                                 
-  selectInput("calcYN", "2. Do you want to calculate the results?", 
-              choices = c("No", "Yes"), multiple=FALSE, selected="No")  
+  selectInput("calcYN", "2. Calculate results or create a graph?", 
+              choices = c("No", "Results", "Graph"), multiple=FALSE, selected="No")  
 })
 #2A. Reactive function for textbox to enter a formula
 Calculator_YN <- reactive({
@@ -6147,10 +6145,16 @@ Calculator_YN <- reactive({
 })                                                     
 #Print the calculation 
 output$prnt_calculation <- renderPrint({
-  if (Calculator_YN() == "Yes") {
+  if (Calculator_YN() == "Results") {
     eval(parse(text=Calculator_Box_Input() ))
   }
 })
+#Plot the calculation 
+  output$plt_calculation <- renderPlot({
+  if (Calculator_YN() == "Graph") {
+    eval(eval(parse(text=Calculator_Box_Input() )))
+  }
+  })
 
 ################################################################################
 #                           Summarize the data                                 #

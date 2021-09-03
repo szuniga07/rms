@@ -5256,7 +5256,6 @@ output$FCIx <- renderUI({                                 #Same idea as output$v
   selectInput("fxcivar", "2. Select the factor.", 
               choices = setdiff(var(), input$fycivar), multiple=FALSE, selected=var()[2])     #Will make choices based on my reactive function.
 })
-
 #Select the predictors.
 output$FCIz <- renderUI({                                 #Same idea as output$vy
   selectInput("fzcivar", "3. Select a time variable.", 
@@ -5303,7 +5302,8 @@ output$FCI_bands <- renderUI({                                 #Same idea as out
 #Select line colors
 output$fci_plot_ln_clrs <- renderUI({                                 
   selectInput("fciPltLnClr", "9. Select line colors.", 
-              choices = xyplot_Line_Color_Names(), multiple=TRUE)     
+              choices = xyplot_Line_Color_Names(), multiple=TRUE, 
+              selected= xyplot_Line_Color_Names()[1:length(fci_plot_groups())] )     
 })
 #Reactive function for directly above
 fci_plot_Line_Colors <- reactive({                 

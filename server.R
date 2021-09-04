@@ -4771,10 +4771,10 @@ fbconf <- function(x, xlev, y, z, dataf, conf_lev, Increment) {
   }
   #Calculates confidence intervals for single units or in increments
   if(Increment == 1) {
-    agr_sum <- aggregate(dataf[, y], list(dataf[, x] , dataf[, z]), FUN="sum")
+    agr_sum <- aggregate(dataf[, y], list(dataf[, x] , dataf[, z]), FUN="sum", na.rm=TRUE)
     agr_n <- aggregate(dataf[, y], list(dataf[, x] , dataf[, z]), FUN="length")
   } else {
-    agr_sum <- aggregate(dataf[, y], list(dataf[, x] , ceiling(dataf[, z]/Increment) ), FUN="sum")
+    agr_sum <- aggregate(dataf[, y], list(dataf[, x] , ceiling(dataf[, z]/Increment) ), FUN="sum", na.rm=TRUE)
     agr_n <- aggregate(dataf[, y], list(dataf[, x] , ceiling(dataf[, z]/Increment) ), FUN="length")
   }
   agr_df <- data.frame(x_lev=agr_sum[, 1], z_lev=as.integer(c(agr_sum[, 2])), agr_sum=agr_sum[, 3], agr_n=agr_n[, 3])
@@ -4793,13 +4793,13 @@ ftconf <- function(x, xlev, y, z, dataf, conf_lev, Increment) {
   }
   #Confidence interval data for increments
   if(Increment == 1) {
-    agr_m <- aggregate(dataf[, y], list(dataf[, x] , dataf[, z]), FUN="mean")
-    agr_sd <- aggregate(dataf[, y], list(dataf[, x] , dataf[, z]), FUN="sd")
+    agr_m <- aggregate(dataf[, y], list(dataf[, x] , dataf[, z]), FUN="mean", na.rm=TRUE)
+    agr_sd <- aggregate(dataf[, y], list(dataf[, x] , dataf[, z]), FUN="sd", na.rm=TRUE)
     agr_n <- aggregate(dataf[, y], list(dataf[, x] , dataf[, z]), FUN="length")
     agr_df <- data.frame(x_lev=agr_m[, 1], z_lev=as.integer(c(agr_m[, 2])) , agr_m=agr_m[, 3], agr_sd=agr_sd[, 3], agr_n=agr_n[, 3])
   } else {
-    agr_m <- aggregate(dataf[, y], list(dataf[, x] , ceiling(dataf[, z]/Increment) ), FUN="mean")
-    agr_sd <- aggregate(dataf[, y], list(dataf[, x] , ceiling(dataf[, z]/Increment) ), FUN="sd")
+    agr_m <- aggregate(dataf[, y], list(dataf[, x] , ceiling(dataf[, z]/Increment) ), FUN="mean", na.rm=TRUE)
+    agr_sd <- aggregate(dataf[, y], list(dataf[, x] , ceiling(dataf[, z]/Increment) ), FUN="sd", na.rm=TRUE)
     agr_n <- aggregate(dataf[, y], list(dataf[, x] , ceiling(dataf[, z]/Increment) ), FUN="length")
     agr_df <- data.frame(x_lev=agr_m[, 1], z_lev=as.integer(c(agr_m[, 2])), agr_m=agr_m[, 3], agr_sd=agr_sd[, 3], agr_n=agr_n[, 3])
   }
@@ -4822,11 +4822,11 @@ fpconf <- function(x, xlev, y, z, dataf, conf_lev, Increment) {
   }
   #Confidence interval data for increments
   if(Increment == 1) {
-    agr_sum <- aggregate(dataf[, y] ~ dataf[, x]+ dataf[, z], FUN="sum")
+    agr_sum <- aggregate(dataf[, y] ~ dataf[, x]+ dataf[, z], FUN="sum", na.rm=TRUE)
     agr_n <- aggregate(dataf[, y] ~ dataf[, x]+ dataf[, z], FUN="length")
     agr_df <- data.frame(x_lev=agr_sum[, 1], z_lev=as.integer(c(agr_sum[, 2])), agr_sum=agr_sum[, 3], agr_n=agr_n[, 3])
   } else {
-    agr_sum <- aggregate(dataf[, y] ~ dataf[, x]+ ceiling(dataf[, z]/Increment), FUN="sum")
+    agr_sum <- aggregate(dataf[, y] ~ dataf[, x]+ ceiling(dataf[, z]/Increment), FUN="sum", na.rm=TRUE)
     agr_n <- aggregate(dataf[, y] ~ dataf[, x]+ ceiling(dataf[, z]/Increment), FUN="length")
     agr_df <- data.frame(x_lev=agr_sum[, 1], z_lev=as.integer(c(agr_sum[, 2])), agr_sum=agr_sum[, 3], agr_n=agr_n[, 3])
   }
@@ -4864,10 +4864,10 @@ fcidf <- reactive({                  #This indicates the data frame I will use.
 ftotBconf <- function(y, z, dataf, conf_lev, Increment) {
   #Calculates confidence intervals for single units or in increments
   if(Increment == 1) {
-    agr_sum <- aggregate(dataf[, y], list(dataf[, z]), FUN="sum")
+    agr_sum <- aggregate(dataf[, y], list(dataf[, z]), FUN="sum", na.rm=TRUE)
     agr_n <- aggregate(dataf[, y], list(dataf[, z]), FUN="length")
   } else {
-    agr_sum <- aggregate(dataf[, y], list(ceiling(dataf[, z]/Increment) ), FUN="sum")
+    agr_sum <- aggregate(dataf[, y], list(ceiling(dataf[, z]/Increment) ), FUN="sum", na.rm=TRUE)
     agr_n <- aggregate(dataf[, y], list(ceiling(dataf[, z]/Increment) ), FUN="length")
   }
   agr_df <- data.frame(z_lev=as.integer(c(agr_sum[, 1])), agr_sum=agr_sum[, 2], agr_n=agr_n[, 2])
@@ -4880,13 +4880,13 @@ ftotBconf <- function(y, z, dataf, conf_lev, Increment) {
 ftotTconf <- function(y, z, dataf, conf_lev, Increment) {
   #Confidence interval data for increments
   if(Increment == 1) {
-    agr_m <- aggregate(dataf[, y], list( dataf[, z]), FUN="mean")
-    agr_sd <- aggregate(dataf[, y], list(dataf[, z]), FUN="sd")
+    agr_m <- aggregate(dataf[, y], list( dataf[, z]), FUN="mean", na.rm=TRUE)
+    agr_sd <- aggregate(dataf[, y], list(dataf[, z]), FUN="sd", na.rm=TRUE)
     agr_n <- aggregate(dataf[, y], list(dataf[, z]), FUN="length")
     agr_df <- data.frame(z_lev=as.integer(c(agr_m[, 1])), agr_m=agr_m[, 2], agr_sd=agr_sd[, 2], agr_n=agr_n[, 2])
   } else {
-    agr_m <- aggregate(dataf[, y], list(ceiling(dataf[, z]/Increment) ), FUN="mean")
-    agr_sd <- aggregate(dataf[, y], list(ceiling(dataf[, z]/Increment) ), FUN="sd")
+    agr_m <- aggregate(dataf[, y], list(ceiling(dataf[, z]/Increment) ), FUN="mean", na.rm=TRUE)
+    agr_sd <- aggregate(dataf[, y], list(ceiling(dataf[, z]/Increment) ), FUN="sd", na.rm=TRUE)
     agr_n <- aggregate(dataf[, y], list(ceiling(dataf[, z]/Increment) ), FUN="length")
     agr_df <- data.frame(z_lev= as.integer(c(agr_m[, 1])), agr_m=agr_m[, 2], agr_sd=agr_sd[, 2], agr_n=agr_n[, 2])
   }
@@ -4903,11 +4903,11 @@ ftotTconf <- function(y, z, dataf, conf_lev, Increment) {
 ftotPconf <- function(y, z, dataf, conf_lev, Increment) {
   #Confidence interval data for increments
   if(Increment == 1) {
-    agr_sum <- aggregate(dataf[, y] ~ dataf[, z], FUN="sum")
+    agr_sum <- aggregate(dataf[, y] ~ dataf[, z], FUN="sum", na.rm=TRUE)
     agr_n <- aggregate(dataf[, y] ~ dataf[, z], FUN="length")
     agr_df <- data.frame(z_lev= as.integer(c(agr_sum[, 1])), agr_sum=agr_sum[, 2], agr_n=agr_n[, 2])
   } else {
-    agr_sum <- aggregate(dataf[, y] ~ ceiling(dataf[, z]/Increment), FUN="sum")
+    agr_sum <- aggregate(dataf[, y] ~ ceiling(dataf[, z]/Increment), FUN="sum", na.rm=TRUE)
     agr_n <- aggregate(dataf[, y] ~ ceiling(dataf[, z]/Increment), FUN="length")
     agr_df <- data.frame(z_lev= as.integer(c(agr_sum[, 1])), agr_sum=agr_sum[, 2], agr_n=agr_n[, 2])
   }

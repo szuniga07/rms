@@ -4462,6 +4462,18 @@ fncPrpTst <- function(DF, Y, X, P, Alt, CI, Correct, Samp1) {
   return("Results"= P.Test)
 }
 
+####################################################
+## Function to do proportion pairwise comparisons ##
+####################################################
+fncPrwsPrpTst <- function(DF, Y, X) {
+  #Determine if it is 1 or 2 sample test
+  Tbl <- table(DF[, X], DF[, Y])
+  Tbl <- Tbl[, 2:1]
+  #Conduct proportion test
+  P.Test <- pairwise.prop.test(Tbl, alternative = "two.sided", p.adjust.method="bonferroni")
+  return("Results"= P.Test)
+}
+
 #################################
 ## Function to create a t-test ##
 #################################
@@ -4485,6 +4497,37 @@ fncTTst <- function(DF, Y, X, M, Pair, Alt, CI, Samp1) {
     T.Tst <- t.test(formula=FMLA, data=DF, alternative = Alt, conf.level = CI)
   }
   return("Results"=T.Tst)
+}
+
+############################################
+## Function to do group tests for 95% CIs ##
+############################################
+fncCnfGrpTst <- function(X, Y, DF, ci_type) {
+  if (ci_type %in% c("Mean (t)", "Poisson (exact)") ) {
+    Formula_1 <- as.formula(paste(paste0(Y, "~"),   
+                                  paste( "as.factor(", X,")" )))
+  }
+  switch(ci_type,                
+         "Mean (t)" =  summary(aov(formula= Formula_1, data=DF)), 
+         "Proportion (binomial)" = fncPrpTst(DF, Y, X, P=NULL, Alt="two.sided", CI=.95, 
+                                             Correct=TRUE, Samp1= "No"), 
+         "Poisson (exact)" =  summary(aov(formula= Formula_1, data=DF)) 
+  )
+}
+
+#############################################
+## Function for post-hoc tests for 95% CIs ##
+#############################################
+fncCnfPstHc <- function(X, Y, DF, ci_type) {
+  if (ci_type %in% c("Mean (t)", "Poisson (exact)") ) {
+    Formula_1 <- as.formula(paste(paste0(Y, "~"),   
+                                  paste( "as.factor(", X,")" )))
+  }
+  switch(ci_type,                
+         "Mean (t)" =  TukeyHSD(aov(formula= Formula_1, data=DF)), 
+         "Proportion (binomial)" = fncPrwsPrpTst(DF, Y, X), 
+         "Poisson (exact)" =  TukeyHSD(aov(formula= Formula_1, data=DF)) 
+  )
 }
 
 ###############################
@@ -4728,7 +4771,9 @@ output$Cidf_output <- renderPrint({
   #cidf2()
   if(input$CiCreate == "Yes") {
     list("Alphabetical"=cidf()[["adf_alpha"]][nrow(cidf()[["adf_alpha"]]):1,], 
-         "Numerical"=cidf()[["adf_numeric"]][nrow(cidf()[["adf_numeric"]]):1,])
+         "Numerical"=cidf()[["adf_numeric"]][nrow(cidf()[["adf_numeric"]]):1,],
+         "Group.Tests"= conf_group_test(),
+         "Pairwise.Comparisons"= conf_post_hoc())
   }
 })
 
@@ -4757,6 +4802,19 @@ ci_plot_Point_Colors <- reactive({
   input$ciPltPtClr 
 })
 
+## Reactive function to do group tests ##
+conf_group_test <- reactive({                  #This indicates the data frame I will use.
+  if(input$CiCreate == "Yes") {
+    fncCnfGrpTst(X=input$xcivar, Y=input$ycivar, DF=df(), ci_type= input$ci_type)
+  }
+})
+
+## Reactive function to do pairwise tests ##
+conf_post_hoc <- reactive({                  #This indicates the data frame I will use.
+  if(input$CiCreate == "Yes") {
+    fncCnfPstHc(X=input$xcivar, Y=input$ycivar, DF=df(), ci_type= input$ci_type)
+  }
+})
 
 #######################################
 # Graphs for trajectories by time     #

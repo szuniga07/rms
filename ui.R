@@ -82,7 +82,7 @@ fluidRow(
          uiOutput("modify_df_yes_no")) 
 ),
 br(),
-h6("Create 'Time' as the difference between 2 dates, select 'Time1', 'Time2'. Create numeric 'YYMM' as month + year: 202101. And 'Month': ordered(YYMM)."),
+h6("Create 'Time' as the difference between 2 dates, select 'Time1', 'Time2'. If none, 'No.Time.Var=NA'. Create numeric 'YYMM' as month + year: 202101. And 'Month': ordered(YYMM)."),
 fluidRow(
   column(3,
          uiOutput("modify_2_var_Time")),  

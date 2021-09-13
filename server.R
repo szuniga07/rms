@@ -5261,8 +5261,12 @@ plot_fci_fnc <- function(x, y, z, xcivar, ycivar, zcivar, dataf, LCol, LWd, Fci.
   if (Tot.Line %in% c("Line", "Line with band") ) {
   if(Straight.Line == "Yes") {
     lines(ci_p_tot[, "x"], ci_p_tot[, "y"], lty=1, col= Tot.Color, lwd=T3.Line.Width)
+    text(ci_p_tot[1, "x"], ci_p_tot[1, "y"], labels= "ALL", cex= Text.Size)
+    text(ci_p_tot[nrow(ci_p_tot), "x"], ci_p_tot[nrow(ci_p_tot), "y"], labels= "ALL", cex= Text.Size)
 } else {
   lines(ci_p_tot[, "x"], ci_p_tot[, "y_p"], lty=1, col= Tot.Color, lwd=T3.Line.Width)
+  text(ci_p_tot[1, "x"], ci_p_tot[1, "y_p"], labels= "ALL", cex= Text.Size)
+  text(ci_p_tot[nrow(ci_p_tot), "x"], ci_p_tot[nrow(ci_p_tot), "y_p"], labels= "ALL", cex= Text.Size)
 }
   }
   

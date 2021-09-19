@@ -845,6 +845,12 @@ fluidRow(
   column(3,
          uiOutput("SurvPltYlim2"))
 ),
+fluidRow(
+  column(3, 
+         uiOutput("SurvPltLnClr")),
+  column(3,
+         uiOutput("SurvPltLnWdt"))
+),
 h5("For model survival plots, select either 'Survival' or 'Cumulative Incidence' for #10 (i.e., plot not run for 'Cumulative Hazard')."),
 fluidRow(
   column(3, 
@@ -876,13 +882,19 @@ fluidRow(
   column(3, 
          uiOutput("KMSurvPltXlim1")),
   column(3,
-         uiOutput("KMSurvPltXlim2"))
-),
-fluidRow(
+         uiOutput("KMSurvPltXlim2")),
   column(3, 
          uiOutput("KMSurvPltYlim1")),
   column(3,
          uiOutput("KMSurvPltYlim2"))
+),
+fluidRow(
+  column(3, 
+         uiOutput("KMSurvPltLnClr")),
+  column(3,
+         uiOutput("KMSurvPltLnWdt")),
+  column(3,
+         uiOutput("KMSurvPltLgdLoc"))
 ),
 br(),
 plotOutput("km_plot", height = 700, width="100%"),

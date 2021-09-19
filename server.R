@@ -7778,20 +7778,38 @@ output$SurvPltYlim2 <- renderUI({
   numericInput("sp_Ylim2", "8. Upper Y-axis limit.",
                value = 1, step = .01)
 })
-
+#9. Select line colors
+output$SurvPltLnClr <- renderUI({                                 
+  selectInput("sp_ln_clr", "9. Select line colors.", 
+              choices = xyplot_Line_Color_Names(), multiple=TRUE, 
+              selected= xyplot_Line_Color_Names()[1:length( unique(df()[, input$SrvPltX]))] )    
+})
+#9A. Reactive function for directly above
+Surv_Line_Colors <- reactive({                 
+  input$sp_ln_clr 
+})
+#10. Select line width
+output$SurvPltLnWdt <- renderUI({                                 
+  numericInput("sp_ln_wd", "10. Select the group line width.", 
+               value = 2, min=0, step = .1)     
+})
+#10A. Reactive function for directly above
+Surv_Line_Width <- reactive({                 
+  input$sp_ln_wd 
+})
 #Create yes/no box to run survival plot
 output$SpTimeInc <- renderUI({                                 
-  numericInput("sp_timeinc", "9. Indicate the X-axis time increment.", 
+  numericInput("sp_timeinc", "11. Indicate the X-axis time increment.", 
                value = round((input$sp_Xlim2/5), 0), step = 1, min=0)     
 })
 #Indicate if you want the hazard function
 output$HazardPlot <- renderUI({                                 
-  selectInput("hazard_plot", "10. Do you want the hazard or survival?", 
+  selectInput("hazard_plot", "12. Do you want the hazard or survival?", 
               choices = c("Cumulative Hazard", "Cumulative Incidence", "Survival"), multiple=FALSE, selected="Survival")     
 })
 #Indicate if you want the log-minus-log plot
 output$SrvLogLog <- renderUI({                                 
-  selectInput("srv_log_log", "11. Want a log-minus-log plot (assess PH)?", 
+  selectInput("srv_log_log", "13. Want a log-minus-log plot (assess PH)?", 
               choices = c("No", "Yes"), multiple=FALSE, selected="No")     
 })
 #"Survival" or "Hazard" to be used for labels
@@ -7835,7 +7853,8 @@ output$surv_plot1 <- renderPlot({
     if ("strata" %in% names(srvft1()) ) {
       plot(srvft1(), 
            xlim=c(input$sp_Xlim1, input$sp_Xlim2), ylim=c(input$sp_Ylim1,input$sp_Ylim2),
-           ylab= paste0(SrvHzrLbl()), fun=SrvHzr(),
+           ylab= paste0(SrvHzrLbl()), fun=SrvHzr(), label.curves=list(col=Surv_Line_Colors(), cex=Surv_Line_Width()), 
+           lwd=Surv_Line_Width(), col=Surv_Line_Colors(),
            xlab=paste0(SrvHzrLbl()," functions of time stratified by ", strsplit(names(srvft1()$strata)[1], "=")[[1]][1], 
                        " with ", input$SrvPltLvl*100, "% confidence intervals"), 
            mark.time=T, pch=LETTERS[1:length(names(srvft1()$strata))])
@@ -7843,7 +7862,8 @@ output$surv_plot1 <- renderPlot({
           if ( !"strata" %in% names(srvft1()) ) {
       plot(srvft1(), fun=SrvHzr(),
            xlim=c(input$sp_Xlim1, input$sp_Xlim2), ylim=c(input$sp_Ylim1,input$sp_Ylim2),
-           ylab=paste0(SrvHzrLbl()),
+           ylab=paste0(SrvHzrLbl()), label.curves=list(col=Surv_Line_Colors(), cex=Surv_Line_Width()), 
+           lwd=Surv_Line_Width(), col=Surv_Line_Colors(),
            xlab=paste0(SrvHzrLbl(), " function of time with ", input$SrvPltLvl*100, "% confidence intervals"))
     }
   } else {
@@ -7852,7 +7872,8 @@ output$surv_plot1 <- renderPlot({
       (do.call("survplot", list(fit1(), input$SrvPltX, conf.int=input$SrvPltLvl, conf=input$surv_plt_band, 
                                 xlim=c(input$sp_Xlim1, input$sp_Xlim2), ylim=c(input$sp_Ylim1,input$sp_Ylim2),
                                 xlab=paste0(SrvHzrLbl(), " time by ", input$SrvPltX), time.inc=input$sp_timeinc, 
-                                fun=SrvHzr(), loglog= SrvLogLog() ))) 
+                                fun=SrvHzr(), loglog= SrvLogLog(), label.curves=list(col=Surv_Line_Colors(), cex=Surv_Line_Width()), 
+                                lwd=Surv_Line_Width(), col=Surv_Line_Colors() ))) 
     } 
     if(input$surv_plt_run == "Yes") {
       box()
@@ -7916,6 +7937,41 @@ KMSrvHzrLbl <- reactive({
   }
 })
 
+#Reactive function to get group levels
+KM_Surv_Plot_Groups <- reactive({                 
+  unique(df()[, input$KMSrvPltX]) 
+})
+#9. Select line colors
+output$KMSurvPltLnClr <- renderUI({                                 
+  selectInput("km_sp_ln_clr", "9. Select line colors.", 
+              choices = xyplot_Line_Color_Names(), multiple=TRUE, 
+              selected= xyplot_Line_Color_Names()[1:length(KM_Surv_Plot_Groups())] )     
+})
+#9A. Reactive function for directly above
+KM_Surv_Line_Colors <- reactive({                 
+  input$km_sp_ln_clr 
+})
+#10. Select line width
+output$KMSurvPltLnWdt <- renderUI({                                 
+  numericInput("km_sp_ln_wd", "10. Select the group line width.", 
+               value = 2, min=0, step = 1)     
+})
+#10A. Reactive function for directly above
+KM_Surv_Line_Width <- reactive({                 
+  input$km_sp_ln_wd 
+})
+#11. Legend location
+output$KMSurvPltLgdLoc <- renderUI({                                
+  selectInput("km_sp_lgd_loc", "11. Select the legend location.",        
+              choices = c("bottomright","bottom","bottomleft","left","topleft","top","topright","right","center"), 
+              multiple=FALSE, selected="topleft" ) 
+})
+#11A. Reactive function for legend location
+KM_Surv_legend_location <- reactive({
+  input$km_sp_lgd_loc
+})
+
+
 #Function to get the right KM formula for groups
 kmSrvftFmlaFnc <- function (regress_type,Y,cens,KMSrvPltX) {
   if (regress_type == "Cox PH") {
@@ -7964,30 +8020,23 @@ KMsrvftUnconFmla <- reactive({
   }
 })
 
-#KM legend
-KMLgnd <- reactive({ 
-  if (input$km_hazard_plot == "Yes") {
-   "bottom"
-  } else {
-    "top"
-  }
-})
-
 #Kaplan-Meier survival or hazard plots
 kmSurvPltFnc <- function(KMsrvftFmla, df, Y, km_hazard_plot, KMSrvHzrLbl, km_sp_Xlim1, km_sp_Xlim2,
-                         km_sp_Ylim1, km_sp_Ylim2, KMSrvPltX, lgnd) {
+                         km_sp_Ylim1, km_sp_Ylim2, KMSrvPltX, 
+                         LCOL, LWD, lgnd.loc) {
   pltType <- ifelse(km_hazard_plot == "No", "S", "F")
   plot(survfit(KMsrvftFmla, data= df), 
        xlim=c(km_sp_Xlim1, km_sp_Xlim2), ylim=c(km_sp_Ylim1, km_sp_Ylim2),
        ylab= paste0(KMSrvHzrLbl, " Probability"), 
-       xlab=Y, mark.time=T, fun=pltType , lwd=3, 
+       xlab=Y, mark.time=T, fun=pltType , lwd=LWD, 
        main= paste0("Kaplan-Meier plot of ", tolower(KMSrvHzrLbl), " by ", KMSrvPltX),
        pch=LETTERS[1:length(unique(df[, KMSrvPltX]))],
-       col=1:length(unique(df[, KMSrvPltX] )), lty= 1:length(unique( df[, KMSrvPltX])))
-  legend(lgnd, legend=sort(unique( df[, KMSrvPltX])), col=1:length(unique(df[, KMSrvPltX] )), 
-         lty=1:length(unique(df[, KMSrvPltX] )), bty="n", lwd=2, cex=1.5,
+       col=LCOL, lty= 1:length(unique( df[, KMSrvPltX])))
+  legend(lgnd.loc, legend=sort(unique( df[, KMSrvPltX])), col=LCOL, 
+         lty=1:length(unique(df[, KMSrvPltX] )), bty="n", lwd=LWD, cex=1.5,
          title=KMSrvPltX)
-} 
+}
+
 
 #Survival fit object
 KMsrvftPlot <- reactive({ 
@@ -7995,7 +8044,8 @@ KMsrvftPlot <- reactive({
     kmSurvPltFnc(KMsrvftFmla=KMsrvftFmla(), df=df(), Y=outcome(), km_hazard_plot=input$km_hazard_plot, 
                  KMSrvHzrLbl=KMSrvHzrLbl(), km_sp_Xlim1=input$km_sp_Xlim1, 
                  km_sp_Xlim2=input$km_sp_Xlim2, km_sp_Ylim1=input$km_sp_Ylim1, 
-                 km_sp_Ylim2=input$km_sp_Ylim2, KMSrvPltX=input$KMSrvPltX, lgnd=KMLgnd()) 
+                 km_sp_Ylim2=input$km_sp_Ylim2, KMSrvPltX=input$KMSrvPltX, 
+                 LCOL=KM_Surv_Line_Colors(), LWD=KM_Surv_Line_Width(), lgnd.loc=KM_Surv_legend_location() ) 
   }
 })
 output$km_plot <- renderPlot({

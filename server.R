@@ -4911,7 +4911,7 @@ fconf <- function(x=xcivar, xlev=xlev, y=ycivar, z=zcivar, dataf, conf_lev=cicon
                   Increment, Fci_type, Aggr) {
   if(Aggr== "Yes: Aggregated data only") {
     agr_df <- data.frame(x_lev=df()[, x], z_lev=as.integer(c(df()[, z])), agr_m=df()[, y], agr_sd=0, agr_n=1)
-    adf_alpha <- data.frame(cbind(PointEst=agr_df$agr_m, Lower=agr_df$agr_m, Upper=agr_df$agr_m))
+    adf_alpha <- data.frame(cbind(PointEst=agr_df$agr_m, Lower=0, Upper=0))
     agr_df <- cbind(agr_df, adf_alpha)
   } else {
     switch(Fci_type,                #"var" and can be used anywhere in server.r.

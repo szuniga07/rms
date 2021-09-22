@@ -5180,7 +5180,8 @@ plot_fci_fnc <- function(x, y, z, xcivar, ycivar, zcivar, dataf, LCol, LWd, Fci.
                          ci_p, ci_l, ci_u,max_pest, min_pest, max_ci, min_ci, ctrs, 
                          cibands, fCiXLim1, fCiXLim2, fCiYLim1, fCiYLim2, Tot.Line, FCI.Tot,
                          FCI.Tot.Straight, Conf.Intrv, Tgt.Line, Straight.Line, Time.Pt.Line,
-                         ci_p_tot, ci_l_tot, ci_u_tot, Tot.Color, Tgt.Color, Tpt.Color, T3.Line.Width, Text.Size) {
+                         ci_p_tot, ci_l_tot, ci_u_tot, Tot.Color, Tgt.Color, Tpt.Color, 
+                         T3.Line.Width, Text.Size) {
   #Make text out of the confidence level
   ConINT <- paste0(as.character(Conf.Intrv*100), "%")
   #Main title
@@ -5230,14 +5231,16 @@ plot_fci_fnc <- function(x, y, z, xcivar, ycivar, zcivar, dataf, LCol, LWd, Fci.
   if(Straight.Line == "Yes") {
     for (i in 1:length(ctrs)) {
       lines(ci_p[[i]][, "x"], ci_p[[i]][, "y"], lty=i, col= my_clr[i], lwd=LWd)
-      text(ci_p[[i]][1, "x"], ci_p[[i]][1, "y"], ctrs[i], cex= Text.Size)
-      text(ci_p[[i]][nrow(ci_p[[i]]), "x"], ci_p[[i]][nrow(ci_p[[i]]), "y"], ctrs[i], cex= Text.Size)
+      text(ci_p[[i]][1, "x"], ci_p[[i]][1, "y"], ctrs[i], cex= Text.Size, col=my_clr[i])
+      text(ci_p[[i]][nrow(ci_p[[i]]), "x"], ci_p[[i]][nrow(ci_p[[i]]), "y"], ctrs[i], cex= Text.Size, col=my_clr[i])
     }
   } else {
     for (i in 1:length(ctrs)) {
       lines(ci_p[[i]][, "x"], ci_p[[i]][, "y_p"], lty=i, col= my_clr[i], lwd=LWd)
-      text(ci_p[[i]][1, "x"], ci_p[[i]][1, "y_p"], ctrs[i], cex= Text.Size)
-      text(ci_p[[i]][nrow(ci_p[[i]]), "x"], ci_p[[i]][nrow(ci_p[[i]]), "y_p"], ctrs[i], cex= Text.Size)
+      text(ci_p[[i]][1, "x"], ci_p[[i]][1, "y_p"], ctrs[i], cex= Text.Size, 
+           col=my_clr[i])
+      text(ci_p[[i]][nrow(ci_p[[i]]), "x"], ci_p[[i]][nrow(ci_p[[i]]), "y_p"], ctrs[i], cex= Text.Size, 
+           col=my_clr[i])
     }
   }
 
@@ -5271,12 +5274,12 @@ plot_fci_fnc <- function(x, y, z, xcivar, ycivar, zcivar, dataf, LCol, LWd, Fci.
   if (Tot.Line %in% c("Line", "Line with band") ) {
   if(Straight.Line == "Yes") {
     lines(ci_p_tot[, "x"], ci_p_tot[, "y"], lty=1, col= Tot.Color, lwd=T3.Line.Width)
-    text(ci_p_tot[1, "x"], ci_p_tot[1, "y"], labels= "ALL", cex= Text.Size)
-    text(ci_p_tot[nrow(ci_p_tot), "x"], ci_p_tot[nrow(ci_p_tot), "y"], labels= "ALL", cex= Text.Size)
+    text(ci_p_tot[1, "x"], ci_p_tot[1, "y"], labels= "ALL", cex= Text.Size, col=Tot.Color)
+    text(ci_p_tot[nrow(ci_p_tot), "x"], ci_p_tot[nrow(ci_p_tot), "y"], labels= "ALL", cex= Text.Size, col=Tot.Color)
 } else {
   lines(ci_p_tot[, "x"], ci_p_tot[, "y_p"], lty=1, col= Tot.Color, lwd=T3.Line.Width)
-  text(ci_p_tot[1, "x"], ci_p_tot[1, "y_p"], labels= "ALL", cex= Text.Size)
-  text(ci_p_tot[nrow(ci_p_tot), "x"], ci_p_tot[nrow(ci_p_tot), "y_p"], labels= "ALL", cex= Text.Size)
+  text(ci_p_tot[1, "x"], ci_p_tot[1, "y_p"], labels= "ALL", cex= Text.Size, col=Tot.Color)
+  text(ci_p_tot[nrow(ci_p_tot), "x"], ci_p_tot[nrow(ci_p_tot), "y_p"], labels= "ALL", cex= Text.Size, col=Tot.Color)
 }
   }
   

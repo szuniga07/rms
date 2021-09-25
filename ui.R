@@ -363,6 +363,12 @@ tabPanel("Describe",
            column(3, 
                   uiOutput("smry_var_hist_var")),
            column(3, offset=1,
+                  uiOutput("smry_var_hist_fac_yesno")),
+           column(3, offset=1,
+                  uiOutput("smry_var_hist_fac"))
+         ),
+         fluidRow(   
+           column(3,
                   uiOutput("smry_var_hist_bars")),
            column(3, offset=1,
                   uiOutput("smry_var_hist_bar_clr"))

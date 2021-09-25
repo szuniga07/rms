@@ -6319,63 +6319,92 @@ smry_var_hist_mean <- reactive({
 smry_var_hist_median <- reactive({
   summary(df()[, descriptive_summary_histogram_variable()])["Median"]
 })
-#2. Select the approximate number of histogram bars
+#2. Indicate if you want the histogram by factor
+output$smry_var_hist_fac_yesno <- renderUI({                                 
+  selectInput("smryVrHstFcYN", "2. Want graphs by factors?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")     
+})
+#2A. Object for classification plot 
+summary_var_hist_factor_yes_no <- reactive({
+  input$smryVrHstFcYN
+})
+#3. Select the histogram variabe.
+output$smry_var_hist_fac <- renderUI({
+  selectInput("smryVrHstFct", "3. Select the factor name",
+              choices = var(), multiple=FALSE, 
+              selected= setdiff(var(), descriptive_summary_histogram_variable())[1] )
+})
+#3A. Reactive function for the variabe
+descriptive_summary_histogram_factor <- reactive({
+  input$smryVrHstFct
+})
+#4. Select the approximate number of histogram bars
 output$smry_var_hist_bars <- renderUI({                                 
-  numericInput("smryVrHstBrs", "2. Select the approximate number of histogram bars.", 
+  numericInput("smryVrHstBrs", "4. Select approximate number of bars.", 
                value = 15, step = 1, min=2)     
 })
-#2A. Object for histogram bars 
+#4A. Object for histogram bars 
 summary_variable_histogram_bars <- reactive({
   input$smryVrHstBrs
 })
-#3. Bar color
+#5. Bar color
 output$smry_var_hist_bar_clr <- renderUI({                                
-  selectInput("smryVrHstBrClr", "3. Select the bar colors.",        
+  selectInput("smryVrHstBrClr", "5. Select the bar colors.",        
               choices = xyplot_Line_Color_Names(), 
               multiple=FALSE, selected="blue" ) 
 })
-#3A. Reactive function for Bar color
+#5A. Reactive function for Bar color
 summary_var_histogram_bar_color <- reactive({
   input$smryVrHstBrClr
 })
-#4. Indicate if you want to show the mean and median
+#6. Indicate if you want to show the mean and median
 output$smry_hist_mn_med_yesno <- renderUI({                                 
-  selectInput("smryHstMnMdYN", "4. Want to show the mean and median?", 
+  selectInput("smryHstMnMdYN", "6. Want to show the mean and median?", 
               choices = c("No", "Yes"), multiple=FALSE, selected="No")     
 })
-#4A. Object for the mean and median 
+#6A. Object for the mean and median 
 summary_hist_mean_median_yes_no <- reactive({
   input$smryHstMnMdYN
 })
-#5. Line colors
+#7. Line colors
 output$smry_var_hist_ln_clr <- renderUI({                                
-  selectInput("smryVrHstLnClr", "5. Select the line colors.",        
+  selectInput("smryVrHstLnClr", "7. Select Mean/Median line colors.",        
               choices = xyplot_Line_Color_Names(), 
               multiple=TRUE, selected="black" ) 
 })
-#5A. Reactive function for the line color
+#7A. Reactive function for the line color
 summary_var_histogram_line_color <- reactive({
   input$smryVrHstLnClr
 })
-#6. Indicate if you want the histogram
+#8. Indicate if you want the histogram
 output$smry_var_hist_yesno <- renderUI({                                 
-  selectInput("smryVrHstYN", "6. Do you want to run the histogram?", 
+  selectInput("smryVrHstYN", "8. Do you want to run the histogram?", 
               choices = c("No", "Yes"), multiple=FALSE, selected="No")     
 })
-#6A. Object for classification plot 
+#8A. Object for classification plot 
 summary_var_hist_yes_no <- reactive({
   input$smryVrHstYN
 })
-#7. Run the histogram function below
+#9. Run the histogram function below
 summary_var_histogram_run <- reactive({
   if(summary_var_hist_yes_no() == "Yes") {    
+    if(summary_var_hist_factor_yes_no() =="Yes") {
+      #fncMltHstPlt <- function(DF, X, Y, BNS, CLR, LCLR, MN, MED, AddLine) {
+        fncMltHstPlt(DF=df(), X=descriptive_summary_histogram_variable(), 
+                     Y= descriptive_summary_histogram_factor(),
+                  BNS=summary_variable_histogram_bars(), CLR=summary_var_histogram_bar_color(), 
+                  LCLR=summary_var_histogram_line_color(), MN=smry_var_hist_mean(), 
+                  MED=smry_var_hist_median(), AddLine=summary_hist_mean_median_yes_no())
+      
+  }  else {
     fncSmryHist(DF=df(), X=descriptive_summary_histogram_variable(), 
                 BNS=summary_variable_histogram_bars(), CLR=summary_var_histogram_bar_color(), 
                 LCLR=summary_var_histogram_line_color(), MN=smry_var_hist_mean(), 
                 MED=smry_var_hist_median(), AddLine=summary_hist_mean_median_yes_no())
-  }  
+  }
+  }
 })
-#7A.histogram  
+#9A.histogram  
 output$summary_var_histogram_out <- renderPlot({
   if(summary_var_hist_yes_no() == "Yes") {
     summary_var_histogram_run()
@@ -6390,10 +6419,51 @@ fncSmryHist <- function(DF, X, BNS, CLR, LCLR, MN, MED, AddLine) {
        main= paste0("Histogram of ", X, " (Mean= ", round(MN, 3),", Median= ", round(MED, 3), ")"))
   #Add mean and median lines
   if (AddLine== "Yes") {
-    abline(v=MN,  col= head(LCLR, 1), lwd=3, lty=1)
-    abline(v=MED, col= tail(LCLR, 1), lwd=3, lty=2)
+    abline(v=MN,  col= head(LCLR, 1), lwd=5, lty=1)
+    abline(v=MED, col= tail(LCLR, 1), lwd=5, lty=2)
   }
 }
+
+###################################################
+## Function to get histogram for multiple groups ##
+###################################################
+fncMltHstPlt <- function(DF, X, Y, BNS, CLR, LCLR, MN, MED, AddLine) {
+  YLevs <- sort(unique(DF[, Y]))
+  N_Levs <- length(YLevs)
+  sqN <- sqrt(N_Levs)
+  RowCol <- c(round(sqN), ceiling(sqN))
+  par(mfrow=RowCol )
+  
+  MEAN <- list()
+  MEDIAN <- list()
+  for (i in 1:N_Levs) {
+    MEAN[i] <- summary(DF[DF[ ,Y] == YLevs[i], X])["Mean"]
+    MEDIAN[i] <- summary(DF[DF[ ,Y] == YLevs[i], X])["Median"]
+  }
+  #Get maximum X and Y dimensions for each level
+  Xmax <- list()
+  Xmin <- list()
+  Ymax <- list()
+  for (i in 1:N_Levs) {
+    Xmin[i] <- min(hist(x=DF[DF[ ,Y] == YLevs[i], X], plot=FALSE, breaks=BNS)$breaks)
+    Xmax[i] <- max(hist(x=DF[DF[ ,Y] == YLevs[i], X], plot=FALSE, breaks=BNS)$breaks)
+    Ymax[i] <- max(hist(x=DF[DF[ ,Y] == YLevs[i], X], plot=FALSE, breaks=BNS)$counts)
+  }
+  #Create the histrograms  
+  for (i in 1:N_Levs) {
+    MN <- unlist(MEAN) 
+    MED <- unlist(MEDIAN)
+    hist(x=DF[DF[ ,Y] == YLevs[i], X], breaks=BNS, col=CLR, xlab= paste0(X, " for ", Y, ":", YLevs[i]),
+         xlim= c(min(unlist(Xmin)), max(unlist(Xmax))), ylim= c(0, max(unlist(Ymax))),
+         main= paste0("Histogram of ", X, " (Mean= ", round(MN[i], 3),", Median= ", round(MED[i], 3), ")"))
+    #Add mean and median lines
+    if (AddLine== "Yes") {
+      abline(v= MN[i],  col= head(LCLR, 1), lwd=5, lty=1)
+      abline(v= MED[i], col= tail(LCLR, 1), lwd=5, lty=2)
+    }
+  }
+}
+
 
 ################################################################################
 ##           Density plot trend over time by groups                           ##

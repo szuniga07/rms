@@ -6031,10 +6031,10 @@ fncSctrPltCr <- function(DF, X, Y,
 fncSctrPlt <- function(DF, X, Y, sct_plt_clr, CT) {
   #Scatter plot
   scatter.smooth(DF[, X], DF[, Y] , main= paste0("Correlation of ", Y, " on ", X, 
-                                        " (correlation= ", round(as.numeric(CT["estimate"]), 3), 
-                                        ", ", "p-value= ", try(round(as.numeric(CT["p.value"]), 4)), ")"),
-         xlab=X, ylab=Y,
-         lpars =list(col = "red", lwd = 3, lty = 3))
+                                                 " (correlation= ", round(as.numeric(CT["estimate"]), 3), 
+                                                 ", ", "p-value= ", try(round(as.numeric(CT["p.value"]), 4)), ")"),
+                 xlab=X, ylab=Y,
+                 lpars =list(col = sct_plt_clr, lwd = 5, lty = 3))
 }
 
 ##########################################################################

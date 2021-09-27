@@ -8,7 +8,7 @@
         sidebarLayout(position= "right",
                       sidebarPanel(
                       ),       
-       
+        
       mainPanel(
         tabsetPanel(                                      #Creates multiple tabs. 
           tabPanel("Data",  

@@ -126,7 +126,7 @@ shinyServer(
                               "01-31-2021", "01-31-21", "2021-01-31", "21-01-31", #"1/31/2021 21:15",
                               "1/31/2021 21:15 as 1/31/2021", #"1/31/2021 21:15:30",
                               "1/31/2021 21:15:30 as 1/31/2021", #"1/31/2021 12:00:00 AM", 
-                              "1/31/2021 12:00:00 AM as 1/31/2021", "31JAN2021:12:00:00 as 1/31/2021",
+                              "1/31/2021 12:00:00 AM as 1/31/2021", "31JAN2021:12:00:00 as 31JAN2021",
                               "44227 in Excel"), 
                   multiple=TRUE, selected="01-31-2021")
     })
@@ -273,7 +273,7 @@ shinyServer(
                  "1/31/2021 21:15:30 as 1/31/2021" = df_mod[, X[i]] <- as.Date(strptime(as.character(df_mod[, X[i]]), format="%m/%d/%Y %H:%M:%S")),
                  "1/31/2021 12:00:00 AM" = df_mod[, X[i]] <- strptime(as.character(df_mod[, X[i]]), format="%m/%d/%Y %H:%M:%S %p"),
                  "1/31/2021 12:00:00 AM as 1/31/2021" = df_mod[, X[i]] <- as.Date(strptime(as.character(df_mod[, X[i]]), format="%m/%d/%Y %H:%M:%S %p")),
-                 "31JAN2021:12:00:00 as 1/31/2021" = df_mod[, X[i]] <- as.Date(strptime(as.character(df_mod[, X[i]]), format="%d%b%Y:%H:%M:%S")),
+                 "31JAN2021:12:00:00 as 31JAN2021" = df_mod[, X[i]] <- as.Date(strptime(as.character(df_mod[, X[i]]), format="%d%b%Y:%H:%M:%S")),
                  "44227 in Excel" = df_mod[, X[i]] <- as.Date(df_mod[, X[i]], origin="1899-12-30")) 
         }
       }

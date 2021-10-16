@@ -6794,7 +6794,7 @@ fncTmDnstPlot <- function(TDList, X, Y, Z, Period, Lcol, Target, Groups,
     #legend(Legend.Loc, legend=c("Starting mean","Ending mean", "Target"),
            legend(Legend.Loc, legend=c(paste0("Starting pooled mean: ", round(mean(TDList[["AggrY"]][[1]][[2]], na.rm=TRUE), 3)),
                                        paste0("Ending pooled mean: ", round(mean(TDList[["AggrY"]][[Increment.Length]][[2]], na.rm=TRUE), 3) ) , 
-                                       paste0("Target ", Target)),
+                                       paste0("Target: ", Target)),
            col=c(colors()[102], colors()[102], "blue"),
            lty= c(1,2,1), lwd= 1.5, cex = 1.5, bty="n", inset=c(0, .05))
   }

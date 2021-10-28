@@ -2090,7 +2090,7 @@ output$anova_smry <- renderPrint({
       selectInput("pe_X", "2. Select a single predictor.", 
                   choices = predictor(), multiple=FALSE, selected=predictor()[1])     #Will make choices based on my reactive function.
     })
-
+ 
 ###################################################################    
 ## Creates a plot for an interaction of continuous X by a factor ##
 ###################################################################    

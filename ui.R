@@ -670,7 +670,9 @@ tabPanel("Impute",
                      column(3, 
                             uiOutput("prt_one_yes")),
                      column(3, offset=1, 
-                            uiOutput("prt_one_x"))
+                            uiOutput("prt_one_x")),
+                     column(3, offset=1, 
+                            uiOutput("pePltFun")) 
                    ),
                    br(),
                    

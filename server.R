@@ -2075,9 +2075,12 @@ output$anova_smry <- renderPrint({
 #This plots the predicted values    
     output$prt_prd <- renderPlot({
       if(input$pe_yes == "Yes") {
-        plot(  do.call("Predict", list(fit1(), pe_x_var())   )) 
+        plot(  do.call("Predict", list(fit1(), pe_x_var(), fun=list("As is"=TRUE, 
+              "Exponentiated"=exp, "Proportion"=plogis, "Mean time"= function(x) mean_time()(lp=x), 
+              "Median time" =function(x) med_time()(lp=x))[[partial_effect_plot_fun()]] )   )) 
       } else {
-        plot(Predict(fit1()))
+        plot(Predict(fit1(), fun=list("As is"=TRUE, "Exponentiated"=exp, "Proportion"=plogis,
+              "Mean time"= function(x) mean_time()(lp=x), "Median time" =function(x) med_time()(lp=x))[[partial_effect_plot_fun()]] ))
       }
     }, height = 600)
     #Create yes/no box to determine plot single partial effect
@@ -2090,7 +2093,29 @@ output$anova_smry <- renderPrint({
       selectInput("pe_X", "2. Select a single predictor.", 
                   choices = predictor(), multiple=FALSE, selected=predictor()[1])     #Will make choices based on my reactive function.
     })
- 
+
+    #Select the type of function I will use in plot(predict, fun=?) 
+    output$pePltFun <- renderUI({
+      selectInput("pe_plot_fun", "3. Select the plot function.", choices = c("As is", "Exponentiated", 
+                                "Proportion", "Mean time", "Median time"), multiple=FALSE, selected= "As is")     
+    })
+    #Reactive function for the plot function above
+    partial_effect_plot_fun <- reactive({                 
+      input$pe_plot_fun 
+    })
+    #Creates the mean time function for survival models
+    mean_time <- reactive({                 
+      if(partial_effect_plot_fun() == "Mean time") {
+        Mean(fit1() )
+      } 
+    })
+    #Creates the median time function for survival models
+    med_time <- reactive({                 
+      if(partial_effect_plot_fun() == "Median time") {
+        Quantile(fit1() )
+      } 
+    })
+    
 ###################################################################    
 ## Creates a plot for an interaction of continuous X by a factor ##
 ###################################################################    

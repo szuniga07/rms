@@ -670,12 +670,20 @@ tabPanel("Impute",
                      column(3, 
                             uiOutput("prt_one_yes")),
                      column(3, offset=1, 
-                            uiOutput("prt_one_x")),
-                     column(3, offset=1, 
-                            uiOutput("pePltFun")) 
+                            uiOutput("prt_one_x"))
                    ),
                    br(),
-                   
+                   fluidRow(
+                     column(3, 
+                            uiOutput("pePltFun")),
+                     column(3, offset=1, 
+                            uiOutput("pePrtPred")) 
+                   ),
+                   br(),
+                   h4("Partial predictions of a single variable"),
+                   h5("Select the variable in #2 above."),
+                   verbatimTextOutput("pe_predict_var_smry"),
+                   br(),
                    h4("Partial prediction of a continuous predictor by a factor."),
                     h5("This plot shows the expected trend line by multiple levels with 95% confidence intervals. Especially helpful in seeing the interaction effect and where lines intersect or diverge."),  
                    br(),
@@ -1793,7 +1801,7 @@ tabPanel("Power" ,
          h5("Binary outcomes: Values of 0.20, 0.50, and 0.80 represent small, medium, and large effects (Cohen, 1988)."),
          h5("Continuous outcomes: Values of 0.20, 0.50, and 0.80 represent small, medium, and large effects. Consult Cohen, 1988, about paired t-tests.")
 ), 
-
+ 
 ###
 tabPanel("95% CIs",
          h4("This plot produces unadjusted confidence intervals for each level of a factor."),

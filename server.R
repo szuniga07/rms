@@ -2075,33 +2075,45 @@ output$anova_smry <- renderPrint({
 #This plots the predicted values    
     output$prt_prd <- renderPlot({
       if(input$pe_yes == "Yes") {
-        plot(  do.call("Predict", list(fit1(), pe_x_var(), fun=list("As is"=TRUE, 
+        plot(  do.call("Predict", list(fit1(), pe_x_var(),  fun=list("As is"=TRUE, 
               "Exponentiated"=exp, "Proportion"=plogis, "Mean time"= function(x) mean_time()(lp=x), 
-              "Median time" =function(x) med_time()(lp=x))[[partial_effect_plot_fun()]] )   )) 
+              "Median time" =function(x) med_time()(lp=x))[[partial_effect_plot_fun()]] )   ), pch=15) 
       } else {
         plot(Predict(fit1(), fun=list("As is"=TRUE, "Exponentiated"=exp, "Proportion"=plogis,
-              "Mean time"= function(x) mean_time()(lp=x), "Median time" =function(x) med_time()(lp=x))[[partial_effect_plot_fun()]] ))
+              "Mean time"= function(x) mean_time()(lp=x), "Median time" =function(x) med_time()(lp=x))[[partial_effect_plot_fun()]] ), pch=15)
       }
     }, height = 600)
-    #Create yes/no box to determine plot single partial effect
+    #1. Create yes/no box to determine plot single partial effect
     output$prt_one_yes <- renderUI({                                 #Same idea as output$vy
       selectInput("pe_yes", "1. Do you want to plot a single partial effect?", 
                   choices = c("No", "Yes"), multiple=FALSE, selected="No")     #Will make choices based on my reactive function.
     })
-    #Select the variables that will get 
+    #2, Select the variables that will get 
     output$prt_one_x <- renderUI({
       selectInput("pe_X", "2. Select a single predictor.", 
                   choices = predictor(), multiple=FALSE, selected=predictor()[1])     #Will make choices based on my reactive function.
     })
 
-    #Select the type of function I will use in plot(predict, fun=?) 
+    #3. Select the type of function I will use in plot(predict, fun=?) 
     output$pePltFun <- renderUI({
       selectInput("pe_plot_fun", "3. Select the plot function.", choices = c("As is", "Exponentiated", 
                                 "Proportion", "Mean time", "Median time"), multiple=FALSE, selected= "As is")     
     })
-    #Reactive function for the plot function above
+    #3A. Reactive function for the plot function above
     partial_effect_plot_fun <- reactive({                 
       input$pe_plot_fun 
+    })
+    #4. Select the type of function I will use in plot(predict, fun=?) 
+    output$pePrtPred <- renderUI({
+      selectInput("pe_prnt_prd", "4. Print the predicted values of 1 variable.", 
+                  choices = c("No", "Yes"), multiple=FALSE, selected= "No")     
+    })
+    #4A. Print predicted scores for 1 variable
+    output$pe_predict_var_smry <- renderPrint({ 
+      if(input$pe_prnt_prd == "Yes") {
+        do.call("Predict", list(fit1(), pe_x_var(), fun=list("As is"=TRUE, "Exponentiated"=exp, "Proportion"=plogis, "Mean time"= function(x) mean_time()(lp=x),
+                "Median time" =function(x) med_time()(lp=x))[[partial_effect_plot_fun()]] )   )
+      } 
     })
     #Creates the mean time function for survival models
     mean_time <- reactive({                 

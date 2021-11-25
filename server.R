@@ -4628,30 +4628,35 @@ output$cobweb_lev_nm <- renderPrint({
 #Continuous outcomes
 tconf <- function(x, y, dataf, conf_lev) {
   #Aggregates outcome by factor 
-  #agr_m <- aggregate(dataf[, y] ~ dataf[, x], FUN="mean", data= dataf)
-  #agr_sd <- aggregate(dataf[, y] ~ dataf[, x], FUN="sd", data= dataf)
-  #agr_n <- aggregate(dataf[, y] ~ dataf[, x], FUN="length", data= dataf)
+  all_m <- mean(dataf[, y], na.rm=T)
+  all_sd <- sd(dataf[, y], na.rm=T)
+  all_n <- length(na.omit(dataf[, y]))
+  #By each X level
   agr_m <- aggregate(dataf[, y], list(dataf[, x]), FUN="mean", na.rm=T)
   agr_sd <- aggregate(dataf[, y], list(dataf[, x]), FUN="sd", na.rm=T)
-  agr_n <- aggregate(dataf[, y], list(dataf[, x]), FUN="length")
+  agr_n <- aggregate(dataf[ complete.cases(dataf[, y]) , y], list(dataf[ complete.cases(dataf[, y]) , x]), FUN="length")
   agr_df <- data.frame(x_lev=agr_m[, 1], agr_m=agr_m[, 2], agr_sd=agr_sd[, 2], agr_n=agr_n[, 2])
   
-  #Calculates confidence intervals
+  #Calculates confidence intervals--Overall
+  all_MOE <- qt((conf_lev/2)+.5, df=all_n - 1) * all_sd/sqrt(all_n)
+  all_Lower <- all_m - all_MOE
+  all_Upper <- all_m + all_MOE
+  adf_all <- data.frame(cbind(PointEst=all_m, Lower=all_Lower, Upper=all_Upper))
+  #Calculates confidence intervals--By Level
   MOE <- qt((conf_lev/2)+.5, df=agr_df$agr_n - 1) * agr_df$agr_sd/sqrt(agr_df$agr_n)
   Lower <- agr_df$agr_m - MOE
   Upper <- agr_df$agr_m + MOE
   adf_alpha <- data.frame(cbind(PointEst=agr_df$agr_m, Lower=Lower, Upper=Upper))
   rownames(adf_alpha) <- agr_df$x_lev
-#  alpha_o <- order(rownames(adf_alpha), decreasing = T) 
+  #  alpha_o <- order(rownames(adf_alpha), decreasing = T) 
   alpha_o <- order(agr_df$x_lev, decreasing = T) 
   adf_alpha <- adf_alpha[alpha_o, ] 
   adf_o <- order(adf_alpha[, "PointEst"], decreasing = T) 
   adf_numeric <- adf_alpha[adf_o, ] 
-  return(list(adf_alpha=adf_alpha, adf_numeric=adf_numeric) ) 
+  return(list(adf_alpha=adf_alpha, adf_numeric=adf_numeric, adf_all= adf_all) ) 
 }
 
 ##############
-
 #Binary outcomes
 bconf <- function(x, y, dataf, conf_lev) {
   #Aggregates outcome by factor 
@@ -4663,29 +4668,36 @@ bconf <- function(x, y, dataf, conf_lev) {
   #Calculates confidence intervals
   adf_alpha <- binconf(x=agr_df[,2], n=agr_df[,3], alpha=1 - conf_lev)
   adf_alpha <- data.frame(adf_alpha)
+  
+  adf_all <- binconf(x=sum(agr_df[,2], na.rm=TRUE), n=sum(agr_df[,3], na.rm=TRUE), alpha=1 - conf_lev)
+  
   rownames(adf_alpha) <- agr_df$x_lev
   #  alpha_o <- order(rownames(adf_alpha), decreasing = T) 
   alpha_o <- order(agr_df$x_lev, decreasing = T) 
   adf_alpha <- adf_alpha[alpha_o, ] 
   adf_o <- order(adf_alpha[, "PointEst"], decreasing = T) 
   adf_numeric <- adf_alpha[adf_o, ] 
-  return(list(adf_alpha=adf_alpha, adf_numeric=adf_numeric) ) 
+  return(list(adf_alpha=adf_alpha, adf_numeric=adf_numeric, adf_all=adf_all) ) 
 }
 
 ##############
 
 #Exact Poisson
 pconf <- function(x, y, dataf, conf_lev) {
+  #Aggregate outcomes for all
+  all_sum <- sum(dataf[, y], na.rm=T)
+  all_n <- length(na.omit(dataf[, y]))
+  adf_all <- unlist(poisson.test(x=all_sum, T=all_n, conf.level= conf_lev)[c("estimate","conf.int")])
+  adf_all <- data.frame(matrix(adf_all, ncol=3))
+  colnames(adf_all) <- c("PointEst", "Lower", "Upper")
   #Aggregates outcome by factor 
-  #  agr_sum <- aggregate(dataf[, y] ~ dataf[, x], FUN="sum", data= dataf)
-  #  agr_n <- aggregate(dataf[, y] ~ dataf[, x], FUN="length", data= dataf)
   agr_sum <- aggregate(dataf[, y], list(dataf[, x]), FUN="sum", na.rm=T)
   agr_n <- aggregate(dataf[, y], list(dataf[, x]), FUN="length")
   agr_df <- data.frame(x_lev=agr_sum[, 1], agr_sum=agr_sum[, 2], agr_n=agr_n[, 2])
   #Calculates confidence intervals
   adf_alpha <- matrix(ncol= 3, nrow= nrow(agr_df), byrow = TRUE)
   for (i in 1:nrow(agr_df)) {
-    adf_alpha[i, ] <- unlist(poisson.test(x=agr_df[i,2], T=agr_df[i,3], conf.level= .95)[c("estimate","conf.int")])
+    adf_alpha[i, ] <- unlist(poisson.test(x=agr_df[i,2], T=agr_df[i,3], conf.level= conf_lev)[c("estimate","conf.int")])
   }
   adf_alpha <- data.frame(adf_alpha)
   colnames(adf_alpha) <- c("PointEst", "Lower", "Upper")
@@ -4695,7 +4707,7 @@ pconf <- function(x, y, dataf, conf_lev) {
   adf_alpha <- adf_alpha[alpha_o, ] 
   adf_o <- order(adf_alpha[, "PointEst"], decreasing = T) 
   adf_numeric <- adf_alpha[adf_o, ] 
-  return(list(adf_alpha=adf_alpha, adf_numeric=adf_numeric) ) 
+  return(list(adf_alpha=adf_alpha, adf_numeric=adf_numeric, adf_all=adf_all) ) 
 }
 
 conf <- function(x=xcivar, y=ycivar, dataf=df(), conf_lev=ciconf_lev) {
@@ -4722,7 +4734,7 @@ cidf <- reactive({                  #This indicates the data frame I will use.
 ##########################################
 # Plot function for confidence intervals #
 ##########################################
-plot_ci_fnc <- function(xcivar, ycivar, ydf, cidf, ciconf_lev, alpha_num, Lcol, Pcol, tgt) {
+plot_ci_fnc <- function(xcivar, ycivar, ydf, cidf, ciconf_lev, alpha_num, Lcol, Pcol, tgt, Cbar, plyCol) {
   if (alpha_num=="Alphabetical") {
     adf <- cidf$adf_alpha
   }
@@ -4734,7 +4746,8 @@ plot_ci_fnc <- function(xcivar, ycivar, ydf, cidf, ciconf_lev, alpha_num, Lcol, 
   rng <- seq(min(adf), max(adf),length.out=nrow(adf))
   par(mar=c(5,7,4,4))
   plot(rng, 1:nrow(adf), type="n", ylab="", 
-       xlab= paste0("Value (the grey vertical line is the overall mean of ", round(mainYmn, 3), ")"),
+       xlab= paste0("Value (the grey vertical line is the overall mean of ", round(mainYmn, 3), ", ", ciconf_lev * 100, "% ", "CI",
+                    " [", round(cidf[["adf_all"]][,"Lower"], 3), " ,", round(cidf[["adf_all"]][,"Upper"], 3),"]",")"),
        main=main_ttl, axes=F ) 
   for (i in 1:nrow(adf)) {
     lines(c(adf[,'Lower'][i], adf[,'Upper'][i]), c(i,i), lwd=4, col=Lcol) 
@@ -4748,6 +4761,16 @@ plot_ci_fnc <- function(xcivar, ycivar, ydf, cidf, ciconf_lev, alpha_num, Lcol, 
   axis(2,at=1:nrow(adf),labels=substr(rownames(adf), 1, 10), las=1, cex.axis=1)
   #  axis(2,at=1:nrow(adf),labels=rownames(adf), las=1, cex.axis=1)
   axis(4,at=1:nrow(adf),labels=round(adf[, "PointEst"],2), las=1, cex.axis=1)
+  
+  ## Add confidence bar ##
+  #Create x and y data
+  cidf[["adf_all"]][,"Lower"]
+  Cbar_x <- c(rep(cidf[["adf_all"]][,"Lower"], nrow(adf)), rep(cidf[["adf_all"]][,"Upper"], nrow(adf)))
+  Cbar_y <- c(1:nrow(adf), nrow(adf):1)
+  #Create shading
+  if(Cbar=="Yes") {
+    polygon(Cbar_x, Cbar_y, col = adjustcolor(plyCol, alpha.f = 0.4), border= plyCol )
+  }
   box()
 }
 
@@ -4755,8 +4778,9 @@ plot_ci_fnc <- function(xcivar, ycivar, ydf, cidf, ciconf_lev, alpha_num, Lcol, 
 plot_ci <- reactive({                  #This indicates the data frame I will use.
   if(input$CiCreate == "Yes") {
     plot_ci_fnc(xcivar=input$xcivar, ycivar=input$ycivar, ydf=df(), cidf=cidf(), 
-                ciconf_lev=input$ciconf_lev, alpha_num=input$alpha_num, 
-                Lcol=ci_plot_Line_Colors() , Pcol=ci_plot_Point_Colors(), tgt=ci_target_line() )
+                ciconf_lev=input$ciconf_lev, alpha_num=input$alpha_num, Lcol=ci_plot_Line_Colors(), 
+                Pcol=ci_plot_Point_Colors(), tgt=ci_target_line(), 
+                Cbar= Ci_create_total_bar_interval(), plyCol= ci_plot_Total_Bar_Colors())
   }
 })
 
@@ -4846,6 +4870,27 @@ output$ci_plot_pt_clrs <- renderUI({
 ci_plot_Point_Colors <- reactive({                 
   input$ciPltPtClr 
 })
+#Select whether to run the 95% confidence interval or not
+output$Ci_create_tot_bar <- renderUI({                                #Creates a UI function here but it will
+  selectInput("CiCreateTotBar", "10. Create overall Conf. Int. band?",
+               choices = c("No", "Yes"),
+               selected="No")
+})
+#Reactive function for directly above
+Ci_create_total_bar_interval <- reactive({                 
+  input$CiCreateTotBar 
+})
+
+#Select line colors
+output$ci_plot_tot_bar_clrs <- renderUI({                                 
+  selectInput("ciPltTotBarClr", "11. Select overall band color.", 
+              choices = xyplot_Line_Color_Names(), multiple=FALSE, selected= "gray")     
+})
+#Reactive function for directly above
+ci_plot_Total_Bar_Colors <- reactive({                 
+  input$ciPltTotBarClr 
+})
+
 
 ## Reactive function to do group tests ##
 conf_group_test <- reactive({                  #This indicates the data frame I will use.

@@ -2170,8 +2170,10 @@ output$anova_smry <- renderPrint({
     #XYplot line color names
     xyplot_Line_Color_Names <- reactive({                 
       colors()[c(552, 498,652, 254, 26,547, 24, 152,32, 52:56, 66, 68, 85,97, 120, 128,139,
-                 142, 147:151, 175, 300, 310, 320, 330, 340, 350, 367,372,393, 448, 399,450, 
-                 485, 514, 529,562,568, 584, 589, 610, 615, 620, 625, 630, 635,640,646,651,657)]    
+                 142, 147:151, 367,372,393, 448, 399,450,
+                 485, 514, 529,562,568, 584, 589, 610, 615, 620, 625, 630, 635,640,646,651,657,
+                 291, 294, 297, 300, 303, 306, 309, 312, 315, 318, 321, 324, 327, 
+                 330, 333, 336, 339, 342, 345, 348, 351, 354,357)]    
     })
     #5. Create yes/no box to make the XY plot
     output$xyplot_yes_no <- renderUI({                                 
@@ -5263,7 +5265,7 @@ plot_fci_fnc <- function(x, y, z, xcivar, ycivar, zcivar, dataf, LCol, LWd, Fci.
                          cibands, fCiXLim1, fCiXLim2, fCiYLim1, fCiYLim2, Tot.Line, FCI.Tot,
                          FCI.Tot.Straight, Conf.Intrv, Tgt.Line, Straight.Line, Time.Pt.Line,
                          ci_p_tot, ci_l_tot, ci_u_tot, Tot.Color, Tgt.Color, Tpt.Color, 
-                         T3.Line.Width, Text.Size) {
+                         T3.Line.Width, Text.Size, LType) {
   #Make text out of the confidence level
   ConINT <- paste0(as.character(Conf.Intrv*100), "%")
   #Main title
@@ -5272,7 +5274,13 @@ plot_fci_fnc <- function(x, y, z, xcivar, ycivar, zcivar, dataf, LCol, LWd, Fci.
   } else {
     Main.Title <- paste0( ycivar, " trajectories of ", xcivar,  " by ", zcivar)
   }
-  
+  #Line Type
+  if(is.null( eval(parse(text=LType )) )) {
+    line_type <- 1:length(ctrs)
+  } else {
+    #line_type <- LType
+    line_type <- as.numeric(eval(parse(text=LType )))
+  }
   #Set up colors
   my_clr <- LCol
   plot(unique(dataf[, z]), seq(min(min_ci, na.rm=T), max(max_ci, na.rm=T), length.out=length(unique(dataf[, z]))), type="n",  
@@ -5297,35 +5305,35 @@ plot_fci_fnc <- function(x, y, z, xcivar, ycivar, zcivar, dataf, LCol, LWd, Fci.
         polygon(unlist(xx_t[[i]]), unlist(yy_t[[i]]), col = adjustcolor(my_clr[i], alpha.f = 0.4), 
                 border=adjustcolor(my_clr[i], alpha.f = 0.4))
       }   
-      } else {
-        for (i in 1:length(ctrs)) {
-          ci_time[[i]] <- ci_l[[i]][,1]
-          l95[[i]] <- ci_l[[i]][, 2] #"y_p"
-          u95[[i]] <- ci_u[[i]][, 2] #"y_p"
-          xx_t[[i]] <- c(ci_time[[i]], rev(ci_time[[i]]))
-          yy_t[[i]] <- c(l95[[i]], rev(u95[[i]]))
-          polygon(unlist(xx_t[[i]]), unlist(yy_t[[i]]), col = adjustcolor(my_clr[i], alpha.f = 0.4), 
-                  border=adjustcolor(my_clr[i], alpha.f = 0.4))
-        }
+    } else {
+      for (i in 1:length(ctrs)) {
+        ci_time[[i]] <- ci_l[[i]][,1]
+        l95[[i]] <- ci_l[[i]][, 2] #"y_p"
+        u95[[i]] <- ci_u[[i]][, 2] #"y_p"
+        xx_t[[i]] <- c(ci_time[[i]], rev(ci_time[[i]]))
+        yy_t[[i]] <- c(l95[[i]], rev(u95[[i]]))
+        polygon(unlist(xx_t[[i]]), unlist(yy_t[[i]]), col = adjustcolor(my_clr[i], alpha.f = 0.4), 
+                border=adjustcolor(my_clr[i], alpha.f = 0.4))
+      }
     } 
   }
   #Add text names
   if(Straight.Line == "Yes") {
     for (i in 1:length(ctrs)) {
-      lines(ci_p[[i]][, "x"], ci_p[[i]][, "y"], lty=i, col= my_clr[i], lwd=LWd)
+      lines(ci_p[[i]][, "x"], ci_p[[i]][, "y"], lty= line_type[i], col= my_clr[i], lwd=LWd)
       text(ci_p[[i]][1, "x"], ci_p[[i]][1, "y"], ctrs[i], cex= Text.Size, col=my_clr[i])
       text(ci_p[[i]][nrow(ci_p[[i]]), "x"], ci_p[[i]][nrow(ci_p[[i]]), "y"], ctrs[i], cex= Text.Size, col=my_clr[i])
     }
   } else {
     for (i in 1:length(ctrs)) {
-      lines(ci_p[[i]][, "x"], ci_p[[i]][, "y_p"], lty=i, col= my_clr[i], lwd=LWd)
+      lines(ci_p[[i]][, "x"], ci_p[[i]][, "y_p"], lty= line_type[i], col= my_clr[i], lwd=LWd)
       text(ci_p[[i]][1, "x"], ci_p[[i]][1, "y_p"], ctrs[i], cex= Text.Size, 
            col=my_clr[i])
       text(ci_p[[i]][nrow(ci_p[[i]]), "x"], ci_p[[i]][nrow(ci_p[[i]]), "y_p"], ctrs[i], cex= Text.Size, 
            col=my_clr[i])
     }
   }
-
+  
   #Plot point estimate lines for the overall trend
   ci_time_tot <- list() 
   l95_tot <- list() 
@@ -5354,15 +5362,15 @@ plot_fci_fnc <- function(x, y, z, xcivar, ycivar, zcivar, dataf, LCol, LWd, Fci.
   }
   #Add overall lines
   if (Tot.Line %in% c("Line", "Line with band") ) {
-  if(Straight.Line == "Yes") {
-    lines(ci_p_tot[, "x"], ci_p_tot[, "y"], lty=1, col= Tot.Color, lwd=T3.Line.Width)
-    text(ci_p_tot[1, "x"], ci_p_tot[1, "y"], labels= "ALL", cex= Text.Size, col=Tot.Color)
-    text(ci_p_tot[nrow(ci_p_tot), "x"], ci_p_tot[nrow(ci_p_tot), "y"], labels= "ALL", cex= Text.Size, col=Tot.Color)
-} else {
-  lines(ci_p_tot[, "x"], ci_p_tot[, "y_p"], lty=1, col= Tot.Color, lwd=T3.Line.Width)
-  text(ci_p_tot[1, "x"], ci_p_tot[1, "y_p"], labels= "ALL", cex= Text.Size, col=Tot.Color)
-  text(ci_p_tot[nrow(ci_p_tot), "x"], ci_p_tot[nrow(ci_p_tot), "y_p"], labels= "ALL", cex= Text.Size, col=Tot.Color)
-}
+    if(Straight.Line == "Yes") {
+      lines(ci_p_tot[, "x"], ci_p_tot[, "y"], lty=1, col= Tot.Color, lwd=T3.Line.Width)
+      text(ci_p_tot[1, "x"], ci_p_tot[1, "y"], labels= "ALL", cex= Text.Size, col=Tot.Color)
+      text(ci_p_tot[nrow(ci_p_tot), "x"], ci_p_tot[nrow(ci_p_tot), "y"], labels= "ALL", cex= Text.Size, col=Tot.Color)
+    } else {
+      lines(ci_p_tot[, "x"], ci_p_tot[, "y_p"], lty=1, col= Tot.Color, lwd=T3.Line.Width)
+      text(ci_p_tot[1, "x"], ci_p_tot[1, "y_p"], labels= "ALL", cex= Text.Size, col=Tot.Color)
+      text(ci_p_tot[nrow(ci_p_tot), "x"], ci_p_tot[nrow(ci_p_tot), "y_p"], labels= "ALL", cex= Text.Size, col=Tot.Color)
+    }
   }
   
   #Add target line
@@ -5392,7 +5400,7 @@ plot_fci <- reactive({                  #This indicates the data frame I will us
     ci_p_tot=fci_tot_fac()$ci_p, ci_l_tot=fci_tot_fac()$ci_l, ci_u_tot=fci_tot_fac()$ci_u,
     Tot.Color=fci_plot_Overall_Line_Colors(), Tgt.Color=fci_plot_Target_Line_Colors(), 
     Tpt.Color=fci_plot_Time_Point_Line_Colors(), T3.Line.Width=fci_plot_targ_time_Line_Wd(), 
-    Text.Size= fci_plot_text_label_size())
+    Text.Size= fci_plot_text_label_size(), LType=fci_plot_group_line_type() )
     }
 })
 
@@ -5475,7 +5483,7 @@ fci_plot_Line_Colors <- reactive({
 
 #Select line width
 output$fci_plot_ln_wdth <- renderUI({                                 
-  numericInput("fciPltLnWd", "10. Select the group line width.", 
+  numericInput("fciPltLnWd", "11. Select the group line width.", 
                value = 2, min=0, step = 1)     
 })
 #Reactive function for directly above
@@ -5485,7 +5493,7 @@ fci_plot_Line_Width <- reactive({
 
 #Select how many knots I want
 output$FCI_nk_knots <- renderUI({                                
-      numericInput("FciNkKnots", "12. Select the number of spline knots.",
+      numericInput("FciNkKnots", "22. Select the number of spline knots.",
        value = 3, min=3, max = 10, step = 1)
 })
 #Select whether to run the 95% confidence interval or not
@@ -5537,7 +5545,6 @@ range_fycivar <- reactive({
 #13. Indicate if you want a straight line
 output$FCi_strght_ln <- renderUI({                                
   selectInput("fciStrtLn", "21. Use straight trend lines?",
-#              choices = c("No", "Yes"),
               choices = c("No", "Yes", "Yes: Aggregated data only"),
               selected="No")
 })
@@ -5547,7 +5554,7 @@ fCi_straight_line <- reactive({
 })
 #Select target and time line width
 output$fci_plot_TgtTpt_ln_wdth <- renderUI({                                 
-  numericInput("fciPlTgTpLnWd", "11. Select other line's width.", 
+  numericInput("fciPlTgTpLnWd", "12. Select other line's width.", 
                value = 2, min=0, step = 1)     
 })
 #Reactive function for directly above
@@ -5593,25 +5600,35 @@ fci_plot_text_label_size <- reactive({
 })
 #14. Indicate lower limit of x-axis
 output$FCI__Xlim1 <- renderUI({
-  numericInput("fCiXLim1", "22. Lower X-axis limit.",
+  numericInput("fCiXLim1", "23. Lower X-axis limit.",
                value = range_fzcivar()[1], step = 1)
 })
 #15. Indicate upper limit of x-axis
 output$FCI__Xlim2 <- renderUI({
-  numericInput("fCiXLim2", "23. Upper X-axis limit.",
+  numericInput("fCiXLim2", "24. Upper X-axis limit.",
                value = if(fci_Z_Increment() ==1) { range_fzcivar()[2] } else {ceiling(range_fzcivar()[2]/fci_Z_Increment() ) } , 
                step = 1)
 })
 #16. Indicate lower limit of y-axis
 output$FCI__Ylim1 <- renderUI({
-  numericInput("fCiYLim1", "24. Lower Y-axis limit.",
+  numericInput("fCiYLim1", "25. Lower Y-axis limit.",
                value = range_fycivar()[1], step = .1)
 })
 #17. Indicate upper limit of x-axis
 output$FCI__Ylim2 <- renderUI({
-  numericInput("fCiYLim2", "25. Upper Y-axis limit.",
+  numericInput("fCiYLim2", "26. Upper Y-axis limit.",
                value = range_fycivar()[2], step = .1)
 })
+#Add a target line
+output$fci_plot_ln_typ <- renderUI({                                 
+  textInput("fciPltLnTyp", "10. Change the group line type.",
+            value = paste0('c( ', ')') )
+})
+#Reactive function for directly above
+fci_plot_group_line_type <- reactive({                 
+  input$fciPltLnTyp 
+})
+
 #Confidence interval plot for time
 output$Plot_Fci_output <- renderPlot({ 
   if(input$FCiCreate == "Yes") {

@@ -476,10 +476,17 @@ tabPanel("Describe",
            column(3, 
                   uiOutput("dnsty_grp_trnd_ln_clr")),
            column(3, 
+                  uiOutput("dns_plot_lbl_clrs")),
+           column(3, 
+                  uiOutput("dns_plot_txt_lbl_sz"))
+         ),
+         fluidRow(   
+           column(3, 
                   uiOutput("dnsty_grp_trnd_trgt")),
            column(3, 
                   uiOutput("dnsty_grp_trnd_lgd_loc"))
          ),
+         
          fluidRow(   
            column(3, 
                   uiOutput("dnsty_grp_trnd_st_sed")),

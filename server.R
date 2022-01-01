@@ -2175,9 +2175,18 @@ output$anova_smry <- renderPrint({
                  291, 294, 297, 300, 303, 306, 309, 312, 315, 318, 321, 324, 327, 
                  330, 333, 336, 339, 342, 345, 348, 351, 354,357)]    
     })
-    #5. Create yes/no box to make the XY plot
+    #5. Select specific groups
+    output$xyplot_grp_levs <- renderUI({                                 
+      selectInput("xyplotGrpLvs", "5. Highlight specific groups?", 
+                  choices = xyplot_groups(), multiple=TRUE)     
+    })
+    #Reactive function to get group levels
+    xyplot_Group_Levels <- reactive({                 
+      input$xyplotGrpLvs 
+    })
+    #6. Create yes/no box to make the XY plot
     output$xyplot_yes_no <- renderUI({                                 
-      selectInput("XyplotYesNo", "5. Do you want to create the plot?", 
+      selectInput("XyplotYesNo", "6. Do you want to create the plot?", 
                   choices = c("No", "Yes"), multiple=FALSE, selected="No")     
     })
     #Reactive function for directly above
@@ -2190,48 +2199,67 @@ output$anova_smry <- renderPrint({
         unique(xyplotData()[, XyplotZ1()]) 
       }
     })
-    #6. Select specific groups
-    output$xyplot_grp_levs <- renderUI({                                 
-      selectInput("xyplotGrpLvs", "6. Highlight specific groups?", 
-                  choices = xyplot_groups(), multiple=TRUE)     
+    #7. Extrapolate continuous X
+    output$xyExtrapo_yes_no <- renderUI({                                 
+      selectInput("xyExtrpYesNo", "7. Do you want to extrapolate on X?", 
+                  choices = c("No", "Yes"), multiple=FALSE, selected="No")     
     })
-    #Reactive function to get group levels
-    xyplot_Group_Levels <- reactive({                 
-      input$xyplotGrpLvs 
+    #7A. Reactive function for the variable
+    xy_extrapolate <- reactive({
+      input$xyExtrpYesNo
     })
-    #7. Indicate lower limit of x-axis
+    #8. Textbox to enter a formula
+    output$xy_extrap_box <- renderUI({  
+      textInput("xyExtrpBox", "8. Select the extrapolated range.", 
+  value= paste0("do.call('Predict', list(fit1(),", '\'', XyplotX1(),'\'', "= ", ", ", '\'', XyplotZ1(),'\'', "))") )
+    })
+    #8A. Reactive function for textbox to enter a formula
+    xy_extrap_box_Input <- reactive({
+      input$xyExtrpBox
+    }) 
+    
+    #9. Add a vertical line
+#    output$xyExtr_X_Val <- renderUI({
+#      textInput("xyExtrX", "9. Enter X-axis value for vertical line.",
+#      value = paste0('c( ', ')') )
+#    })
+    #9A. Reactive function for the variable
+#    xyExtr_x_value <- reactive({
+#      input$xyExtrX
+#    })
+    #9. Indicate lower limit of x-axis
     output$xyplot_Xlim1 <- renderUI({
-      numericInput("xyplotLmX1", "7. Lower X-axis limit.",
+      numericInput("xyplotLmX1", "9. Lower X-axis limit.",
                    value = xylm()$XMin, step = .1)
     })
     #7A. Reactive function for the variable
     xyplot_X_limit_1 <- reactive({
       input$xyplotLmX1
     })
-    #8. Indicate upper limit of x-axis
+    #10. Indicate upper limit of x-axis
     output$xyplot_Xlim2 <- renderUI({
-      numericInput("xyplotLmX2", "8. Upper X-axis limit.",
+      numericInput("xyplotLmX2", "10. Upper X-axis limit.",
                    value = xylm()$XMax, step = .1)
     })
-    #8A. Reactive function for the variable
+    #11A. Reactive function for the variable
     xyplot_X_limit_2 <- reactive({
       input$xyplotLmX2
     })
-    #9. Indicate lower limit of y-axis
+    #11. Indicate lower limit of y-axis
     output$xyplot_Ylim1 <- renderUI({
-      numericInput("xyplotLmY1", "9. Lower Y-axis limit.",
+      numericInput("xyplotLmY1", "11. Lower Y-axis limit.",
                    value = xylm()$YMin, step = .1)
     })
-    #9A. Reactive function for the variable
+    #11A. Reactive function for the variable
     xyplot_Y_limit_1 <- reactive({
       input$xyplotLmY1
     })
-    #10. Indicate upper limit of Y-axis
+    #12. Indicate upper limit of Y-axis
     output$xyplot_Ylim2 <- renderUI({
-      numericInput("xyplotLmY2", "10. Upper Y-axis limit.",
+      numericInput("xyplotLmY2", "12. Upper Y-axis limit.",
                    value = xylm()$YMax, step = .1)
     })
-    #10A. Reactive function for the variable
+    #12A. Reactive function for the variable
     xyplot_Y_limit_2 <- reactive({
       input$xyplotLmY2
     })
@@ -2244,7 +2272,11 @@ output$anova_smry <- renderPrint({
     })
     #Get the Predicted values needed for the plot
     xyplotData <- reactive({                 
-      do.call("Predict", list(fit1(), XyplotX1(), XyplotZ1() )   ) 
+      if(xy_extrapolate() == "Yes") {
+        eval(parse(text= xy_extrap_box_Input() ))
+      } else {
+        do.call("Predict", list(fit1(), XyplotX1(), XyplotZ1() )   ) 
+      }
     })
     #Set up function to get XY limits from an XYplot
     xylm_run <- reactive({
@@ -2260,9 +2292,9 @@ output$anova_smry <- renderPrint({
     #Set up function to create the XYplot
     Xyplt_setup <- reactive({
       if(xyplot_create_YesNo() == "Yes") {
-      fncXYpltInt(DF=df(), xyplotDF=xyplotData(), ContX= XyplotX1(), GroupX=XyplotZ1(), 
-                  GroupLevs=xyplot_Group_Levels(), XYlims=xylm_all(), Clrs=xyplot_Line_Colors(), CIbands=xyplot_Bands_YesNo()) 
-    }
+        fncXYpltInt(DF=df(), xyplotDF=xyplotData(), ContX= XyplotX1(), GroupX=XyplotZ1(), 
+                    GroupLevs=xyplot_Group_Levels(), XYlims=xylm_all(), Clrs=xyplot_Line_Colors(), CIbands=xyplot_Bands_YesNo()) 
+      }
     })
     #This creates the plot
     output$xYplot_interaction <- renderPlot({
@@ -2334,7 +2366,7 @@ output$anova_smry <- renderPrint({
         } 
       }
     }
-     
+    
     ##########################################
     # Contrast plots for partial predictions #
     ##########################################
@@ -7346,7 +7378,7 @@ Cxyplot_Line_Colors <- reactive({
 })
 #5. Create yes/no box to make the XY plot
 output$Cxyplot_yes_no <- renderUI({                                 
-  selectInput("CXyplotYesNo", "5. Do you want to create the plot?", 
+  selectInput("CXyplotYesNo", "6. Do you want to create the plot?", 
               choices = c("No", "Yes"), multiple=FALSE, selected="No")     
 })
 #Reactive function for directly above
@@ -7361,7 +7393,7 @@ Cxyplot_groups <- reactive({
 })
 #Select specific groups
 output$Cxyplot_grp_levs <- renderUI({                                 
-  selectInput("CxyplotGrpLvs", "6. Highlight specific groups?", 
+  selectInput("CxyplotGrpLvs", "5. Highlight specific groups?", 
               choices = Cxyplot_groups(), multiple=TRUE)     
 })
 #Reactive function to get group levels

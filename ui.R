@@ -714,9 +714,9 @@ tabPanel("Impute",
                      column(3, 
                             uiOutput("xyExtrapo_yes_no")),
                      column(3, offset=1,
-                            uiOutput("xy_extrap_box"))
-#                     column(3, offset=1,
-#                            uiOutput("xyExtr_X_Val"))
+                            uiOutput("xy_extrap_box")),
+                     column(3, offset=1,
+                            uiOutput("xyExtr_X_Val"))
                    ),
                    fluidRow(
                      column(3, 

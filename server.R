@@ -2219,17 +2219,17 @@ output$anova_smry <- renderPrint({
     }) 
     
     #9. Add a vertical line
-#    output$xyExtr_X_Val <- renderUI({
-#      textInput("xyExtrX", "9. Enter X-axis value for vertical line.",
-#      value = paste0('c( ', ')') )
-#    })
+    output$xyExtr_X_Val <- renderUI({
+      textInput("xyExtrX", "9. Enter X-axis value for vertical line.",
+      value = paste0('c( ', ')') )
+    })
     #9A. Reactive function for the variable
-#    xyExtr_x_value <- reactive({
-#      input$xyExtrX
-#    })
+    xyExtr_x_value <- reactive({
+      as.numeric(eval(parse(text=input$xyExtrX )))
+    })
     #9. Indicate lower limit of x-axis
     output$xyplot_Xlim1 <- renderUI({
-      numericInput("xyplotLmX1", "9. Lower X-axis limit.",
+      numericInput("xyplotLmX1", "10. Lower X-axis limit.",
                    value = xylm()$XMin, step = .1)
     })
     #7A. Reactive function for the variable
@@ -2238,7 +2238,7 @@ output$anova_smry <- renderPrint({
     })
     #10. Indicate upper limit of x-axis
     output$xyplot_Xlim2 <- renderUI({
-      numericInput("xyplotLmX2", "10. Upper X-axis limit.",
+      numericInput("xyplotLmX2", "11. Upper X-axis limit.",
                    value = xylm()$XMax, step = .1)
     })
     #11A. Reactive function for the variable
@@ -2247,7 +2247,7 @@ output$anova_smry <- renderPrint({
     })
     #11. Indicate lower limit of y-axis
     output$xyplot_Ylim1 <- renderUI({
-      numericInput("xyplotLmY1", "11. Lower Y-axis limit.",
+      numericInput("xyplotLmY1", "12. Lower Y-axis limit.",
                    value = xylm()$YMin, step = .1)
     })
     #11A. Reactive function for the variable
@@ -2256,7 +2256,7 @@ output$anova_smry <- renderPrint({
     })
     #12. Indicate upper limit of Y-axis
     output$xyplot_Ylim2 <- renderUI({
-      numericInput("xyplotLmY2", "12. Upper Y-axis limit.",
+      numericInput("xyplotLmY2", "13. Upper Y-axis limit.",
                    value = xylm()$YMax, step = .1)
     })
     #12A. Reactive function for the variable
@@ -2293,7 +2293,8 @@ output$anova_smry <- renderPrint({
     Xyplt_setup <- reactive({
       if(xyplot_create_YesNo() == "Yes") {
         fncXYpltInt(DF=df(), xyplotDF=xyplotData(), ContX= XyplotX1(), GroupX=XyplotZ1(), 
-                    GroupLevs=xyplot_Group_Levels(), XYlims=xylm_all(), Clrs=xyplot_Line_Colors(), CIbands=xyplot_Bands_YesNo()) 
+                    GroupLevs=xyplot_Group_Levels(), XYlims=xylm_all(), Clrs=xyplot_Line_Colors(), 
+                    CIbands=xyplot_Bands_YesNo(), ABline= xyExtr_x_value()) 
       }
     })
     #This creates the plot
@@ -2319,7 +2320,7 @@ output$anova_smry <- renderPrint({
     ################################################################################
     #                   Function to create contrast XYplot                         #
     ################################################################################
-    fncXYpltInt <- function(DF, xyplotDF, ContX, GroupX, GroupLevs, XYlims, Clrs, CIbands, ...) {
+    fncXYpltInt <- function(DF, xyplotDF, ContX, GroupX, GroupLevs, XYlims, Clrs, CIbands, ABline, ...) {
       #Create the X and Y limits
       XLim <- c(XYlims[["XMin"]], XYlims[["XMax"]])
       YLim <- c(XYlims[["YMin"]], XYlims[["YMax"]])
@@ -2335,14 +2336,16 @@ output$anova_smry <- renderPrint({
                   lty= 1:length(unique(DF[, GroupX ])), col= Clrs, 
                   lwd= 3, ylab= "Yhat", xlab= ContX, cex= 1.75,
                   xlim=XLim, ylim=YLim,
-                  main= paste0("Partial prediction plot of ", ContX, " by levels of ", GroupX) )
+                  main= paste0("Partial prediction plot of ", ContX, " by levels of ", GroupX),
+                  abline=list(v=ABline))
         } else {
           xYplot(xyplotDF[[which(names(xyplotDF) == "yhat")]] ~ xyplotDF[[which(names(xyplotDF) == ContX)]] ,  
                  groups= xyplotDF[[which(names(xyplotDF) == GroupX)]],
                  type= 'l', lty= 1:length(unique(DF[, GroupX ])), col= Clrs, 
                  lwd= 3, ylab= "Yhat", xlab= ContX, cex= 1.75, 
                  xlim=XLim, ylim=YLim,
-                 main= paste0("Partial prediction plot of ", ContX, " by levels of ", GroupX) )
+                 main= paste0("Partial prediction plot of ", ContX, " by levels of ", GroupX),
+                 abline=list(v=ABline) )
         } 
       }  else {
         if(CIbands == "Yes") {
@@ -2355,14 +2358,16 @@ output$anova_smry <- renderPrint({
                   lty= 1:length(unique(DF[, GroupX ])), col= Clrs, 
                   lwd= 3, ylab= "Yhat", xlab= ContX, cex= 1.75, 
                   xlim=XLim, ylim=YLim,
-                  main= paste0("Partial prediction plot of ", ContX, " by levels of ", GroupX) )
+                  main= paste0("Partial prediction plot of ", ContX, " by levels of ", GroupX),
+                  abline=list(v=ABline) )
         } else {
           xYplot(xyplotDF[xyplotDF[, GroupX ] %in% GroupLevs, which(names(xyplotDF) == "yhat")] ~ xyplotDF[xyplotDF[, GroupX ] %in% GroupLevs, which(names(xyplotDF) == ContX)] ,  
                  groups= xyplotDF[[which(names(xyplotDF) == GroupX)]][ xyplotDF[, GroupX ] %in% GroupLevs ],
                  type= 'l', lty= 1:length(unique(DF[, GroupX ])), col= Clrs, 
                  lwd= 3, ylab= "Yhat", xlab= ContX, cex= 1.75, 
                  xlim=XLim, ylim=YLim,
-                 main= paste0("Partial prediction plot of ", ContX, " by levels of ", GroupX) )
+                 main= paste0("Partial prediction plot of ", ContX, " by levels of ", GroupX),
+                 abline=list(v=ABline) )
         } 
       }
     }
@@ -6804,7 +6809,8 @@ density_group_trend_plot <- reactive({
                   Legend.Loc= density_group_trend_legend_location(), 
                   Xmin=density_group_trend_Xlim1(), Xmax=density_group_trend_Xlim2(), 
                   Ymin=density_group_trend_Ylim1(), Ymax= density_group_trend_Ylim2(),
-                  GCol=density_plot_Label_Colors(), Text.Size=dns_plot_text_label_size() ) 
+                  GCol=density_plot_Label_Colors(), Text.Size=dns_plot_text_label_size(),
+                  Period.Range=density_group_trend_range_time()) 
   }  
 })
 #18A. Trend plot  
@@ -6817,7 +6823,7 @@ output$dnsty_grp_trnd_plot <- renderPlot({
 density_group_trend_by_time <- reactive({
   if(density_group_trend_run_yes_no() == "Yes") {    
     fncTmDnstOut(TDList= density_group_trend_output(), 
-                 Period=density_group_trend_play(), Target= density_group_trend_Target())  
+                 Period=density_group_trend_play(), Target= density_group_trend_Target(), Period.Range=density_group_trend_range_time())  
   }  
 })
 #19A. Each period's output  
@@ -6905,21 +6911,23 @@ fncTmDnsty <- function(DF, X, Y, Z, Increment, Seed.Multiplier) {
 ##    Function to Plot density of aggregated values  over time increments     ##
 ################################################################################
 fncTmDnstPlot <- function(TDList, X, Y, Z, Period, Lcol, Target, Groups,
-                          Legend.Loc,Xmin, Xmax, Ymin, Ymax, GCol, Text.Size) {
+                          Legend.Loc,Xmin, Xmax, Ymin, Ymax, GCol, Text.Size, Period.Range) {
+  #Full range of periods to use in case I get a year variable
+  Full.Range <- seq(Period.Range[1], Period.Range[2], by=1 )
   #Colors
   my_clr <- GCol
   Increment.Length <- TDList[["Increment.Length"]]
   #Title
   if(TDList[["Increment"]] == 1) {
     Main.Title <- paste(Y," rate by ", Z, ": ", 
-                        TDList[["Time.Start.Label"]][[Period]],  sep= "")
+                        TDList[["Time.Start.Label"]][[which(Full.Range == Period)]],  sep= "")
   } else {
     Main.Title <- paste(Y," rate by ", Z, ": ", 
-                        TDList[["Time.Start.Label"]][[Period]], " - ",                      
-                        TDList[["Time.Stop.Label"]][[Period]],  sep= "")
+                        TDList[["Time.Start.Label"]][[which(Full.Range == Period)]], " - ",                      
+                        TDList[["Time.Stop.Label"]][[which(Full.Range == Period)]],  sep= "")
   }
   #Density plot
-  plot(TDList[["D2"]][[ Period]], xlim=c(Xmin,Xmax), ylim= c(Ymin, Ymax),  
+  plot(TDList[["D2"]][[ which(Full.Range == Period)]], xlim=c(Xmin,Xmax), ylim= c(Ymin, Ymax),  
        col=Lcol, lwd=8  ,
        main=Main.Title, xlab= "Rate" 
   )
@@ -6928,21 +6936,21 @@ fncTmDnstPlot <- function(TDList, X, Y, Z, Period, Lcol, Target, Groups,
   abline(v= mean(TDList[["AggrY"]][[1]][[2]]), col=colors()[102], lwd=2)
   abline(v= mean(TDList[["AggrY"]][[Increment.Length]][[2]]), col=colors()[102], lwd=2, lty=2)
   ###Rug and text to identify the med centers.###
-  rug(TDList[["DYvals"]][[Period]], side=1, col=Lcol)
+  rug(TDList[["DYvals"]][[which(Full.Range == Period)]], side=1, col=Lcol)
   #Text for group values
   if ( is.null(Groups) ) {  
-    text(TDList[["DYvals"]][[Period]], unlist(TDList[["Dy.Cord.Random"]][Period]),   
-         labels= unlist(TDList[["DXname"]][[Period]][X]),
+    text(TDList[["DYvals"]][[which(Full.Range == Period)]], unlist(TDList[["Dy.Cord.Random"]][which(Full.Range == Period)]),   
+         labels= unlist(TDList[["DXname"]][[which(Full.Range == Period)]][X]),
          cex=Text.Size, col=my_clr )
   } else {
-    non_groups <- setdiff(unlist(TDList[["DXname"]][[Period]][[X]]) , Groups)   #Get excluded groups
-    Groups.Temp <- as.character(unlist(TDList[["DXname"]][[Period]][[X]]))      #Get all groups
+    non_groups <- setdiff(unlist(TDList[["DXname"]][[which(Full.Range == Period)]][[X]]) , Groups)   #Get excluded groups
+    Groups.Temp <- as.character(unlist(TDList[["DXname"]][[which(Full.Range == Period)]][[X]]))      #Get all groups
     Groups.Temp[which(Groups.Temp %in% non_groups )] <- ""                      #Change non-groups to blanks
-    text(TDList[["DYvals"]][[Period]], unlist(TDList[["Dy.Cord.Random"]][Period]),   
-    labels= Groups.Temp, cex=Text.Size, col= my_clr)
+    text(TDList[["DYvals"]][[which(Full.Range == Period)]], unlist(TDList[["Dy.Cord.Random"]][which(Full.Range == Period)]),   
+         labels= Groups.Temp, cex=Text.Size, col= my_clr)
   }
   ###Legend###
-  #This creates a legend for the ablines with and without targets. TDList[["AggrY"]][[Period]] YTmean
+  #This creates a legend for the ablines with and without targets. TDList[["AggrY"]][[which(Full.Range == Period)]] YTmean
   if ( !is.numeric(Target) ) {  
     legend(x=Legend.Loc, legend=c(paste0("Starting pooled mean: ", round(mean(TDList[["AggrY"]][[1]][[2]], na.rm=TRUE), 3)),
                                   paste0("Ending pooled mean: ", round(mean(TDList[["AggrY"]][[Increment.Length]][[2]], na.rm=TRUE), 3) )),
@@ -6950,9 +6958,9 @@ fncTmDnstPlot <- function(TDList, X, Y, Z, Period, Lcol, Target, Groups,
            lty= c(1,2,1), lwd= 1.5, cex = 1.5, bty="n", inset=c(0, .05))
   } else {  
     #legend(Legend.Loc, legend=c("Starting mean","Ending mean", "Target"),
-           legend(Legend.Loc, legend=c(paste0("Starting pooled mean: ", round(mean(TDList[["AggrY"]][[1]][[2]], na.rm=TRUE), 3)),
-                                       paste0("Ending pooled mean: ", round(mean(TDList[["AggrY"]][[Increment.Length]][[2]], na.rm=TRUE), 3) ) , 
-                                       paste0("Target: ", Target)),
+    legend(Legend.Loc, legend=c(paste0("Starting pooled mean: ", round(mean(TDList[["AggrY"]][[1]][[2]], na.rm=TRUE), 3)),
+                                paste0("Ending pooled mean: ", round(mean(TDList[["AggrY"]][[Increment.Length]][[2]], na.rm=TRUE), 3) ) , 
+                                paste0("Target: ", Target)),
            col=c(colors()[102], colors()[102], "blue"),
            lty= c(1,2,1), lwd= 1.5, cex = 1.5, bty="n", inset=c(0, .05))
   }
@@ -6961,8 +6969,9 @@ fncTmDnstPlot <- function(TDList, X, Y, Z, Period, Lcol, Target, Groups,
 ################################################################################
 ##           Function to get aggregated values over time increments           ##
 ################################################################################
-fncTmDnstOut <- function(TDList, Period, Target) {
-  out.by.period <- TDList[["AggrY"]][[Period]]
+fncTmDnstOut <- function(TDList, Period, Target, Period.Range) {
+  Full.Range <- seq(Period.Range[1], Period.Range[2], by=1 )
+  out.by.period <- TDList[["AggrY"]][[ which(Full.Range == Period)]]
   
   #High Target
   HT.table <- vector(length=2)
@@ -10978,11 +10987,14 @@ fncStSpcLegendFactoLev <- function(Model_fit, X_Lev) {
 ##} )
 
 #output$test1 <- renderPrint({
-#list( #head(modifiedDf1()),
-#modifiedDf()
-#  modifiedTimeVarCrt()  
-#  ftotCidf()
-#)  
+#list(  
+  #density_group_trend_by_time()
+  #density_group_trend_output()
+#TDList=density_group_trend_output(), X= density_group_trend_group(), Y= density_group_trend_outcome(), Z= density_group_trend_time()
+#  out=  density_group_trend_output()[["AggrY"]][[1]] 
+#  (density_group_trend_output() ),
+#  (density_group_trend_play() )
+#)
 #  }) 
  
 ################################################################################

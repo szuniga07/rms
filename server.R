@@ -5028,11 +5028,31 @@ fpconf <- function(x, xlev, y, z, dataf, conf_lev, Increment) {
   return(agr_df=agr_df ) 
 }
 
+#Create levels that will appear in the aggregated only data
+fncPltAgrLv <- function(All.Groups, Specific.Groups) {
+  if(is.null(Specific.Groups) ) {
+    fci_aggr_levs <- All.Groups
+  } else {
+    fci_aggr_levs <- Specific.Groups
+  }
+  return(fci_aggr_levs)
+}
+
+fci_plot_aggr_levs <- reactive({ 
+  if(input$FCiCreate == "Yes") {
+  fncPltAgrLv(All.Groups=fci_plot_groups(), Specific.Group=fci_plot_Group_Levels())
+  }
+})
+
 fconf <- function(x=xcivar, xlev=xlev, y=ycivar, z=zcivar, dataf, conf_lev=ciconf_lev, 
-                  Increment, Fci_type, Aggr) {
+                  Increment, Fci_type, Aggr, Aggr.Levs) {
   if(Aggr== "Yes: Aggregated data only") {
-    agr_df <- data.frame(x_lev=df()[, x], z_lev=as.integer(c(df()[, z])), agr_m=df()[, y], agr_sd=0, agr_n=1)
-    adf_alpha <- data.frame(cbind(PointEst=agr_df$agr_m, Lower=0, Upper=0))
+#    agr_df <- data.frame(x_lev=dataf[, x], z_lev=as.integer(c(dataf[, z])), agr_m=dataf[, y], agr_sd=0, agr_n=1)
+    agr_df <- data.frame(x_lev=dataf[ dataf[, x] %in% Aggr.Levs, x], 
+                         z_lev=as.integer(c( dataf[ dataf[, x] %in% Aggr.Levs, z] )), 
+                         agr_m= dataf[ dataf[, x] %in% Aggr.Levs, y],
+                         agr_sd=0, agr_n=1)
+    adf_alpha <- data.frame(cbind(PointEst=agr_df$agr_m, Lower=agr_df$agr_m, Upper=agr_df$agr_m))
     agr_df <- cbind(agr_df, adf_alpha)
   } else {
     switch(Fci_type,                #"var" and can be used anywhere in server.r.
@@ -5048,7 +5068,7 @@ fcidf <- reactive({                  #This indicates the data frame I will use.
   if(input$FCiCreate == "Yes") {
     fconf(x=input$fxcivar, xlev=fci_plot_Group_Levels(), y=input$fycivar, z=input$fzcivar, 
           dataf=df(), conf_lev=input$fciconf_lev, Increment=fci_Z_Increment(), 
-          Fci_type=input$fci_type, Aggr=fCi_straight_line() )
+          Fci_type=input$fci_type, Aggr=fCi_straight_line(), Aggr.Levs=fci_plot_aggr_levs() )
   }
 })
 

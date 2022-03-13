@@ -10340,7 +10340,7 @@ output$ms_model_fit_out <- renderPrint({
          "Current State Map"=multi_state_model()$cmap,
          "Transitions"=multi_state_model()$transitions,
          "Coefficient's X Levels"= multi_state_x_level_names(),
-         "AIC"= AIC(efit1()) )
+         "AIC"= try(AIC( multi_state_model() )) )
     #"Coefficient's X Levels"=attributes(multi_state_model()$cmap)$dimnames[[1]][-1])
   }
 })
@@ -11007,14 +11007,7 @@ fncStSpcLegendFactoLev <- function(Model_fit, X_Lev) {
 ##} )
 
 #output$test1 <- renderPrint({
-#list(  
-  #density_group_trend_by_time()
-  #density_group_trend_output()
-#TDList=density_group_trend_output(), X= density_group_trend_group(), Y= density_group_trend_outcome(), Z= density_group_trend_time()
-#  out=  density_group_trend_output()[["AggrY"]][[1]] 
-#  (density_group_trend_output() ),
-#  (density_group_trend_play() )
-#)
+#list(  )
 #  }) 
  
 ################################################################################

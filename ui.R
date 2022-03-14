@@ -1171,6 +1171,7 @@ tabPanel("Multi-State",
          h5("This section converts wide format data into long format and produces multiple variables such as start and stop times for various states."),
          h5("Important: One time variable (e.g., #3) that covers the full range is required (i.e., values of 1:max(Time)). The ID variable in #5 needs to be in sequential order (i.e., no gaps). The time variable created from #2, will take the same name."),
          h5("If running a time-dependent covariate model, specify the model as 'Surv(tstart, tstop, event) ~ Intervention'. "),
+         h5("'Transient state'means a subject can transition out of that state. 'Terminal state' means once a subject enters that state, departure is not possible (e.g., death)."),
          h5("Make sure to reverse code (use 'enum') after time-dependent data creation, 'Intervention' at time 1=1, time 2=0 if patients start with the intervention then stop. No code change needed if patients do not start on the intervention (i.e., begin as Intervention==0)."),
          h5("To create a time-dependent/varying coefficient dataset, go to the 'Survival' tab."),
          fluidRow(
@@ -1357,7 +1358,7 @@ plotOutput("MSschoenfeld_plt", height = 800, width="100%"),
 br(),
 #Model summary for state space figure
 h4("Summarize output"),
-h5("Create the model summary to retrieve the state space figure values"),
+h5("Create the model summary to retrieve the state space figure values. Complete this section to get the diagram below."),
 h6("Select options for the coefficient of primary interest. Leaving #2 blank returns all transitions."),
 fluidRow(
   column(3, 

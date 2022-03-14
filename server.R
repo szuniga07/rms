@@ -10462,7 +10462,7 @@ ms_summary_multiplier_value1 <- reactive({
 #4. Select the summary X levels I want
 output$MS_Sum_X_Levs2 <- renderUI({
   if(begin_ms_model() == "Yes") {
-    selectInput("msSumXLev2", "1. Select summary X levels", 
+    selectInput("msSumXLev2", "4. Select summary X levels", 
                 choices = multi_state_x_level_names() , multiple=FALSE,  
                 selected=setdiff(multi_state_x_level_names(), ms_summary_x_levels1())[1]
                 )
@@ -10477,7 +10477,7 @@ ms_summary_x_levels2 <- reactive({
 #5. Transition names
 output$MS_Sum_Trns_Nms2 <- renderUI({  
   if(begin_ms_model() == "Yes") {
-    selectInput("msSumTrnNm2", "2. Select specific transitions",
+    selectInput("msSumTrnNm2", "5. Select specific transitions",
                 #choices = multi_state_transition_names(),  multiple=TRUE, selected=multi_state_transition_names()[1])
     choices = multi_state_transition_names(),  multiple=TRUE)
   }
@@ -10491,7 +10491,7 @@ ms_summary_transition_names2 <- reactive({
 #6. Multiplier value for continuous variables
 output$MS_Sum_Multi_Val2 <- renderUI({  
   if(begin_ms_model() == "Yes") {
-    numericInput("mSSumMultiVal2", "3. Select continuous X multiplier",
+    numericInput("mSSumMultiVal2", "6. Select continuous X multiplier",
                  min=1, step=1, value=1)
   }
 })

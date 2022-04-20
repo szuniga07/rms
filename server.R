@@ -127,7 +127,8 @@ shinyServer(
                               "1/31/2021 21:15 as 1/31/2021", #"1/31/2021 21:15:30",
                               "1/31/2021 21:15:30 as 1/31/2021", #"1/31/2021 12:00:00 AM", 
                               "1/31/2021 12:00:00 AM as 1/31/2021", "31JAN2021:12:00:00 as 31JAN2021",
-                              "44227 in Excel"), 
+                              "JAN2021", "JAN21","JAN-2021","JAN-21","01/2021", "01/21",
+                              "01-2021", "01-21", "2021-01", "21-01", "44227 in Excel"), 
                   multiple=TRUE, selected="01-31-2021")
     })
     #6. Number of replications per format used
@@ -274,6 +275,16 @@ shinyServer(
                  "1/31/2021 12:00:00 AM" = df_mod[, X[i]] <- strptime(as.character(df_mod[, X[i]]), format="%m/%d/%Y %H:%M:%S %p"),
                  "1/31/2021 12:00:00 AM as 1/31/2021" = df_mod[, X[i]] <- as.Date(strptime(as.character(df_mod[, X[i]]), format="%m/%d/%Y %H:%M:%S %p")),
                  "31JAN2021:12:00:00 as 31JAN2021" = df_mod[, X[i]] <- as.Date(strptime(as.character(df_mod[, X[i]]), format="%d%b%Y:%H:%M:%S")),
+                 "JAN2021" = df_mod[, X[i]] <- as.Date(df_mod[, X[i]], format="%b%Y"), 
+                 "JAN21" = df_mod[, X[i]] <- as.Date(df_mod[, X[i]], format="%b%y"), 
+                 "JAN-2021" =  df_mod[, X[i]] <- as.Date(df_mod[, X[i]], format="%b-%Y"),
+                 "JAN-21" = df_mod[, X[i]] <- as.Date(df_mod[, X[i]], format="%b-%y"),
+                 "01/2021" = df_mod[, X[i]] <- as.Date(df_mod[, X[i]], format="%m/%Y"),
+                 "01/21" = df_mod[, X[i]] <- as.Date(df_mod[, X[i]], format="%m/%y"),
+                 "01-2021" = df_mod[, X[i]] <- as.Date(df_mod[, X[i]], format="%m-%Y"),
+                 "01-21" = df_mod[, X[i]] <- as.Date(df_mod[, X[i]], format="%m-%y"),
+                 "2021-01" = df_mod[, X[i]] <- as.Date(df_mod[, X[i]], format="%Y-%m"),
+                 "21-01" = df_mod[, X[i]] <- as.Date(df_mod[, X[i]], format="%y-%m"),
                  "44227 in Excel" = df_mod[, X[i]] <- as.Date(df_mod[, X[i]], origin="1899-12-30")) 
         }
       }

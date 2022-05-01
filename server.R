@@ -1011,9 +1011,9 @@ shinyServer(
                    } else {
                      fit.mult.impute(aft_mdl_fmla2(), psm, mi(), data=df(), pr=FALSE)},
                    "Generalized Least Squares" = if(input$updy == "Yes") {
-                     fit.mult.impute(cox_mdl_fmla2u(), Gls, mi(), data=df(), pr=FALSE, correlation=corCAR1(form= gls_cor()))
+                     fit.mult.impute(as.formula(input$up_fmla), Gls, mi(), data=df(), pr=FALSE, correlation=corCAR1(form= gls_cor()))
                    } else {
-                     fit.mult.impute(cox_mdl_fmla2(), Gls, mi(), data=df(), pr=FALSE, correlation=corCAR1(form= gls_cor()))}
+                     fit.mult.impute(mdl_fmla(), Gls, mi(), data=df(), pr=FALSE, correlation=corCAR1(form= gls_cor()))}
             )
           }
           

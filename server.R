@@ -922,25 +922,25 @@ shinyServer(
           
           if (input$begin_mdl == "Yes") {
             
-            switch(input$regress_type,                #"var" and can be used anywhere in server.r.
+            switch(input$regress_type,                                          #replaced "as.formula(input$up_fmla)" with Upd_mdl_fmla()
                    "Linear"   = if(input$updy == "Yes") {
-                     ols(as.formula(input$up_fmla), x=TRUE, y=TRUE, data=df())
+                     ols(Upd_mdl_fmla(), x=TRUE, y=TRUE, data=df())
                    } else {
                      ols(mdl_fmla(), x=TRUE, y=TRUE, data=df())},
                    "Logistic" = if(input$updy == "Yes") {
-                     lrm(as.formula(input$up_fmla), x=TRUE, y=TRUE, data=df(), tol=1e-100, maxit=20) #I added tol value so it can handle time predictor (YYMM)
+                     lrm(Upd_mdl_fmla(), x=TRUE, y=TRUE, data=df(), tol=1e-100, maxit=20) #I added tol value so it can handle time predictor (YYMM)
                    } else { #Added maxit to handle small samples. See https://stat.ethz.ch/pipermail/r-help/2017-September/449115.html  
                      lrm(mdl_fmla(), x=TRUE, y=TRUE, data=df(), tol=1e-100, maxit=20)},  #I added tol value so it can handle time predictor that causes "singularity"
                    "Ordinal Logistic" = if(input$updy == "Yes") {
-                     orm(as.formula(input$up_fmla), x=TRUE, y=TRUE, data=df())
+                     orm(Upd_mdl_fmla(), x=TRUE, y=TRUE, data=df())
                    } else {
                      orm(mdl_fmla(), x=TRUE, y=TRUE, data=df())},
                    "Poisson" = if(input$updy == "Yes") {
-                     Glm(as.formula(input$up_fmla), x=TRUE, y=TRUE, data=df(), family=poisson())
+                     Glm(Upd_mdl_fmla(), x=TRUE, y=TRUE, data=df(), family=poisson())
                    } else {
                      Glm(mdl_fmla(), x=TRUE, y=TRUE, data=df(), family=poisson())},
                    "Quantile" = if(input$updy == "Yes") {
-                     Rq(as.formula(input$up_fmla), x=TRUE, y=TRUE, data=df(), tau=as.numeric(rq_tau1()))
+                     Rq(Upd_mdl_fmla(), x=TRUE, y=TRUE, data=df(), tau=as.numeric(rq_tau1()))
                    } else {
                      Rq(mdl_fmla(), x=TRUE, y=TRUE, data=df(), tau=as.numeric(rq_tau1()))},
                    "Cox PH"   = if(input$updy == "Yes") {
@@ -961,7 +961,8 @@ shinyServer(
                    } else {
                      psm(aft_mdl_fmla2(), x=TRUE, y=TRUE, data=df(), dist=AFT_PSM_Dist())},
                    "Generalized Least Squares" = if(input$updy == "Yes") {
-                     Gls(as.formula(input$up_fmla), x=TRUE, data=df(), correlation=corCompSymm(form= gls_cor()))
+                     Gls(Upd_mdl_fmla(), x=TRUE, data=df(), correlation=corCompSymm(form= gls_cor()))
+                     #Gls(as.formula(input$up_fmla), x=TRUE, data=df(), correlation=corCompSymm(form= gls_cor()))
                    } else {
                      Gls(mdl_fmla(), x=TRUE, data=df(),
                          correlation=corCompSymm(form= gls_cor()))}
@@ -974,23 +975,23 @@ shinyServer(
             
             switch(input$regress_type,
                    "Linear"   = if(input$updy == "Yes") {
-                     fit.mult.impute(as.formula(input$up_fmla), ols, mi(), data=df(), pr=FALSE)
+                     fit.mult.impute(Upd_mdl_fmla(), ols, mi(), data=df(), pr=FALSE)
                    } else {
                      fit.mult.impute(mdl_fmla(), ols, mi(), data=df(), pr=FALSE)},
                    "Logistic" = if(input$updy == "Yes") {
-                     fit.mult.impute(as.formula(input$up_fmla), lrm, mi(), data=df(), pr=FALSE, tol=1e-100)
+                     fit.mult.impute(Upd_mdl_fmla(), lrm, mi(), data=df(), pr=FALSE, tol=1e-100)
                    } else {
                      fit.mult.impute(mdl_fmla(), lrm, mi(), data=df(), pr=FALSE)},
                    "Ordinal Logistic" = if(input$updy == "Yes") {
-                     fit.mult.impute(as.formula(input$up_fmla), orm, mi(), data=df(), pr=FALSE)
+                     fit.mult.impute(Upd_mdl_fmla(), orm, mi(), data=df(), pr=FALSE)
                    } else {
                      fit.mult.impute(mdl_fmla(), orm, mi(), data=df(), pr=FALSE)},
                    "Poisson" = if(input$updy == "Yes") {
-                     fit.mult.impute(as.formula(input$up_fmla), Glm, mi(), data=df(), pr=FALSE, family=poisson())
+                     fit.mult.impute(Upd_mdl_fmla(), Glm, mi(), data=df(), pr=FALSE, family=poisson())
                    } else {
                      fit.mult.impute(mdl_fmla(), Glm, mi(), data=df(), pr=FALSE)},
                    "Quantile" = if(input$updy == "Yes") {
-                     fit.mult.impute(as.formula(input$up_fmla), Rq, mi(), data=df(), pr=FALSE, tau=as.numeric(rq_tau1()))
+                     fit.mult.impute(Upd_mdl_fmla(), Rq, mi(), data=df(), pr=FALSE, tau=as.numeric(rq_tau1()))
                    } else {
                      fit.mult.impute(mdl_fmla(), Rq, mi(), data=df(), pr=FALSE, tau=as.numeric(rq_tau1()))},
                    "Cox PH"   = if(input$updy == "Yes") {
@@ -1011,7 +1012,7 @@ shinyServer(
                    } else {
                      fit.mult.impute(aft_mdl_fmla2(), psm, mi(), data=df(), pr=FALSE)},
                    "Generalized Least Squares" = if(input$updy == "Yes") {
-                     fit.mult.impute(as.formula(input$up_fmla), Gls, mi(), data=df(), pr=FALSE, correlation=corCAR1(form= gls_cor()))
+                     fit.mult.impute(Upd_mdl_fmla(), Gls, mi(), data=df(), pr=FALSE, correlation=corCAR1(form= gls_cor()))
                    } else {
                      fit.mult.impute(mdl_fmla(), Gls, mi(), data=df(), pr=FALSE, correlation=corCAR1(form= gls_cor()))}
             )
@@ -1142,11 +1143,15 @@ shinyServer(
                   choices = c("No", "Yes"), multiple=FALSE, selected="No")     #Will make choices based on my reactive function.
     })
     
-    #Update the model formula.
+    #13. Update the model formula.
     output$uf <- renderUI({                                 #Same idea as output$vy
       textInput("up_fmla", "13. Update formula (Interactions: Change \"+\" to \'*\', strat(X) to stratify CPH).", 
                 value= deparse(mdl_fmla(), width.cutoff=500 ))     #Will make choices based on my reactive function.
     })
+    #13A. Quantile N object
+    Upd_mdl_fmla <<- reactive({
+      as.formula(input$up_fmla)
+      })
     
     #Indicates if the SINGLE predictor is stratified, needed to print regression results output$regress
     MsStrat0 <- reactive({
@@ -2872,8 +2877,9 @@ output$calibrate_B_arg_n <- renderUI({
 
 #3. Pick a time for survival models
 output$calibrate_surv_time <- renderUI({
-  numericInput("calSrvTM", "3. Select a time for survival models", value= as.numeric(describeY()[["counts"]][10]), 
-               min=as.numeric(describeY()[["extremes"]][1]), max=as.numeric(describeY()[["extremes"]][10]), step=1)
+  numericInput("calSrvTM", "3. Select a time for survival models", value= try(as.numeric(describeY()[["counts"]]["Mean"])), 
+#               min=try(as.numeric(describeY()[["extremes"]][1])), max=try(as.numeric(describeY()[["extremes"]][10])), 
+               step=1)
 })
 
 #4. Pick a time for survival models

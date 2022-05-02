@@ -801,7 +801,7 @@ br()
                    h4("The reliability of a model, meaning the ability of the model to predict future observations as well as it appeared to predict the responses at hand."),
                    br(),
                    h5("Note: Prior to calibration, create the single imputed data under 'Transformation and Imputation of predictors' in the 'Reduce' tab for multiple imputation purposes."),
-                   h5("For #4, select the number of groups that survival models calibration is validated on (see note below). Default is 5 (e.g., sample size/5)."),
+                   h5("For #3, mean time shown. For #4, select the number of groups that survival models calibration is validated on (see note below). Default is 5 (e.g., sample size/5)."),
                    br(),
                    fluidRow(
                    column(3, 

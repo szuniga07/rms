@@ -160,6 +160,8 @@ h5("Once data is downloaded, it can be uploaded and entered at the top for analy
                    uiOutput("clustering"),  #GLS clustering variable.
                    br(),
                    uiOutput("quant_tau"),  #Selects the percentile to use in quantile regression.
+                   br(),
+                   uiOutput("weighting_reg"),  #Selects the weight variable in the regression.
                    br()
                    ),
                    
@@ -235,6 +237,7 @@ fluidRow(
 br(),
 h5("Outcome = Yes = max(Outcome). Outcome = No = min(Outcome). In a 'Cox PH with censoring' model, Outcome = Yes = 'Dead', Outcome = Yes = 'Alive'. For non-censored 'Cox PH' and 'AFT', Outcome = Yes = <Time-cutoff and Outcome = No = >=Time-cutoff because it represents higher risk/faster outcomes."),
 h5("X-axis values are linear predictions. For AFT models, sensitivty and 1-specificity values are in reverse because predictions are in survival times (i.e., use values below cutoff)."),
+h5("For Poisson regressions with offset(), the actual range of predictions differs from the histogram of predicted Y above. Offsets need to be multiplied by mean(offset) to be similar."),
 plotOutput("plot_binary_class_run", height = 800, width="100%"),
 br(),
 h5("Get sensitivity, specificity, false-positive, false-negative, and positive and negative predictive values associated using your prediction threshold value. Includes Decision Curve Analysis."),
@@ -280,7 +283,7 @@ tabPanel("PREDs",                                #Creates a new panel named "Tes
          h4("Download, Upload, Save and make Predictions from model fits."),
          br(),
          h5("Save model."),
-         h5("Note: Save ANY file name with '.RData' at the end."),
+         h5("Note: Save ANY file name with '.RData' at the end. Poisson regressions with offsets require exp(lpred)*offset mean"),
          fluidRow(                           #Wrapping them in a fluidRow provides easy control over  
            column(3,
            uiOutput("SaveModelFit")),
@@ -693,6 +696,7 @@ tabPanel("Impute",
                    br(),
                    h4("Partial prediction of a continuous predictor by a factor."),
                     h5("This plot shows the expected trend line by multiple levels with 95% confidence intervals. Especially helpful in seeing the interaction effect and where lines intersect or diverge."),  
+                   h5("For Poisson regression offset(), include the function in #8, e.g., 'do.call('Predict', list(fit1(),'year2'= 1:7, 'procedure', fun=function(x) exp(x)*mean(df()[, 'Pt.Days'']), offset= list(Pt.Days=mean(df()[, 'Pt.Days''])) ))'."),  
                    br(),
                    fluidRow(
                      column(3, 
@@ -731,6 +735,8 @@ tabPanel("Impute",
                    br(),
                    plotOutput("xYplot_interaction", height=800, width="100%"),
                    br(),
+                   h4("For extrapolated values in a Poisson regression with an offset, specify like this: do.call('Predict', list(fit1(),'year2'= 1:7, 'procedure', fun=function(x) exp(x)*mean(df()[, 'Pt.Days']), offset= list(Pt.Days=mean(df()[, 'Pt.Days'])) ))"),
+                   br(),
 h4("Contrast plots"),
 h5("This graph shows differences between groups (linear differences, odds ratios, hazard ratios) with 95% confidence intervals. Compare 2 groups on predicted values, especially useful for interactions."),                   
 h5("This plot compliments the partial prediction plot above. You must run the plot directly above first."),                   
@@ -758,6 +764,7 @@ plotOutput("xyplot_contrast_plot", height=700, width="100%"),
 h6("The portions of the red horizontal line (e.g., at 0 for linear regression, at 1 for logistic regression and Cox PH) corresponds to no significant predictor effect when contained within the 95% CI."),
 h6("The blue line represents the contrast level you selected (e.g., 'Female')."),
 h6("For example, women may have higher rates of death before age 58, equal with men from 58-88, and have lower rates after 88 years."),
+h6("For Poisson regressions with offset(), contrasts are of general rate ratios. To contrast using an average offset, use Predict() in Describe tab."),
 br(),
 h5("Contrasts and 95% confidence intervals from the plot above at various percentiles of the continuous predictor. Non-interaction contrasts will be constant."),
 tableOutput("contrast_quant_table"),

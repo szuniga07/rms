@@ -924,48 +924,50 @@ shinyServer(
             
             switch(input$regress_type,                                          #replaced "as.formula(input$up_fmla)" with Upd_mdl_fmla()
                    "Linear"   = if(input$updy == "Yes") {
-                     ols(Upd_mdl_fmla(), x=TRUE, y=TRUE, data=df())
+                     ols(Upd_mdl_fmla(), x=TRUE, y=TRUE, data=df(), weights= eval(parse(text= weighting_regression_var())) )
                    } else {
-                     ols(mdl_fmla(), x=TRUE, y=TRUE, data=df())},
+                     ols(mdl_fmla(), x=TRUE, y=TRUE, data=df(), weights= eval(parse(text= weighting_regression_var())))},
                    "Logistic" = if(input$updy == "Yes") {
-                     lrm(Upd_mdl_fmla(), x=TRUE, y=TRUE, data=df(), tol=1e-100, maxit=20) #I added tol value so it can handle time predictor (YYMM)
+                     lrm(Upd_mdl_fmla(), x=TRUE, y=TRUE, data=df(), tol=1e-100, maxit=20, 
+                         weights= eval(parse(text= weighting_regression_var())) ) #I added tol value so it can handle time predictor (YYMM)
                    } else { #Added maxit to handle small samples. See https://stat.ethz.ch/pipermail/r-help/2017-September/449115.html  
-                     lrm(mdl_fmla(), x=TRUE, y=TRUE, data=df(), tol=1e-100, maxit=20)},  #I added tol value so it can handle time predictor that causes "singularity"
+                     lrm(mdl_fmla(), x=TRUE, y=TRUE, data=df(), tol=1e-100, maxit=20, 
+                         weights= eval(parse(text= weighting_regression_var())))},  #I added tol value so it can handle time predictor that causes "singularity"
                    "Ordinal Logistic" = if(input$updy == "Yes") {
                      orm(Upd_mdl_fmla(), x=TRUE, y=TRUE, data=df())
                    } else {
                      orm(mdl_fmla(), x=TRUE, y=TRUE, data=df())},
                    "Poisson" = if(input$updy == "Yes") {
-                     Glm(Upd_mdl_fmla(), x=TRUE, y=TRUE, data=df(), family=poisson())
+                     Glm(Upd_mdl_fmla(), x=TRUE, y=TRUE, data=df(), family=poisson(), weights= eval(parse(text= weighting_regression_var())))
                    } else {
-                     Glm(mdl_fmla(), x=TRUE, y=TRUE, data=df(), family=poisson())},
+                     Glm(mdl_fmla(), x=TRUE, y=TRUE, data=df(), family=poisson(), weights= eval(parse(text= weighting_regression_var())) )},
                    "Quantile" = if(input$updy == "Yes") {
-                     Rq(Upd_mdl_fmla(), x=TRUE, y=TRUE, data=df(), tau=as.numeric(rq_tau1()))
+                     Rq(Upd_mdl_fmla(), x=TRUE, y=TRUE, data=df(), tau=as.numeric(rq_tau1()), weights= eval(parse(text= weighting_regression_var())) )
                    } else {
-                     Rq(mdl_fmla(), x=TRUE, y=TRUE, data=df(), tau=as.numeric(rq_tau1()))},
+                     Rq(mdl_fmla(), x=TRUE, y=TRUE, data=df(), tau=as.numeric(rq_tau1()), weights= eval(parse(text= weighting_regression_var())) )},
                    "Cox PH"   = if(input$updy == "Yes") {
-                     cph(cox_mdl_fmla1u(), x=TRUE, y=TRUE, data=df(), surv=TRUE)
+                     cph(cox_mdl_fmla1u(), x=TRUE, y=TRUE, data=df(), surv=TRUE, weights= eval(parse(text= weighting_regression_var())))
                    } else {
-                     cph(cox_mdl_fmla1(), x=TRUE, y=TRUE, data=df(), surv=TRUE)},
+                     cph(cox_mdl_fmla1(), x=TRUE, y=TRUE, data=df(), surv=TRUE, weights= eval(parse(text= weighting_regression_var())))},
                    "Cox PH with censoring" = if(input$updy == "Yes") {
-                     cph(cox_mdl_fmla2u(), x=TRUE, y=TRUE, data=df(), surv=TRUE)
+                     cph(cox_mdl_fmla2u(), x=TRUE, y=TRUE, data=df(), surv=TRUE, weights= eval(parse(text= weighting_regression_var())))
                    } else {
-                     cph(cox_mdl_fmla2(), x=TRUE, y=TRUE, data=df(), surv=TRUE)},
+                     cph(cox_mdl_fmla2(), x=TRUE, y=TRUE, data=df(), surv=TRUE, weights= eval(parse(text= weighting_regression_var())))},
                    #AFT models
                    "AFT"   = if(input$updy == "Yes") {
-                     psm(aft_mdl_fmla1u(), data=df(), x=TRUE, y=TRUE, dist=AFT_PSM_Dist())
+                     psm(aft_mdl_fmla1u(), data=df(), x=TRUE, y=TRUE, dist=AFT_PSM_Dist(), weights= eval(parse(text= weighting_regression_var())) )
                    } else {
-                     psm(aft_mdl_fmla1(), data=df(), x=TRUE, y=TRUE, dist=AFT_PSM_Dist())},
+                     psm(aft_mdl_fmla1(), data=df(), x=TRUE, y=TRUE, dist=AFT_PSM_Dist(), weights= eval(parse(text= weighting_regression_var())) )},
                    "AFT with censoring" = if(input$updy == "Yes") {
-                     psm(aft_mdl_fmla2u(), data=df(),  x=TRUE, y=TRUE, dist=AFT_PSM_Dist())
+                     psm(aft_mdl_fmla2u(), data=df(),  x=TRUE, y=TRUE, dist=AFT_PSM_Dist(), weights= eval(parse(text= weighting_regression_var())) )
                    } else {
-                     psm(aft_mdl_fmla2(), x=TRUE, y=TRUE, data=df(), dist=AFT_PSM_Dist())},
+                     psm(aft_mdl_fmla2(), x=TRUE, y=TRUE, data=df(), dist=AFT_PSM_Dist(), weights= eval(parse(text= weighting_regression_var())) )},
                    "Generalized Least Squares" = if(input$updy == "Yes") {
-                     Gls(Upd_mdl_fmla(), x=TRUE, data=df(), correlation=corCompSymm(form= gls_cor()))
+                     Gls(Upd_mdl_fmla(), x=TRUE, data=df(), correlation=corCompSymm(form= gls_cor()), weights= eval(parse(text= weighting_regression_var())) )
                      #Gls(as.formula(input$up_fmla), x=TRUE, data=df(), correlation=corCompSymm(form= gls_cor()))
                    } else {
-                     Gls(mdl_fmla(), x=TRUE, data=df(),
-                         correlation=corCompSymm(form= gls_cor()))}
+                     Gls(mdl_fmla(), x=TRUE, data=df(), correlation=corCompSymm(form= gls_cor()), 
+                         weights= eval(parse(text= weighting_regression_var())) )}
                    #correlation= do.call("corCAR1", list(form=~week|uid)) )})
                    #as.formula(paste(paste0("~"), paste(gls_clst1(), collapse= "|")))
             )
@@ -1124,28 +1126,39 @@ shinyServer(
       numericInput("tau1", "9. Quantile level for quantile regression",
                    value=0.50, min=0, max=1, step=.05)     #Will make choices based on my reactive function.
     })
+
+    #10. Enter a weight variable.
+    output$weighting_reg <- renderUI({                                 
+      textInput("weight_var", "10. Enter a weight variable.")     
+    })
+    
+    #10A. Enter a weight variable.
+    weighting_regression_var <- reactive({         
+      input$weight_var
+    })
+    
     
     #Indicate if there should be splines.
     output$rcs_yes <- renderUI({                                 #Same idea as output$vy
-      selectInput("rcsy", "10. Do you want splines?", 
+      selectInput("rcsy", "11. Do you want splines?", 
                   choices = c("No", "Yes"), multiple=FALSE, selected="No")     #Will make choices based on my reactive function.
     })
     
     #Select the variables that will have splines.
     output$rx <- renderUI({                                 #Same idea as output$vy
-      selectInput("rcs_X", "11. Select the spline variables (continuous only)", 
+      selectInput("rcs_X", "12. Select the spline variables (continuous only)", 
                   choices = predictor(), multiple=TRUE, selected=predictor()[1])     #Will make choices based on my reactive function.
     })
 
     #Indicate if you should update the model.
     output$update_yes <- renderUI({                                 #Same idea as output$vy
-      selectInput("updy", "12. Do you want to update the model formula?", 
+      selectInput("updy", "13. Do you want to update the model formula?", 
                   choices = c("No", "Yes"), multiple=FALSE, selected="No")     #Will make choices based on my reactive function.
     })
     
     #13. Update the model formula.
     output$uf <- renderUI({                                 #Same idea as output$vy
-      textInput("up_fmla", "13. Update formula (Interactions: Change \"+\" to \'*\', strat(X) to stratify CPH).", 
+      textInput("up_fmla", "14. Update formula (Interactions: Change \"+\" to \'*\', strat(X) to stratify CPH).", 
                 value= deparse(mdl_fmla(), width.cutoff=500 ))     #Will make choices based on my reactive function.
     })
     #13A. Quantile N object
@@ -1385,11 +1398,11 @@ get_binary_class_df <- reactive({
   if (prediction_class_histogram_yes_no() =="Yes") {
     if (use_class_prior_model_YN() =="Yes") {
       fncYhatClassDf(Fit=class_prior_model_fit_name(), Y=outcome(), Threshold=prediction_class_threshold(), Censor=censor1(),
-                     PredTime=prediction_classification_time(), RegType=input$regress_type, DF=df() )
+                     PredTime=prediction_classification_time(), RegType=input$regress_type, DF=df(), OffSetName= mdl_off_set_output()$offset_variable_name)
     } else {
       fncYhatClassDf(Fit= fit1(), Y=outcome(),
                      Threshold=prediction_class_threshold(), Censor=censor1(),
-                     PredTime=prediction_classification_time(), RegType=input$regress_type, DF=df() )
+                     PredTime=prediction_classification_time(), RegType=input$regress_type, DF=df(), OffSetName= mdl_off_set_output()$offset_variable_name)
     }
   }
 })
@@ -1471,10 +1484,10 @@ get_thresh_quant_df <- reactive({
   if (decison_curve_analysis_yes_no() =="Yes") {
     if (use_class_prior_model_YN() =="Yes") {
       fncThreshQntl(Fit=class_prior_model_fit_name(), Y=outcome(), Threshold=describeYhatHistRslt(), Censor=censor1(), 
-                    PredTime=prediction_classification_time(), RegType=input$regress_type, DF=df())
+                    PredTime=prediction_classification_time(), RegType=input$regress_type, DF=df(), OffSetName=mdl_off_set_output()$offset_variable_name)
     } else {
       fncThreshQntl(Fit=fit1(), Y=outcome(), Threshold=describeYhatHistRslt(), Censor=censor1(), 
-                    PredTime=prediction_classification_time(), RegType=input$regress_type, DF=df())
+                    PredTime=prediction_classification_time(), RegType=input$regress_type, DF=df(), OffSetName=mdl_off_set_output()$offset_variable_name)
     }
   }
 })
@@ -1551,14 +1564,19 @@ descion_crv_plt_ylim2 <- reactive({
 ##############
 ## Get data ##
 ##############
-fncYhatClassDf <- function(Fit, Y, Threshold, Censor=NULL, PredTime=NULL, RegType, DF)  {
+fncYhatClassDf <- function(Fit, Y, Threshold, Censor=NULL, PredTime=NULL, RegType, DF, OffSetName)  {
   tm1 <- Fit
   atime <- PredTime
   tdf <- DF
   tY <- Y
   tcensor <- Censor
-  PREDrange <- range(predict(Fit), na.rm=T)  
-  
+#  PREDrange <- range(predict(Fit), na.rm=T)  
+  if(RegType == "Poisson" & length(OffSetName) == 0 ) {
+    PREDrange <- range(predict(Fit), na.rm=T) 
+  } else {
+#    PREDrange <- range(exp(predict( Fit, newdata=DF) )* mean(DF[, OffSetName]), na.rm=T)
+    PREDrange <- range(predict( Fit, newdata=DF), na.rm=T )
+  } 
   # Need to make object for this so I can calculate the trapezoid AUC:
   threshLev <- Threshold
   #Get predictions for values at threshold
@@ -1899,22 +1917,22 @@ fncClassDfSmry <- function(ClassDF, RegType) {
 ###########################################
 ## Create a decision curve analysis plot ##
 ###########################################
-fncThreshQntl <- function(Fit, Y, Threshold, Censor=NULL, PredTime=NULL, RegType, DF) {
+fncThreshQntl <- function(Fit, Y, Threshold, Censor=NULL, PredTime=NULL, RegType, DF, OffSetName) {
   #Get sensitivity and specificity for IQR of predicted values
   yClass.05 <-  fncYhatClassDf(Fit=Fit, Y=Y, Threshold=as.numeric(Threshold[["counts"]][7]), 
-                               Censor=Censor, PredTime=PredTime, RegType=RegType, DF=DF)
+                               Censor=Censor, PredTime=PredTime, RegType=RegType, DF=DF, OffSetName=OffSetName)
   yClass.10 <-  fncYhatClassDf(Fit=Fit, Y=Y, Threshold=as.numeric(Threshold[["counts"]][8]), 
-                               Censor=Censor, PredTime=PredTime, RegType=RegType, DF=DF)
+                               Censor=Censor, PredTime=PredTime, RegType=RegType, DF=DF, OffSetName=OffSetName)
   yClass.25 <-  fncYhatClassDf(Fit=Fit, Y=Y, Threshold=as.numeric(Threshold[["counts"]][9]), 
-                               Censor=Censor, PredTime=PredTime, RegType=RegType, DF=DF)
+                               Censor=Censor, PredTime=PredTime, RegType=RegType, DF=DF, OffSetName=OffSetName)
   yClass.50 <-  fncYhatClassDf(Fit=Fit, Y=Y, Threshold=as.numeric(Threshold[["counts"]][10]), 
-                               Censor=Censor, PredTime=PredTime, RegType=RegType, DF=DF)
+                               Censor=Censor, PredTime=PredTime, RegType=RegType, DF=DF, OffSetName=OffSetName)
   yClass.75 <-  fncYhatClassDf(Fit=Fit, Y=Y, Threshold=as.numeric(Threshold[["counts"]][11]), 
-                               Censor=Censor, PredTime=PredTime, RegType=RegType, DF=DF)
+                               Censor=Censor, PredTime=PredTime, RegType=RegType, DF=DF, OffSetName=OffSetName)
   yClass.90 <-  fncYhatClassDf(Fit=Fit, Y=Y, Threshold=as.numeric(Threshold[["counts"]][12]), 
-                               Censor=Censor, PredTime=PredTime, RegType=RegType, DF=DF)
+                               Censor=Censor, PredTime=PredTime, RegType=RegType, DF=DF, OffSetName=OffSetName)
   yClass.95 <-  fncYhatClassDf(Fit=Fit, Y=Y, Threshold=as.numeric(Threshold[["counts"]][13]), 
-                               Censor=Censor, PredTime=PredTime, RegType=RegType, DF=DF)
+                               Censor=Censor, PredTime=PredTime, RegType=RegType, DF=DF, OffSetName=OffSetName)
   #Group the output
   YClass <- list("yClass.05"=yClass.05, "yClass.10"=yClass.10, "yClass.25"=yClass.25,"yClass.50"=yClass.50,
                  "yClass.75"=yClass.75, "yClass.90"=yClass.90, "yClass.95"=yClass.95)
@@ -2088,8 +2106,85 @@ output$anova_smry <- renderPrint({
   anova(fit1(), digits=4, tol=1e-13)
 })
 
+#####################################
+## Offsets for Poisson regressions ##
+#####################################
+## This function determines if there is an offset in the model ##
+fncMdlOffSetYesNo <- function(Model) {
+  if(length(Model$offset) > 1) {
+    OffsetYN <- "Yes"
+  } else {
+    OffsetYN <- "No"
+  }
+  return(OffsetYN=OffsetYN)
+}
+
+## This function gets the info I need about the offset ##
+fncModelOffset <- function(Model, DF) {
+  #Get offset
+  offset_variable <- character()
+  if(fncMdlOffSetYesNo(Model) == "Yes") {
+    #if(length(Model$offset) > 1) {
+    offset_variable <- names(Model[["model"]])[ grep("\\)\\)", names(Model[["model"]])) ]
+  }
+  #Get variable name, remove offset notation
+  #offset_variable_name <- gsub("[[:punct:]]", "", gsub("offset|log", "", offset_variable))
+  offset_variable_name <- strsplit(offset_variable, "\\(|\\)"  )[[1]][3]  #String split to get offset variable
+  
+  #Create function that goes into plot
+  Offset_Exp_function <- function ( x) exp( x) * mean(DF[, offset_variable_name])
+  
+  if(length(offset_variable_name) == 0) {
+    Offset_Exp_function <- NULL
+  } else {
+    Offset_Exp_function <- Offset_Exp_function
+  }
+  
+  if(length(offset_variable_name) == 0) {
+    offset_variable_name <- NULL
+  } else {
+    offset_variable_name <- offset_variable_name
+  }
+  
+  #This creates the text for the offset value
+  #offset_variable_val_text <- character()
+  if(length(offset_variable_name) == 0) {
+    offset_variable_val_text <- NULL
+  } else {
+    offset_variable_val_text <- paste0("list(", offset_variable_name, "=", mean(DF[,offset_variable_name,], na.rm=T),")" )
+  }
+  return(list(offset_variable_name=offset_variable_name, 
+              Offset_Exp_function=Offset_Exp_function, offset_variable_val_text=offset_variable_val_text))
+}
+
+## This function creates an object of offset info or blank values if not relevant ##
+fncMdlOffSetDF <- function(Model, DF) {
+  if(fncMdlOffSetYesNo(Model) == "Yes") {
+    Offset.List <- fncModelOffset(Model=Model, DF=DF)
+  } else {
+    Offset.List <- list(offset_variable_name=character(), 
+                        Offset_Exp_function=expression(), offset_variable_val_text=numeric())
+  }
+  return(Offset.List)
+}
+
+## Reactive functions for offset functions above ##
+#Yes/No on whether there is an offset
+mdl_off_set_yes_no <- reactive({                 
+  fncMdlOffSetYesNo(fit1() ) 
+})
+
+#This gets the offset data I need to plot the partial predictions below
+mdl_off_set_output <- reactive({                 
+  fncMdlOffSetDF(Model=fit1(), DF=df() ) 
+})
+
+##########################
+##  Partial predictions ##
+##########################
 #This plots the predicted values    
     output$prt_prd <- renderPlot({
+      if( mdl_off_set_yes_no() == "No") {
       if(input$pe_yes == "Yes") {
         plot(  do.call("Predict", list(fit1(), pe_x_var(),  fun=list("As is"=TRUE, 
               "Exponentiated"=exp, "Proportion"=plogis, "Mean time"= function(x) mean_time()(lp=x), 
@@ -2098,7 +2193,17 @@ output$anova_smry <- renderPrint({
         plot(Predict(fit1(), fun=list("As is"=TRUE, "Exponentiated"=exp, "Proportion"=plogis,
               "Mean time"= function(x) mean_time()(lp=x), "Median time" =function(x) med_time()(lp=x))[[partial_effect_plot_fun()]] ), pch=15)
       }
+      } else {
+        if(input$pe_yes == "Yes") {
+          plot(  do.call("Predict", list(fit1(), pe_x_var(),  fun= mdl_off_set_output()$Offset_Exp_function,
+                        offset=eval(parse(text= mdl_off_set_output()$offset_variable_val_text ))) ), pch=15) 
+        } else {
+          plot(Predict(fit1(), fun= mdl_off_set_output()$Offset_Exp_function, 
+                       offset=eval(parse(text= mdl_off_set_output()$offset_variable_val_text )) ), pch=15)
+        }
+      }
     }, height = 600)
+
     #1. Create yes/no box to determine plot single partial effect
     output$prt_one_yes <- renderUI({                                 #Same idea as output$vy
       selectInput("pe_yes", "1. Do you want to plot a single partial effect?", 
@@ -2125,11 +2230,19 @@ output$anova_smry <- renderPrint({
                   choices = c("No", "Yes"), multiple=FALSE, selected= "No")     
     })
     #4A. Print predicted scores for 1 variable
-    output$pe_predict_var_smry <- renderPrint({ 
+    output$pe_predict_var_smry <- renderPrint({
+      if( mdl_off_set_yes_no() == "No") {
+      
       if(input$pe_prnt_prd == "Yes") {
         do.call("Predict", list(fit1(), pe_x_var(), fun=list("As is"=TRUE, "Exponentiated"=exp, "Proportion"=plogis, "Mean time"= function(x) mean_time()(lp=x),
                 "Median time" =function(x) med_time()(lp=x))[[partial_effect_plot_fun()]] )   )
       } 
+      } else {
+        if(input$pe_prnt_prd == "Yes") {
+          do.call("Predict", list(fit1(), pe_x_var(), fun=mdl_off_set_output()$Offset_Exp_function,
+                                  offset=eval(parse(text= mdl_off_set_output()$offset_variable_val_text )))   )
+        } 
+    }
     })
     #Creates the mean time function for survival models
     mean_time <- reactive({                 
@@ -2291,7 +2404,8 @@ output$anova_smry <- renderPrint({
       if(xy_extrapolate() == "Yes") {
         eval(parse(text= xy_extrap_box_Input() ))
       } else {
-        do.call("Predict", list(fit1(), XyplotX1(), XyplotZ1() )   ) 
+        do.call("Predict", list(fit1(), XyplotX1(), XyplotZ1(),  fun= mdl_off_set_output()$Offset_Exp_function,
+                                offset=eval(parse(text= mdl_off_set_output()$offset_variable_val_text )) )   ) 
       }
     })
     #Set up function to get XY limits from an XYplot
@@ -2474,16 +2588,14 @@ output$anova_smry <- renderPrint({
       if(reg %in% c("Logistic", "Ordinal Logistic") ) {
         xyplot_ylab <- paste0("Odds Ratio (",lev1, ":", lev2,")")
       }
-      if(reg %in% c("Linear","Poisson","Quantile","Generalized Least
-                    Squares")) {
+      if(reg %in% c("Linear","Poisson","Quantile","Generalized Least Squares")) {
         xyplot_ylab <- paste0("Contrast (",lev1, ":", lev2,")")
     }
       ## Determine if it is an abline at 0 or 1 ##
       if(reg %in% c("Cox PH", "Cox PH with censoring","Logistic", "Ordinal Logistic","AFT","AFT with censoring") ) {
         abline_01 <- 1
       }
-      if(reg %in% c("Linear","Poisson","Quantile","Generalized Least
-                    Squares")) {
+      if(reg %in% c("Linear","Poisson","Quantile","Generalized Least Squares")) {
         abline_01 <- 0
     }
       #Put elements int a list
@@ -2492,19 +2604,35 @@ output$anova_smry <- renderPrint({
       b <- list(lev2, seq(x_min, x_max, length.out=250))
       names(b) <- c(group, X)
       #w <- do.call("contrast", list( fit=model, a=a, b=b) )
-      w <- contrast( fit=model, a=a, b=b)
+#      w <- contrast( fit=model, a=a, b=b)
+      w <- contrast( fit=model, a=a, b=b, fun= mdl_off_set_output()$Offset_Exp_function)
       
       ## Exponentiate the data if needed ##
       #Contrast
-      if(reg %in% c("Cox PH", "Cox PH with censoring","Logistic", "Ordinal Logistic","Poisson","AFT","AFT with censoring")) {
+      if(reg %in% c("Cox PH", "Cox PH with censoring","Logistic", "Ordinal Logistic","AFT","AFT with censoring")) {
         w[["Contrast"]] <- exp(w[["Contrast"]])
       }
       #Lower
-      if(reg %in% c("Cox PH", "Cox PH with censoring","Logistic", "Ordinal Logistic","Poisson","AFT","AFT with censoring")) {
+      if(reg %in% c("Cox PH", "Cox PH with censoring","Logistic", "Ordinal Logistic","AFT","AFT with censoring")) {
         w[["Lower"]] <- exp(w[["Lower"]])
       }
       #Upper
-      if(reg %in% c("Cox PH", "Cox PH with censoring","Logistic", "Ordinal Logistic","Poisson","AFT","AFT with censoring")) {
+      if(reg %in% c("Cox PH", "Cox PH with censoring","Logistic", "Ordinal Logistic","AFT","AFT with censoring")) {
+        w[["Upper"]] <- exp(w[["Upper"]])
+      }
+      ## Just Poisson ##
+      #Contrast
+      if(reg %in% "Poisson" & length(mdl_off_set_output()$offset_variable_name) == 0 ) {
+        w[["Contrast"]] <- exp(w[["Contrast"]])
+      } else {
+        w[["Contrast"]] <- w[["Contrast"]]
+      }
+      #Lower
+      if(reg %in% "Poisson" & length(mdl_off_set_output()$offset_variable_name) == 0 ) {
+        w[["Lower"]] <- exp(w[["Lower"]])
+      }
+      #Upper
+      if(reg %in% "Poisson" & length(mdl_off_set_output()$offset_variable_name) == 0 ) {
         w[["Upper"]] <- exp(w[["Upper"]])
       }
       
@@ -3042,7 +3170,8 @@ rms_func <- reactive({
 
 #Creates a small data frame of just my inputs, will use it to create yhat scores
 xdf <- reactive({
-  xdf <- data.frame(df()[, predictor(), drop=FALSE])  #The drop argument allows me to show 1 predictor
+#  xdf <- data.frame(df()[, predictor(), drop=FALSE])  #The drop argument allows me to show 1 predictor
+  xdf <- data.frame(df()[, setdiff(predictor(), mdl_off_set_output()$offset_variable_name), drop=FALSE])  #Drops offset variables
 })
 
 #This creates the function to gather data element  characteristics for the model (e.g., names, mean) 
@@ -11024,7 +11153,7 @@ fncStSpcLegendFactoLev <- function(Model_fit, X_Lev) {
 ##} )
 
 #output$test1 <- renderPrint({
-#list(  )
+#list(  mdl_off_set_output() )
 #  }) 
  
 ################################################################################

@@ -687,6 +687,7 @@ shinyServer(
       switch(reg_yhat,                
              "Linear"   = plot_yhat <- yhat, 
              "Logistic" = plot_yhat <- yhat,
+             "Proportion Y Logistic" = plot_yhat <- yhat,
              "Ordinal Logistic"  = plot_yhat <- yhat,
              "Poisson"  = plot_yhat <- (yhat),
              "Quantile" = plot_yhat <- yhat,
@@ -933,6 +934,10 @@ shinyServer(
                    } else { #Added maxit to handle small samples. See https://stat.ethz.ch/pipermail/r-help/2017-September/449115.html  
                      lrm(mdl_fmla(), x=TRUE, y=TRUE, data=df(), tol=1e-100, maxit=20, 
                          weights= eval(parse(text= weighting_regression_var())))},  #I added tol value so it can handle time predictor that causes "singularity"
+                   "Proportion Y Logistic" = if(input$updy == "Yes") {
+                     Glm(Upd_mdl_fmla(), x=TRUE, y=TRUE, data=df(), family=binomial(), weights= eval(parse(text= weighting_regression_var())))
+                   } else {
+                     Glm(mdl_fmla(), x=TRUE, y=TRUE, data=df(), family=binomial(), weights= eval(parse(text= weighting_regression_var())) )},
                    "Ordinal Logistic" = if(input$updy == "Yes") {
                      orm(Upd_mdl_fmla(), x=TRUE, y=TRUE, data=df())
                    } else {
@@ -984,6 +989,10 @@ shinyServer(
                      fit.mult.impute(Upd_mdl_fmla(), lrm, mi(), data=df(), pr=FALSE, tol=1e-100)
                    } else {
                      fit.mult.impute(mdl_fmla(), lrm, mi(), data=df(), pr=FALSE)},
+                   "Proportion Y Logistic" = if(input$updy == "Yes") {
+                     fit.mult.impute(Upd_mdl_fmla(), Glm, mi(), data=df(), pr=FALSE, family=binomial())
+                   } else {
+                     fit.mult.impute(mdl_fmla(), Glm, mi(), data=df(), pr=FALSE)},
                    "Ordinal Logistic" = if(input$updy == "Yes") {
                      fit.mult.impute(Upd_mdl_fmla(), orm, mi(), data=df(), pr=FALSE)
                    } else {
@@ -991,7 +1000,7 @@ shinyServer(
                    "Poisson" = if(input$updy == "Yes") {
                      fit.mult.impute(Upd_mdl_fmla(), Glm, mi(), data=df(), pr=FALSE, family=poisson())
                    } else {
-                     fit.mult.impute(mdl_fmla(), Glm, mi(), data=df(), pr=FALSE)},
+                     fit.mult.impute(mdl_fmla(), Glm, mi(), data=df(), pr=FALSE, family=poisson())},
                    "Quantile" = if(input$updy == "Yes") {
                      fit.mult.impute(Upd_mdl_fmla(), Rq, mi(), data=df(), pr=FALSE, tau=as.numeric(rq_tau1()))
                    } else {
@@ -1088,6 +1097,7 @@ shinyServer(
       selectInput("regress_type", "5. Select the regression method",
                   choices = c("Linear", 
                               "Logistic", 
+                              "Proportion Y Logistic",
                               "Ordinal Logistic",
                               "Poisson",
                               "Cox PH",
@@ -1176,16 +1186,35 @@ shinyServer(
         } 
     }) 
     
+    #Model AIC, needed to revise for Poisson
+    fit1_AIC <- reactive({
+      if( input$regress_type == "Poisson") {
+        print( fit1()$aic )
+      } else {
+        print( unname(AIC(fit1())) ) 
+      } 
+    }) 
+    
+    fncFt1Aic <- function(Model, RegTyp) {
+      if( RegTyp %in% c("Poisson", "Proportion Y Logistic")) {
+         Model$aic 
+      } else {
+         unname(AIC(Model ))  
+      } 
+      
+    }
+
     #Regression results.
     output$regress <- renderPrint({                                                
       atch()
       if(MsStrat0() ==1) {
-        print(list( "Model"=fit1(), "AIC"=AIC(fit1()) ))
+        list( "Model"=fit1(), "AIC"= fncFt1Aic(Model=fit1(), RegTyp=input$regress_type) )
       } else {   
-        if( input$regress_type %in% c("Logistic", "Ordinal Logistic", "Poisson", "Cox PH", "Cox PH with censoring")) {
-          print( list("Model"=fit1(), "Exponentiated Coefficients"= exp(fit1()[["coefficients"]]), "AIC"=AIC(fit1())) )
+        if( input$regress_type %in% c("Logistic", "Proportion Y Logistic","Ordinal Logistic", "Poisson", "Cox PH", "Cox PH with censoring")) {
+          list("Model"=fit1(), "Exponentiated Coefficients"= exp(fit1()[["coefficients"]]), "AIC"= fncFt1Aic(Model=fit1(), RegTyp=input$regress_type) ) 
         } else {
-          print(list( "Model"=fit1(), "AIC"=AIC(fit1()) ))
+#          list("Model"=fit1(), "AIC"= fit1_AIC() )
+          list("Model"=fit1(), "AIC"= fncFt1Aic(Model=fit1(), RegTyp=input$regress_type) )
         }
       }
     })
@@ -1270,6 +1299,7 @@ fncTrnsfYhatSmry <- function(YhatRslt, RegType) {
   Transformed.Yhat <- switch(RegType,                
                              "Linear" = NA, 
                              "Logistic" = plogis(as.numeric(YhatRslt$counts[setdiff(names(YhatRslt$counts), excld_describe) ])),
+                             "Proportion Y Logistic" = plogis(as.numeric(YhatRslt$counts[setdiff(names(YhatRslt$counts), excld_describe) ])),
                              "Ordinal Logistic" = plogis(as.numeric(YhatRslt$counts[setdiff(names(YhatRslt$counts), excld_describe) ])),
                              "Poisson" = exp(as.numeric(YhatRslt$counts[setdiff(names(YhatRslt$counts), excld_describe) ])),
                              "Quantile" = NA,
@@ -1282,6 +1312,7 @@ fncTrnsfYhatSmry <- function(YhatRslt, RegType) {
   names(Transformed.Yhat) <- switch(RegType,                
                                     "Linear" = NULL, 
                                     "Logistic" = setdiff(names(YhatRslt$counts), excld_describe),
+                                    "Proportion Y Logistic" = setdiff(names(YhatRslt$counts), excld_describe),
                                     "Ordinal Logistic" = setdiff(names(YhatRslt$counts), excld_describe),
                                     "Poisson" = setdiff(names(YhatRslt$counts), excld_describe),
                                     "Quantile" = NA,
@@ -1294,6 +1325,7 @@ fncTrnsfYhatSmry <- function(YhatRslt, RegType) {
   Transformed.Full.Range <- switch(RegType,                
                              "Linear" = NA, 
                              "Logistic" = range(plogis(as.numeric(YhatRslt$extremes)) ),
+                             "Proportion Y Logistic" = range(plogis(as.numeric(YhatRslt$extremes)) ),
                              "Ordinal Logistic" = range(plogis(as.numeric(YhatRslt$extremes)) ),
                              "Poisson" = exp(as.numeric(YhatRslt$extremes)),
                              "Quantile" = NA,
@@ -1584,6 +1616,7 @@ fncYhatClassDf <- function(Fit, Y, Threshold, Censor=NULL, PredTime=NULL, RegTyp
   newtdf1 <- switch(RegType,                
                     "Linear"   = tdf[ tdf[,  tY] >= threshLev, ], 
                     "Logistic" = tdf[ tdf[,  tY] == 1, ],
+                    "Proportion Y Logistic" = tdf[ tdf[,  tY] == 1, ],
                     "Ordinal Logistic"  = tdf[ tdf[,  tY] > 1, ],
                     "Poisson"  = tdf[ tdf[,  tY] >= exp(threshLev), ],
                     "Quantile" = tdf[ tdf[,  tY] >= threshLev, ],
@@ -1597,6 +1630,7 @@ fncYhatClassDf <- function(Fit, Y, Threshold, Censor=NULL, PredTime=NULL, RegTyp
   newtdf2 <- switch(RegType,                
                     "Linear"   = tdf[ tdf[,  tY] < threshLev, ], 
                     "Logistic" = tdf[ tdf[,  tY] == 0, ],
+                    "Proportion Y Logistic" = tdf[ tdf[,  tY] == 0, ],
                     "Ordinal Logistic"  = tdf[ tdf[,  tY]  ==1, ],
                     "Poisson"  = tdf[ tdf[,  tY] < exp(threshLev), ],
                     "Quantile" = tdf[ tdf[,  tY] < threshLev, ],
@@ -1611,6 +1645,7 @@ fncYhatClassDf <- function(Fit, Y, Threshold, Censor=NULL, PredTime=NULL, RegTyp
   Transform.Threshold <- switch(RegType,                
                                 "Linear"   = NA, 
                                 "Logistic" = plogis(threshLev),
+                                "Proportion Y Logistic" = plogis(threshLev),
                                 "Ordinal Logistic"  = plogis(threshLev),
                                 "Poisson"  = exp(threshLev),
                                 "Quantile" = NA,
@@ -1692,7 +1727,8 @@ fncYhatClassPlt <- function(ClassDF, AUC, Brks, RegType, aspectRatio)  {
   #Sensitivity and 1-specificity
   Sens.Value <- switch(RegType,                
                         "Linear"   = round(ClassDF$propAbovMY1, 3), 
-                        "Logistic" = round(ClassDF$propAbovMY1, 3),
+                       "Logistic" = round(ClassDF$propAbovMY1, 3),
+                       "Proportion Y Logistic" = round(ClassDF$propAbovMY1, 3),
                         "Ordinal Logistic"  = round(ClassDF$propAbovMY1, 3),
                         "Poisson"  = round(ClassDF$propAbovMY1, 3),
                         "Quantile" = round(ClassDF$propAbovMY1, 3),
@@ -1704,7 +1740,8 @@ fncYhatClassPlt <- function(ClassDF, AUC, Brks, RegType, aspectRatio)  {
   Spec.Value <- switch(RegType,                
                         "Linear"   = round(ClassDF$propAbovMY0, 3), 
                         "Logistic" = round(ClassDF$propAbovMY0, 3),
-                        "Ordinal Logistic"  = round(ClassDF$propAbovMY0, 3),
+                       "Proportion Y Logistic" = round(ClassDF$propAbovMY0, 3),
+                       "Ordinal Logistic"  = round(ClassDF$propAbovMY0, 3),
                         "Poisson"  = round(ClassDF$propAbovMY0, 3),
                         "Quantile" = round(ClassDF$propAbovMY0, 3),
                         "Cox PH"   = round(ClassDF$propAbovMY0, 3),
@@ -1716,7 +1753,8 @@ fncYhatClassPlt <- function(ClassDF, AUC, Brks, RegType, aspectRatio)  {
   Bar.Colors1 <- switch(RegType,                
                                 "Linear"   = c("grey", "green"), 
                                 "Logistic" = c("grey", "green"),
-                                "Ordinal Logistic"  = c("grey", "green"),
+                        "Proportion Y Logistic" = c("grey", "green"),
+                        "Ordinal Logistic"  = c("grey", "green"),
                                 "Poisson"  = c("grey", "green"),
                                 "Quantile" = c("grey", "green"),
                                 "Cox PH"   = c("grey", "green"),
@@ -1727,6 +1765,7 @@ fncYhatClassPlt <- function(ClassDF, AUC, Brks, RegType, aspectRatio)  {
   Bar.Colors2 <- switch(RegType,                
                         "Linear"   = c("grey", "red"), 
                         "Logistic" = c("grey", "red"),
+                        "Proportion Y Logistic" = c("grey", "red"),
                         "Ordinal Logistic"  = c("grey", "red"),
                         "Poisson"  = c("grey", "red"),
                         "Quantile" = c("grey", "red"),
@@ -1739,6 +1778,7 @@ fncYhatClassPlt <- function(ClassDF, AUC, Brks, RegType, aspectRatio)  {
   AUC_val <- switch(RegType,                
                     "Linear"   = round(AUC, 3), 
                     "Logistic" = round(AUC, 3),
+                    "Proportion Y Logistic" = round(AUC, 3),
                     "Ordinal Logistic"  = round(AUC, 3),
                     "Poisson"  = round(AUC, 3),
                     "Quantile" = round(AUC, 3),
@@ -1780,6 +1820,7 @@ fncClassDfSmry <- function(ClassDF, RegType) {
   propAbovMY1 <- switch(RegType,                
                     "Linear"   = unname(ClassDF$propAbovMY1), 
                     "Logistic" = unname(ClassDF$propAbovMY1),
+                    "Proportion Y Logistic" = unname(ClassDF$propAbovMY1),
                     "Ordinal Logistic"  = unname(ClassDF$propAbovMY1),
                     "Poisson"  = unname(ClassDF$propAbovMY1),
                     "Quantile" = unname(ClassDF$propAbovMY1),
@@ -1792,7 +1833,8 @@ fncClassDfSmry <- function(ClassDF, RegType) {
   specifity <- switch(RegType,                
                         "Linear"   = unname(ClassDF$specifity), 
                         "Logistic" = unname(ClassDF$specifity),
-                        "Ordinal Logistic"  = unname(ClassDF$specifity),
+                      "Proportion Y Logistic" = unname(ClassDF$specifity),
+                      "Ordinal Logistic"  = unname(ClassDF$specifity),
                         "Poisson"  = unname(ClassDF$specifity),
                         "Quantile" = unname(ClassDF$specifity),
                         "Cox PH"   = unname(ClassDF$specifity),
@@ -1804,6 +1846,7 @@ fncClassDfSmry <- function(ClassDF, RegType) {
   propAbovMY0 <- switch(RegType,                
                       "Linear"   = unname(ClassDF$propAbovMY0), 
                       "Logistic" = unname(ClassDF$propAbovMY0),
+                      "Proportion Y Logistic" = unname(ClassDF$propAbovMY0),
                       "Ordinal Logistic"  = unname(ClassDF$propAbovMY0),
                       "Poisson"  = unname(ClassDF$propAbovMY0),
                       "Quantile" = unname(ClassDF$propAbovMY0),
@@ -1815,7 +1858,8 @@ fncClassDfSmry <- function(ClassDF, RegType) {
   #False.Negatives value
   fls_Neg <- switch(RegType,                
                         "Linear"   = unname(ClassDF$fls_Neg), 
-                        "Logistic" = unname(ClassDF$fls_Neg),
+                    "Logistic" = unname(ClassDF$fls_Neg),
+                    "Proportion Y Logistic" = unname(ClassDF$fls_Neg),
                         "Ordinal Logistic"  = unname(ClassDF$fls_Neg),
                         "Poisson"  = unname(ClassDF$fls_Neg),
                         "Quantile" = unname(ClassDF$fls_Neg),
@@ -1829,7 +1873,8 @@ fncClassDfSmry <- function(ClassDF, RegType) {
   #Sensitivity value
   N.AbovMY1 <- switch(RegType,                
                         "Linear"   = unname(ClassDF$N.AbovMY1), 
-                        "Logistic" = unname(ClassDF$N.AbovMY1),
+                      "Logistic" = unname(ClassDF$N.AbovMY1),
+                      "Proportion Y Logistic" = unname(ClassDF$N.AbovMY1),
                         "Ordinal Logistic"  = unname(ClassDF$N.AbovMY1),
                         "Poisson"  = unname(ClassDF$N.AbovMY1),
                         "Quantile" = unname(ClassDF$N.AbovMY1),
@@ -1842,6 +1887,7 @@ fncClassDfSmry <- function(ClassDF, RegType) {
   N.specifity <- switch(RegType,                
                       "Linear"   = unname(ClassDF$N.specifity), 
                       "Logistic" = unname(ClassDF$N.specifity),
+                      "Proportion Y Logistic" = unname(ClassDF$N.specifity),
                       "Ordinal Logistic"  = unname(ClassDF$N.specifity),
                       "Poisson"  = unname(ClassDF$N.specifity),
                       "Quantile" = unname(ClassDF$N.specifity),
@@ -1853,7 +1899,8 @@ fncClassDfSmry <- function(ClassDF, RegType) {
   #False.Positives value
   N.AbovMY0 <- switch(RegType,                
                         "Linear"   = unname(ClassDF$N.AbovMY0), 
-                        "Logistic" = unname(ClassDF$N.AbovMY0),
+                      "Logistic" = unname(ClassDF$N.AbovMY0),
+                      "Proportion Y Logistic" = unname(ClassDF$N.AbovMY0),
                         "Ordinal Logistic"  = unname(ClassDF$N.AbovMY0),
                         "Poisson"  = unname(ClassDF$N.AbovMY0),
                         "Quantile" = unname(ClassDF$N.AbovMY0),
@@ -1866,6 +1913,7 @@ fncClassDfSmry <- function(ClassDF, RegType) {
   N.fls_Neg <- switch(RegType,                
                     "Linear"   = unname(ClassDF$N.fls_Neg), 
                     "Logistic" = unname(ClassDF$N.fls_Neg),
+                    "Proportion Y Logistic" = unname(ClassDF$N.fls_Neg),
                     "Ordinal Logistic"  = unname(ClassDF$N.fls_Neg),
                     "Poisson"  = unname(ClassDF$N.fls_Neg),
                     "Quantile" = unname(ClassDF$N.fls_Neg),
@@ -1882,6 +1930,7 @@ fncClassDfSmry <- function(ClassDF, RegType) {
   wt_thresh <- switch(RegType,                
                       "Linear"   = pnorm( ClassDF$threshLev, mean = mean(df()[, outcome()], na.rm=T), sd = sd(df()[, outcome()], na.rm=T)),
                       "Logistic" = plogis(ClassDF$threshLev),
+                      "Proportion Y Logistic" = plogis(ClassDF$threshLev),
                       "Ordinal Logistic"  = plogis(ClassDF$threshLev),
                       "Poisson"  = pnorm( exp(ClassDF$threshLev), mean = mean(df()[, outcome()], na.rm=T), sd = sd(df()[, outcome()], na.rm=T)),                      
                       "Quantile" = pnorm( ClassDF$threshLev, mean = mean(df()[, outcome()], na.rm=T), sd = sd(df()[, outcome()], na.rm=T)),
@@ -1951,6 +2000,7 @@ fncThreshQntl <- function(Fit, Y, Threshold, Censor=NULL, PredTime=NULL, RegType
     Threshold.Level[i] <- switch(RegType,                
                       "Linear"   = YClass_Quants[i], 
                       "Logistic" = plogis(YClass[[i]]$threshLev),
+                      "Proportion Y Logistic" = plogis(YClass[[i]]$threshLev),
                       "Ordinal Logistic"  = YClass_Quants[i],
                       "Poisson"  = YClass_Quants[i],
                       "Quantile" = YClass_Quants[i],
@@ -2585,14 +2635,14 @@ mdl_off_set_output <- reactive({
       if(reg %in% c("AFT","AFT with censoring")) {
         xyplot_ylab <- paste0("Survival Time Ratio (",lev1, ":", lev2,")")
       }
-      if(reg %in% c("Logistic", "Ordinal Logistic") ) {
+      if(reg %in% c("Logistic","Proportion Y Logistic", "Ordinal Logistic") ) {
         xyplot_ylab <- paste0("Odds Ratio (",lev1, ":", lev2,")")
       }
       if(reg %in% c("Linear","Poisson","Quantile","Generalized Least Squares")) {
         xyplot_ylab <- paste0("Contrast (",lev1, ":", lev2,")")
     }
       ## Determine if it is an abline at 0 or 1 ##
-      if(reg %in% c("Cox PH", "Cox PH with censoring","Logistic", "Ordinal Logistic","AFT","AFT with censoring") ) {
+      if(reg %in% c("Cox PH", "Cox PH with censoring","Logistic", "Proportion Y Logistic","Ordinal Logistic","AFT","AFT with censoring") ) {
         abline_01 <- 1
       }
       if(reg %in% c("Linear","Poisson","Quantile","Generalized Least Squares")) {
@@ -2609,15 +2659,15 @@ mdl_off_set_output <- reactive({
       
       ## Exponentiate the data if needed ##
       #Contrast
-      if(reg %in% c("Cox PH", "Cox PH with censoring","Logistic", "Ordinal Logistic","AFT","AFT with censoring")) {
+      if(reg %in% c("Cox PH", "Cox PH with censoring","Logistic","Proportion Y Logistic", "Ordinal Logistic","AFT","AFT with censoring")) {
         w[["Contrast"]] <- exp(w[["Contrast"]])
       }
       #Lower
-      if(reg %in% c("Cox PH", "Cox PH with censoring","Logistic", "Ordinal Logistic","AFT","AFT with censoring")) {
+      if(reg %in% c("Cox PH", "Cox PH with censoring","Logistic", "Proportion Y Logistic","Ordinal Logistic","AFT","AFT with censoring")) {
         w[["Lower"]] <- exp(w[["Lower"]])
       }
       #Upper
-      if(reg %in% c("Cox PH", "Cox PH with censoring","Logistic", "Ordinal Logistic","AFT","AFT with censoring")) {
+      if(reg %in% c("Cox PH", "Cox PH with censoring","Logistic","Proportion Y Logistic", "Ordinal Logistic","AFT","AFT with censoring")) {
         w[["Upper"]] <- exp(w[["Upper"]])
       }
       ## Just Poisson ##
@@ -2851,6 +2901,7 @@ fncNomo <- function(RegType)  {
   nom <- switch(RegType,                
                 "Linear"   = expression(nomogram(Fit)), 
                 "Logistic" = expression(nomogram(Fit, fun=plogis)),
+                "Proportion Y Logistic" = expression(nomogram(Fit, fun=plogis)),
                 "Ordinal Logistic"  = expression(nomogram(Fit, fun=plogis)),
                 "Poisson"  = expression(nomogram(Fit, fun=exp)),
                 "Quantile" = expression(nomogram(Fit)),
@@ -2895,6 +2946,7 @@ fncNomoOutput <- function(Nom, Fit, PrbSrvTm, TrnSrvTm, MdMnSrvTm, Time_label,Ti
   surv  <- switch(RegType,                
                   "Linear"   = NA , 
                   "Logistic" = NA ,
+                  "Proportion Y Logistic" = NA ,
                   "Ordinal Logistic"  = NA ,
                   "Poisson"  = NA ,
                   "Quantile" = NA ,
@@ -2907,6 +2959,7 @@ fncNomoOutput <- function(Nom, Fit, PrbSrvTm, TrnSrvTm, MdMnSrvTm, Time_label,Ti
   surv1  <- switch(RegType,                
                    "Linear"   = NA , 
                    "Logistic" = NA ,
+                   "Proportion Y Logistic" = NA ,
                    "Ordinal Logistic"  = NA ,
                    "Poisson"  = NA ,
                    "Quantile" = NA ,
@@ -2919,6 +2972,7 @@ fncNomoOutput <- function(Nom, Fit, PrbSrvTm, TrnSrvTm, MdMnSrvTm, Time_label,Ti
   surv2  <- switch(RegType,                
                    "Linear"   = NA , 
                    "Logistic" = NA ,
+                   "Proportion Y Logistic" = NA ,
                    "Ordinal Logistic"  = NA ,
                    "Poisson"  = NA ,
                    "Quantile" = NA ,
@@ -2931,6 +2985,7 @@ fncNomoOutput <- function(Nom, Fit, PrbSrvTm, TrnSrvTm, MdMnSrvTm, Time_label,Ti
   quan  <- switch(RegType,                
                   "Linear"   = NA , 
                   "Logistic" = NA ,
+                  "Proportion Y Logistic" = NA ,
                   "Ordinal Logistic"  = NA ,
                   "Poisson"  = NA ,
                   "Quantile" = NA ,
@@ -2943,6 +2998,7 @@ fncNomoOutput <- function(Nom, Fit, PrbSrvTm, TrnSrvTm, MdMnSrvTm, Time_label,Ti
   med  <- switch(RegType,                
                  "Linear"   = NA , 
                  "Logistic" = NA ,
+                 "Proportion Y Logistic" = NA ,
                  "Ordinal Logistic"  = NA ,
                  "Poisson"  = NA ,
                  "Quantile" = NA ,
@@ -2955,6 +3011,7 @@ fncNomoOutput <- function(Nom, Fit, PrbSrvTm, TrnSrvTm, MdMnSrvTm, Time_label,Ti
   meant  <- switch(RegType,                
                    "Linear"   = NA , 
                    "Logistic" = NA ,
+                   "Proportion Y Logistic" = NA ,
                    "Ordinal Logistic"  = NA ,
                    "Poisson"  = NA ,
                    "Quantile" = NA ,
@@ -2967,6 +3024,7 @@ fncNomoOutput <- function(Nom, Fit, PrbSrvTm, TrnSrvTm, MdMnSrvTm, Time_label,Ti
   mnt  <- switch(RegType,                
                  "Linear"   = NA , 
                  "Logistic" = NA ,
+                 "Proportion Y Logistic" = NA ,
                  "Ordinal Logistic"  = NA ,
                  "Poisson"  = NA ,
                  "Quantile" = NA ,
@@ -2979,6 +3037,7 @@ fncNomoOutput <- function(Nom, Fit, PrbSrvTm, TrnSrvTm, MdMnSrvTm, Time_label,Ti
   Nomogram.Output  <- switch(RegType,                
          "Linear"   = eval(Nom) , 
          "Logistic" = eval(Nom) ,
+         "Proportion Y Logistic" = eval(Nom) ,
          "Ordinal Logistic"  = eval(Nom) ,
          "Poisson"  = eval(Nom) ,
          "Quantile" = eval(Nom) ,
@@ -3389,7 +3448,8 @@ yhat_plot_fnc <- function(yhat, reg_yhat) {
   switch(reg_yhat,                
          "Linear"   = plot_yhat <- yhat, 
 #         "Logistic" = plot_yhat <- 1/(1+exp(-yhat)),
-         "Logistic" = plot_yhat <- plogis(yhat),
+"Logistic" = plot_yhat <- plogis(yhat),
+"Proportion Y Logistic" = plot_yhat <- plogis(yhat),
 #"Ordinal Logistic"          = plot_yhat <- 1/(1+exp(-yhat)),
 "Ordinal Logistic"          = plot_yhat <- plogis(yhat),
          "Poisson"  = plot_yhat <- exp(yhat),
@@ -6086,47 +6146,53 @@ fit.si <<- reactive({
     
     switch(input$regress_type,                #"var" and can be used anywhere in server.r.
            "Linear"   = if(input$updy == "Yes") {
-             ols(as.formula(input$up_fmla), x=TRUE, y=TRUE, data=new_imputed.si())
+             ols(as.formula(input$up_fmla), x=TRUE, y=TRUE, data=new_imputed.si(), weights= eval(parse(text= weighting_regression_var())))
            } else {
-             ols(mdl_fmla(), x=TRUE, y=TRUE, data=new_imputed.si())},
+             ols(mdl_fmla(), x=TRUE, y=TRUE, data=new_imputed.si(), weights= eval(parse(text= weighting_regression_var())))},
            "Logistic" = if(input$updy == "Yes") {
-             lrm(as.formula(input$up_fmla), x=TRUE, y=TRUE, data=new_imputed.si(), tol=1e-100, maxit=20) #I added tol value so it can handle time predictor (YYMM)
+             lrm(as.formula(input$up_fmla), x=TRUE, y=TRUE, data=new_imputed.si(), tol=1e-100, maxit=20, 
+                 weights= eval(parse(text= weighting_regression_var()))) #I added tol value so it can handle time predictor (YYMM)
            } else { #Added maxit to handle small samples. See https://stat.ethz.ch/pipermail/r-help/2017-September/449115.html  
-             lrm(mdl_fmla(), x=TRUE, y=TRUE, data=new_imputed.si(), tol=1e-100, maxit=20)},  #I added tol value so it can handle time predictor that causes "singularity"
+             lrm(mdl_fmla(), x=TRUE, y=TRUE, data=new_imputed.si(), tol=1e-100, maxit=20, 
+                 weights= eval(parse(text= weighting_regression_var())))},  #I added tol value so it can handle time predictor that causes "singularity"
+           "Proportion Y Logistic" = if(input$updy == "Yes") {
+             Glm(as.formula(input$up_fmla), x=TRUE, y=TRUE, data=new_imputed.si(), family=binomial(), weights= eval(parse(text= weighting_regression_var())))
+           } else {
+             Glm(mdl_fmla(), x=TRUE, y=TRUE, data=new_imputed.si(), family=binomial(), weights= eval(parse(text= weighting_regression_var())))},
            "Ordinal Logistic" = if(input$updy == "Yes") {
              orm(as.formula(input$up_fmla), x=TRUE, y=TRUE, data=new_imputed.si(), data=new_imputed.si())
            } else {
              orm(mdl_fmla(), x=TRUE, y=TRUE, data=new_imputed.si())},
            "Poisson" = if(input$updy == "Yes") {
-             Glm(as.formula(input$up_fmla), x=TRUE, y=TRUE, data=new_imputed.si(), family=poisson())
+             Glm(as.formula(input$up_fmla), x=TRUE, y=TRUE, data=new_imputed.si(), family=poisson(), weights= eval(parse(text= weighting_regression_var())))
            } else {
-             Glm(mdl_fmla(), x=TRUE, y=TRUE, data=new_imputed.si(), family=poisson())},
+             Glm(mdl_fmla(), x=TRUE, y=TRUE, data=new_imputed.si(), family=poisson(), weights= eval(parse(text= weighting_regression_var())))},
            "Quantile" = if(input$updy == "Yes") {
-             Rq(as.formula(input$up_fmla), x=TRUE, y=TRUE, data=new_imputed.si(), tau=as.numeric(rq_tau1()))
+             Rq(as.formula(input$up_fmla), x=TRUE, y=TRUE, data=new_imputed.si(), tau=as.numeric(rq_tau1()), weights= eval(parse(text= weighting_regression_var())))
            } else {
-             Rq(mdl_fmla(), x=TRUE, y=TRUE, data=new_imputed.si(), tau=as.numeric(rq_tau1()))},
+             Rq(mdl_fmla(), x=TRUE, y=TRUE, data=new_imputed.si(), tau=as.numeric(rq_tau1()), weights= eval(parse(text= weighting_regression_var())))},
            "Cox PH"   = if(input$updy == "Yes") {
-             cph(cox_mdl_fmla1u(), x=TRUE, y=TRUE, data=new_imputed.si(), surv=TRUE)
+             cph(cox_mdl_fmla1u(), x=TRUE, y=TRUE, data=new_imputed.si(), surv=TRUE, weights= eval(parse(text= weighting_regression_var())))
            } else {
-             cph(cox_mdl_fmla1(), x=TRUE, y=TRUE, data=new_imputed.si(), surv=TRUE)},
+             cph(cox_mdl_fmla1(), x=TRUE, y=TRUE, data=new_imputed.si(), surv=TRUE, weights= eval(parse(text= weighting_regression_var())))},
            "Cox PH with censoring" = if(input$updy == "Yes") {
-             cph(cox_mdl_fmla2u(), x=TRUE, y=TRUE, data=new_imputed.si(), surv=TRUE)
+             cph(cox_mdl_fmla2u(), x=TRUE, y=TRUE, data=new_imputed.si(), surv=TRUE, weights= eval(parse(text= weighting_regression_var())))
            } else {
-             cph(cox_mdl_fmla2(), x=TRUE, y=TRUE, data=new_imputed.si(), surv=TRUE)},
+             cph(cox_mdl_fmla2(), x=TRUE, y=TRUE, data=new_imputed.si(), surv=TRUE, weights= eval(parse(text= weighting_regression_var())))},
            #AFT models
            "AFT"   = if(input$updy == "Yes") {
-             psm(aft_mdl_fmla1u(), data=new_imputed.si(), x=TRUE, y=TRUE, dist=AFT_PSM_Dist())
+             psm(aft_mdl_fmla1u(), data=new_imputed.si(), x=TRUE, y=TRUE, dist=AFT_PSM_Dist(), weights= eval(parse(text= weighting_regression_var())))
            } else {
-             psm(aft_mdl_fmla1(), data=new_imputed.si(), x=TRUE, y=TRUE, dist=AFT_PSM_Dist())},
+             psm(aft_mdl_fmla1(), data=new_imputed.si(), x=TRUE, y=TRUE, dist=AFT_PSM_Dist(), weights= eval(parse(text= weighting_regression_var())))},
            "AFT with censoring" = if(input$updy == "Yes") {
-             psm(aft_mdl_fmla2u(), data=new_imputed.si(), x=TRUE, y=TRUE, dist=AFT_PSM_Dist())
+             psm(aft_mdl_fmla2u(), data=new_imputed.si(), x=TRUE, y=TRUE, dist=AFT_PSM_Dist(), weights= eval(parse(text= weighting_regression_var())))
            } else {
-             psm(aft_mdl_fmla2(), data=new_imputed.si(),  x=TRUE, y=TRUE, dist=AFT_PSM_Dist())},
+             psm(aft_mdl_fmla2(), data=new_imputed.si(),  x=TRUE, y=TRUE, dist=AFT_PSM_Dist(), weights= eval(parse(text= weighting_regression_var())))},
            "Generalized Least Squares" = if(input$updy == "Yes") {
-             Gls(as.formula(input$up_fmla), x=TRUE, data=new_imputed.si(), correlation=corCompSymm(form= gls_cor()))
+             Gls(as.formula(input$up_fmla), x=TRUE, data=new_imputed.si(), correlation=corCompSymm(form= gls_cor(), weights= eval(parse(text= weighting_regression_var()))))
            } else {
              Gls(mdl_fmla(), x=TRUE, data=new_imputed.si(),
-                 correlation=corCompSymm(form= gls_cor()))}
+                 correlation=corCompSymm(form= gls_cor()), weights= eval(parse(text= weighting_regression_var())))}
     )
   }
 })
@@ -7724,7 +7790,7 @@ CcontrastXyDataFnc <- function(model, X, group, lev1, lev2, reg) {
   if(reg %in% c("Cox PH", "Cox PH with censoring")) {
     xyplot_ylab <- paste0("Cost Ratio (",lev1, ":", lev2,")")
   }
-  if(reg %in% c("Logistic", "Ordinal Logistic") ) {
+  if(reg %in% c("Logistic", "Proportion Y Logistic","Ordinal Logistic") ) {
     xyplot_ylab <- paste0("Odds Ratio (",lev1, ":", lev2,")")
   }
   if(reg %in% c("Linear","Poisson","Quantile","Generalized Least
@@ -7732,7 +7798,7 @@ CcontrastXyDataFnc <- function(model, X, group, lev1, lev2, reg) {
     xyplot_ylab <- paste0("Contrast (",lev1, ":", lev2,")")
 }
   ## Determine if it is an abline at 0 or 1 ##
-  if(reg %in% c("Cox PH", "Cox PH with censoring","Logistic", "Ordinal Logistic") ) {
+  if(reg %in% c("Cox PH", "Cox PH with censoring","Logistic", "Proportion Y Logistic", "Ordinal Logistic") ) {
     abline_01 <- 1
   }
   if(reg %in% c("Linear","Poisson","Quantile","Generalized Least

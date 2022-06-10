@@ -178,7 +178,7 @@ h5("Once data is downloaded, it can be uploaded and entered at the top for analy
                           uiOutput("uf"),  #vx is the created drop down box coming from renderUI in server.r.
                    )
                    ),
-                   h5("Note: To model using Multiple Imputation, set #2 to 'No' after completing imputations."),
+                   h5("Note: To model using Multiple Imputation, set #2 to 'No' after completing imputations. 'Proportion Y Logistic' requires a weight in #10 equal to the proportion's denominator."),
                    br(), 
                    h4("Regression results"),
                    verbatimTextOutput("regress"),  #"regress" calls output$regress from server.r 

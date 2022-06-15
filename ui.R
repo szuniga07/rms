@@ -1937,7 +1937,7 @@ tabPanel("95% CIs",
                   uiOutput("FCI__Ylim2"))
          ),
             
-         h5("Modify the plot space in #23-26. Enter values into 'c()' for #13 and #14 when needed, separate values with ',' (e.g., c(1, 2) ). For single time point data, use 'Yes: Aggregated data only' in #21."),
+         h5("Modify the plot space in #24-27. Enter values into 'c()' for #13 and #14 when needed, separate values with ',' (e.g., c(1, 2) ). For single time point data, use 'Yes: Aggregated data only' in #21."),
          h5("Note: The colors of the lines are assigned according to the group order of the 'point estimate and confidence interval' output below."),
          br(),
          plotOutput("Plot_Fci_output", height = 800, width="100%"),

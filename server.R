@@ -5543,9 +5543,9 @@ plot_fci_fnc <- function(x, y, z, xcivar, ycivar, zcivar, dataf, LCol, LWd, Fci.
   ConINT <- paste0(as.character(Conf.Intrv*100), "%")
   #Main title
   if(cibands == "Yes") {
-    Main.Title <- paste0( ycivar, " trajectories of ", xcivar,  " by ", zcivar, " with ", ConINT, " confidence bands")
+    Main.Title <- paste0( ycivar, " trajectories per ", xcivar,  " by ", zcivar, " with ", ConINT, " confidence bands")
   } else {
-    Main.Title <- paste0( ycivar, " trajectories of ", xcivar,  " by ", zcivar)
+    Main.Title <- paste0( ycivar, " trajectories per ", xcivar,  " by ", zcivar)
   }
   #Line Type
   if(is.null( eval(parse(text=LType )) )) {
@@ -5556,7 +5556,7 @@ plot_fci_fnc <- function(x, y, z, xcivar, ycivar, zcivar, dataf, LCol, LWd, Fci.
   }
   #Set up colors
   my_clr <- LCol
-  par(mar = c(5, 7, 3, 1) + 0.1)
+  par(mar = c(6, 6, 3, 1) + 0.1)
   plot(unique(dataf[, z]), seq(min(min_ci, na.rm=T), max(max_ci, na.rm=T), 
                                length.out=length(unique(dataf[, z]))), type="n",  
        #cex.lab=1*labMulti, cex.main=1.35, cex.sub=1*labMulti, 
@@ -5565,9 +5565,9 @@ plot_fci_fnc <- function(x, y, z, xcivar, ycivar, zcivar, dataf, LCol, LWd, Fci.
        )
   title(Main.Title, cex.main = 1.1*labMulti) 
   axis(1, las=1, cex.axis=1*labMulti )
-  axis(2, las=1, cex.axis=1*labMulti )
-  mtext(zcivar, side = 1, line = 3, cex=1.1*labMulti )
-  mtext(ycivar, side = 2, line = 5, cex=1.1*labMulti )
+  axis(2, las=3, cex.axis=1*labMulti )
+  mtext(zcivar, side = 1, line = 4, cex=1.1*labMulti )
+  mtext(ycivar, side = 2, line = 4, cex=1.1*labMulti )
   box()
   #Plot point estimate lines
   ci_time <- list() 
@@ -5780,7 +5780,7 @@ output$FCI_nk_knots <- renderUI({
 })
 #Select label size multiplier
 output$FCI_plot_lab_multi <- renderUI({                                 
-  numericInput("fciPltLabMlt", "23. Increase label sizes.",
+  numericInput("fciPltLabMlt", "23. Increase XY label sizes.",
                value = 1, min=.01, step = .1)
 })
 #Reactive function for directly above

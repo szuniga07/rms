@@ -1856,7 +1856,9 @@ tabPanel("95% CIs",
            column(3, 
                   uiOutput("Ci_create_tot_bar")),
            column(3, offset=1,
-                  uiOutput("ci_plot_tot_bar_clrs"))
+                  uiOutput("ci_plot_tot_bar_clrs")),
+           column(3, offset=1,
+                  uiOutput("ci_plot_lab_multi"))
          ),
          plotOutput("Plot_Ci_output", height = 800, width="100%"),
          h6("Note: You can sort alphabetically by the factor level name or numerically by the point estimate. Left side = factor level, right side = point estimate."),
@@ -1920,7 +1922,9 @@ tabPanel("95% CIs",
            column(3, 
                   uiOutput("FCi_strght_ln")),
            column(3, 
-                  uiOutput("FCI_nk_knots"))
+                  uiOutput("FCI_nk_knots")),
+           column(3, 
+                  uiOutput("FCI_plot_lab_multi"))
          ),
          fluidRow(   
            column(3, 

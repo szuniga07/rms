@@ -4979,7 +4979,7 @@ cidf <- reactive({                  #This indicates the data frame I will use.
 ##########################################
 # Plot function for confidence intervals #
 ##########################################
-plot_ci_fnc <- function(xcivar, ycivar, ydf, cidf, ciconf_lev, alpha_num, Lcol, Pcol, tgt, Cbar, plyCol) {
+plot_ci_fnc <- function(xcivar, ycivar, ydf, cidf, ciconf_lev, alpha_num, Lcol, Pcol, tgt, Cbar, plyCol, labMulti=1) {
   if (alpha_num=="Alphabetical") {
     adf <- cidf$adf_alpha
   }
@@ -4991,21 +4991,23 @@ plot_ci_fnc <- function(xcivar, ycivar, ydf, cidf, ciconf_lev, alpha_num, Lcol, 
   rng <- seq(min(adf), max(adf),length.out=nrow(adf))
   par(mar=c(5,7,4,4))
   plot(rng, 1:nrow(adf), type="n", ylab="", 
-       xlab= paste0("Value (the grey vertical line is the overall mean of ", round(mainYmn, 3), ", ", ciconf_lev * 100, "% ", "CI",
+       xlab= paste0("Value (grey vertical line = overall mean of ", round(mainYmn, 3), ", ", ciconf_lev * 100, "% ", "CI",
                     " [", round(cidf[["adf_all"]][,"Lower"], 3), " ,", round(cidf[["adf_all"]][,"Upper"], 3),"]",")"),
-       main=main_ttl, axes=F ) 
+       #main=main_ttl, 
+       axes=F,  cex.lab=1*labMulti)
+  title(main_ttl, cex.main = 1*labMulti) 
   for (i in 1:nrow(adf)) {
     lines(c(adf[,'Lower'][i], adf[,'Upper'][i]), c(i,i), lwd=4, col=Lcol) 
-    points(adf[,'PointEst'][i],i, pch=24, col=Pcol, lwd=1, bg=Pcol, cex=1.75) 
+    points(adf[,'PointEst'][i],i, pch=24, col=Pcol, lwd=1, bg=Pcol, cex=1.75*labMulti) 
   }
   #Mean line
   abline(v=mainYmn, lwd=3, col="grey", lty=3)
   #Target line
   abline(v=tgt, lwd=3, col="green", lty=1)
   axis(1) 
-  axis(2,at=1:nrow(adf),labels=substr(rownames(adf), 1, 10), las=1, cex.axis=1)
+  axis(2,at=1:nrow(adf),labels=substr(rownames(adf), 1, 10), las=1, cex.axis=1*labMulti )
   #  axis(2,at=1:nrow(adf),labels=rownames(adf), las=1, cex.axis=1)
-  axis(4,at=1:nrow(adf),labels=round(adf[, "PointEst"],2), las=1, cex.axis=1)
+  axis(4,at=1:nrow(adf),labels=round(adf[, "PointEst"],2), las=1, cex.axis= 1*labMulti*.75 )
   
   ## Add confidence bar ##
   #Create x and y data
@@ -5024,8 +5026,8 @@ plot_ci <- reactive({                  #This indicates the data frame I will use
   if(input$CiCreate == "Yes") {
     plot_ci_fnc(xcivar=input$xcivar, ycivar=input$ycivar, ydf=df(), cidf=cidf(), 
                 ciconf_lev=input$ciconf_lev, alpha_num=input$alpha_num, Lcol=ci_plot_Line_Colors(), 
-                Pcol=ci_plot_Point_Colors(), tgt=ci_target_line(), 
-                Cbar= Ci_create_total_bar_interval(), plyCol= ci_plot_Total_Bar_Colors())
+                Pcol=ci_plot_Point_Colors(), tgt=ci_target_line(), Cbar= Ci_create_total_bar_interval(), 
+                plyCol= ci_plot_Total_Bar_Colors(), labMulti=ci_plot_label_multiplier() )
   }
 })
 
@@ -5135,7 +5137,15 @@ output$ci_plot_tot_bar_clrs <- renderUI({
 ci_plot_Total_Bar_Colors <- reactive({                 
   input$ciPltTotBarClr 
 })
-
+#Select line colors
+output$ci_plot_lab_multi <- renderUI({                                 
+  numericInput("ciPltLabMlt", "12. Increase label sizes.",
+               value = 1, min=.01, step = .1)
+})
+#Reactive function for directly above
+ci_plot_label_multiplier <- reactive({                 
+  input$ciPltLabMlt 
+})
 
 ## Reactive function to do group tests ##
 conf_group_test <- reactive({                  #This indicates the data frame I will use.
@@ -5528,7 +5538,7 @@ plot_fci_fnc <- function(x, y, z, xcivar, ycivar, zcivar, dataf, LCol, LWd, Fci.
                          cibands, fCiXLim1, fCiXLim2, fCiYLim1, fCiYLim2, Tot.Line, FCI.Tot,
                          FCI.Tot.Straight, Conf.Intrv, Tgt.Line, Straight.Line, Time.Pt.Line,
                          ci_p_tot, ci_l_tot, ci_u_tot, Tot.Color, Tgt.Color, Tpt.Color, 
-                         T3.Line.Width, Text.Size, LType) {
+                         T3.Line.Width, Text.Size, LType, labMulti=1) {
   #Make text out of the confidence level
   ConINT <- paste0(as.character(Conf.Intrv*100), "%")
   #Main title
@@ -5546,10 +5556,19 @@ plot_fci_fnc <- function(x, y, z, xcivar, ycivar, zcivar, dataf, LCol, LWd, Fci.
   }
   #Set up colors
   my_clr <- LCol
-  plot(unique(dataf[, z]), seq(min(min_ci, na.rm=T), max(max_ci, na.rm=T), length.out=length(unique(dataf[, z]))), type="n",  
-       cex.lab=1.35,cex.main=1.35,cex.sub=1.35, 
-       ylab=ycivar, xlab=zcivar, xlim=c(fCiXLim1, fCiXLim2), ylim=c(fCiYLim1, fCiYLim2),
-       main= Main.Title )
+  par(mar = c(5, 7, 3, 1) + 0.1)
+  plot(unique(dataf[, z]), seq(min(min_ci, na.rm=T), max(max_ci, na.rm=T), 
+                               length.out=length(unique(dataf[, z]))), type="n",  
+       #cex.lab=1*labMulti, cex.main=1.35, cex.sub=1*labMulti, 
+       axes=F, ylab="", xlab="", 
+       xlim=c(fCiXLim1, fCiXLim2), ylim=c(fCiYLim1, fCiYLim2)
+       )
+  title(Main.Title, cex.main = 1.1*labMulti) 
+  axis(1, las=1, cex.axis=1*labMulti )
+  axis(2, las=1, cex.axis=1*labMulti )
+  mtext(zcivar, side = 1, line = 3, cex=1.1*labMulti )
+  mtext(ycivar, side = 2, line = 5, cex=1.1*labMulti )
+  box()
   #Plot point estimate lines
   ci_time <- list() 
   l95 <- list() 
@@ -5663,7 +5682,7 @@ plot_fci <- reactive({                  #This indicates the data frame I will us
     ci_p_tot=fci_tot_fac()$ci_p, ci_l_tot=fci_tot_fac()$ci_l, ci_u_tot=fci_tot_fac()$ci_u,
     Tot.Color=fci_plot_Overall_Line_Colors(), Tgt.Color=fci_plot_Target_Line_Colors(), 
     Tpt.Color=fci_plot_Time_Point_Line_Colors(), T3.Line.Width=fci_plot_targ_time_Line_Wd(), 
-    Text.Size= fci_plot_text_label_size(), LType=fci_plot_group_line_type() )
+    Text.Size= fci_plot_text_label_size(), LType=fci_plot_group_line_type(), labMulti=FCI_plot_label_multiplier() )
     }
 })
 
@@ -5759,6 +5778,16 @@ output$FCI_nk_knots <- renderUI({
       numericInput("FciNkKnots", "22. Select the number of spline knots.",
        value = 3, min=3, max = 10, step = 1)
 })
+#Select label size multiplier
+output$FCI_plot_lab_multi <- renderUI({                                 
+  numericInput("fciPltLabMlt", "23. Increase label sizes.",
+               value = 1, min=.01, step = .1)
+})
+#Reactive function for directly above
+FCI_plot_label_multiplier <- reactive({                 
+  input$fciPltLabMlt 
+})
+
 #Select whether to run the 95% confidence interval or not
 output$FCi_create <- renderUI({                                
   selectInput("FCiCreate", "20. Create the time plot?",
@@ -5863,23 +5892,23 @@ fci_plot_text_label_size <- reactive({
 })
 #14. Indicate lower limit of x-axis
 output$FCI__Xlim1 <- renderUI({
-  numericInput("fCiXLim1", "23. Lower X-axis limit.",
+  numericInput("fCiXLim1", "24. Lower X-axis limit.",
                value = range_fzcivar()[1], step = 1)
 })
 #15. Indicate upper limit of x-axis
 output$FCI__Xlim2 <- renderUI({
-  numericInput("fCiXLim2", "24. Upper X-axis limit.",
+  numericInput("fCiXLim2", "25. Upper X-axis limit.",
                value = if(fci_Z_Increment() ==1) { range_fzcivar()[2] } else {ceiling(range_fzcivar()[2]/fci_Z_Increment() ) } , 
                step = 1)
 })
 #16. Indicate lower limit of y-axis
 output$FCI__Ylim1 <- renderUI({
-  numericInput("fCiYLim1", "25. Lower Y-axis limit.",
+  numericInput("fCiYLim1", "26. Lower Y-axis limit.",
                value = range_fycivar()[1], step = .1)
 })
 #17. Indicate upper limit of x-axis
 output$FCI__Ylim2 <- renderUI({
-  numericInput("fCiYLim2", "26. Upper Y-axis limit.",
+  numericInput("fCiYLim2", "27. Upper Y-axis limit.",
                value = range_fycivar()[2], step = .1)
 })
 #Add a target line

@@ -714,6 +714,340 @@ shinyServer(
 #      }
     })
     
+################################################################################
+    ###############################################
+    ## Plot of Predictions by specific variables ##
+    ###############################################
+    ############
+    ##   UI   ##
+    ############
+    #Select the predictors.
+    output$opyx <- renderUI({                                 #Same idea as output$vy
+      selectInput("opyxvar", "1. Select a predictor.", 
+                  choices = predictor(), multiple=FALSE, selected=predictor()[1])
+    })
+    #Reactive function to the predictor
+    opy_x_var <- reactive({                 
+      input$opyxvar 
+    })
+    
+    #2. Select whether to run the 95% confidence interval or not
+    output$opy_strat_fac <- renderUI({                                
+      selectInput("opyStrFac", "2. Want to group by a factor?",
+                  choices = c("No", "Yes"),
+                  selected="No")
+    })
+    ## Code for plot range
+    #2. Range of X value
+    opy_stratify_factor <- reactive({ 
+      input$opyStrFac  
+    })
+    #3. Select the predictors.
+    output$opyz <- renderUI({                                 #Same idea as output$vy
+      selectInput("opyzvar", "3. Select optional factor.", 
+                  choices = setdiff(predictor(), opy_x_var() ), multiple=FALSE, 
+                  selected=setdiff(predictor(), opy_x_var())[1] )     
+    })
+    #3. Reactive function to get the factor
+    opy_z_var <- reactive({                 
+      input$opyzvar 
+    })
+    #Reactive function to get group levels
+    opy_plot_groups <- reactive({
+    #  if(opy_stratify_factor== "Yes") {
+        unique(df()[, opy_z_var() ]) 
+    #  }
+    })
+    #4. Select specific groups
+    output$opyplot_grp_levs <- renderUI({                                 
+      if(length(predictor() )== 1) {
+        selectInput("opyPlotGrpLvs", "4. Highlight specific groups?", 
+                    choices = "NA", multiple=TRUE, selected= "NA" )     
+      } else {
+        selectInput("opyPlotGrpLvs", "4. Highlight specific groups?", 
+                    choices = sort(opy_plot_groups()), multiple=TRUE, selected= sort(opy_plot_groups()) )     
+      }
+    })
+    #4. Reactive function to get group levels
+    opy_plot_Group_Levels <- reactive({                 
+      input$opyPlotGrpLvs 
+    })
+    #4. Get number of levels for colors
+    opy_color_level_number <- reactive({ 
+      if(opy_stratify_factor == "No") {
+        1:2
+      } else {
+         1:length(opy_plot_Group_Levels())
+      }
+    })
+    #5. Select line colors
+    output$opy_plot_ln_clrs <- renderUI({                                 
+      if(length(predictor() )== 1) {
+        selectInput("opyPltLnClr", "5. Select symbol colors.", 
+                    choices = xyplot_Line_Color_Names(), multiple=TRUE, 
+                    selected= xyplot_Line_Color_Names()[1:2 ] )     
+      } else {
+        selectInput("opyPltLnClr", "5. Select symbol colors.", 
+                    choices = xyplot_Line_Color_Names(), multiple=TRUE, 
+                    selected= xyplot_Line_Color_Names()[1:length(opy_plot_Group_Levels()) ] )     
+      }
+    })
+#5. Reactive function for directly above
+opy_plot_Line_Colors <- reactive({                 
+  input$opyPltLnClr 
+})
+#6. Select the line label size
+output$opy_plot_symbl_sz <- renderUI({                                 
+  numericInput("opyPlsymblSz", "6. Select the symbol size.", 
+               value = 2, min=0, step = .1)     
+})
+#6 Reactive function for directly above
+opy_plot_symbol_size <- reactive({                 
+  input$opyPlsymblSz 
+})
+#7. Add a target line
+output$opy_Hor_Line <- renderUI({                                 
+  textInput("opyHorLn", "7. Add a horizontal line.",
+            value = paste0('c( ', ')') )
+})
+#7. Reactive function for above
+opy_horizontal_line <- reactive({ 
+  input$opyHorLn  
+})
+#8. Add a time point line
+output$opy_Vert_Line <- renderUI({                                 
+  textInput("opyVtPtLn", "8. Add a vertical line.",
+            value = paste0('c( ', ')'))
+})
+#8. Reactive function for above
+opy_vertical_line <- reactive({ 
+  input$opyVtPtLn  
+})
+#9. Select target line color
+output$opy_plot_tgt_ln_clrs <- renderUI({                                 
+  selectInput("opyPltTLnClr", "9. Select the line's color.", 
+              choices = xyplot_Line_Color_Names(), multiple=FALSE, selected="black")     
+})
+#9. Reactive function for directly above
+opy_plot_Target_Line_Colors <- reactive({                 
+  input$opyPltTLnClr 
+})
+#10. Select label size multiplier
+output$opy_plot_lab_multi <- renderUI({                                 
+  numericInput("opyPltLabMlt", "10. Increase label sizes.",
+               value = 1, min=.01, step = .1)
+})
+#10. Reactive function for directly above
+opy_plot_label_multiplier <- reactive({                 
+  input$opyPltLabMlt 
+})
+#11. Legend location
+output$opy_lgd_loc <- renderUI({                                
+  selectInput("opyLgdLoc", "11. Select the legend location.",        
+              choices = c("bottomright","bottom","bottomleft","left","topleft","top","topright","right","center"), 
+              multiple=FALSE, selected="topleft" ) 
+})
+#11. Reactive function for legend location
+opy_legend_location <- reactive({
+  input$opyLgdLoc
+})
+#12. Select whether to run the 95% confidence interval or not
+output$opy_create <- renderUI({                                
+  selectInput("opyCreate", "12. Create the plot?",
+              choices = c("No", "Yes"),
+              selected="No")
+})
+## Code for plot range
+#13. Range of X value
+range_opyx_var <- reactive({ 
+  range(as.numeric(df()[, opy_x_var()]), na.rm=TRUE )  
+})
+#14. Range of Y value
+range_opyz_var <- reactive({ 
+  range(as.numeric(df()[, outcome() ]), na.rm=TRUE )  
+})
+#13. Indicate lower limit of x-axis
+output$opy__Xlim1 <- renderUI({
+  numericInput("opyXLim1", "13. Lower X-axis limit.",
+               value = range_opyx_var()[1], step = 1)
+})
+#13. Indicate lower limit of x-axis
+opy__Xlim_val1 <- reactive({
+  input$opyXLim1
+})
+#14. Indicate upper limit of x-axis
+output$opy__Xlim2 <- renderUI({
+  numericInput("opyXLim2", "14. Upper X-axis limit.",
+               value = range_opyx_var()[2] , step = 1)
+})
+#14. Indicate upper limit of x-axis
+opy__Xlim_val2 <- reactive({
+  input$opyXLim2
+})
+#15. Indicate lower limit of y-axis
+output$opy__Ylim1 <- renderUI({
+  numericInput("opyYLim1", "15. Lower Y-axis limit.",
+               value = range_opyz_var()[1], step = .1)
+})
+#15. Indicate lower limit of y-axis
+opy__ylim_val1 <- reactive({
+  input$opyYLim1
+})
+#16. Indicate upper limit of x-axis
+output$opy__Ylim2 <- renderUI({
+  numericInput("opyYLim2", "16. Upper Y-axis limit.",
+               value = range_opyz_var()[2], step = .1)
+})
+#16. Indicate upper limit of x-axis
+opy__ylim_val2 <- reactive({
+  input$opyYLim2
+})
+
+#Get transformed predictions
+trans_y_hat <- reactive({                  #This indicates the data frame I will use.
+  if(input$opyCreate == "Yes") {
+    fncPredTrans(FIT=fit1(), RegType=input$regress_type)
+  }
+})
+
+#Observed and predcited plot 
+plot_opy <- reactive({                  #This indicates the data frame I will use.
+  if(input$opyCreate == "Yes") {
+    fncPredAndY(FIT=fit1(), TransYhat=trans_y_hat(), TransYSpec=describeYhatHistRsltTrnsf(), X=opy_x_var(), 
+                Y=outcome(), Strat.YN=opy_stratify_factor(), Z=opy_z_var(), ZLevs=opy_plot_Group_Levels(), DF=df(), 
+                XYZCOL=opy_plot_Line_Colors(), CEX=opy_plot_symbol_size(), Legend.Loc=opy_legend_location(), 
+                XLine=opy_vertical_line() , YLine=opy_horizontal_line() , ABLine.Col=opy_plot_Target_Line_Colors() ,
+                xlim1=opy__Xlim_val1(), xlim2=opy__Xlim_val2(), ylim1=opy__ylim_val1(), ylim2=opy__ylim_val2(), 
+                labMulti=opy_plot_label_multiplier() )
+  }
+})
+#Observed and predcited plot 
+output$observed_pred_scatter <- renderPlot({ 
+  if(input$opyCreate == "Yes") {
+    plot_opy()
+  }
+}, height = 800 )
+
+######################################################
+## Reactive functions that runs the functions below ##    
+######################################################
+#Function to get transformed predictions #
+    fncPredTrans <- function(FIT, RegType) {
+        #Transform scores
+        Transformed.Yhat <- switch(RegType,                
+                                   "Linear" = predict(FIT), 
+                                   "Logistic" = plogis(predict(FIT)),
+                                   "Proportion Y Logistic" = plogis(predict(FIT)),
+                                   "Ordinal Logistic" = plogis(predict(FIT)),
+                                   "Poisson" = exp(predict(FIT)),
+                                   "Quantile" = predict(FIT),
+                                   "Cox PH" = plogis(predict(FIT)),
+                                   "Cox PH with censoring" = plogis(predict(FIT)),
+                                   "AFT"  = predict(FIT),
+                                   "AFT with censoring"     = predict(FIT),
+                                   "Generalized Least Squares" = predict(FIT) )
+
+        return("Transformed.Yhat"=Transformed.Yhat)
+      }  
+
+    ## Function for a Plot of Predictions by specific variables ##
+    fncPredAndY <- function(FIT, TransYhat, TransYSpec, X, Y, Strat.YN, Z=NULL, ZLevs, DF, 
+                            XYZCOL, CEX, Legend.Loc, XLine=NULL, YLine=NULL, ABLine.Col=NULL,
+                            xlim1, xlim2, ylim1, ylim2, labMulti) {
+      #Get Transformed Yhat mean and mediam
+      Trans.Yhat.Mean <- unlist(TransYSpec$Transformed.Yhat["Mean"])
+      Trans.Yhat.Median <- unlist(TransYSpec$Transformed.Yhat[".50"])
+      
+      #Title
+      if( Strat.YN== "No") {
+        Main.Title <- paste0("Observed and Predicted (MN= ", round(Trans.Yhat.Mean, 2), 
+                             ", MED=", round(Trans.Yhat.Median, 2),") ", Y, " values by ", X) 
+      } else {
+        Main.Title <- paste0("Observed and Predicted (MN= ", round(Trans.Yhat.Mean, 2), 
+                             ", MED= ", round(Trans.Yhat.Median, 2),") ", Y, " values by ", X, " on ", Z) 
+      }    
+      #Get values for plotting
+      SPECS <- specs(FIT, long=TRUE)
+      #  YLIM <- range(DF[, Y])
+      YLIM <- c(ylim1, ylim2)
+      #  XLIM <- range(SPECS[["limits"]][X])
+      #  XLIM <- as.numeric(SPECS[["limits"]][[X]][6:7])
+      XLIM <- c(xlim1, xlim2)
+      #Get number of levels for the factor
+      if( Strat.YN== "No") {
+        unique_levs <- NULL
+      } else {
+        unique_levs <- intersect( sort(unique(DF[, Z][ !is.na(DF[, Z]) ] )), ZLevs)
+      }
+      #Get the x-axis labels
+      if( class(DF[, X]) %in% c("factor", "character")) {
+        XAxisLab <- sort(unique(DF[, X][ !is.na(DF[, X]) ] ))
+      } else {
+        #  XAxisLab <- round(sort(unique(DF[, X][ !is.na(DF[, X]) ] )))
+        XAxisLab <- NULL
+      }
+      
+      #Create plot  
+      if( Strat.YN== "No") {
+        par(mar = c(6, 6, 3, 1) + 0.1)
+        plot(as.numeric(DF[, X]), DF[, Y], col=XYZCOL[1], pch=1, xlim=XLIM, ylim=YLIM, cex= CEX, 
+             ylab="", xlab="", axes=F )
+        title(Main.Title, cex.main = 1.1*labMulti) 
+        mtext(X, side = 1, line = 4, cex=1.1*labMulti )
+        mtext(Y, side = 2, line = 4, cex=1.1*labMulti )
+        axis(1, at= XAxisLab, labels= XAxisLab, las=1, cex.axis=1*labMulti )
+        axis(2, las=3, cex.axis=1*labMulti)
+        box()
+        points(DF[, X], TransYhat, col=XYZCOL[2], pch=3, cex= CEX  )
+        abline(v=as.numeric(eval(parse(text=XLine )) ), col=ABLine.Col)
+        abline(h=as.numeric(eval(parse(text=YLine )) ), col=ABLine.Col)
+      } else {
+        par(mar = c(6, 6, 3, 1) + 0.1)
+        plot(as.numeric(DF[, X]), DF[, Y],  
+             type="n", xlim=XLIM, ylim=YLIM, cex= CEX, ylab="", xlab="", axes=F )
+        for (i in 1:length(unique_levs )) {
+          title(Main.Title, cex.main = 1.1*labMulti) 
+          mtext(X, side = 1, line = 4, cex=1.1*labMulti )
+          mtext(Y, side = 2, line = 4, cex=1.1*labMulti )
+          axis(1, at= XAxisLab, labels= XAxisLab, las=1, cex.axis=1*labMulti )
+          axis(2, las=3, cex.axis=1*labMulti)
+          box()
+          points(DF[, X][ DF[, Z]== unique_levs[i] ], DF[, Y][ DF[, Z]== unique_levs[i] ], 
+                 col=XYZCOL[i], pch=1, cex= CEX )
+          points(DF[, X][ DF[, Z]== unique_levs[i] ], TransYhat[ DF[, Z]== unique_levs[i] ], 
+                 col=XYZCOL[i], pch=3, cex= CEX )
+          abline(v=as.numeric(eval(parse(text=XLine )) ), col=ABLine.Col)
+          abline(h=as.numeric(eval(parse(text=YLine )) ), col=ABLine.Col)
+        }
+        
+      }
+      ###Legend###
+      #Get legend levels 
+      if( Strat.YN== "No") {
+        legend_levs <- NULL
+      } else {
+        legend_levs <- intersect(levels(as.factor(DF[, Z][ !is.na(DF[, Z]) ] )) , as.character(unique_levs))
+      }
+      
+      #This creates a legend for the ablines with and without factors. 
+      if ( Strat.YN== "No" ) {  
+        legend(x=Legend.Loc, legend=c("Observed", "Predicted"),
+               col=XYZCOL,
+               pch=c(1, 3),
+               lty= 0, lwd= 1.5, cex = 1.5, bty="n" #, inset=c(0, .05)
+        )
+      } else {  
+        legend(Legend.Loc, legend=c("Observed", "Predicted", legend_levs),
+               col= c(1,1, XYZCOL),
+               pch=c(1, 3, rep(3, length(legend_levs))),
+               lty= 0, 
+               lwd= 1.5, cex = 1.5, bty="n")
+      }
+      
+    }
+    
+################################################################################
+    
     ########### Model approximation section ###########        
     output$MIForAprx <- renderUI({  
       selectInput("MI_for_aprx", "1. Did you do Multiple Imputation?", 
@@ -1297,43 +1631,43 @@ fncTrnsfYhatSmry <- function(YhatRslt, RegType) {
   excld_describe <- c("n", "missing", "distinct", "Info")
   #Transform scores
   Transformed.Yhat <- switch(RegType,                
-                             "Linear" = NA, 
+                             "Linear" = as.numeric(YhatRslt$counts[setdiff(names(YhatRslt$counts), excld_describe) ]), 
                              "Logistic" = plogis(as.numeric(YhatRslt$counts[setdiff(names(YhatRslt$counts), excld_describe) ])),
                              "Proportion Y Logistic" = plogis(as.numeric(YhatRslt$counts[setdiff(names(YhatRslt$counts), excld_describe) ])),
                              "Ordinal Logistic" = plogis(as.numeric(YhatRslt$counts[setdiff(names(YhatRslt$counts), excld_describe) ])),
                              "Poisson" = exp(as.numeric(YhatRslt$counts[setdiff(names(YhatRslt$counts), excld_describe) ])),
-                             "Quantile" = NA,
+                             "Quantile" = as.numeric(YhatRslt$counts[setdiff(names(YhatRslt$counts), excld_describe) ]),
                              "Cox PH" = plogis(as.numeric(YhatRslt$counts[setdiff(names(YhatRslt$counts), excld_describe) ])),
                              "Cox PH with censoring" = plogis(as.numeric(YhatRslt$counts[setdiff(names(YhatRslt$counts), excld_describe) ])),
-                             "AFT"  = NA,
-                             "AFT with censoring"     = NA,
-                             "Generalized Least Squares" = NA )
+                             "AFT"  = as.numeric(YhatRslt$counts[setdiff(names(YhatRslt$counts), excld_describe) ]),
+                             "AFT with censoring"     = as.numeric(YhatRslt$counts[setdiff(names(YhatRslt$counts), excld_describe) ]),
+                             "Generalized Least Squares" = as.numeric(YhatRslt$counts[setdiff(names(YhatRslt$counts), excld_describe) ]) )
   #Add names
   names(Transformed.Yhat) <- switch(RegType,                
-                                    "Linear" = NULL, 
+                                    "Linear" = setdiff(names(YhatRslt$counts), excld_describe), 
                                     "Logistic" = setdiff(names(YhatRslt$counts), excld_describe),
                                     "Proportion Y Logistic" = setdiff(names(YhatRslt$counts), excld_describe),
                                     "Ordinal Logistic" = setdiff(names(YhatRslt$counts), excld_describe),
                                     "Poisson" = setdiff(names(YhatRslt$counts), excld_describe),
-                                    "Quantile" = NA,
+                                    "Quantile" = setdiff(names(YhatRslt$counts), excld_describe),
                                     "Cox PH" = setdiff(names(YhatRslt$counts), excld_describe),
                                     "Cox PH with censoring" = setdiff(names(YhatRslt$counts), excld_describe),
-                                    "AFT"  = NA,
-                                    "AFT with censoring"     = NA,
-                                    "Generalized Least Squares" = NA )
+                                    "AFT"  = setdiff(names(YhatRslt$counts), excld_describe),
+                                    "AFT with censoring"     = setdiff(names(YhatRslt$counts), excld_describe),
+                                    "Generalized Least Squares" = setdiff(names(YhatRslt$counts), excld_describe) )
   #Transform range of lowest and highest values
   Transformed.Full.Range <- switch(RegType,                
-                             "Linear" = NA, 
+                             "Linear" = range(as.numeric(YhatRslt$extremes) ), 
                              "Logistic" = range(plogis(as.numeric(YhatRslt$extremes)) ),
                              "Proportion Y Logistic" = range(plogis(as.numeric(YhatRslt$extremes)) ),
                              "Ordinal Logistic" = range(plogis(as.numeric(YhatRslt$extremes)) ),
-                             "Poisson" = exp(as.numeric(YhatRslt$extremes)),
-                             "Quantile" = NA,
+                             "Poisson" = range(exp(as.numeric(YhatRslt$extremes)) ),
+                             "Quantile" = range(as.numeric(YhatRslt$extremes) ),
                              "Cox PH" = range(plogis(as.numeric(YhatRslt$extremes)) ),
                              "Cox PH with censoring" = range(plogis(as.numeric(YhatRslt$extremes)) ),
-                             "AFT"  = NA,
-                             "AFT with censoring"     = NA,
-                             "Generalized Least Squares" = NA )
+                             "AFT"  = range(as.numeric(YhatRslt$extremes) ),
+                             "AFT with censoring"     = range(as.numeric(YhatRslt$extremes) ),
+                             "Generalized Least Squares" = range(as.numeric(YhatRslt$extremes) ) )
   
   return(list("Transformed.Yhat"=Transformed.Yhat, "Transformed.Full.Range"= Transformed.Full.Range))
 }  

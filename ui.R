@@ -249,7 +249,7 @@ fluidRow(
 br(),
 plotOutput("observed_pred_scatter", height = 800, width="100%"),
 br(),
-h5("If selecting a factor to show predictions by group members, consider factors with fewer levels to easier examine results or limit it to specific cases (#4 above)."),
+h5("If selecting a factor to show predictions by group members, consider factors with fewer levels to easier examine results or limit it to specific cases (#4 above). 'RES MN' = Residual Mean."),
 br(),
 h4("Examine sensitivity and specificity values from a threshold on predicted values."),
 br(),

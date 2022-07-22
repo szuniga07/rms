@@ -943,8 +943,8 @@ output$observed_pred_scatter <- renderPlot({
                                    "Quantile" = predict(FIT),
                                    "Cox PH" = plogis(predict(FIT)),
                                    "Cox PH with censoring" = plogis(predict(FIT)),
-                                   "AFT"  = predict(FIT),
-                                   "AFT with censoring"     = predict(FIT),
+                                   "AFT"  = exp(predict(FIT)),
+                                   "AFT with censoring"     = exp(predict(FIT)),
                                    "Generalized Least Squares" = predict(FIT) )
 
         return("Transformed.Yhat"=Transformed.Yhat)
@@ -999,8 +999,8 @@ output$observed_pred_scatter <- renderPlot({
         axis(2, las=3, cex.axis=1*labMulti)
         box()
         points(DF[, X], TransYhat, col=XYZCOL[2], pch=3, cex= CEX  )
-        abline(v=as.numeric(eval(parse(text=XLine )) ), col=ABLine.Col)
-        abline(h=as.numeric(eval(parse(text=YLine )) ), col=ABLine.Col)
+        abline(v=as.numeric(eval(parse(text=XLine )) ), col=ABLine.Col, lwd=2*CEX)
+        abline(h=as.numeric(eval(parse(text=YLine )) ), col=ABLine.Col, lwd=2*CEX)
       } else {
         par(mar = c(6, 6, 3, 1) + 0.1)
         plot(as.numeric(DF[, X]), DF[, Y],  
@@ -1016,8 +1016,8 @@ output$observed_pred_scatter <- renderPlot({
                  col=XYZCOL[i], pch=1, cex= CEX )
           points(DF[, X][ DF[, Z]== unique_levs[i] ], TransYhat[ DF[, Z]== unique_levs[i] ], 
                  col=XYZCOL[i], pch=3, cex= CEX )
-          abline(v=as.numeric(eval(parse(text=XLine )) ), col=ABLine.Col)
-          abline(h=as.numeric(eval(parse(text=YLine )) ), col=ABLine.Col)
+          abline(v=as.numeric(eval(parse(text=XLine )) ), col=ABLine.Col, lwd=2*CEX)
+          abline(h=as.numeric(eval(parse(text=YLine )) ), col=ABLine.Col, lwd=2*CEX)
         }
         
       }
@@ -1028,16 +1028,22 @@ output$observed_pred_scatter <- renderPlot({
       } else {
         legend_levs <- intersect(levels(as.factor(DF[, Z][ !is.na(DF[, Z]) ] )) , as.character(unique_levs))
       }
+      #Get Residuals by levels 
+      if( Strat.YN== "No") {
+        resid_levs <- mean(resid(FIT), na.rm=TRUE)
+      } else {
+        resid_levs <- by(resid(fit1()), df()$cyl, mean, na.rm=TRUE)
+      }
       
       #This creates a legend for the ablines with and without factors. 
       if ( Strat.YN== "No" ) {  
-        legend(x=Legend.Loc, legend=c("Observed", "Predicted"),
+        legend(x=Legend.Loc, legend=c("Observed", paste0("Predicted ", "(RES MN= ", round(resid_levs, 3), ")") ),
                col=XYZCOL,
                pch=c(1, 3),
                lty= 0, lwd= 1.5, cex = 1.5, bty="n" #, inset=c(0, .05)
         )
       } else {  
-        legend(Legend.Loc, legend=c("Observed", "Predicted", legend_levs),
+        legend(Legend.Loc, legend=c("Observed", "Predicted", paste(legend_levs, "RES MN=", round(resid_levs, 3))),
                col= c(1,1, XYZCOL),
                pch=c(1, 3, rep(3, length(legend_levs))),
                lty= 0, 
@@ -1639,8 +1645,8 @@ fncTrnsfYhatSmry <- function(YhatRslt, RegType) {
                              "Quantile" = as.numeric(YhatRslt$counts[setdiff(names(YhatRslt$counts), excld_describe) ]),
                              "Cox PH" = plogis(as.numeric(YhatRslt$counts[setdiff(names(YhatRslt$counts), excld_describe) ])),
                              "Cox PH with censoring" = plogis(as.numeric(YhatRslt$counts[setdiff(names(YhatRslt$counts), excld_describe) ])),
-                             "AFT"  = as.numeric(YhatRslt$counts[setdiff(names(YhatRslt$counts), excld_describe) ]),
-                             "AFT with censoring"     = as.numeric(YhatRslt$counts[setdiff(names(YhatRslt$counts), excld_describe) ]),
+                             "AFT"  = exp(as.numeric(YhatRslt$counts[setdiff(names(YhatRslt$counts), excld_describe) ])) ,
+                             "AFT with censoring"     = exp(as.numeric(YhatRslt$counts[setdiff(names(YhatRslt$counts), excld_describe) ])) ,
                              "Generalized Least Squares" = as.numeric(YhatRslt$counts[setdiff(names(YhatRslt$counts), excld_describe) ]) )
   #Add names
   names(Transformed.Yhat) <- switch(RegType,                
@@ -1665,8 +1671,8 @@ fncTrnsfYhatSmry <- function(YhatRslt, RegType) {
                              "Quantile" = range(as.numeric(YhatRslt$extremes) ),
                              "Cox PH" = range(plogis(as.numeric(YhatRslt$extremes)) ),
                              "Cox PH with censoring" = range(plogis(as.numeric(YhatRslt$extremes)) ),
-                             "AFT"  = range(as.numeric(YhatRslt$extremes) ),
-                             "AFT with censoring"     = range(as.numeric(YhatRslt$extremes) ),
+                             "AFT"  = range(exp(as.numeric(YhatRslt$extremes)) ),
+                             "AFT with censoring"     = range(exp(as.numeric(YhatRslt$extremes)) ),
                              "Generalized Least Squares" = range(as.numeric(YhatRslt$extremes) ) )
   
   return(list("Transformed.Yhat"=Transformed.Yhat, "Transformed.Full.Range"= Transformed.Full.Range))

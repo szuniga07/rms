@@ -1032,7 +1032,7 @@ output$observed_pred_scatter <- renderPlot({
       if( Strat.YN== "No") {
         resid_levs <- mean(resid(FIT), na.rm=TRUE)
       } else {
-        resid_levs <- by(resid(fit1()), df()$cyl, mean, na.rm=TRUE)
+        resid_levs <- by(resid(FIT), DF[, Z], mean, na.rm=TRUE)
       }
       
       #This creates a legend for the ablines with and without factors. 

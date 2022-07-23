@@ -928,6 +928,13 @@ output$observed_pred_scatter <- renderPlot({
   }
 }, height = 800 )
 
+output$residuals_by_group <- renderPrint({                                                 
+  options(scipen=20)
+  if (input$opyCreate == "Yes") {
+    print(plot_opy() )
+  }
+})
+
 ######################################################
 ## Reactive functions that runs the functions below ##    
 ######################################################
@@ -950,7 +957,9 @@ output$observed_pred_scatter <- renderPlot({
         return("Transformed.Yhat"=Transformed.Yhat)
       }  
 
-    ## Function for a Plot of Predictions by specific variables ##
+##############################################################
+## Function for a Plot of Predictions by specific variables ##
+##############################################################
     fncPredAndY <- function(FIT, TransYhat, TransYSpec, X, Y, Strat.YN, Z=NULL, ZLevs, DF, 
                             XYZCOL, CEX, Legend.Loc, XLine=NULL, YLine=NULL, ABLine.Col=NULL,
                             xlim1, xlim2, ylim1, ylim2, labMulti) {
@@ -1028,28 +1037,37 @@ output$observed_pred_scatter <- renderPlot({
       } else {
         legend_levs <- intersect(levels(as.factor(DF[, Z][ !is.na(DF[, Z]) ] )) , as.character(unique_levs))
       }
-      #Get Residuals by levels 
-      if( Strat.YN== "No") {
-        resid_levs <- mean(resid(FIT), na.rm=TRUE)
-      } else {
-        resid_levs <- by(resid(FIT), DF[, Z], mean, na.rm=TRUE)
-      }
-      
       #This creates a legend for the ablines with and without factors. 
       if ( Strat.YN== "No" ) {  
-        legend(x=Legend.Loc, legend=c("Observed", paste0("Predicted ", "(RES MN= ", round(resid_levs, 3), ")") ),
+        #legend(x=Legend.Loc, legend=c("Observed", paste0("Predicted ", "(RES MN= ", round(resid_levs, 3), ")") ),
+        legend(x=Legend.Loc, legend=c("Observed", "Predicted"),
                col=XYZCOL,
                pch=c(1, 3),
                lty= 0, lwd= 1.5, cex = 1.5, bty="n" #, inset=c(0, .05)
         )
       } else {  
-        legend(Legend.Loc, legend=c("Observed", "Predicted", paste(legend_levs, "RES MN=", round(resid_levs, 3))),
+        #legend(Legend.Loc, legend=c("Observed", "Predicted", paste(legend_levs, "RES MN=", round(resid_levs, 3))),
+        legend(x=Legend.Loc, legend=c("Observed", "Predicted", intersect(legend_levs, ZLevs) ),
                col= c(1,1, XYZCOL),
-               pch=c(1, 3, rep(3, length(legend_levs))),
+               pch=c(1, 3, rep(3, length(ZLevs))),
                lty= 0, 
                lwd= 1.5, cex = 1.5, bty="n")
       }
-      
+      #Get Residuals by levels 
+      if( Strat.YN== "No") {
+        resid_levs <- c(mean(resid(FIT), na.rm=TRUE), median(resid(FIT), na.rm=TRUE))
+      } else {
+        resid_levs <- cbind(by(resid(FIT), DF[, Z], mean, na.rm=TRUE), by(resid(FIT), DF[, Z], median, na.rm=TRUE))
+      }
+      #Get Residuals by levels 
+      if( Strat.YN== "No") {
+        names(resid_levs) <- c("Mean of residuals", "Median of residuals")
+      } else {
+        colnames(resid_levs) <- c(paste0("Mean residual by ", Z), 
+#                              paste0("Median of residuals by ", Z,": ", unique_levs))
+                              paste0("Median residual by ", Z))
+      }
+      return(resid_levs)
     }
     
 ################################################################################

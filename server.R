@@ -1056,15 +1056,15 @@ output$residuals_by_group <- renderPrint({
       #Get Residuals by levels 
       if( Strat.YN== "No") {
         resid_levs <- c(mean(resid(FIT), na.rm=TRUE), median(resid(FIT), na.rm=TRUE))
-      } else {
-        resid_levs <- cbind(by(resid(FIT), DF[, Z], mean, na.rm=TRUE), by(resid(FIT), DF[, Z], median, na.rm=TRUE))
+      } else {   #naresid() allows me to have residuals and NAs for rows with missing variables/residuals
+        resid_levs <- cbind(by(naresid(FIT$na.action, resid(FIT)) , DF[, Z], mean, na.rm=TRUE), 
+                            by(naresid(FIT$na.action, resid(FIT)) , DF[, Z], median, na.rm=TRUE))
       }
       #Get Residuals by levels 
       if( Strat.YN== "No") {
         names(resid_levs) <- c("Mean of residuals", "Median of residuals")
       } else {
         colnames(resid_levs) <- c(paste0("Mean residual by ", Z), 
-#                              paste0("Median of residuals by ", Z,": ", unique_levs))
                               paste0("Median residual by ", Z))
       }
       return(resid_levs)

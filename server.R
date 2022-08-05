@@ -675,7 +675,7 @@ shinyServer(
     
 
     output$outcome_hist <- renderPlot({
-      if (class(df()[,outcome()]) %in%  c("numeric","integer","labelled")) {
+      if (class(df()[,outcome()])[1] %in%  c("numeric","integer","labelled")) {
         hist(df()[,outcome()], main="Histogram of the outcome variable",
              xlab=paste0(input$variableY))
       }
@@ -1043,7 +1043,7 @@ output$residuals_by_group <- renderPrint({
         legend(x=Legend.Loc, legend=c("Observed", "Predicted"),
                col=XYZCOL,
                pch=c(1, 3),
-               lty= 0, lwd= 1.5, cex = 1.5, bty="n" #, inset=c(0, .05)
+               lty= 0, lwd= 3, cex = 1.5, bty="n" #, inset=c(0, .05)
         )
       } else {  
         #legend(Legend.Loc, legend=c("Observed", "Predicted", paste(legend_levs, "RES MN=", round(resid_levs, 3))),
@@ -1051,14 +1051,14 @@ output$residuals_by_group <- renderPrint({
                col= c(1,1, XYZCOL),
                pch=c(1, 3, rep(3, length(ZLevs))),
                lty= 0, 
-               lwd= 1.5, cex = 1.5, bty="n")
+               lwd= 3, cex = 1.5, bty="n")
       }
       #Get Residuals by levels 
       if( Strat.YN== "No") {
         resid_levs <- c(mean(resid(FIT), na.rm=TRUE), median(resid(FIT), na.rm=TRUE))
       } else {   #naresid() allows me to have residuals and NAs for rows with missing variables/residuals
-        resid_levs <- cbind(by(naresid(FIT$na.action, resid(FIT)) , DF[, Z], mean, na.rm=TRUE), 
-                            by(naresid(FIT$na.action, resid(FIT)) , DF[, Z], median, na.rm=TRUE))
+        resid_levs <- cbind(by(naresid(FIT$na.action, resid(FIT))[!duplicated(names(naresid(FIT$na.action, resid(FIT))))] , DF[, Z], mean, na.rm=TRUE), 
+                            by(naresid(FIT$na.action, resid(FIT))[!duplicated(names(naresid(FIT$na.action, resid(FIT))))] , DF[, Z], median, na.rm=TRUE))
       }
       #Get Residuals by levels 
       if( Strat.YN== "No") {

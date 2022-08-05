@@ -245,7 +245,7 @@ fluidRow(
          uiOutput("opy__Ylim1")),
   column(3, 
          uiOutput("opy__Ylim2"))
-),
+), 
 br(),
 plotOutput("observed_pred_scatter", height = 800, width="100%"),
 br(),

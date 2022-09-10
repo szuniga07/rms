@@ -905,9 +905,9 @@ opy__ylim_val2 <- reactive({
 
 #Get transformed predictions
 trans_y_hat <- reactive({                  #This indicates the data frame I will use.
-  if(input$opyCreate == "Yes") {
+#  if(input$opyCreate == "Yes") {
     fncPredTrans(FIT=fit1(), RegType=input$regress_type)
-  }
+#  }
 })
 
 #Observed and predcited plot 
@@ -1643,7 +1643,8 @@ nm_x_var <- reactive({
             "Transformed.Yhat"=try(describeYhatHistRsltTrnsf()[["Transformed.Yhat"]] ),
             "Transformed.Full.Range"=try(describeYhatHistRsltTrnsf()[["Transformed.Full.Range"]]),
             "Variation"=c("Standard.Deviation.Yhat"= sd(yhat_hist_rslt(), na.rm=TRUE), 
-              "Coefficient.of.Variation"= sd(yhat_hist_rslt(), na.rm=TRUE)/mean(yhat_hist_rslt(), na.rm=TRUE) )
+              "Coefficient.of.Variation"= sd(yhat_hist_rslt(), na.rm=TRUE)/mean(yhat_hist_rslt(), na.rm=TRUE)), 
+            "Mean Absolute Deviation" = fncMAD(DF= df(), Y= outcome(), Trans.Y=trans_y_hat(), Reg.Meth= input$regress_type)
       )
     })
 
@@ -1696,6 +1697,24 @@ fncTrnsfYhatSmry <- function(YhatRslt, RegType) {
   return(list("Transformed.Yhat"=Transformed.Yhat, "Transformed.Full.Range"= Transformed.Full.Range))
 }  
 
+## Function to get Mean Absolute Deviation ##
+    fncMAD <- function(DF, Y, Trans.Y, Reg.Meth) {
+      MAD <- switch(Reg.Meth,                
+                                 "Linear" =     mean(abs(DF[,Y] - Trans.Y ), na.rm=T), 
+                                 "Logistic" = NA,
+                                 "Proportion Y Logistic" = NA,
+                                 "Ordinal Logistic" = NA,
+                                 "Poisson" =     mean(abs(DF[,Y] - Trans.Y ), na.rm=T),
+                                 "Quantile" =     mean(abs(DF[,Y] - Trans.Y ), na.rm=T),
+                                 "Cox PH" = NA,
+                                 "Cox PH with censoring" = NA,
+                                 "AFT"  = NA ,
+                                 "AFT with censoring"     = NA ,
+                                 "Generalized Least Squares" =     mean(abs(DF[,Y] - Trans.Y ), na.rm=T) )
+
+      return(MAD)
+    }  
+    
 
 #########################################
 ## Binary classification of predictors ##
@@ -11597,6 +11616,51 @@ fncStSpcLegendFactoLev <- function(Model_fit, X_Lev) {
 
 
 ################################################################################
+#             Additional function to run from the Describe tab                 #
+################################################################################
+## Calibration curve ##
+Calibration.Curve <- function(model.fit=fit1(), df.cal=df(), outcome.Y=outcome(), BINS=NULL, POS=NULL, CEX=NULL) {
+  #Create the number of quantiles
+  if(is.null(BINS)) {
+    quant.pick <- 10
+  } else {
+    quant.pick <- BINS
+  }
+  #Create the position object
+  if(is.null(POS)) {
+    POS.cal <- 3
+  } else {
+    POS.cal <- POS
+  }
+  #Create the CEX object
+  if(is.null(CEX)) {
+    CEX.cal <- 2
+  } else {
+    CEX.cal <- CEX
+  }
+  
+  cal.quants <- cut2(model.fit$fitted.values, g=quant.pick)    
+  quant.ls <- list()
+  for (i in 1:quant.pick) {
+    quant.ls[i] <- mean( model.fit$fitted.value[cal.quants == levels(cal.quants)[i] ] ,na.rm=TRUE)   
+  }
+  obsY.ls <- list()
+  for (i in 1:quant.pick) {
+    obsY.ls[i] <- mean( df.cal[ model.fit$fitted.value[cal.quants == levels(cal.quants)[i] ], outcome.Y ] ,na.rm=TRUE)
+  }
+  
+  plot(1:quant.pick, quant.ls, type="n", 
+       ylim=c(min(unlist(quant.ls), unlist(obsY.ls),na.rm=T )* .99, max(unlist(quant.ls), unlist(obsY.ls),na.rm=T) *1.01),
+       main="Calibration curve with observed means per bin", xlab="Means of predicted values in bins", 
+       ylab= outcome.Y, axes=F, cex.lab=2, cex.main=2)
+  axis(1, at=1:quant.pick, labels= round(unlist(quant.ls), 2), cex.axis=1.5)
+  axis(2, cex.axis=1.5)
+  points(1:quant.pick, obsY.ls, cex=CEX.cal, pch=20, col="blue")
+  lines(1:quant.pick, quant.ls, lwd=5, col="red")
+  text(1:quant.pick, obsY.ls, labels = round(unlist(obsY.ls), 2), cex=(CEX.cal* .5), pos=POS.cal)
+  box()
+
+}
 
 ################################################################################
 ## Testing section: Begin  ##

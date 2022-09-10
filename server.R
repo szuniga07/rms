@@ -11642,23 +11642,24 @@ Calibration.Curve <- function(model.fit=fit1(), df.cal=df(), outcome.Y=outcome()
   cal.quants <- cut2(model.fit$fitted.values, g=quant.pick)    
   quant.ls <- list()
   for (i in 1:quant.pick) {
-    quant.ls[i] <- mean( model.fit$fitted.value[cal.quants == levels(cal.quants)[i] ] ,na.rm=TRUE)   
+    quant.ls[i] <- mean( model.fit$fitted.values[cal.quants == levels(cal.quants)[i] ] ,na.rm=TRUE)   
   }
   obsY.ls <- list()
   for (i in 1:quant.pick) {
-    obsY.ls[i] <- mean( df.cal[ model.fit$fitted.value[cal.quants == levels(cal.quants)[i] ], outcome.Y ] ,na.rm=TRUE)
+    obsY.ls[i] <- mean( model.fit$y[cal.quants == levels(cal.quants)[i] ] ,na.rm=TRUE)
   }
   
   plot(1:quant.pick, quant.ls, type="n", 
        ylim=c(min(unlist(quant.ls), unlist(obsY.ls),na.rm=T )* .99, max(unlist(quant.ls), unlist(obsY.ls),na.rm=T) *1.01),
        main="Calibration curve with observed means per bin", xlab="Means of predicted values in bins", 
-       ylab= outcome.Y, axes=F, cex.lab=2, cex.main=2)
+       ylab= outcome.Y, axes=F, cex.lab=1.5, cex.main=2)
   axis(1, at=1:quant.pick, labels= round(unlist(quant.ls), 2), cex.axis=1.5)
   axis(2, cex.axis=1.5)
-  points(1:quant.pick, obsY.ls, cex=CEX.cal, pch=20, col="blue")
+  points(1:quant.pick, unlist(obsY.ls), cex=CEX.cal, pch=20, col="blue")
   lines(1:quant.pick, quant.ls, lwd=5, col="red")
-  text(1:quant.pick, obsY.ls, labels = round(unlist(obsY.ls), 2), cex=(CEX.cal* .5), pos=POS.cal)
+  text(1:quant.pick, unlist(obsY.ls), labels = round(unlist(obsY.ls), 2), cex=(CEX.cal* .5), pos=POS.cal)
   box()
+  return( list("Observed Y means"=unlist(obsY.ls), "Predicted Y means"=unlist(quant.ls)  ) )
 
 }
 

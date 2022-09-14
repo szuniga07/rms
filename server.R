@@ -11663,6 +11663,15 @@ Calibration.Curve <- function(model.fit=fit1(), df.cal=df(), outcome.Y=outcome()
 
 }
 
+## Function to plot a PNG picture ## Add jpeg and a real plot() in the future
+fncPlotPng <- function(Image1=Null, Image2=Null) {
+  library(jpeg)
+  plot(1:10,ty="n", axes=F, xlab="", ylab="")
+  rasterImage(Image1, .5,.5, 5,9.5)
+  try(rasterImage(Image2, 5.5,.5, 10,9.5))
+}
+
+
 ################################################################################
 ## Testing section: Begin  ##
 ################################################################################

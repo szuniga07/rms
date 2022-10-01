@@ -754,9 +754,9 @@ shinyServer(
     })
     #Reactive function to get group levels
     opy_plot_groups <- reactive({
-    #  if(opy_stratify_factor== "Yes") {
+      if(opy_stratify_factor() == "Yes") {
         unique(df()[, opy_z_var() ]) 
-    #  }
+      }
     })
     #4. Select specific groups
     output$opyplot_grp_levs <- renderUI({                                 

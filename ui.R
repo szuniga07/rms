@@ -325,7 +325,7 @@ fluidRow(
 ),
 br(),
 plotOutput("plot_thresh_quant_run", height = 800, width="100%"),
-h5("The decision curve graph's weights (e.g., Pt/1-Pt) use quantiles (0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95)."),
+h5("The decision curve graph's weights (e.g., Pt/1-Pt) use quantiles (0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95). The X-axis represents the quantile range (0.05-0.95) for 7 predicted values."),
 br()
 ),    
 

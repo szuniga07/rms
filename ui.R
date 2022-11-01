@@ -659,10 +659,12 @@ tabPanel("Impute",
          fluidRow(   
            column(6, 
                   uiOutput("MIx"),
-                  uiOutput("MIks")),
+                  uiOutput("MI_set_seed")),
            column(6, 
                   uiOutput("MIn"),
-                  uiOutput("MI_Begin")
+                  uiOutput("MI_Begin")),
+           column(6, 
+                  uiOutput("MIks")
                   )),
          h6("Select the number imputations equal to the percentage missing (e.g., 20% missing = 20 imputations)."),
          h6("Set the number of knots = 0 for a linear fit or if there are < 5 unique values in continous variables."),
@@ -866,7 +868,8 @@ br()
                    fluidRow(
                    column(3, 
                    uiOutput("calibrate_type"), 
-                   uiOutput("calibrate_surv_quan_n")
+                   uiOutput("calibrate_surv_quan_n"),
+                   uiOutput("BeginCalibrate")
                    ),  
                    column(3, offset=1,
                    uiOutput("calibrate_B_arg_n"),
@@ -874,7 +877,7 @@ br()
                    ),
                    column(3, offset=1,
                           uiOutput("calibrate_surv_time"),
-                          uiOutput("BeginCalibrate")
+                          uiOutput("calibrate_set_seed")
                    )
                    ),
                    br(),
@@ -887,11 +890,14 @@ br()
                    fluidRow(
                      column(3, 
                             uiOutput("validate_type"),
-                            uiOutput("MIForVali")
+                            uiOutput("validate_set_seed")
                      ),  
                      column(3, offset=1,
                             uiOutput("validate_B_arg_n"),
                             uiOutput("BeginValidate")
+                     ),  
+                     column(3, offset=1,
+                            uiOutput("MIForVali")
                      )),
                    h5("Note: Prior to validation, create the single imputed data under 'Transformation and Imputation of predictors' in the 'Reduce' tab for multiple imputation purposes."),
                    #h6("Note: Confirm the single imputed or original dataframe is loaded in the 'Model builder' tab, depending on your purpose."),

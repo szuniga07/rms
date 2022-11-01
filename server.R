@@ -3461,9 +3461,18 @@ output$MIForCali <- renderUI({
               choices = c("No", "Yes"), multiple=FALSE, selected="No")     #Will make choices based on my reactive function.
 })
 
+#6. Pick a time for survival models
+output$calibrate_set_seed <- renderUI({
+  numericInput("calSetNumSeed", "6. Set random number seed.", value= 1, min=1, step=1) 
+})
+#6A. Set random number seed
+calibrate_number_seed <- reactive({
+  input$calSetNumSeed
+})
+
 #Determine if we should begin the calibration.
 output$BeginCalibrate <- renderUI({  
-  selectInput("begin_cali", "6. Begin calibration?", 
+  selectInput("begin_cali", "7. Begin calibration?", 
               choices = c("No", "Yes"), multiple=FALSE, selected="No")     #Will make choices based on my reactive function.
 })
 
@@ -3472,7 +3481,7 @@ output$cali_brate <- renderPlot({
   if (input$MI_for_cali == "No") {
     
   if (input$begin_cali == "Yes") {
-  set.seed(1)
+  set.seed(calibrate_number_seed() )
   if (input$caliType == "boot") {
     plot(calibrate(fit1(), B=input$cali_B_n, u=input$calSrvTM, method="boot"), subtitles=TRUE)
   }
@@ -3486,7 +3495,7 @@ output$cali_brate <- renderPlot({
     plot(calibrate(fit1(),  u=input$calSrvTM, method="randomization", B=input$cali_B_n), subtitles=TRUE)
   }
 #Add validation of right censored data
-      set.seed(1)
+      set.seed(calibrate_number_seed() )
       if (input$regress_type %in%  c("Cox PH","Cox PH with censoring","AFT","AFT with censoring")) {
         plot(calibrate(fit1(), B=input$cali_B_n, u=input$calSrvTM, m=floor(length(fit1()$linear.predictors) /calibrate_survival_quantile_n()), 
                        cmethod='KM'), add=TRUE)
@@ -3497,7 +3506,7 @@ output$cali_brate <- renderPlot({
   if (input$MI_for_cali == "Yes") {
     
     if (input$begin_cali == "Yes") {
-      set.seed(1)
+      set.seed(calibrate_number_seed() )
       if (input$caliType == "boot") {
         plot(calibrate(fit.si(), B=input$cali_B_n, u=input$calSrvTM, method="boot"), subtitles=TRUE)
       }
@@ -3511,7 +3520,7 @@ output$cali_brate <- renderPlot({
         plot(calibrate(fit.si(),  u=input$calSrvTM, method="randomization", B=input$cali_B_n), subtitles=TRUE)
       }
       #Add validation of right censored data
-      set.seed(1)
+      set.seed(calibrate_number_seed() )
       if (input$regress_type %in%  c("Cox PH","Cox PH with censoring","AFT","AFT with censoring")) {
         plot(calibrate(fit.si(), B=input$cali_B_n, u=input$calSrvTM, m=floor( length(fit.si()$linear.predictors) /calibrate_survival_quantile_n()), 
                        cmethod='KM'), add=TRUE)
@@ -3540,9 +3549,18 @@ output$MIForVali <- renderUI({
               choices = c("No", "Yes"), multiple=FALSE, selected="No")     #Will make choices based on my reactive function.
 })
 
+#4. Pick a time for survival models
+output$validate_set_seed <- renderUI({
+  numericInput("valSetNumSeed", "4. Set random number seed.", value= 1, min=1, step=1) 
+})
+#4A. Random number seed
+validate_number_seed <- reactive({
+  input$valSetNumSeed
+})
+
 #Determine if we should begin the calibration.
 output$BeginValidate <- renderUI({  
-  selectInput("begin_vali", "4. Begin validation?", 
+  selectInput("begin_vali", "5. Begin validation?", 
               choices = c("No", "Yes"), multiple=FALSE, selected="No")     #Will make choices based on my reactive function.
 })
 
@@ -3550,7 +3568,7 @@ output$vali_date <- renderPrint({
   if (input$MI_for_vali == "No") {
     
     if (input$begin_vali == "Yes") {
-      set.seed(1)
+      set.seed(validate_number_seed() )
       if (input$valiType == "boot") {
         print(rms:::validate(fit1(), B=input$vali_B_n, method="boot", bw=TRUE), digits=3, B=50)
       }
@@ -3569,7 +3587,7 @@ output$vali_date <- renderPrint({
   if (input$MI_for_vali == "Yes") {
     
     if (input$begin_vali == "Yes") {
-      set.seed(1)
+      set.seed(validate_number_seed() )
       if (input$valiType == "boot") {
         print(rms:::validate(fit.si(), B=input$vali_B_n, method="boot", bw=TRUE), digits=3, B=50)
       }
@@ -6490,9 +6508,17 @@ output$MIn <- renderUI({                                 #Same idea as output$vy
 output$MIks <- renderUI({                                 #Same idea as output$vy
   numericInput("MIknots", "3. Select the number of knots.", value = 4, min=0, step=1)     #Will make choices based on my reactive function.
 })
-#Determine if we should begin the multiple imputations.
+#4. Pick a time for survival models
+output$MI_set_seed <- renderUI({
+  numericInput("MISetNumSeed", "4. Set random number seed.", value= 1, min=1, step=1) 
+})
+#4A. Random number seed
+MI_number_seed <- reactive({
+  input$MISetNumSeed
+})
+#5. Determine if we should begin the multiple imputations.
 output$MI_Begin <- renderUI({  
-  selectInput("MIbegin", "4. Begin multiple imputation?", 
+  selectInput("MIbegin", "5. Begin multiple imputation?", 
               choices = c("No", "Yes"), multiple=FALSE, selected="No")     
 })
 
@@ -6504,7 +6530,7 @@ mi_fmla <- reactive({             #Spline terms
 #Multiple imputation for data sets
 mi <- reactive({
   if (input$MIbegin == "Yes") {
-    set.seed(1)  
+    set.seed(MI_number_seed() )
     aregImpute(mi_fmla(),
                data=df(), n.impute=input$MInumber,   #Proportion NA= .20 so we use 20 imputations.
                nk=input$MIknots,                   #Default 4 knots used when variables are used to impute other values.

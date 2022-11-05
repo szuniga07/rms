@@ -4375,10 +4375,10 @@ output$cluster_plot <- renderPlot({
 ###   Transform/Impute   ###
 ############################
 ptrans <-   reactive({
-  set.seed(1)
+  set.seed( 1 )
   transcan(cluster_anl_fmla(),
            imputed=TRUE, transformed=TRUE, trantab=TRUE, pl=FALSE,
-           show.na=TRUE, data=df(), nk= input$SIknots, asis=input$asisx, 
+           show.na=TRUE, data=df(), nk= input$SIknots, asis=input$asisx, iter.max=SI_max_iter(),
            #frac=.1,  #This might be fracmiss...max amount of NAs to determine if I should keep. Might add this later if the default to keep all is not useful  
            pr=FALSE)
 })
@@ -4412,10 +4412,16 @@ output$AsIs_x <- renderUI({                                 #Same idea as output
   selectInput("asisx", "2. Variables neither transformed nor splined.", 
               choices = predictor(), multiple=TRUE)     #Will make choices based on my reactive function.
 })
-
+output$SI_set_maxIter <- renderUI({
+  numericInput("SISetMaxIter", "3. Set max number of iterations.", value= 50, min=1, step=1) 
+})
+#4A. Random number seed
+SI_max_iter <- reactive({
+  input$SISetMaxIter
+})
 #Indicate if you want the transformation/imputed values
 output$Transcan_Choice <- renderUI({ 
-  radioButtons("TransChoice", "3. Would you like to run the simultaneous transformation and imputation?",
+  radioButtons("TransChoice", "4. Would you like to run the simultaneous transformation and imputation?",
                choices = c("No", "Yes"),
                selected="No") 
 })
@@ -6516,9 +6522,14 @@ output$MI_set_seed <- renderUI({
 MI_number_seed <- reactive({
   input$MISetNumSeed
 })
+#Selects variables that won't get transformed or imputed
+output$MIAsIs_x <- renderUI({                                 
+  selectInput("MIasisx", "5. Variables not transformed nor splined.", 
+              choices = predictor(), multiple=TRUE)     
+})
 #5. Determine if we should begin the multiple imputations.
 output$MI_Begin <- renderUI({  
-  selectInput("MIbegin", "5. Begin multiple imputation?", 
+  selectInput("MIbegin", "6. Begin multiple imputation?", 
               choices = c("No", "Yes"), multiple=FALSE, selected="No")     
 })
 
@@ -6543,9 +6554,11 @@ mi <- reactive({
 #######################################################################
 ptrans.si <-   reactive({
   if (input$MIbegin == "Yes") {
-    set.seed(1)
+    set.seed(MI_number_seed() )
     transcan(mi_fmla(), imputed=TRUE, transformed=FALSE, trantab=TRUE, pl=FALSE, show.na=TRUE, data=df(), pr=FALSE, 
-             nk=input$SIknots, asis=input$asisx)
+             nk=input$MIknots, 
+             #n.impute=input$MInumber, 
+             asis=input$MIasisx)
   }
 })
 

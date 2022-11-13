@@ -3203,46 +3203,55 @@ nomo_survival_time_prob_periods <- reactive({
   }
 })
 
-#6. Transition specific formulas
+#6. Label size for nomogram variables
+output$nomo_vr_lbl_sz <- renderUI({  
+  numericInput("nomoVrLblSz", "6. Select variable label size",
+               min=1, step=.1, value=1)
+})
+#6A. Object with multiplier value
+nomo_var_label_size <- reactive({
+  input$nomoVrLblSz
+})
+#7. Transition specific formulas
 output$nomo_up_Fmla <- renderUI({
-  textInput("nomoUpFmla", "6. Update nomogram formula", 
+  textInput("nomoUpFmla", "7. Update nomogram formula", 
   #value= deparse(nomo_fmla_output(), width.cutoff=500 )  )     
   value= nomo_fmla_output()  )     
 })
-#6B. Make full regression call
+#7B. Make full regression call
 #nomo_first_formula <- reactive({
 #  paste0("coxph(list(",  deparse(ms_cph_mdl_fmla(), width.cutoff=500 ),  ",), data=", input$msDfInputName,", ", "id=", 
 #         cph_time_fmla_id(), ", model=TRUE" , ")")
 #})
-#6A. Object with formula
+#7A. Object with formula
 nomo_update_formula <- reactive({
   parse(text=sub("expression", "", input$nomoUpFmla))
 })
 
-#7. Create yes/no box to determine plot single partial effect
+#8. Create yes/no box to determine plot single partial effect
 output$nomo_yes <- renderUI({                                 #Same idea as output$vy
-  selectInput("nomoYes", "7. Do you want to create a nomogram?", 
+  selectInput("nomoYes", "8. Do you want to create a new nomogram?", 
               choices = c("No", "Yes"), multiple=FALSE, selected="No")     #Will make choices based on my reactive function.
 })
-#7A. Object with new layout
+#8A. Object with new layout
 nomogram_yes <- reactive({
   input$nomoYes
 })
 
-#8. Run function to get nomogram formula
+#9. Run function to get nomogram formula
 get_nomo_fmla <- reactive({
 #  if (nomogram_yes() =="Yes") {
     fncNomo(RegType=input$regress_type)
 #  }
 })
-#8A. Run the data function
+#9A. Run the data function
 nomo_fmla_output <- reactive({
 #  if (nomogram_yes() =="Yes") {
     get_nomo_fmla()
 #  }
 })
 
-#9. Get nomogram output
+#10. Get nomogram output
 get_nomo_output <- reactive({
   if (nomogram_yes() =="Yes") {
     fncNomoOutput(Nom=nomo_update_formula(), Fit=fit1(), PrbSrvTm=nomogram_prob_survival_time(), TrnSrvTm=nomo_transformation_time_denom(), 
@@ -3252,16 +3261,16 @@ get_nomo_output <- reactive({
 })
 
 
-#10. Run plot
+#11. Run plot
 output$nomo_gram <- renderPlot({
   if(nomogram_yes() == "Yes") {
-    plot(get_nomo_output())
+    plot(get_nomo_output(), cex.var=nomo_var_label_size() )
   } else {
-    plot(nomogram(fit1()))
+    plot(nomogram(fit1()), cex.var=nomo_var_label_size())
   }
 }, height = 800)
 
-#11. Print nomogram results
+#12. Print nomogram results
 output$nomogram_smry <- renderPrint({ 
   if(nomogram_yes() == "Yes") {
     get_nomo_output()

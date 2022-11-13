@@ -844,14 +844,16 @@ br()
                             uiOutput("nomo_pred_surv_time_xaxis"))
                    ),
                    br(),
-                   h5("Survival model labeling features. #4: Time values listed in predictions, #5: Time periods such as 'days'. "),
+                   h5("Survival model labeling features. #4: Time values listed in predictions, #5: Time periods such as 'days', #6: Change the size of variable names. "),
                    fluidRow(
                      column(4,
                             uiOutput("nomo_surv_time_prob_vals")),
                      column(4,
-                            uiOutput("nomo_surv_time_prob_pers"))
+                            uiOutput("nomo_surv_time_prob_pers")),
+                     column(4,
+                            uiOutput("nomo_vr_lbl_sz"))
                    ),
-                   h5("Update the nomogram for all models. #6: Modify the nomogram or revise X values not able to plot...ap=c(.1,.5,1:5,10,20,30,40), #7: Update various models."),
+                   h5("Update the nomogram for all models. #7: Modify the nomogram or revise X values not able to plot...ap=c(.1,.5,1:5,10,20,30,40), #8: Update various models."),
                    fluidRow(
                      column(4,
                             uiOutput("nomo_up_Fmla")),

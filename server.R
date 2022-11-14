@@ -3165,7 +3165,7 @@ nomo_transformation_time_denom <- reactive({
 #Select the function at times (matches with "med" and "mmeant") or use .05 and .95 quantiles
 #3. Revise plot layout
 output$nomo_pred_surv_time_xaxis <- renderUI({
-  textInput("nomoPrdSrvTmXaxis", "3. Median and mean survival X-axis times:", 
+  textInput("nomoPrdSrvTmXaxis", "3. Mean and median survival X-axis times:", 
             value= "c(1,2)" )     
 })
 #3A. Object with new layout
@@ -3286,9 +3286,9 @@ output$nomogram_smry <- renderPrint({
 fncNomo <- function(RegType)  {
   nom <- switch(RegType,                
                 "Linear"   = expression(nomogram(Fit)), 
-                "Logistic" = expression(nomogram(Fit, fun=plogis)),
-                "Proportion Y Logistic" = expression(nomogram(Fit, fun=plogis)),
-                "Ordinal Logistic"  = expression(nomogram(Fit, fun=plogis)),
+                "Logistic" = expression(nomogram(Fit, fun=plogis, fun.at=c(.01, .025, .05, seq(.1,.9,.1), .95, .975, .99))),
+                "Proportion Y Logistic" = expression(nomogram(Fit, fun=plogis, fun.at=c(.01, .025, .05, seq(.1,.9,.1), .95, .975, .99))),
+                "Ordinal Logistic"  = expression(nomogram(Fit, fun=plogis, fun.at=c(.01, .025, .05, seq(.1,.9,.1), .95, .975, .99))),
                 "Poisson"  = expression(nomogram(Fit, fun=exp)),
                 "Quantile" = expression(nomogram(Fit)),
                 "Cox PH"   = expression(nomogram(Fit, 

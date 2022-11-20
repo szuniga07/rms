@@ -918,7 +918,7 @@ plot_opy <- reactive({                  #This indicates the data frame I will us
                 XYZCOL=opy_plot_Line_Colors(), CEX=opy_plot_symbol_size(), Legend.Loc=opy_legend_location(), 
                 XLine=opy_vertical_line() , YLine=opy_horizontal_line() , ABLine.Col=opy_plot_Target_Line_Colors() ,
                 xlim1=opy__Xlim_val1(), xlim2=opy__Xlim_val2(), ylim1=opy__ylim_val1(), ylim2=opy__ylim_val2(), 
-                labMulti=opy_plot_label_multiplier() )
+                labMulti=opy_plot_label_multiplier(), reg_yhat=input$regress_type )
   }
 })
 #Observed and predcited plot 
@@ -962,7 +962,7 @@ output$residuals_by_group <- renderPrint({
 ##############################################################
     fncPredAndY <- function(FIT, TransYhat, TransYSpec, X, Y, Strat.YN, Z=NULL, ZLevs, DF, 
                             XYZCOL, CEX, Legend.Loc, XLine=NULL, YLine=NULL, ABLine.Col=NULL,
-                            xlim1, xlim2, ylim1, ylim2, labMulti) {
+                            xlim1, xlim2, ylim1, ylim2, labMulti, reg_yhat) {
       #Get Transformed Yhat mean and mediam
       Trans.Yhat.Mean <- unlist(TransYSpec$Transformed.Yhat["Mean"])
       Trans.Yhat.Median <- unlist(TransYSpec$Transformed.Yhat[".50"])
@@ -1007,7 +1007,8 @@ output$residuals_by_group <- renderPrint({
         axis(1, at= XAxisLab, labels= XAxisLab, las=1, cex.axis=1*labMulti )
         axis(2, las=3, cex.axis=1*labMulti)
         box()
-        points(DF[, X], TransYhat, col=XYZCOL[2], pch=3, cex= CEX  )
+#        points(DF[, X], TransYhat, col=XYZCOL[2], pch=3, cex= CEX  )
+        points(DF[, X], TransYhat, col=tail(XYZCOL, 1), pch=3, cex= CEX  )
         abline(v=as.numeric(eval(parse(text=XLine )) ), col=ABLine.Col, lwd=2*CEX)
         abline(h=as.numeric(eval(parse(text=YLine )) ), col=ABLine.Col, lwd=2*CEX)
       } else {
@@ -1057,8 +1058,15 @@ output$residuals_by_group <- renderPrint({
       if( Strat.YN== "No") {
         resid_levs <- c(mean(resid(FIT), na.rm=TRUE), median(resid(FIT), na.rm=TRUE))
       } else {   #naresid() allows me to have residuals and NAs for rows with missing variables/residuals
-        resid_levs <- cbind(by(naresid(FIT$na.action, resid(FIT))[!duplicated(names(naresid(FIT$na.action, resid(FIT))))] , DF[, Z], mean, na.rm=TRUE), 
-                            by(naresid(FIT$na.action, resid(FIT))[!duplicated(names(naresid(FIT$na.action, resid(FIT))))] , DF[, Z], median, na.rm=TRUE))
+#        resid_levs <- cbind(by(naresid(FIT$na.action, resid(FIT))[!duplicated(names(naresid(FIT$na.action, resid(FIT))))] , DF[, Z], mean, na.rm=TRUE), 
+#                            by(naresid(FIT$na.action, resid(FIT))[!duplicated(names(naresid(FIT$na.action, resid(FIT))))] , DF[, Z], median, na.rm=TRUE))
+        if( reg_yhat %in% c("Ordinal Logistic", "Logistic") ) {
+          resid_levs <- cbind(by(naresid(FIT$na.action, resid(FIT))[!duplicated(as.character(1:nrow(DF)) )] , DF[, Z], mean, na.rm=TRUE), 
+                            by(naresid(FIT$na.action, resid(FIT))[!duplicated(as.character(1:nrow(DF)) )] , DF[, Z], median, na.rm=TRUE))
+        } else {  
+          resid_levs <- cbind(by(naresid(FIT$na.action, resid(FIT))[!duplicated(names(naresid(FIT$na.action, resid(FIT))))] , DF[, Z], mean, na.rm=TRUE),
+                              by(naresid(FIT$na.action, resid(FIT))[!duplicated(names(naresid(FIT$na.action, resid(FIT))))] , DF[, Z], median, na.rm=TRUE))
+        } 
       }
       #Get Residuals by levels 
       if( Strat.YN== "No") {

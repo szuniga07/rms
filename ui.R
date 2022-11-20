@@ -1,4 +1,4 @@
-          
+           
 #The code below allows me to print 2 plots in the same panel.   
   shinyUI(  
     fluidPage( 
@@ -205,6 +205,7 @@ verbatimTextOutput("desc_YhatHistRslt"),
                    h5("Linear predicted values (logit, exp(logit), or response level) and probabilities (Logistic regression)."),
 br(),
 h4("Plot and compare observed and predicted values, with or without factor groupings."),
+h5("Add a second color in #5 for predicted scores when #2 is 'No', if preferred."),
 br(),
 fluidRow(   
   column(3, 

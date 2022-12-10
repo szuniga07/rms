@@ -123,10 +123,11 @@ shinyServer(
     output$modify_time_format <- renderUI({  
       selectInput("ModifyTimeFmt", "5. Choose the correct time format.", 
                   choices = c("31JAN2021", "31JAN21","31-JAN-2021","31-JAN-21","01/31/2021", "01/31/21", 
-                              "01-31-2021", "01-31-21", "2021-01-31", "21-01-31", #"1/31/2021 21:15",
-                              "1/31/2021 21:15 as 1/31/2021", #"1/31/2021 21:15:30",
-                              "1/31/2021 21:15:30 as 1/31/2021", #"1/31/2021 12:00:00 AM", 
-                              "1/31/2021 12:00:00 AM as 1/31/2021", "31JAN2021:12:00:00 as 31JAN2021",
+                              "01-31-2021", "01-31-21", "2021-01-31", "21-01-31", 
+                              "1/31/2021 21:15 as 1/31/2021", "1/31/2021 21:15:30 as 1/31/2021", 
+                              "1/31/2021 12:00:00 AM as 1/31/2021", 
+                              "2021-01-31 21:15:30 as 2021-01-31",
+                              "31JAN2021:12:00:00 as 31JAN2021",
                               "JAN2021", "JAN21","JAN-2021","JAN-21","01/2021", "01/21",
                               "01-2021", "01-21", "2021-01", "21-01", "44227 in Excel"), 
                   multiple=TRUE, selected="01-31-2021")
@@ -274,6 +275,7 @@ shinyServer(
                  "1/31/2021 21:15:30 as 1/31/2021" = df_mod[, X[i]] <- as.Date(strptime(as.character(df_mod[, X[i]]), format="%m/%d/%Y %H:%M:%S")),
                  "1/31/2021 12:00:00 AM" = df_mod[, X[i]] <- strptime(as.character(df_mod[, X[i]]), format="%m/%d/%Y %H:%M:%S %p"),
                  "1/31/2021 12:00:00 AM as 1/31/2021" = df_mod[, X[i]] <- as.Date(strptime(as.character(df_mod[, X[i]]), format="%m/%d/%Y %H:%M:%S %p")),
+                 "2021-01-31 21:15:30 as 2021-01-31" = df_mod[, X[i]] <- as.Date(strptime(as.character(df_mod[, X[i]]), format="%Y-%m-%d %H:%M:%S")),
                  "31JAN2021:12:00:00 as 31JAN2021" = df_mod[, X[i]] <- as.Date(strptime(as.character(df_mod[, X[i]]), format="%d%b%Y:%H:%M:%S")),
                  "JAN2021" = df_mod[, X[i]] <- as.Date(paste0("01", as.character(df_mod[, X[i]]) ),  format="%d%b%Y"), 
                  "JAN21" = df_mod[, X[i]] <- as.Date(paste0("01", as.character(df_mod[, X[i]]) ), format="%d%b%y"), 
@@ -7312,6 +7314,17 @@ density_group_trend_outcome <- reactive({
 density_group_trend_Y_density <- reactive({
   density(df()[, density_group_trend_outcome()], na.rm=TRUE) 
 })
+
+#3. Indicate if you want to run the trend function
+output$dnsty_grp_bgn_yesno <- renderUI({                                 
+  selectInput("dnsGrpBgnYN", "3. Begin grouping?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")     
+})
+#3A. Object for yes/no running of the plot 
+density_group_begin_yes_no <- reactive({
+  input$dnsGrpBgnYN
+})
+
 #2. Select the grouping variable.
 output$dnsty_grp_trnd_Xvar <- renderUI({
   selectInput("dnsGrpTrnX", "2. Select the group factor.",
@@ -7326,142 +7339,152 @@ density_group_trend_group <- reactive({
 density_group_trend_grp_levels <- reactive({
   unique(df()[, density_group_trend_group()])
 })
-#3. Select the specific groups.
+#4. Select the specific groups.
 output$dnsty_grp_trnd_Xlevs <- renderUI({
-  selectInput("dnsGrpTrXlev", "3. Select specific groups.",
-              choices = sort(density_group_trend_grp_levels()), multiple=TRUE)
+  if(density_group_begin_yes_no() == "Yes") {
+    selectInput("dnsGrpTrXlev", "4. Select specific groups.",
+                choices = sort(density_group_trend_grp_levels()), multiple=TRUE)
+  } else {
+    selectInput("dnsGrpTrXlev", "4. Select specific groups.",
+                choices = "NA", multiple=TRUE, selected= "NA" )     
+  }
 })
-#3A. Reactive function for the variable
+#4A. Reactive function for the variable
 density_group_trend_grp_X_levs <- reactive({
   input$dnsGrpTrXlev
 })
-#4. Select the time indicator.
+#5. Select the time indicator.
 output$dnsty_grp_trnd_Zvar <- renderUI({ 
-  selectInput("dnsGrpTrnZ", "4. Select the time indicator.", 
+  selectInput("dnsGrpTrnZ", "5. Select the time indicator.", 
               choices = setdiff(var(), c(density_group_trend_outcome(), density_group_trend_group() ) ), 
               multiple=FALSE, selected= setdiff(var(), c(density_group_trend_outcome(), density_group_trend_group() ) )[1])
 })
-#4A. Reactive function for the variable
+#5A. Reactive function for the variable
 density_group_trend_time <- reactive({
   input$dnsGrpTrnZ
 })
-#4B. Reactive function for the range of time
+#5B. Reactive function for the range of time
 density_group_trend_range_time <- reactive({
   range(as.numeric(df()[, density_group_trend_time()]), na.rm=TRUE)
 })
-#5. Select the rolling time period 
+#6. Select the rolling time period 
 output$dnsty_grp_trnd_Z_inc <- renderUI({                                 
-  numericInput("dnsGrpTrnZInc", "5. Select time increments (3= 3 months).", 
+  numericInput("dnsGrpTrnZInc", "6. Select time increments (3= 3 months).", 
                value = 1, step = 1)     
 })
-#5A. Reactive function for the variable
+#6A. Reactive function for the variable
 density_group_trend_Time_Increment <- reactive({
   input$dnsGrpTrnZInc
 })
-#6. Line color
+#7. Line color
 output$dnsty_grp_trnd_ln_clr <- renderUI({                                
-  selectInput("dnsGrpTrnLClr", "6. Select the line color.",        
+  selectInput("dnsGrpTrnLClr", "7. Select the line color.",        
               choices = xyplot_Line_Color_Names(), 
               multiple=FALSE, selected="red" ) 
 })
-#6A. Reactive function for line color
+#7A. Reactive function for line color
 density_group_trend_line_color <- reactive({
   input$dnsGrpTrnLClr
 })
-#7. Select the rolling time period 
+#10. Select the rolling time period 
 output$dnsty_grp_trnd_trgt <- renderUI({                                 
-  numericInput("dnsGrpTrnTrgt", "8. Set a target.", 
+  numericInput("dnsGrpTrnTrgt", "10. Set a target.", 
                value = NULL, step = .01)     
 })
-#7A. Reactive function for the variable
+#10A. Reactive function for the variable
 density_group_trend_Target <- reactive({
   input$dnsGrpTrnTrgt
 })
-#8. Legend location
+#11. Legend location
 output$dnsty_grp_trnd_lgd_loc <- renderUI({                                
-  selectInput("dnsGrpTrnLgdLoc", "9. Select the legend location.",        
+  selectInput("dnsGrpTrnLgdLoc", "11. Select the legend location.",        
               choices = c("bottomright","bottom","bottomleft","left","topleft","top","topright","right","center"), 
               multiple=FALSE, selected="topleft" ) 
 })
-#8A. Reactive function for legend location
+#11A. Reactive function for legend location
 density_group_trend_legend_location <- reactive({
   input$dnsGrpTrnLgdLoc
 })
-#9. Set the seed 
+#12. Set the seed 
 output$dnsty_grp_trnd_st_sed <- renderUI({                                 
-  numericInput("dnsGrpTrnStSd", "10. Set (seed) group name randomness.", 
+  numericInput("dnsGrpTrnStSd", "12. Set (seed) group name randomness.", 
                value = 1, step = 1, min=1)     
 })
-#9A. Reactive function for the variable
+#12A. Reactive function for the variable
 density_group_trend_set_seed <- reactive({
   input$dnsGrpTrnStSd
 })
-#10. Indicate if you want to run the trend function
+#13. Indicate if you want to run the trend function
 output$dnsty_grp_trnd_run_yesno <- renderUI({                                 
-  selectInput("dnsGrpTrnRunYN", "11. Run the trend?", 
+  selectInput("dnsGrpTrnRunYN", "13. Run the trend?", 
               choices = c("No", "Yes"), multiple=FALSE, selected="No")     
 })
-#10A. Object for yes/no running of the plot 
+#13A. Object for yes/no running of the plot 
 density_group_trend_run_yes_no <- reactive({
   input$dnsGrpTrnRunYN
 })
-#11. Speed of the animation play 
+#14. Speed of the animation play 
 output$dnsty_grp_trnd_sec <- renderUI({                                 
-  numericInput("dnsGrpTrnSec", "12. Play speed (1000= 1 second).", 
+  numericInput("dnsGrpTrnSec", "14. Play speed (1000= 1 second).", 
                value = 500, step = 100, min=0)     
 })
-#11A. Reactive function for the variable
+#14A. Reactive function for the variable
 density_group_trend_seconds <- reactive({
   input$dnsGrpTrnSec
 })
-#12. Play the trend graph
+#15. Play the trend graph
 output$dnsty_grp_trnd_ply <- renderUI({
-  sliderInput("dnsGrpTrnPly", "13. Play the time trend.",   
-              min= density_group_trend_range_time()[1], 
-              max= density_group_trend_range_time()[2] - (density_group_trend_Time_Increment() - 1), 
-              value =1, step=1, animate=list(interval= density_group_trend_seconds() ))  
+  if(density_group_begin_yes_no() == "Yes") {
+    sliderInput("dnsGrpTrnPly", "15. Play the time trend.",   
+                min= density_group_trend_range_time()[1], 
+                max= density_group_trend_range_time()[2] - (density_group_trend_Time_Increment() - 1), 
+                value =1, step=1, animate=list(interval= density_group_trend_seconds() ))  
+  } else {
+    sliderInput("dnsGrpTrnPly", "15. Play the time trend.",   
+                min= 0, max= 1, value =0, step=1 )
+  }
 })
-#12A. Reactive function for the variable
+#15A. Reactive function for the variable
 density_group_trend_play <- reactive({
   input$dnsGrpTrnPly
 })
-#13. Indicate lower limit of x-axis
+#16. Indicate lower limit of x-axis
 output$dnsty_grp_trnd_Xlim1 <- renderUI({
-  numericInput("dnsGrpTrnX1", "14. Lower X-axis limit.",
+  numericInput("dnsGrpTrnX1", "16. Lower X-axis limit.",
                value = min(density_group_trend_Y_density()[["x"]], na.rm=TRUE), step = .1)
 })
-#13A. Reactive function for the variable
+#16A. Reactive function for the variable
 density_group_trend_Xlim1 <- reactive({
   input$dnsGrpTrnX1
 })
-#14. Indicate upper limit of x-axis
+#17. Indicate upper limit of x-axis
 output$dnsty_grp_trnd_Xlim2 <- renderUI({
-  numericInput("dnsGrpTrnX2", "15. Upper X-axis limit.",
+  numericInput("dnsGrpTrnX2", "17. Upper X-axis limit.",
                value = max(density_group_trend_Y_density()[["x"]], na.rm=TRUE), step = .1)
 })
-#14A. Reactive function for the variable
+#17A. Reactive function for the variable
 density_group_trend_Xlim2 <- reactive({
   input$dnsGrpTrnX2
 })
-#15. Indicate lower limit of y-axis
+#18. Indicate lower limit of y-axis
 output$dnsty_grp_trnd_Ylim1 <- renderUI({
-  numericInput("dnsGrpTrnY1", "16. Lower Y-axis limit.",
+  numericInput("dnsGrpTrnY1", "18. Lower Y-axis limit.",
                value = min(density_group_trend_Y_density()[["y"]], na.rm=TRUE), step = .1)
 })
-#15A. Reactive function for the variable
+#18A. Reactive function for the variable
 density_group_trend_Ylim1 <- reactive({
   input$dnsGrpTrnY1
 })
-#16. Indicate upper limit of Y-axis
+#19. Indicate upper limit of Y-axis
 output$dnsty_grp_trnd_Ylim2 <- renderUI({
-  numericInput("dnsGrpTrnY2", "17. Upper Y-axis limit.",
+  numericInput("dnsGrpTrnY2", "19. Upper Y-axis limit.",
                value = max(density_group_trend_Y_density()[["y"]], na.rm=TRUE), step = .1)
 })
-#16A. Reactive function for the variable
+#19A. Reactive function for the variable
 density_group_trend_Ylim2 <- reactive({
   input$dnsGrpTrnY2
 })
-#17. Run trend output function below  
+#20. Run trend output function below  
 density_group_trend_output <- reactive({
   if(density_group_trend_run_yes_no() == "Yes") {    
     fncTmDnsty(DF=df(), X= density_group_trend_group(), Y= density_group_trend_outcome(), 
@@ -7469,18 +7492,23 @@ density_group_trend_output <- reactive({
                Seed.Multiplier= density_group_trend_set_seed() )
   }  
 })
-#7. Select group label colors
+#8. Select group label colors
 output$dns_plot_lbl_clrs <- renderUI({                                 
-  selectInput("dnsPltLblClr", "7. Select group label colors.", 
+  if(density_group_begin_yes_no() == "Yes") {
+  selectInput("dnsPltLblClr", "8. Select group label colors.", 
               choices = xyplot_Line_Color_Names(), multiple=TRUE, 
               selected= xyplot_Line_Color_Names()[1:length(density_plot_groups())] )     
-})
-#8. Select the line label size
+  } else {
+    selectInput("dnsPltLblClr", "8. Select group label colors.", 
+                choices = NA, multiple=TRUE, selected= NA )     
+  }  
+  })
+#9. Select the line label size
 output$dns_plot_txt_lbl_sz <- renderUI({                                 
-  numericInput("dnsPlTxtLblSz", "8. Select the group label size.", 
+  numericInput("dnsPlTxtLblSz", "9. Select the group label size.", 
                value = 2, min=0, step = .1)     
 })
-#8A. Reactive function for directly above
+#9A. Reactive function for directly above
 dns_plot_text_label_size <- reactive({                 
   input$dnsPlTxtLblSz 
 })
@@ -7493,7 +7521,7 @@ density_plot_groups <- reactive({
   unique(df()[, density_group_trend_group()]) 
 })
 
-#18. Plot function below  
+#21. Plot function below  
 density_group_trend_plot <- reactive({
   if(density_group_trend_run_yes_no() == "Yes") {    
     fncTmDnstPlot(TDList= density_group_trend_output(), X= density_group_trend_group(), 
@@ -7507,20 +7535,20 @@ density_group_trend_plot <- reactive({
                   Period.Range=density_group_trend_range_time()) 
   }  
 })
-#18A. Trend plot  
+#21A. Trend plot  
 output$dnsty_grp_trnd_plot <- renderPlot({
   if(density_group_trend_run_yes_no() == "Yes") {
     density_group_trend_plot()
   }
 })
-#19. Each period's output  
+#22. Each period's output  
 density_group_trend_by_time <- reactive({
   if(density_group_trend_run_yes_no() == "Yes") {    
     fncTmDnstOut(TDList= density_group_trend_output(), 
                  Period=density_group_trend_play(), Target= density_group_trend_Target(), Period.Range=density_group_trend_range_time())  
   }  
 })
-#19A. Each period's output  
+#22A. Each period's output  
 output$dnsty_grp_trnd_out_by_tm <- renderPrint({
   if(density_group_trend_run_yes_no() == "Yes") {    
     density_group_trend_by_time()

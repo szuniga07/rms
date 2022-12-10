@@ -514,7 +514,7 @@ tabPanel("Describe",
          br(),
          ## Density plot of trend over time by groups ## 
          h4("Trend over time by groups"),
-         br(),
+         br(), 
          h5("A density plot per time period. Requires complete data for all time periods."),
          h5("Press the play button to see the trend. Highlight specific groups. Names are above group rates, randomly stacked. Select >1 time increments for rolling average."),
          fluidRow(   
@@ -523,21 +523,23 @@ tabPanel("Describe",
            column(3, 
                   uiOutput("dnsty_grp_trnd_Xvar")),
            column(3, 
-                  uiOutput("dnsty_grp_trnd_Xlevs")),
+                  uiOutput("dnsty_grp_bgn_yesno")),
            column(3, 
-                  uiOutput("dnsty_grp_trnd_Zvar"))
+                  uiOutput("dnsty_grp_trnd_Xlevs"))
          ),
          fluidRow(   
+           column(3, 
+                  uiOutput("dnsty_grp_trnd_Zvar")),
            column(3, 
                   uiOutput("dnsty_grp_trnd_Z_inc")),
            column(3, 
                   uiOutput("dnsty_grp_trnd_ln_clr")),
            column(3, 
-                  uiOutput("dns_plot_lbl_clrs")),
-           column(3, 
-                  uiOutput("dns_plot_txt_lbl_sz"))
+                  uiOutput("dns_plot_lbl_clrs"))
          ),
          fluidRow(   
+           column(3, 
+                  uiOutput("dns_plot_txt_lbl_sz")),
            column(3, 
                   uiOutput("dnsty_grp_trnd_trgt")),
            column(3, 

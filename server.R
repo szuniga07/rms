@@ -1877,9 +1877,20 @@ output$get_bin_class_sens_spc_out <- renderPrint({
 #############################
 ## Decision curve analysis ##
 #############################
+#2. Legend location
+output$dca_lgd_loc <- renderUI({                                
+  selectInput("dcaLgdLoc", "2. Select the legend location.",        
+              choices = c("bottomright","bottom","bottomleft","left","topleft","top","topright","right","center"), 
+              multiple=FALSE, selected="topright" ) 
+})
+#2. Reactive function for legend location
+dca_legend_location <- reactive({
+  input$dcaLgdLoc
+})
+
 #12. Indicate if you want the classification plot
 output$decison_curve_anly_yesno <- renderUI({                                 
-  selectInput("decisCrvAnlYN", "2. Do you want to run the decision curve analysis?", 
+  selectInput("decisCrvAnlYN", "3. Do you want to run the decision curve analysis?", 
               choices = c("No", "Yes"), multiple=FALSE, selected="No")     
 })
 #12A. Object for classification plot 
@@ -1920,7 +1931,8 @@ thresh_quant_data_output <- reactive({
 plot_thresh_quant_function <- reactive({
   if (decison_curve_analysis_yes_no() =="Yes") {
     fncDcsnCrvPlt(ThreshQntl=thresh_quant_data_output(), CType=net_benefit_or_interventions(),
-                  xlim1=descion_crv_plt_xlim1(), xlim2=descion_crv_plt_xlim2(), ylim1=descion_crv_plt_ylim1(), ylim2=descion_crv_plt_ylim2())
+                  xlim1=descion_crv_plt_xlim1(), xlim2=descion_crv_plt_xlim2(), 
+                  ylim1=descion_crv_plt_ylim1(), ylim2=descion_crv_plt_ylim2(), Legend.Loc=dca_legend_location() )
   }
 })
 #15A. Run the plot function 
@@ -2429,20 +2441,24 @@ fncThreshQntl <- function(Fit, Y, Threshold, Censor=NULL, PredTime=NULL, RegType
 #####################################
 ## Function to plot decision curve ##
 #####################################
-fncDcsnCrvPlt <- function(ThreshQntl, CType, xlim1,xlim2,ylim1,ylim2) {
+fncDcsnCrvPlt <- function(ThreshQntl, CType, xlim1,xlim2,ylim1,ylim2, Legend.Loc) {
   if(CType == "Net Benefit") {
+    par(mar= c(5.1, 4.6, 4.1, 1.6))
     plot(ThreshQntl$Threshold.Level, ThreshQntl$Net.Benefit,type="n", xlim=c(xlim1,xlim2), ylim=c(ylim1,ylim2), 
-         main="Decision curve plot of threshold by benefit", xlab="Threshold", ylab="Net Benefit")
+         main="Decision curve plot of net benefit by threshold levels", xlab="Threshold", ylab="Net Benefit",
+         cex.main=2, cex.lab=2)
     lines(ThreshQntl$Threshold.Level, ThreshQntl$Net.Benefit,cex=2, lwd=3, lty=2)
     lines(ThreshQntl$Threshold.Level, ThreshQntl$All.Treated,cex=2, lwd=3, lty=1, col=2)
     abline(h=0, col=8, lwd=2)
-    legend("bottomright", legend=c("Model", "All treated", "None treated"), 
+    legend(x=Legend.Loc, legend=c("Model", "All treated", "None treated"), 
            col=c(1,2,8), lty=c(2,1,1),
            lwd=2, cex=2)
   } else {
+    par(mar= c(5.1, 4.6, 4.1, 1.6))
     plot(ThreshQntl$Threshold.Level, ThreshQntl$Interventions.Saved, 
          lwd=4, type="l", col=4, axes=F, xlim=c(xlim1,xlim2), ylim=c(ylim1,ylim2), 
-         main="Decision curve plot of interventions avoided", xlab="Threshold", 
+         main="Decision curve plot of interventions avoided by threshold levels", xlab="Threshold",
+         cex.main=2, cex.lab=2,
          ylab="Interventions avoided per 100 persons")
     axis(1)
     axis(2, at= seq(0,1, .1), labels= seq(0,1, .1)*100)

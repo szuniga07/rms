@@ -301,6 +301,7 @@ br(),
 h4("Decision Curve Analysis (Vickers, 2006, doi:10.1177/0272989X06295361)"),
 br(),
 h5("The Net Benefit is driven by true-positives, a higher value is better. The NB plot compares what provides a better strategy along various thresholds (only consider thresholds within the range of predicted values) . Two valid comparison strategies are to 'treat all' or 'treat none'."),
+h5("For example, a net benefit of 0.0973 indicates that the difference between our true-positives and false-positives will be finding about 10 more true-positives than false-positives per 100 patients using a cutoff of FEV= 3."),
 h5("The 'All treated' line tends to intersect the 'None treated' line at the prevalence line for binary outcomes. No Benefit when all interventions withheld."),
 h5("A model can reduce unnecessary interventions. For example, a risk threshold of 10% may reduce the number of unnecessary interventions by 40 per 100 without missing treatment for any patients with cancer."),
 h5("Net Benefit = Frequency of True-Positives/N - False-Positives/N * (Pt/1-Pt) at a specific threshold (Pt)."),
@@ -309,9 +310,11 @@ h5("Interventions Avoided = Frequency of True-Negatives/N - False-Negatives/N * 
 h5("Weighting: As Pt goes up, true- and false-positives goes down but the weight goes up. With a bigger weight, net benefit tends to get smaller because [false-positives * weight] is larger."),
 br(),
 fluidRow(
-  column(5, 
+  column(3, 
          uiOutput("net_or_intervention")),
-  column(5, offset=1,
+  column(3, 
+         uiOutput("dca_lgd_loc")),
+  column(3, 
          uiOutput("decison_curve_anly_yesno"))
 ),
 fluidRow(

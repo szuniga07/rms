@@ -1944,7 +1944,7 @@ output$plot_thresh_quant_run <- renderPlot({
 
 #16. Indicate lower limit of x-axis
 output$descionCrvPltXlim1 <- renderUI({
-  numericInput("dc_Xlim1", "3. Lower X-axis limit.",
+  numericInput("dc_Xlim1", "4. Lower X-axis limit.",
                #value = cox_min_time(), step = 1)
                value = 0, step = .1)
 })
@@ -1956,7 +1956,7 @@ descion_crv_plt_xlim1 <- reactive({
 })
 #17. Indicate upper limit of x-axis
 output$descionCrvPltXlim2 <- renderUI({
-  numericInput("dc_Xlim2", "4. Upper X-axis limit.",
+  numericInput("dc_Xlim2", "5. Upper X-axis limit.",
                value = 1, step = .1)
 })
 #17A. Set up Decision Curve
@@ -1967,7 +1967,7 @@ descion_crv_plt_xlim2 <- reactive({
 })
 #18. Indicate lower limit of y-axis
 output$descionCrvPltYlim1 <- renderUI({
-  numericInput("dc_Ylim1", "5. Lower Y-axis limit.",
+  numericInput("dc_Ylim1", "6. Lower Y-axis limit.",
                value = 0, step = .1)
 })
 #18A. Set up Decision Curve
@@ -1978,7 +1978,7 @@ descion_crv_plt_ylim1 <- reactive({
 })
 #19. Indicate upper limit of x-axis
 output$descionCrvPltYlim2 <- renderUI({
-  numericInput("dc_Ylim2", "6. Upper Y-axis limit.",
+  numericInput("dc_Ylim2", "7. Upper Y-axis limit.",
                value = 1, step = .1)
 })
 #19A. Set up Decision Curve

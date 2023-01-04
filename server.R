@@ -8147,39 +8147,68 @@ output$Cxyplot_grp_levs <- renderUI({
 Cxyplot_Group_Levels <- reactive({                 
   input$CxyplotGrpLvs 
 })
-#7. Indicate lower limit of x-axis
-output$Cxyplot_Xlim1 <- renderUI({
-  numericInput("CxyplotLmX1", "7. Lower X-axis limit.",
-               value = Cxylm()$XMin, step = .1)
+#7. Extrapolate continuous X
+output$CxyExtrapo_yes_no <- renderUI({                                 
+  selectInput("CxyExtrpYesNo", "7. Do you want to extrapolate on X?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")     
 })
 #7A. Reactive function for the variable
+Cxy_extrapolate <- reactive({
+  input$CxyExtrpYesNo
+})
+#8. Textbox to enter a formula
+output$Cxy_extrap_box <- renderUI({  
+  textInput("CxyExtrpBox", "8. Select the extrapolated range.", 
+            value= paste0("do.call('Predict', list(fit1(),", '\'', CXyplotX1(),'\'', "= ", ", ", '\'', CXyplotZ1(),'\'', "))") )
+})
+#8A. Reactive function for textbox to enter a formula
+Cxy_extrap_box_Input <- reactive({
+  input$CxyExtrpBox
+}) 
+
+#9. Add a vertical line
+output$CxyExtr_X_Val <- renderUI({
+  textInput("CxyExtrX", "9. Enter X-axis value for vertical line.",
+            value = paste0('c( ', ')') )
+})
+#9A. Reactive function for the variable
+CxyExtr_x_value <- reactive({
+  as.numeric(eval(parse(text=input$CxyExtrX )))
+})
+
+#10. Indicate lower limit of x-axis
+output$Cxyplot_Xlim1 <- renderUI({
+  numericInput("CxyplotLmX1", "10. Lower X-axis limit.",
+               value = Cxylm()$XMin, step = .1)
+})
+#10A. Reactive function for the variable
 Cxyplot_X_limit_1 <- reactive({
   input$CxyplotLmX1
 })
-#8. Indicate upper limit of x-axis
+#11. Indicate upper limit of x-axis
 output$Cxyplot_Xlim2 <- renderUI({
-  numericInput("CxyplotLmX2", "8. Upper X-axis limit.",
+  numericInput("CxyplotLmX2", "11. Upper X-axis limit.",
                value = Cxylm()$XMax, step = .1)
 })
-#8A. Reactive function for the variable
+#11A. Reactive function for the variable
 Cxyplot_X_limit_2 <- reactive({
   input$CxyplotLmX2
 })
-#9. Indicate lower limit of y-axis
+#12. Indicate lower limit of y-axis
 output$Cxyplot_Ylim1 <- renderUI({
-  numericInput("CxyplotLmY1", "9. Lower Y-axis limit.",
+  numericInput("CxyplotLmY1", "12. Lower Y-axis limit.",
                value = Cxylm()$YMin, step = .1)
 })
-#9A. Reactive function for the variable
+#12A. Reactive function for the variable
 Cxyplot_Y_limit_1 <- reactive({
   input$CxyplotLmY1
 })
-#10. Indicate upper limit of Y-axis
+#13. Indicate upper limit of Y-axis
 output$Cxyplot_Ylim2 <- renderUI({
-  numericInput("CxyplotLmY2", "10. Upper Y-axis limit.",
+  numericInput("CxyplotLmY2", "13. Upper Y-axis limit.",
                value = Cxylm()$YMax, step = .1)
 })
-#10A. Reactive function for the variable
+#13A. Reactive function for the variable
 Cxyplot_Y_limit_2 <- reactive({
   input$CxyplotLmY2
 })
@@ -8210,7 +8239,8 @@ Cxylm <- reactive({
 CXyplt_setup <- reactive({
   if(Cxyplot_create_YesNo() == "Yes") {
     fncXYpltInt(DF=df(), xyplotDF=CxyplotData(), ContX= CXyplotX1(), GroupX= CXyplotZ1(), 
-                GroupLevs= Cxyplot_Group_Levels(), XYlims= Cxylm_all(), Clrs= Cxyplot_Line_Colors(), CIbands=Cxyplot_Bands_YesNo()) 
+                GroupLevs= Cxyplot_Group_Levels(), XYlims= Cxylm_all(), Clrs= Cxyplot_Line_Colors(), 
+                CIbands=Cxyplot_Bands_YesNo(), ABline= CxyExtr_x_value()) 
   }
 })
 #This creates the plot

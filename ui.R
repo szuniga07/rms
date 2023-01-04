@@ -1,4 +1,4 @@
-           
+            
 #The code below allows me to print 2 plots in the same panel.   
   shinyUI(  
     fluidPage( 
@@ -1563,6 +1563,14 @@ fluidRow(
          uiOutput("Cxyplot_grp_levs")),
   column(3, 
          uiOutput("Cxyplot_yes_no"))
+),
+fluidRow(
+  column(3, 
+         uiOutput("CxyExtrapo_yes_no")),
+  column(3, offset=1,
+         uiOutput("Cxy_extrap_box")),
+  column(3, offset=1,
+         uiOutput("CxyExtr_X_Val"))
 ),
 fluidRow(
   column(3, 

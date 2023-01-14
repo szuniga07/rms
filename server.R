@@ -7906,14 +7906,14 @@ quant_ests_fnc <- function(fit, Y, X, reg) {
 
   #5. Cost--get predicted values at different quantiles
   if (reg %in% c("Cox PH", "Cox PH with censoring")) {
-  p1.50 <- Predict(fit, fun=function(x) MED_cox(lp=x))                           #MED_coxian
+  p1.50 <- Predict(fit, fun=function(x) MED_cox(q=.50, lp=x))                           #MED_coxian
   p1.10 <- Predict(fit, fun=function(x) MED_cox(q=.90, lp=x))                    #10th percentile
   p1.25 <- Predict(fit, fun=function(x) MED_cox(q=.75, lp=x))                    #25th percentile
   p1.75 <- Predict(fit, fun=function(x) MED_cox(q=.25, lp=x))                    #75th percentile
   p1.90 <- Predict(fit, fun=function(x) MED_cox(q=.10, lp=x))                    #90th percentile
   }
   if (reg == "Ordinal Logistic") {
-    p1.50 <- Predict(fit, fun=function(x) MED_cox(lp=x))                           #MED_coxian
+    p1.50 <- Predict(fit, fun=function(x) MED_cox(q=.50, lp=x))                           #MED_coxian
     p1.10 <- Predict(fit, fun=function(x) MED_cox(q=.10, lp=x))                    #10th percentile
     p1.25 <- Predict(fit, fun=function(x) MED_cox(q=.25, lp=x))                    #25th percentile
     p1.75 <- Predict(fit, fun=function(x) MED_cox(q=.75, lp=x))                    #75th percentile

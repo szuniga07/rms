@@ -11830,7 +11830,7 @@ loan.calculator <- function(Amount, Rate, Years, Extra=NA, Month=NA) {
   ## Sentences ##
   SIR.Loan.Type.Intro <- "This is a summary of loan charges using a 'Simple Interest Rate'."
   SIR.Summary.Sentence <- paste0("Your principal loan amount is $", P, " with an interest rate of ", 
-                                 round(r*100, 2), "% for ", t, " years.")
+                                 r*100, "% for ", t, " years.")
   SIR.Payment.Sentence <- paste0("Your total loan payment is $",  Loan.Amount)
   SIR.Interest.Sentence <- paste0("Your total interest payment is $",  Interest)
   SIR.Interest.Prop.Sentence <- paste0("The interest you pay is equal to ", round(100 * SIR.Interest.Proportion, 2),"% of the $", P, " you borrowed.")
@@ -11860,7 +11860,7 @@ loan.calculator <- function(Amount, Rate, Years, Extra=NA, Month=NA) {
   ## Summary ##
   FIR.Loan.Type.Intro <- "This is a summary of loan charges using a 'Fixed Interest Rate'."
   FIR.Summary.Sentence <- paste0("Your principal loan amount is $", P, " with an interest rate of ",
-                                 round(r*100, 2), "% for ", t, " years.")
+                                 r*100, "% for ", t, " years.")
   monthly.pay.sentence <- paste0("Your monthly payment is $", round(Monthly.Payment, 2))
   #Total amount owed in the loan (principal + interest)
   total.amount.owed.sentence <- paste0("Your total loan payment is $", round(Total.Amount, 2))
@@ -11996,7 +11996,7 @@ loan.calculator <- function(Amount, Rate, Years, Extra=NA, Month=NA) {
   
   ## Sentence ##
   FIR.Plus.Summary.Sentence <- paste0("Your principal loan is $", P, ", interest rate of ",
-                                      round(r*100, 2), "% for ", t, " years. You pay an extra $", Extra, " each month." )
+                                      r*100, "% for ", t, " years. You pay an extra $", Extra, " each month." )
   #Savings in fewer months
   Extra.Time.Saving.Sentence <-  paste0("The extra $", extra.amount, " pays off your loan ", Extra.Time.Saving, " month(s) faster (", nrow(Repayment.Summary), " months instead of ", Months.to.Pay.Loan," months).")
   #Savings in dollars
@@ -12107,7 +12107,7 @@ loan.calculator <- function(Amount, Rate, Years, Extra=NA, Month=NA) {
   
   ## Sentence ##
   FIR.Plus.Summary.Sentence2 <- paste0("Your principal loan is $", P, ", interest rate of ",
-                                       round(r*100, 2), "% for ", t, " years. You pay an extra $", Extra, " at month ", Month, ".")
+                                       r*100, "% for ", t, " years. You pay an extra $", Extra, " at month ", Month, ".")
   #Savings in fewer months
   Extra.Time.Saving2.Sentence <-  paste0("The extra $", extra.amount, " pays off your loan ", Extra.Time.Saving2, " month(s) faster (", nrow(Repayment.Summary2), " months instead of ", Months.to.Pay.Loan2," months).")
   #Savings in dollars

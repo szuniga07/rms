@@ -11819,6 +11819,8 @@ loan.calculator <- function(Amount, Rate, Years, Extra=NA, Month=NA) {
   P <- Amount
   r <- Rate
   t <- Years
+  #Format principal using a comma for future printing
+  format.Principal <- noquote(formatC(P, format="f", big.mark=",", digits = 2))
   
   #Total interest and total payments
   Interest <- P*r*t
@@ -11829,11 +11831,11 @@ loan.calculator <- function(Amount, Rate, Years, Extra=NA, Month=NA) {
   
   ## Sentences ##
   SIR.Loan.Type.Intro <- "This is a summary of loan charges using a 'Simple Interest Rate'."
-  SIR.Summary.Sentence <- paste0("Your principal loan amount is $", P, " with an interest rate of ", 
+  SIR.Summary.Sentence <- paste0("Your principal loan amount is $", format.Principal, " with an interest rate of ", 
                                  r*100, "% for ", t, " years.")
-  SIR.Payment.Sentence <- paste0("Your total loan payment is $",  Loan.Amount)
-  SIR.Interest.Sentence <- paste0("Your total interest payment is $",  Interest)
-  SIR.Interest.Prop.Sentence <- paste0("The interest you pay is equal to ", round(100 * SIR.Interest.Proportion, 2),"% of the $", P, " you borrowed.")
+  SIR.Payment.Sentence <- paste0("Your total loan payment is $", noquote(formatC(round(Loan.Amount, 2), format="f", big.mark=",", digits = 2)))
+  SIR.Interest.Sentence <- paste0("Your total interest payment is $", noquote(formatC(round(Interest, 2), format="f", big.mark=",", digits = 2)) )
+  SIR.Interest.Prop.Sentence <- paste0("The interest you pay is equal to ", round(100 * SIR.Interest.Proportion, 2),"% of the $", format.Principal, " you borrowed.")
   #Summarize and return results
   SIR.Summary <- data.frame(rbind(SIR.Loan.Type.Intro,
                                   SIR.Summary.Sentence,
@@ -11848,6 +11850,8 @@ loan.calculator <- function(Amount, Rate, Years, Extra=NA, Month=NA) {
   ################################################################################
   years.pay <- Years
   Principal <- Amount 
+  #Format principal using a comma for future printing
+  format.Principal <- noquote(formatC(Principal, format="f", big.mark=",", digits = 2))
   rate <- Rate
   Monthly.rate <- (rate/12)
   Total.months <- round(years.pay * 12)
@@ -11859,15 +11863,18 @@ loan.calculator <- function(Amount, Rate, Years, Extra=NA, Month=NA) {
   ## Sentences ##
   ## Summary ##
   FIR.Loan.Type.Intro <- "This is a summary of loan charges using a 'Fixed Interest Rate'."
-  FIR.Summary.Sentence <- paste0("Your principal loan amount is $", P, " with an interest rate of ",
+  FIR.Summary.Sentence <- paste0("Your principal loan amount is $", format.Principal, " with an interest rate of ",
                                  r*100, "% for ", t, " years.")
-  monthly.pay.sentence <- paste0("Your monthly payment is $", round(Monthly.Payment, 2))
+  monthly.pay.sentence <- paste0("Your monthly payment is $", 
+                                 noquote(formatC(round(Monthly.Payment, 2), format="f", big.mark=",", digits = 2)))
   #Total amount owed in the loan (principal + interest)
-  total.amount.owed.sentence <- paste0("Your total loan payment is $", round(Total.Amount, 2))
+  total.amount.owed.sentence <- paste0("Your total loan payment is $", 
+                                       noquote(formatC(round(Total.Amount, 2), format="f", big.mark=",", digits = 2)))
   #The amount of interest paid
-  Total.Int.Paid.sentence <- paste0("Your total interest payment is $", round(Total.Interest.Paid, 2))
+  Total.Int.Paid.sentence <- paste0("Your total interest payment is $", 
+                                    noquote(formatC(round(Total.Interest.Paid, 2), format="f", big.mark=",", digits = 2)) )
   #Percentage of loan that is interest
-  Percentage.Loan.Interest.sentence <- paste0("The interest you pay is equal to ", round(100 * Proportion.Loan.Interest, 2),"% of the $",Principal, " you borrowed.")
+  Percentage.Loan.Interest.sentence <- paste0("The interest you pay is equal to ", round(100 * Proportion.Loan.Interest, 2),"% of the $",format.Principal, " you borrowed.")
   
   ################################################################################
   #            Calculates original Amortization table, no extra paid amount     # 
@@ -11888,27 +11895,29 @@ loan.calculator <- function(Amount, Rate, Years, Extra=NA, Month=NA) {
     
   }
   #This summarizes the Amortization table
-  Repayment.Summary0 <- cbind(round(unlist(Payment0[1:(length(Monthly.Principal0)-1 )]), 2),
-                              round(cumsum(unlist(Payment0[1:(length(Monthly.Principal0)-1 )])), 2),
-                              round(unlist(Monthly.Principal0[1:(length(Monthly.Principal0)-1 )]), 2), 
-                              round(unlist(Interest.Payment0[1:(length(Monthly.Principal0)-1 )]), 2), 
-                              round(cumsum(unlist(Interest.Payment0[1:(length(Monthly.Principal0)-1 )])), 2), 
-                              round(unlist(Balance0[1:(length(Monthly.Principal0)-1 )]), 2) )
+  Repayment.Summary0 <- data.frame(cbind(round(unlist(Payment0[1:(length(Monthly.Principal0)-1 )]), 2),
+                                         round(cumsum(unlist(Payment0[1:(length(Monthly.Principal0)-1 )])), 2),
+                                         round(unlist(Monthly.Principal0[1:(length(Monthly.Principal0)-1 )]), 2), 
+                                         round(unlist(Interest.Payment0[1:(length(Monthly.Principal0)-1 )]), 2), 
+                                         round(cumsum(unlist(Interest.Payment0[1:(length(Monthly.Principal0)-1 )])), 2), 
+                                         round(unlist(Balance0[1:(length(Monthly.Principal0)-1 )]), 2) ))
   
   #Add variable names
-  colnames(Repayment.Summary0) <- c("Payment","Total Paid", "Principal", "Interest", "Total Interest Paid", "Remaining Balance")
+  colnames(Repayment.Summary0) <- c("Payment","Total.Paid", "Principal", "Interest", "Total.Interest.Paid", "Remaining.Balance")
   #This calculates the Principal amount when the previous month was less than 1 payment
-  Repayment.Summary0[, "Principal"][Repayment.Summary0[, "Remaining Balance"] < 0]  <-  Repayment.Summary0[, "Payment"][Repayment.Summary0[, "Remaining Balance"] < 0] + 
-    Repayment.Summary0[, "Remaining Balance"][Repayment.Summary0[, "Remaining Balance"] < 0] - (Repayment.Summary0[, "Interest"][Repayment.Summary0[, "Remaining Balance"] < 0] * 2)
+  Repayment.Summary0[, "Principal"][Repayment.Summary0[, "Remaining.Balance"] < 0]  <-  Repayment.Summary0[, "Payment"][Repayment.Summary0[, "Remaining.Balance"] < 0] + 
+    Repayment.Summary0[, "Remaining.Balance"][Repayment.Summary0[, "Remaining.Balance"] < 0] - (Repayment.Summary0[, "Interest"][Repayment.Summary0[, "Remaining.Balance"] < 0] * 2)
   #This puts a 0 when the remaining balance amount when it is less than 0
-  Repayment.Summary0[, "Remaining Balance"][Repayment.Summary0[, "Remaining Balance"] < 0]  <-  0
+  Repayment.Summary0[, "Remaining.Balance"][Repayment.Summary0[, "Remaining.Balance"] < 0]  <-  0
+  #Adds in month indicator
+  Repayment.Summary0$Month <- 1:nrow(Repayment.Summary0)
   
   
   #The month in which your payment is going more to the principal
   Principal.GT.Interest <- head(which(Repayment.Summary0[, "Principal"] > Repayment.Summary0[, "Interest"]), 1)
   Principal.GT.Int.sentence <- paste0("The month that your payment is going more towards the principal than interest is #",Principal.GT.Interest, ".")
   #The month that I have paid as much as I have originally paid
-  Paid.Same.As.Loan0 <- head(which(Repayment.Summary0[, "Total Paid"] >= Principal), 1)
+  Paid.Same.As.Loan0 <- head(which(Repayment.Summary0[, "Total.Paid"] >= Principal), 1)
   Paid.Same.As.Loan.sentence0 <- paste0("The month that you paid as much as your principal loan amount is #", Paid.Same.As.Loan0, ".")
   
   FIR.Summary <- data.frame(rbind(FIR.Loan.Type.Intro,
@@ -11946,23 +11955,25 @@ loan.calculator <- function(Amount, Rate, Years, Extra=NA, Month=NA) {
     
   }
   #This summarizes the amortization table
-  Repayment.Summary <- cbind(round(unlist(Payment[1:(length(Monthly.Principal)-1 )]), 2), 
-                             round(cumsum(unlist(Payment[1:(length(Monthly.Principal)-1 )])), 2),
-                             round(unlist(Monthly.Principal[1:(length(Monthly.Principal)-1 )]), 2), 
-                             round(unlist(Interest.Payment[1:(length(Monthly.Principal)-1 )]), 2), 
-                             round(cumsum(unlist(Interest.Payment[1:(length(Monthly.Principal)-1 )])), 2), 
-                             round(unlist(Balance[1:(length(Monthly.Principal)-1 )]), 2) )
+  Repayment.Summary <- data.frame(cbind(round(unlist(Payment[1:(length(Monthly.Principal)-1 )]), 2), 
+                                        round(cumsum(unlist(Payment[1:(length(Monthly.Principal)-1 )])), 2),
+                                        round(unlist(Monthly.Principal[1:(length(Monthly.Principal)-1 )]), 2), 
+                                        round(unlist(Interest.Payment[1:(length(Monthly.Principal)-1 )]), 2), 
+                                        round(cumsum(unlist(Interest.Payment[1:(length(Monthly.Principal)-1 )])), 2), 
+                                        round(unlist(Balance[1:(length(Monthly.Principal)-1 )]), 2) ))
   #Add variable names
-  colnames(Repayment.Summary) <- c("Payment","Total Paid", "Principal", "Interest", "Total Interest Paid", "Remaining Balance")
+  colnames(Repayment.Summary) <- c("Payment","Total.Paid", "Principal", "Interest", "Total.Interest.Paid", "Remaining.Balance")
   #This calculates the Principal amount when the previous month was less than 1 payment
-  Repayment.Summary[, "Principal"][Repayment.Summary[, "Remaining Balance"] < 0]  <-  Repayment.Summary[, "Payment"][Repayment.Summary[, "Remaining Balance"] < 0] + 
-    Repayment.Summary[, "Remaining Balance"][Repayment.Summary[, "Remaining Balance"] < 0] - (Repayment.Summary[, "Interest"][Repayment.Summary[, "Remaining Balance"] < 0] * 2)
+  Repayment.Summary[, "Principal"][Repayment.Summary[, "Remaining.Balance"] < 0]  <-  Repayment.Summary[, "Payment"][Repayment.Summary[, "Remaining.Balance"] < 0] + 
+    Repayment.Summary[, "Remaining.Balance"][Repayment.Summary[, "Remaining.Balance"] < 0] - (Repayment.Summary[, "Interest"][Repayment.Summary[, "Remaining.Balance"] < 0] * 2)
   #This puts a 0 when the remaining balance amount when it is less than 0
-  Repayment.Summary[, "Remaining Balance"][Repayment.Summary[, "Remaining Balance"] < 0]  <-  0
+  Repayment.Summary[, "Remaining.Balance"][Repayment.Summary[, "Remaining.Balance"] < 0]  <-  0
+  #Adds in month indicator
+  Repayment.Summary$Month <- 1:nrow(Repayment.Summary)
   
   
   #Calculates the proportion of your loan amount that is made up of interest
-  Prop.Loan.Is.Interest <- tail(Repayment.Summary[,"Total Interest Paid"], 1) / Principal
+  Prop.Loan.Is.Interest <- tail(Repayment.Summary[,"Total.Interest.Paid"], 1) / Principal
   #Calculate the number of month to pay off the loan FOR THE ORIGINAL PAYMENT STRUCTURE
   Months.to.Pay.Loan <- nrow(Repayment.Summary0)
   #Calculate the number of month to pay off the loan with the extra payment
@@ -11976,9 +11987,9 @@ loan.calculator <- function(Amount, Rate, Years, Extra=NA, Month=NA) {
   #Proportion that is reduced after paying extra
   Extra.Interest.Saving <- (1 - round(Prop.Loan.Is.Interest, 4)/ round(Proportion.Loan.Interest, 4))  #extra amount/Original
   #Get original interest paid
-  original.interest.paid <- round(tail(Repayment.Summary0[,"Total Interest Paid"], 1), 2)
+  original.interest.paid <- round(tail(Repayment.Summary0[,"Total.Interest.Paid"], 1), 2)
   #Get new interest paid
-  new.interest.paid <- round(tail(Repayment.Summary[,"Total Interest Paid"], 1), 2)
+  new.interest.paid <- round(tail(Repayment.Summary[,"Total.Interest.Paid"], 1), 2)
   #Dollars less paid in interest
   Dollar.Interest.Saving <-  original.interest.paid - new.interest.paid
   #Total amount paid for the loan
@@ -12001,22 +12012,29 @@ loan.calculator <- function(Amount, Rate, Years, Extra=NA, Month=NA) {
   }
   
   ## Sentence ##
-  FIR.Plus.Summary.Sentence <- paste0("Your principal loan is $", P, ", interest rate of ",
-                                      r*100, "% for ", t, " years. You pay an extra $", Extra, " each month." )
+  FIR.Plus.Summary.Sentence <- paste0("Your principal loan is $", format.Principal, ", interest rate of ",
+                                      r*100, "% for ", t, " years. You pay an extra $", 
+                                      noquote(formatC(round(Extra, 2), format="f", big.mark=",", digits = 2)), " each month." )
   #Savings in fewer months
-  Extra.Time.Saving.Sentence <-  paste0("The extra $", extra.amount, " pays off your loan ", Extra.Time.Saving, " month(s) faster (", nrow(Repayment.Summary), " months instead of ", Months.to.Pay.Loan," months).")
+  Extra.Time.Saving.Sentence <-  paste0("The extra $", noquote(formatC(round(extra.amount, 2), format="f", big.mark=",", digits = 2)), 
+                                        " pays off your loan ", Extra.Time.Saving, " month(s) faster (", nrow(Repayment.Summary), 
+                                        " months instead of ", Months.to.Pay.Loan," months).")
   #Savings in dollars
-  Extra.Int.Saving.Sentence <-  paste0("You will pay $", round(Dollar.Interest.Saving, 2), 
-                                       " less in interest ($", new.interest.paid, " instead of $", original.interest.paid,
+  Extra.Int.Saving.Sentence <-  paste0("You will pay $", noquote(formatC(round(round(Dollar.Interest.Saving, 2), 2), format="f", big.mark=",", digits = 2)), 
+                                       " less in interest ($", noquote(formatC(round(new.interest.paid, 2), format="f", big.mark=",", digits = 2)), 
+                                       " instead of $", noquote(formatC(round(original.interest.paid, 2), format="f", big.mark=",", digits = 2)),
                                        ") or ", round(Extra.Interest.Saving*100, 2), "% less in interest.")
   #The interest I pay as part of my loan
-  Interest.Prop.Sentence <- paste0("The interest you now pay is equal to ", round(100 * Prop.Loan.Is.Interest, 2),"% of the $", P, " you borrowed.")
+  Interest.Prop.Sentence <- paste0("The interest you now pay is equal to ", round(100 * Prop.Loan.Is.Interest, 2),"% of the $", format.Principal, " you borrowed.")
   #Month you pay more in principal
   Principal.GT.Int1.sentence <- paste0("The month that your payment is going more towards the principal than interest is #",Principal.GT.Int.1, ".")
   #Total amount owed in the loan (principal + interest)
-  total.amount.owed.Extra.sentence <- paste0("Your total loan is now $", round(Main.Amount.Extra, 0), ". ", "You saved $", round(Actual.Savings.Extra, 0), " (loan reduced: $",round(Total.Saved.Extra, 0), " - extra payments: $", round(Total.Payments.Extra, 0), ").")
+  total.amount.owed.Extra.sentence <- paste0("Your loan total is now $", noquote(formatC(round(round(Main.Amount.Extra, 0), 2), format="f", big.mark=",", digits = 2)) , 
+                                             ". ", "You saved $", noquote(formatC(round(round(Actual.Savings.Extra, 0), 2), format="f", big.mark=",", digits = 2)) , 
+                                             " (loan reduced: $", noquote(formatC(round(round(Total.Saved.Extra, 0), 2), format="f", big.mark=",", digits = 2)) , 
+                                             " - extra payments: $", noquote(formatC(round(round(Total.Payments.Extra, 0), 2), format="f", big.mark=",", digits = 2)) , ").")
   #The month that I have paid as much as I have originally paid
-  Paid.Same.As.Loan <- head(which(Repayment.Summary[, "Total Paid"] >= Principal), 1)
+  Paid.Same.As.Loan <- head(which(Repayment.Summary[, "Total.Paid"] >= Principal), 1)
   Paid.Same.As.Loan.sentence <- paste0("The month that you paid as much as your principal loan amount is #", Paid.Same.As.Loan, ".")
   
   FIR.Plus.Summary <- data.frame(rbind(FIR.Loan.Type.Intro,
@@ -12036,7 +12054,7 @@ loan.calculator <- function(Amount, Rate, Years, Extra=NA, Month=NA) {
   #            Calculates Amortization table when I do a 1 time payment     # 
   ################################################################################
   if ( !is.na(Month) ) {
-    i <- Repayment.Summary0[Month , "Remaining Balance"] - Extra
+    i <- Repayment.Summary0[Month , "Remaining.Balance"] - Extra
   } else {
     i <- Principal
   }
@@ -12054,30 +12072,34 @@ loan.calculator <- function(Amount, Rate, Years, Extra=NA, Month=NA) {
     
   }
   #This summarizes the Amortization table
-  Repayment.Summary2 <- cbind(round(unlist(Payment2[1:(length(Monthly.Principal2)-1 )]), 2), 
-                              round(cumsum(unlist(Payment2[1:(length(Monthly.Principal2)-1 )])), 2),                              round(unlist(Monthly.Principal2[1:(length(Monthly.Principal2)-1 )]), 2), 
-                              round(unlist(Interest.Payment2[1:(length(Monthly.Principal2)-1 )]), 2), 
-                              round(cumsum(unlist(Interest.Payment2[1:(length(Monthly.Principal2)-1 )]) ), 2), 
-                              round(unlist(Balance2[1:(length(Monthly.Principal2)-1 )]), 2) )
+  Repayment.Summary2 <- data.frame(cbind(round(unlist(Payment2[1:(length(Monthly.Principal2)-1 )]), 2), 
+                                         round(cumsum(unlist(Payment2[1:(length(Monthly.Principal2)-1 )])), 2),                              round(unlist(Monthly.Principal2[1:(length(Monthly.Principal2)-1 )]), 2), 
+                                         round(unlist(Interest.Payment2[1:(length(Monthly.Principal2)-1 )]), 2), 
+                                         round(cumsum(unlist(Interest.Payment2[1:(length(Monthly.Principal2)-1 )]) ), 2), 
+                                         round(unlist(Balance2[1:(length(Monthly.Principal2)-1 )]), 2) ))
   #Make sure this is a data frame
   Repayment.Summary2 <- data.frame(Repayment.Summary2)
   #Add variable names
-  colnames(Repayment.Summary2) <- c("Payment","Total Paid", "Principal", "Interest", "Total Interest Paid", "Remaining Balance")
+  colnames(Repayment.Summary2) <- c("Payment","Total.Paid", "Principal", "Interest", "Total.Interest.Paid", "Remaining.Balance")
+  #Adds in month indicator
+  Repayment.Summary2$Month <- 1:nrow(Repayment.Summary2)
   #This calculates the Principal amount when the previous month was less than 1 payment
-  Repayment.Summary2[, "Principal"][Repayment.Summary2[, "Remaining Balance"] < 0]  <-  Repayment.Summary2[, "Payment"][Repayment.Summary2[, "Remaining Balance"] < 0] + 
-    Repayment.Summary2[, "Remaining Balance"][Repayment.Summary2[, "Remaining Balance"] < 0] - (Repayment.Summary2[, "Interest"][Repayment.Summary2[, "Remaining Balance"] < 0] * 2)
+  Repayment.Summary2[, "Principal"][Repayment.Summary2[, "Remaining.Balance"] < 0]  <-  Repayment.Summary2[, "Payment"][Repayment.Summary2[, "Remaining.Balance"] < 0] + 
+    Repayment.Summary2[, "Remaining.Balance"][Repayment.Summary2[, "Remaining.Balance"] < 0] - (Repayment.Summary2[, "Interest"][Repayment.Summary2[, "Remaining.Balance"] < 0] * 2)
   #This puts a 0 when the remaining balance amount when it is less than 0
-  Repayment.Summary2[, "Remaining Balance"][Repayment.Summary2[, "Remaining Balance"] < 0]  <-  0
+  Repayment.Summary2[, "Remaining.Balance"][Repayment.Summary2[, "Remaining.Balance"] < 0]  <-  0
   #Add in the rows that were not changed by the extra payment
   if (!is.na(Month)) {
     Repayment.Summary2 <- rbind(Repayment.Summary0[ 1:Month,], Repayment.Summary2)  
   }
-  Repayment.Summary2$"Total Interest Paid" <- round(cumsum(Repayment.Summary2$"Interest"), 2) 
+  Repayment.Summary2$"Total.Interest.Paid" <- round(cumsum(Repayment.Summary2$"Interest"), 2) 
   #Add in row.names to show the payment number
   row.names(Repayment.Summary2) <- 1:nrow(Repayment.Summary2)
+  #Adds in month indicator
+  Repayment.Summary2$Month <- 1:nrow(Repayment.Summary2)
   
   #Calculates the proportion of your loan amount that is made up of interest
-  Prop.Loan.Is.Interest2 <- tail(Repayment.Summary2[,"Total Interest Paid"], 1) / Principal
+  Prop.Loan.Is.Interest2 <- tail(Repayment.Summary2[,"Total.Interest.Paid"], 1) / Principal
   #Calculate the number of month to pay off the loan FOR THE ORIGINAL PAYMENT STRUCTURE
   Months.to.Pay.Loan2 <- nrow(Repayment.Summary0)
   #Calculate the number of month to pay off the loan with the extra payment
@@ -12091,9 +12113,9 @@ loan.calculator <- function(Amount, Rate, Years, Extra=NA, Month=NA) {
   #Proportion that is reduced after paying extra
   Extra.Interest.Saving2 <- (1 - round(Prop.Loan.Is.Interest2, 4)/ round(Proportion.Loan.Interest, 4))  #extra amount/Original
   #Get original interest paid
-  original.interest.paid2 <- round(tail(Repayment.Summary0[,"Total Interest Paid"], 1), 2)
+  original.interest.paid2 <- round(tail(Repayment.Summary0[,"Total.Interest.Paid"], 1), 2)
   #Get new interest paid
-  new.interest.paid2 <- round(tail(Repayment.Summary2[,"Total Interest Paid"], 1), 2)
+  new.interest.paid2 <- round(tail(Repayment.Summary2[,"Total.Interest.Paid"], 1), 2)
   #Dollars less paid in interest
   Dollar.Interest.Saving2 <-  original.interest.paid2 - new.interest.paid2
   #Total amount paid for the loan
@@ -12112,24 +12134,30 @@ loan.calculator <- function(Amount, Rate, Years, Extra=NA, Month=NA) {
   if (Mths.to.Pay.Loan.Extra > 12) {
     Repayment.Time2 <- paste0("It will take ", Years.to.Pay.Loan2, " year(s) and ", Remainder.Months2," months to pay off the loan.")
   } else {
-    Repayment.Time2 <- paste0("It will take ",  Mths.to.Pay.Loan.Extra," months to pay the loan.")
+    Repayment.Time2 <- paste0("It will take ",  Mths.to.Pay.Loan.Extra," months to pay off the loan.")
   }
   
   ## Sentence ##
-  FIR.Plus.Summary.Sentence2 <- paste0("Your principal loan is $", P, ", interest rate of ",
-                                       r*100, "% for ", t, " years. You pay an extra $", Extra, " at month ", Month, ".")
+  FIR.Plus.Summary.Sentence2 <- paste0("Your principal loan is $", format.Principal, ", interest rate of ",
+                                       r*100, "% for ", t, " years. You pay an extra $", noquote(formatC(round(Extra, 2), format="f", big.mark=",", digits = 2)), " at month ", Month, ".")
   #Savings in fewer months
-  Extra.Time.Saving2.Sentence <-  paste0("The extra $", extra.amount, " pays off your loan ", Extra.Time.Saving2, " month(s) faster (", nrow(Repayment.Summary2), " months instead of ", Months.to.Pay.Loan2," months).")
+  Extra.Time.Saving2.Sentence <-  paste0("The extra $", noquote(formatC(round(extra.amount, 2), format="f", big.mark=",", digits = 2)), " pays off your loan ", 
+                                         Extra.Time.Saving2, " month(s) faster (", nrow(Repayment.Summary2), " months instead of ", Months.to.Pay.Loan2," months).")
   #Savings in dollars
-  Extra.Int.Saving.Sentence2 <-  paste0("You will pay $", round(Dollar.Interest.Saving2, 2), 
-                                        " less in interest ($", new.interest.paid2, " instead of $", original.interest.paid2,
+  Extra.Int.Saving.Sentence2 <-  paste0("You will pay $", noquote(formatC(round(round(Dollar.Interest.Saving2, 2), 2), format="f", big.mark=",", digits = 2)), 
+                                        " less in interest ($", noquote(formatC(round(new.interest.paid2, 2), format="f", big.mark=",", digits = 2)), 
+                                        " instead of $", noquote(formatC(round(original.interest.paid2, 2), format="f", big.mark=",", digits = 2)),
                                         ") or ", round(Extra.Interest.Saving2*100, 2), "% less in interest.")
   #The interest I pay as part of my loan
-  Interest.Prop.Sentence2 <- paste0("The interest you now pay is equal to ", round(100 * Prop.Loan.Is.Interest2, 2),"% of the $", P, " you borrowed.")
+  Interest.Prop.Sentence2 <- paste0("The interest you now pay is equal to ", round(100 * Prop.Loan.Is.Interest2, 2),
+                                    "% of the $", format.Principal, " you borrowed.")
   #Month you pay more in principal
   Principal.GT.Int2.sentence <- paste0("The month that your payment is going more towards the principal than interest is #",Principal.GT.Int.2, ".")
   #Total amount owed in the loan (principal + interest)
-  total.amount.owed.1.Month.sentence <- paste0("Your total loan is now $", round(Main.Amount.Extra2, 0), ". ", "You saved $", round(Actual.Savings.1.Month, 0), " (loan reduced: $", round(Total.Saved.1.Month, 0), " - extra payment: $", round(Total.Payments.1.Month, 2), ").")
+  total.amount.owed.1.Month.sentence <- paste0("Your loan total is now $", noquote(formatC(round(round(Main.Amount.Extra2, 0), 2), format="f", big.mark=",", digits = 2)), 
+                                               ". ", "You saved $", noquote(formatC(round(round(Actual.Savings.1.Month, 0), 2), format="f", big.mark=",", digits = 2)), 
+                                               " (loan reduced: $", noquote(formatC(round(round(Total.Saved.1.Month, 0), 2), format="f", big.mark=",", digits = 2)), " - extra payment: $", 
+                                               noquote(formatC(round(round(Total.Payments.1.Month, 2), 2), format="f", big.mark=",", digits = 2)), ").")
   
   ################################################################################
   #Determine which type of analysis this is
@@ -12149,12 +12177,12 @@ loan.calculator <- function(Amount, Rate, Years, Extra=NA, Month=NA) {
   }
   
   #Add in cumulative payments
-  Repayment.Summary2$"Total Paid" <- round(cumsum(Repayment.Summary2[, "Payment"]), 2)
+  Repayment.Summary2$"Total.Paid" <- round(cumsum(Repayment.Summary2[, "Payment"]), 2)
   #The month that I have paid as much as I have originally paid
-  Paid.Same.As.Loan2 <- head(which(Repayment.Summary2[, "Total Paid"] >= Principal), 1)
+  Paid.Same.As.Loan2 <- head(which(Repayment.Summary2[, "Total.Paid"] >= Principal), 1)
   Paid.Same.As.Loan.sentence2 <- paste0("The month that you paid as much as your principal loan amount is #", Paid.Same.As.Loan2, ".")
   #Rearrange columns
-  #Repayment.Summary2 <- Repayment.Summary2[, c("Payment","Total Paid", "Principal", "Interest", "Total Interest Paid", "Remaining Balance")]
+  #Repayment.Summary2 <- Repayment.Summary2[, c("Payment","Total.Paid", "Principal", "Interest", "Total.Interest.Paid", "Remaining.Balance")]
   
   FIR.1.Month.Summary <- data.frame(rbind(FIR.Loan.Type.Intro,
                                           FIR.Plus.Summary.Sentence2,
@@ -12175,23 +12203,23 @@ loan.calculator <- function(Amount, Rate, Years, Extra=NA, Month=NA) {
   
   # Shows how interest shoots up and then becomes less over time
   if (Analysis == 1) {
-    plot(1:nrow(Repayment.Summary0), Repayment.Summary0[,"Total Interest Paid"], 
+    plot(1:nrow(Repayment.Summary0), Repayment.Summary0[,"Total.Interest.Paid"], 
          col="red", main="Cumulative interest paid", xlab="Months", ylab="Cost",
          type="l", lwd=7)
   }
   if (Analysis == 2) {
-    plot(1:nrow(Repayment.Summary0), Repayment.Summary0[,"Total Interest Paid"], 
+    plot(1:nrow(Repayment.Summary0), Repayment.Summary0[,"Total.Interest.Paid"], 
          col="red", main="Cumulative interest paid", xlab="Months", ylab="Cost",
          type="l", lwd=7)
-    lines(1:nrow(Repayment.Summary), Repayment.Summary[,"Total Interest Paid"], col="blue", lwd=7, lty=2)
+    lines(1:nrow(Repayment.Summary), Repayment.Summary[,"Total.Interest.Paid"], col="blue", lwd=7, lty=2)
     legend(x="topleft", legend=c("Original cumulative interest", "New cumulative interest"),
            col=c("red", "blue"), lty= c(1,2), lwd= 1.5, cex = 1.5, bty="n", inset=c(0, .05))
   }
   if (Analysis == 3) {
-    plot(1:nrow(Repayment.Summary0), Repayment.Summary0[,"Total Interest Paid"], 
+    plot(1:nrow(Repayment.Summary0), Repayment.Summary0[,"Total.Interest.Paid"], 
          col="red", main="Cumulative interest paid", xlab="Months", ylab="Cost",
          type="l", lwd=7)
-    lines(1:nrow(Repayment.Summary2), Repayment.Summary2[,"Total Interest Paid"], col="blue", lwd=7, lty=2)
+    lines(1:nrow(Repayment.Summary2), Repayment.Summary2[,"Total.Interest.Paid"], col="blue", lwd=7, lty=2)
     legend(x="topleft", legend=c("Original cumulative interest", "New cumulative interest"),
            col=c("red", "blue"), lty= c(1,2), lwd= 1.5, cex = 1.5, bty="n", inset=c(0, .05))
   }
@@ -12225,34 +12253,77 @@ loan.calculator <- function(Amount, Rate, Years, Extra=NA, Month=NA) {
   }
 }
 
-################################################################################
-#             Function to plot loan calculator cumulative interest paid        #
-################################################################################
+############################################################################################################
+#                             Function to plot loan results                                                #
+############################################################################################################
+
 plot.loan <- function(Loan) {
   main_loan_DF <- Loan$FIR.Repayment
   Analysis <- Loan$Analysis
   if (Analysis == 1) {
-    plot(1:nrow(main_loan_DF), main_loan_DF[,"Total Interest Paid"], 
+    plot(1:nrow(main_loan_DF), main_loan_DF[,"Total.Interest.Paid"], 
          col="red", main="Cumulative interest paid", xlab="Months", ylab="Cost",
          type="l", lwd=7)
   }
   if (Analysis == 2) {
     new_loan_DF <- Loan$FIR.Repayment.Plus
-    plot(1:nrow(main_loan_DF), main_loan_DF[,"Total Interest Paid"], 
+    plot(1:nrow(main_loan_DF), main_loan_DF[,"Total.Interest.Paid"], 
          col="red", main="Cumulative interest paid", xlab="Months", ylab="Cost",
          type="l", lwd=7)
-    lines(1:nrow(new_loan_DF), new_loan_DF[,"Total Interest Paid"], col="blue", lwd=7, lty=3)
+    lines(1:nrow(new_loan_DF), new_loan_DF[,"Total.Interest.Paid"], col="blue", lwd=7, lty=3)
     legend(x="topleft", legend=c("Original cumulative interest", "New cumulative interest"),
            col=c("red", "blue"), lty= c(1,3), lwd= 1.5, cex = 1.5, bty="n", inset=c(0, .05))
   }
   if (Analysis == 3) {
     new_loan_DF <- Loan$FIR.Repayment.1.Month
-    plot(1:nrow(main_loan_DF), main_loan_DF[,"Total Interest Paid"], 
+    plot(1:nrow(main_loan_DF), main_loan_DF[,"Total.Interest.Paid"], 
          col="red", main="Cumulative interest paid", xlab="Months", ylab="Cost",
          type="l", lwd=7)
-    lines(1:nrow(new_loan_DF), new_loan_DF[,"Total Interest Paid"], col="blue", lwd=7, lty=3)
+    lines(1:nrow(new_loan_DF), new_loan_DF[,"Total.Interest.Paid"], col="blue", lwd=7, lty=3)
     legend(x="topleft", legend=c("Original cumulative interest", "New cumulative interest"),
            col=c("red", "blue"), lty= c(1,3), lwd= 1.5, cex = 1.5, bty="n", inset=c(0, .05))
+  }
+}
+
+############################################################################################################
+#                             Function to format loan tables                                               #
+############################################################################################################
+format.loan <- function(Loan) {
+  #Creates main loan info
+  main_loan_DF <- Loan$FIR.Repayment
+  Analysis <- Loan$Analysis
+  #Reformat all but the month column so that it stays an integer
+  for (i in 1:(ncol(main_loan_DF) -1)) {
+    main_loan_DF[, i] <- as.character(noquote(formatC(abs(main_loan_DF[, i]), width = 1, 
+                                                      format = "f", big.mark=",", digits = 2)))
+  }
+  if (Analysis == 2) {
+    new_loan_DF <- Loan$FIR.Repayment.Plus
+    #Reformat all but the month column so that it stays an integer
+    for (i in 1:(ncol(new_loan_DF) -1)) {
+      new_loan_DF[, i] <- as.character(noquote(formatC(abs(new_loan_DF[, i]), width = 1, 
+                                                       format = "f", big.mark=",", digits = 2)))
+    }
+  }
+  if (Analysis == 3) {
+    new_loan_DF <- Loan$FIR.Repayment.1.Month
+    #Reformat all but the month column so that it stays an integer
+    for (i in 1:(ncol(new_loan_DF) -1)) {
+      new_loan_DF[, i] <- as.character(noquote(formatC(abs(new_loan_DF[, i]), width = 1, 
+                                                       format = "f", big.mark=",", digits = 2)))
+    }
+  }
+  
+  if (Analysis == 1) {
+    return( "FIR.Repayment.Formatted"=main_loan_DF)
+  } 
+  if (Analysis == 2) {
+    return( list("FIR.Summary.Formatted"= main_loan_DF, 
+                 "FIR.Repayment.Plus.Formatted"= new_loan_DF))
+  }
+  if (Analysis == 3) {
+    return( list("FIR.Summary.Formatted"= main_loan_DF,
+                 "FIR.Repayment.1.Month"=new_loan_DF))
   }
 }
 
@@ -12265,6 +12336,7 @@ plot.loan <- function(Loan) {
 #loan.calculator(Amount=300000, Rate=.05, Years=30, Extra=20000, Month=12)$FIR.1.Month.Summary
 #The $20,000 in the 3rd example was less than the $31,500 in the 2nd example because it reduced more interest, sooner. 
 #plot.loan(loan.calculator(Amount=300000, Rate=.05, Years=30, Extra=20000, Month=12))
+#format.loan(loan.calculator(Amount=300000, Rate=.05, Years=30))
 
 
 ################################################################################

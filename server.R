@@ -6800,26 +6800,46 @@ output$scatter_cor_test_cnt <- renderUI({
 Scatter_Cor_Test_Cont_Correct <- reactive({
   input$sctrCrtstCC
 })
-#8. Line color
-output$sctr_crtst_clr <- renderUI({                                
-  selectInput("sctrCrtstClr", "8. Select the plot's line color.",        
-              choices = xyplot_Line_Color_Names(), 
-              multiple=FALSE, selected="red" ) 
+#8. Exact method
+output$scatter_cor_regression_add_YN <- renderUI({  
+  selectInput("sctrRgrLnYN", "8. Add the regression line?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")     
 })
-#8A. Reactive function for alternative hypothesis test
+#8A. Reactive function for Exact method
+Scatter_Cor_Regression_Line_Yes_No <- reactive({
+  input$sctrRgrLnYN
+})
+#9. Line color
+output$sctr_crtst_clr <- renderUI({                                
+  selectInput("sctrCrtstClr", "9. Select the line color(s).",        
+              choices = xyplot_Line_Color_Names(), 
+              multiple=TRUE, selected=xyplot_Line_Color_Names()[c(1,5)] ) 
+})
+#9A. Reactive function for alternative hypothesis test
 scatter_cor_line_color <- reactive({
   input$sctrCrtstClr
 })
-#9. Exact method
+output$scatter_cor_lgd_loc <- renderUI({                                
+  selectInput("sctrCorLgdLoc", "10. Select the legend location.",        
+              choices = c("bottomright","bottom","bottomleft","left","topleft","top","topright","right","center"), 
+              multiple=FALSE, selected="topleft" ) 
+})
+#10A. Reactive function for legend location
+scatter_cor_legend_location <- reactive({
+  input$sctrCorLgdLoc
+})
+
+#11. Exact method
 output$scatter_cor_test_run_YN <- renderUI({  
-  selectInput("sctrCrtstYN", "9. Run the correlation and plot?", 
+  selectInput("sctrCrtstYN", "11. Run the correlation and plot?", 
               choices = c("No", "Yes"), multiple=FALSE, selected="No")     
 })
-#9A. Reactive function for Exact method
+#11A. Reactive function for Exact method
 Scatter_Cor_Test_Run_Yes_No <- reactive({
   input$sctrCrtstYN
 })
-#10. Run the function below
+
+#12. Run the function below
 scatter_cor_test_cor_run <- reactive({
   if(Scatter_Cor_Test_Run_Yes_No() == "Yes") {    
     fncSctrPltCr(DF=df(), X=scatter_cor_test_x(), Y=scatter_cor_test_y(), 
@@ -6833,21 +6853,22 @@ scatter_cor_test_cor_run <- reactive({
     )
   }  
 })
-#10A.Correlation test output  
+#12A.Correlation test output  
 output$scatter_cor_test_cor_test_out <- renderPrint({
   if(Scatter_Cor_Test_Run_Yes_No() == "Yes") {
     scatter_cor_test_cor_run()
   }
 })
-#11. Run the function below
+#13. Run the function below
 scatter_cor_test_plt_run <- reactive({
   if(Scatter_Cor_Test_Run_Yes_No() == "Yes") {    
     fncSctrPlt(DF=df(), X=scatter_cor_test_x(), Y=scatter_cor_test_y(), 
-                 sct_plt_clr=scatter_cor_line_color(), CT=scatter_cor_test_cor_run()
+                 sct_plt_clr=scatter_cor_line_color(), CT=scatter_cor_test_cor_run(), 
+               Add.Reg=Scatter_Cor_Regression_Line_Yes_No() , Leg.Loc= scatter_cor_legend_location()
     )
   }  
 })
-#11A.Scatter plot  
+#13A.Scatter plot  
 output$scatter_cor_test_plt_out <- renderPlot({
   if(Scatter_Cor_Test_Run_Yes_No() == "Yes") {
     scatter_cor_test_plt_run()
@@ -6876,13 +6897,37 @@ fncSctrPltCr <- function(DF, X, Y,
 ##################################
 ## Function to get scatter plot ##
 ##################################
-fncSctrPlt <- function(DF, X, Y, sct_plt_clr, CT) {
+fncSctrPlt <- function(DF, X, Y, sct_plt_clr, CT, Add.Reg, Leg.Loc) {
+  #Regression results
+  if(Add.Reg =="Yes") {
+    mod_fit_1 <- lm(DF[, Y] ~ DF[, X], data=DF)
+  }
+    #Title
+    if(Add.Reg =="No") {
+      Main.title <- paste0("Correlation of ", Y, " on ", X, " (R = ", round(as.numeric(CT["estimate"]), 3), 
+                           ", ", "p-value= ", try(round(as.numeric(CT["p.value"]), 4)), ")")
+    } else {
+      Main.title <- paste0("Correlation of ", Y, " on ", X, " (R= ", round(as.numeric(CT["estimate"]), 3), 
+                           ", ", "p-value= ", try(round(as.numeric(CT["p.value"]), 4)), 
+                           ", Int.= ", try(round(as.numeric(mod_fit_1$coefficients[1]), 3)), 
+                           ", Slope= ", try(round(as.numeric(mod_fit_1$coefficients[2]), 3)), ")" )
+    }
+    
   #Scatter plot
-  scatter.smooth(DF[, X], DF[, Y] , main= paste0("Correlation of ", Y, " on ", X, 
-                                                 " (correlation= ", round(as.numeric(CT["estimate"]), 3), 
-                                                 ", ", "p-value= ", try(round(as.numeric(CT["p.value"]), 4)), ")"),
-                 xlab=X, ylab=Y,
+  scatter.smooth(DF[, X], DF[, Y] , main= Main.title, xlab=X, ylab=Y,
                  lpars =list(col = sct_plt_clr, lwd = 5, lty = 3))
+  #Add regression line
+  if(Add.Reg =="Yes") {
+    abline(lm(DF[, Y] ~ DF[, X], data=DF), col= sct_plt_clr[2], lty=1, lwd= 5)
+  }
+  #Add Loess and regression trend lines
+  if(Add.Reg =="Yes") {
+    legend(Leg.Loc, legend=c("Loess trend","Regression trend"), col=sct_plt_clr[1:2],  #Leg.Loc sct_plt_clr
+           lty= c(1,3), lwd= 2.5, cex = 2, bty="n", inset=c(0, .05))
+  } else {
+    legend(Leg.Loc, legend=c("Loess trend"), col=sct_plt_clr[1],  #Leg.Loc sct_plt_clr
+           lty= 3, lwd= 2.5, cex = 2, bty="n", inset=c(0, .05))
+  }
 }
 
 ##########################################################################

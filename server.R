@@ -6104,6 +6104,273 @@ plot_fci_fnc <- function(x, y, z, xcivar, ycivar, zcivar, dataf, LCol, LWd, Fci.
   
 }
 
+############################################################
+##            Function to create the ITSA data            ##
+############################################################
+plot_itsa_df_fnc <- function(I.Model, I.df, I.dd, I.y, I.x, Model.x, I.treatment,
+                             I.time, I.time.pt) {
+  #The ITSA model
+  itsa_mdl <- I.Model
+  #ITSA data frame
+  itsa_df_nm <- I.df
+  #data distribution
+  itsa_dd <- I.dd
+  #ITSA outcome
+  itsa_Y <- I.y
+  #ITSA specific variables
+  itsa_var_ls <- I.x
+  #All variables
+  itsa_all_var_ls <- Model.x
+  #Covariates not used to construct dummy coding for time
+  itsa_cov_ls <- setdiff(itsa_all_var_ls, itsa_var_ls)
+  #ITSA treatment variable
+  if (!is.null(I.treatment)) {
+    itsa_trt_bin <- I.treatment
+  } else {
+    itsa_trt_bin <- NA
+  }
+  #ITSA time variable
+  itsa_time_var <- I.time
+  #ITSA intervention time points
+  itsa_time_points <- I.time.pt
+  #Get the unique years
+  itsa_yr_df <- sort(unique(itsa_df_nm[, itsa_time_var]))
+  
+  #Get the intervention/treatment group value
+  if (!is.na(itsa_trt_bin)) {
+  itsa_trt_grp_val <- itsa_dd[["limits"]][which(rownames(itsa_dd[["limits"]]) =="High"),  
+                                          which(colnames(itsa_df_nm) == itsa_trt_bin)]
+  }
+  #Get the control group value
+  if (!is.na(itsa_trt_bin)) {
+    itsa_ctl_grp_val <- itsa_dd[["limits"]][which(rownames(itsa_dd[["limits"]]) =="Low"),  
+                                          which(colnames(itsa_df_nm) == itsa_trt_bin)]
+  }
+  ## Get aggregated outcome values for each year ##
+  #Intervention
+  if (!is.na(itsa_trt_bin)) {
+    itsa_aggr_Y_int <- aggregate(itsa_df_nm[ itsa_df_nm[, itsa_trt_bin]==itsa_trt_grp_val, itsa_Y]  ~ itsa_df_nm[ itsa_df_nm[, itsa_trt_bin]==itsa_trt_grp_val, itsa_time_var]  , FUN="mean", na.rm=T)
+  colnames(itsa_aggr_Y_int) <- c(itsa_time_var, itsa_Y)
+  } else {
+    itsa_aggr_Y_int <- aggregate(itsa_df_nm[ , itsa_Y]  ~ itsa_df_nm[ , itsa_time_var]  , FUN="mean", na.rm=T)
+    colnames(itsa_aggr_Y_int) <- c(itsa_time_var, itsa_Y)
+  }
+  #Control
+  if (!is.na(itsa_trt_bin)) {
+    itsa_aggr_Y_ctl <- aggregate(itsa_df_nm[ itsa_df_nm[, itsa_trt_bin]==itsa_ctl_grp_val, itsa_Y]  ~ itsa_df_nm[ itsa_df_nm[, itsa_trt_bin]==itsa_ctl_grp_val, itsa_time_var]  , FUN="mean", na.rm=T)
+  colnames(itsa_aggr_Y_ctl) <- c(itsa_time_var, itsa_Y)
+  }
+  
+  #Get minimal data for the intervention group
+  #--be careful about where I put new lines at because it will return too much
+  if (!is.na(itsa_trt_bin)) {
+    itsa_cov_trt_df <- itsa_df_nm[itsa_df_nm[,itsa_trt_bin] == itsa_trt_grp_val , 
+                                which(colnames(itsa_df_nm) %in% itsa_all_var_ls) ][!duplicated( 
+                                  itsa_df_nm[itsa_df_nm[,itsa_trt_bin] == itsa_trt_grp_val , ][itsa_time_var]), ]
+  } else {
+    itsa_cov_trt_df <- itsa_df_nm[, which(colnames(itsa_df_nm) %in% itsa_all_var_ls) ][!duplicated( 
+                                    itsa_df_nm[, ][itsa_time_var]), ]
+}
+  #merge in average outcome by treatment group
+  itsa_cov_trt_df <- merge(itsa_cov_trt_df, itsa_aggr_Y_int, by=itsa_time_var)
+
+  #Get minimal data for the control group
+  #--be careful about where I put new lines at because it will return too much
+  if (!is.na(itsa_trt_bin)) {
+    itsa_cov_ctl_df <- itsa_df_nm[itsa_df_nm[,itsa_trt_bin] == itsa_ctl_grp_val , 
+                                which(colnames(itsa_df_nm) %in% itsa_all_var_ls) ][!duplicated( 
+                                  itsa_df_nm[itsa_df_nm[,itsa_trt_bin] == itsa_ctl_grp_val , ][itsa_time_var]), ]
+  } 
+  #merge in average outcome by treatment group
+  if (!is.na(itsa_trt_bin)) {
+    itsa_cov_ctl_df <- merge(itsa_cov_ctl_df, itsa_aggr_Y_ctl, by=itsa_time_var)
+}
+  
+    #Combine data into 1 dataset for plotting
+  if (!is.na(itsa_trt_bin)) {
+    itsa_pred_plot_df <- rbind(itsa_cov_trt_df, itsa_cov_ctl_df)
+  #Get rownames in numerical order
+  rownames(itsa_pred_plot_df) <- 1:nrow(itsa_pred_plot_df)
+  } else {
+    itsa_pred_plot_df <- itsa_cov_trt_df
+    #Get rownames in numerical order
+    rownames(itsa_pred_plot_df) <- 1:nrow(itsa_pred_plot_df)
+}
+
+  #For loop to change covariates to adjusted values
+  for (i in 1:length(itsa_cov_ls)) {
+    itsa_pred_plot_df[, which(colnames(itsa_pred_plot_df) == itsa_cov_ls[i]) ] <- 
+      itsa_dd[[ "limits"]][rownames(itsa_dd[[ "limits"]]) == "Adjust to", which(colnames(itsa_dd[[ "limits"]]) == itsa_cov_ls[i])]
+    
+  }
+  
+  ## Get predicted scores for plotting data ##
+  itsa_pred_plot_df$itsa_yhat <- predict(itsa_mdl, newdata= itsa_pred_plot_df)
+  
+  return("ITSA.DF"=itsa_pred_plot_df)
+  ## End of function ##
+}
+
+
+############################################################
+##            Function to create the ITSA plot            ##
+############################################################
+plot_itsa_fci_fnc <- function(xcivar, ycivar, zcivar, dataf, LCol,  LWd,
+                              fCiXLim1, fCiXLim2, fCiYLim1, fCiYLim2, 
+                              Tgt.Line, Time.Pt.Line, Tgt.Color, Tpt.Color, 
+                              T3.Line.Width, Text.Size, labMulti, 
+                              #From plot_itsa_df_fnc 
+                               I.treatment, I.time.pt, Lgd.Loc, I.df, I.time) {
+  itsa_df <- dataf
+  #ITSA data frame
+  itsa_df_nm <- I.df
+  #ITSA time variable
+  itsa_time_var <- I.time
+  #Get the unique years
+  itsa_yr_df <- sort(unique(itsa_df_nm[, itsa_time_var]))
+  #ITSA treatment variable
+  if (!is.null(I.treatment)) {
+    itsa_trt_bin <- I.treatment
+  } else {
+    itsa_trt_bin <- NA
+  }
+  #ITSA intervention time points
+  itsa_time_points <- I.time.pt
+  #Set up colors, modify so a dummy color for "Treatment at..." gets added
+  my_clr <- LCol
+  #Intervention group
+  if (!is.na(itsa_trt_bin)) {
+    my_clr <- c(my_clr[1:4], "black", my_clr[5:6])
+  } else {
+    my_clr <- c(my_clr[1:2], "black", my_clr[3])
+  }
+  
+  #Graph from plot_fci_fnc
+  #Intervention group
+  if (!is.na(itsa_trt_bin)) {
+    itsa_period_values_trt <- cut(itsa_df[, zcivar][1:(nrow(itsa_df)/2)], 
+                                   c(min(itsa_yr_df, na.rm=T) -1, itsa_time_points, max(itsa_yr_df, na.rm=T) +1), right=FALSE)
+  } else {  
+    itsa_period_values_trt <- cut(itsa_df[, zcivar], 
+                                   c(min(itsa_yr_df, na.rm=T) -1, itsa_time_points, max(itsa_yr_df, na.rm=T) +1), right=FALSE)  }
+  #Control group
+  if (!is.na(itsa_trt_bin)) {
+    itsa_period_values_ctl <- cut(itsa_df[, zcivar][((nrow(itsa_df)/2) + 1): nrow(itsa_df)], 
+                                   c(min(itsa_yr_df, na.rm=T) -1, itsa_time_points, max(itsa_yr_df, na.rm=T) +1), right=FALSE)
+  } else {  
+    itsa_period_values_ctl <- NA
+  }
+  itsa_period_levels <- unique(itsa_period_values_trt)
+  itsa_period_levels
+  itsaPRED <- "itsa_yhat"
+  #Main title
+  if (!is.na(itsa_trt_bin)) {
+    Main.Title <- paste0( ycivar, " trajectories per ", xcivar,  " by ", zcivar)
+  } else {
+    Main.Title <- paste0( ycivar, " trajectories", " by ", zcivar)
+  }
+  
+  par(mar = c(6, 6, 3, 1) + 0.1)
+  plot(itsa_df[, zcivar], itsa_df[, ycivar], type="n",  
+       axes=F, ylab="", xlab="", xlim=c(fCiXLim1, fCiXLim2), ylim=c(fCiYLim1, fCiYLim2))
+  #Intervention group
+  if (!is.na(itsa_trt_bin)) {
+    points(itsa_df[ itsa_df[, itsa_trt_bin] == max(itsa_df[, itsa_trt_bin], na.rm=T) , zcivar], 
+           itsa_df[itsa_df[, itsa_trt_bin] == max(itsa_df[, itsa_trt_bin], na.rm=T), ycivar], 
+           col=my_clr[1], cex=LWd)
+  } else {
+    points(itsa_df[, zcivar], itsa_df[, ycivar], col=my_clr[1], cex=LWd)
+  }
+  #Control group
+  if (!is.na(itsa_trt_bin)) {
+    points(itsa_df[itsa_df[, itsa_trt_bin] == min(itsa_df[, itsa_trt_bin], na.rm=T) , zcivar], 
+           itsa_df[itsa_df[, itsa_trt_bin] == min(itsa_df[, itsa_trt_bin], na.rm=T), ycivar],
+           col=my_clr[2], cex=LWd)
+  } 
+  
+  title(Main.Title, cex.main = 1.1*labMulti) 
+  axis(1, las=1, cex.axis=1*labMulti )
+  axis(2, las=3, cex.axis=1*labMulti )
+  mtext(zcivar, side = 1, line = 4, cex=1.1*labMulti )
+  mtext(ycivar, side = 2, line = 4, cex=1.1*labMulti )
+  #Intervention
+  for (i in 1:length(itsa_period_levels)) {
+    if (!is.na(itsa_trt_bin)) {
+    lines(itsa_df[itsa_period_values_trt == itsa_period_levels[i] & itsa_df[, itsa_trt_bin] == max(itsa_df[, itsa_trt_bin], na.rm=T) , zcivar], 
+          itsa_df[itsa_period_values_trt == itsa_period_levels[i] & itsa_df[, itsa_trt_bin] == max(itsa_df[, itsa_trt_bin], na.rm=T), itsaPRED], 
+          col=my_clr[3], lwd=LWd)
+    } else {
+      lines(itsa_df[itsa_period_values_trt == itsa_period_levels[i]  , zcivar], 
+            itsa_df[itsa_period_values_trt == itsa_period_levels[i] , itsaPRED], 
+            col=my_clr[2], lwd=LWd)
+    }
+  }
+  #Control group
+  if (!is.na(itsa_trt_bin)) {
+    for (i in 1:length(itsa_period_levels)) {
+      lines(itsa_df[itsa_period_values_trt == itsa_period_levels[i] & itsa_df[, itsa_trt_bin] == min(itsa_df[, itsa_trt_bin], na.rm=T) , zcivar], 
+            itsa_df[itsa_period_values_trt == itsa_period_levels[i] & itsa_df[, itsa_trt_bin] == min(itsa_df[, itsa_trt_bin], na.rm=T), itsaPRED], 
+            col=my_clr[4], lwd=LWd)
+    }
+  }
+  #Standard regression line colors require their to be extra colors listed than the default number
+  #Intervention
+  if (!is.na(itsa_trt_bin)) {
+    abline(lm(as.formula(paste(paste0(ycivar , "~", zcivar))), 
+              data=itsa_df[itsa_df$treatment==1,]), lty=2, col=my_clr[6], lwd=LWd)  
+  } else {
+    abline(lm(as.formula(paste(paste0(ycivar , "~", zcivar))), 
+              data=itsa_df), lty=2, col=my_clr[4], lwd=LWd)  
+  }
+  #Control
+  if (!is.na(itsa_trt_bin)) {
+    abline(lm(as.formula(paste(paste0(ycivar , "~", zcivar))), 
+              data=itsa_df[itsa_df$treatment==0,]), lty=2, col=my_clr[7], lwd=LWd)  
+  } 
+  #Time and target lines
+  #Add time point line
+  for (i in 1:length(Time.Pt.Line)) {
+    abline(v= as.numeric(eval(parse(text=Time.Pt.Line[i] )) ), 
+           col=Tpt.Color, lty=1, lwd=T3.Line.Width)
+  }
+  #Add target line
+  for (i in 1:length(Tgt.Line)) {
+    abline(h= as.numeric(eval(parse(text=Tgt.Line[i] )) ), 
+           col=Tgt.Color, lty=3, lwd=T3.Line.Width)
+  }
+  #Legend description
+  #Intervention group
+  if (!is.na(itsa_trt_bin)) {
+    itsa_legend <- c("Treatment observed means","Control observed means",
+                     "Treatment ITSA lines", "Control ITSA lines", 
+                     paste0("Treatment at ", paste(sort(itsa_time_points), collapse=" & ") ),
+                     "Treament regression line", "Control regression line")
+  } else {
+    itsa_legend <- c("Observed means",
+                     "ITSA trend lines", 
+                     paste0("Intervention at ", paste(sort(itsa_time_points), collapse=" & ") ),
+                     "Regression line")
+  }
+  #Legend line types
+  #Intervention group
+  if (!is.na(itsa_trt_bin)) {
+    itsa_legend_lty <- c(0,0,1,1,0,2,2)
+  } else {
+    itsa_legend_lty <- c(0,1,0,2)
+  }
+  #Legend PCH type
+  #Intervention group
+  if (!is.na(itsa_trt_bin)) {
+    itsa_legend_pch <- c(1,1,NA,NA,NA,NA,NA)
+  } else {
+    itsa_legend_pch <- c(1,NA,NA,NA)
+  }
+  legend(Lgd.Loc, legend=itsa_legend[1:length(my_clr)], lty=itsa_legend_lty[1:length(my_clr)], 
+         lwd=(1+Text.Size), pch= itsa_legend_pch, col=my_clr, bty="n", cex=Text.Size)
+  box()
+  
+}
+
 #Confidence interval plot reactive function
 plot_fci <- reactive({                  #This indicates the data frame I will use.
   if(input$FCiCreate == "Yes") {
@@ -6120,6 +6387,32 @@ plot_fci <- reactive({                  #This indicates the data frame I will us
     Tpt.Color=fci_plot_Time_Point_Line_Colors(), T3.Line.Width=fci_plot_targ_time_Line_Wd(), 
     Text.Size= fci_plot_text_label_size(), LType=fci_plot_group_line_type(), labMulti=FCI_plot_label_multiplier() )
     }
+})
+
+#Get data from ITSA to plot the results
+plot_itsa_DF <- reactive({
+  if(itsa_yes_no() == "Yes") {
+    plot_itsa_df_fnc(I.Model=fit1(), I.df=df(), I.dd=dd_df, 
+                     I.y=input$fycivar, I.x=itsa_X_Variables(), 
+                     Model.x=predictor(), I.treatment=itsa_treatment_indicator(),
+                     I.time=input$fzcivar, I.time.pt=itsa_time_periods())
+  }
+})
+
+#ITSA plot reactive function
+plot_itsa <- reactive({                  #This indicates the data frame I will use.
+  if(itsa_yes_no() == "Yes") {
+    plot_itsa_fci_fnc(xcivar=input$fxcivar, ycivar=input$fycivar, zcivar=input$fzcivar, dataf=plot_itsa_DF(), 
+                      LCol=fci_plot_Line_Colors(),  LWd=fci_plot_Line_Width(), 
+                      fCiXLim1=input$fCiXLim1, fCiXLim2=input$fCiXLim2, 
+                      fCiYLim1=input$fCiYLim1, fCiYLim2=input$fCiYLim2, 
+                      Tgt.Line=fCi_target_line(), Time.Pt.Line=fCi_time_point_line(), 
+                      Tgt.Color=fci_plot_Target_Line_Colors(), Tpt.Color=fci_plot_Time_Point_Line_Colors(), 
+                      T3.Line.Width=fci_plot_targ_time_Line_Wd(), Text.Size=fci_plot_text_label_size(), 
+                      labMulti=FCI_plot_label_multiplier(), I.treatment=itsa_treatment_indicator()[1], 
+                      I.time.pt=itsa_time_periods(), Lgd.Loc=itsa_legend_location(), 
+                      I.df=df(), I.time= input$fzcivar)
+  }
 })
 
 ## Get the overall group trend rates ##
@@ -6326,25 +6619,72 @@ output$fci_plot_txt_lbl_sz <- renderUI({
 fci_plot_text_label_size <- reactive({                 
   input$fciPlTxtLblSz 
 })
+#24. Select whether to run the ITSA or not
+output$ITSA_create <- renderUI({                                
+  selectInput("itsaCreate", "24. Did you do an ITSA?",
+              choices = c("No", "Yes"),
+              selected="No")
+})
+#24A. Reactive function for creating the ITSA
+itsa_yes_no <- reactive({
+  input$itsaCreate
+})
+#25. Select ITSA variables
+output$ITSA_I.x <- renderUI({ 
+  selectInput("itsaXVar", "25. What are the ITSA variables?", 
+              choices = predictor(), multiple=TRUE, selected=predictor()[1])     
+})
+#25A. Reactive function for legend location
+itsa_X_Variables <- reactive({
+  input$itsaXVar
+})
+#26. Select ITSA treatment indicator
+output$ITSA_I.trt <- renderUI({ 
+  selectInput("itsaTrtVar", "26. What is the treatment indicator?", 
+              choices = itsa_X_Variables(), multiple=TRUE )
+})
+#26A. Reactive function for the ITSA treatment indicator
+itsa_treatment_indicator <- reactive({
+  input$itsaTrtVar
+})
+#27. Select the rolling time period 
+output$ITSA_I.tm.pt <- renderUI({                                 
+  selectInput("itsaTP", "27. When are the treatment periods?", 
+              choices = seq(range_fzcivar()[1], range_fzcivar()[2], by =1), multiple=TRUE)     
+})
+#27A. Reactive function to get the intervention periods
+itsa_time_periods <- reactive({                 
+  input$itsaTP 
+})
+#28. Legend location
+output$itsa_lgd_loc <- renderUI({                                
+  selectInput("itsaLgdLoc", "28. Select the legend location.",        
+              choices = c("bottomright","bottom","bottomleft","left","topleft","top","topright","right","center"), 
+              multiple=FALSE, selected="topleft" ) 
+})
+#28A. Reactive function for legend location
+itsa_legend_location <- reactive({
+  input$itsaLgdLoc
+})
 #14. Indicate lower limit of x-axis
 output$FCI__Xlim1 <- renderUI({
-  numericInput("fCiXLim1", "24. Lower X-axis limit.",
+  numericInput("fCiXLim1", "29. Lower X-axis limit.",
                value = range_fzcivar()[1], step = 1)
 })
 #15. Indicate upper limit of x-axis
 output$FCI__Xlim2 <- renderUI({
-  numericInput("fCiXLim2", "25. Upper X-axis limit.",
+  numericInput("fCiXLim2", "30. Upper X-axis limit.",
                value = if(fci_Z_Increment() ==1) { range_fzcivar()[2] } else {ceiling(range_fzcivar()[2]/fci_Z_Increment() ) } , 
                step = 1)
 })
 #16. Indicate lower limit of y-axis
 output$FCI__Ylim1 <- renderUI({
-  numericInput("fCiYLim1", "26. Lower Y-axis limit.",
+  numericInput("fCiYLim1", "31. Lower Y-axis limit.",
                value = range_fycivar()[1], step = .1)
 })
 #17. Indicate upper limit of x-axis
 output$FCI__Ylim2 <- renderUI({
-  numericInput("fCiYLim2", "27. Upper Y-axis limit.",
+  numericInput("fCiYLim2", "32. Upper Y-axis limit.",
                value = range_fycivar()[2], step = .1)
 })
 #Add a target line
@@ -6359,7 +6699,10 @@ fci_plot_group_line_type <- reactive({
 
 #Confidence interval plot for time
 output$Plot_Fci_output <- renderPlot({ 
-  if(input$FCiCreate == "Yes") {
+  #if(input$FCiCreate == "Yes") {
+  if(itsa_yes_no() == "Yes") {
+    plot_itsa()
+  }  else {
     plot_fci()
   }
 }, height = 800 )

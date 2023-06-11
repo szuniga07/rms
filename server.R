@@ -6277,15 +6277,15 @@ plot_itsa_fci_fnc <- function(xcivar, ycivar, zcivar, dataf, LCol,  LWd,
   if (!is.na(itsa_trt_bin)) {
     points(itsa_df[ itsa_df[, itsa_trt_bin] == max(itsa_df[, itsa_trt_bin], na.rm=T) , zcivar], 
            itsa_df[itsa_df[, itsa_trt_bin] == max(itsa_df[, itsa_trt_bin], na.rm=T), ycivar], 
-           col=my_clr[1], cex=LWd)
+           col=my_clr[1], cex=LWd*.5, lwd=LWd)
   } else {
-    points(itsa_df[, zcivar], itsa_df[, ycivar], col=my_clr[1], cex=LWd)
+    points(itsa_df[, zcivar], itsa_df[, ycivar], col=my_clr[1], cex=LWd*.5, lwd=LWd)
   }
   #Control group
   if (!is.na(itsa_trt_bin)) {
     points(itsa_df[itsa_df[, itsa_trt_bin] == min(itsa_df[, itsa_trt_bin], na.rm=T) , zcivar], 
            itsa_df[itsa_df[, itsa_trt_bin] == min(itsa_df[, itsa_trt_bin], na.rm=T), ycivar],
-           col=my_clr[2], cex=LWd)
+           col=my_clr[2], cex=LWd*.5, lwd=LWd)
   } 
   
   title(Main.Title, cex.main = 1.1*labMulti) 

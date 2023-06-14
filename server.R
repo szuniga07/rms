@@ -6237,12 +6237,19 @@ plot_itsa_fci_fnc <- function(xcivar, ycivar, zcivar, dataf, LCol,  LWd,
   #ITSA intervention time points
   itsa_time_points <- I.time.pt
   #Set up colors, modify so a dummy color for "Treatment at..." gets added
-  my_clr <- LCol
+  #my_clr <- LCol
   #Intervention group
   if (!is.na(itsa_trt_bin)) {
-    my_clr <- c(my_clr[1:4], "black", my_clr[5:6])
+    my_clr <- c(LCol[1:4], "black", LCol[5:6])
   } else {
-    my_clr <- c(my_clr[1:2], "black", my_clr[3])
+    my_clr <- c(LCol[1:2], "black", LCol[3])
+  }
+  
+  #Length of my_clr so it is at least a minimum of 5
+  if (!is.na(itsa_trt_bin)) {
+    lth_my_clr <- max(5, sum(complete.cases(my_clr)), na.rm=TRUE)
+  } else {
+    lth_my_clr <- max(3, sum(complete.cases(my_clr)), na.rm=TRUE)
   }
   
   #Graph from plot_fci_fnc
@@ -6364,8 +6371,8 @@ plot_itsa_fci_fnc <- function(xcivar, ycivar, zcivar, dataf, LCol,  LWd,
     itsa_legend_pch <- c(1,1,NA,NA,NA,NA,NA)
   } else {
     itsa_legend_pch <- c(1,NA,NA,NA)
-  }
-  legend(Lgd.Loc, legend=itsa_legend[1:length(my_clr)], lty=itsa_legend_lty[1:length(my_clr)], 
+  }     #lth_my_clr gives a minimum of 3 or 5 things in the legend or more if we use regression lines  
+  legend(Lgd.Loc, legend=itsa_legend[1:lth_my_clr], lty=itsa_legend_lty[1:length(my_clr)], 
          lwd=(1+Text.Size), pch= itsa_legend_pch, col=my_clr, bty="n", cex=Text.Size)
   box()
   

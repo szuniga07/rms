@@ -12437,6 +12437,8 @@ loan.calculator <- function(Amount, Rate, Years, Extra=NA, Month=NA) {
                                              ". ", "You saved $", noquote(formatC(round(round(Actual.Savings.Extra, 0), 2), format="f", big.mark=",", digits = 2)) , 
                                              " (loan reduced: $", noquote(formatC(round(round(Total.Saved.Extra, 0), 2), format="f", big.mark=",", digits = 2)) , 
                                              " - extra payments: $", noquote(formatC(round(round(Total.Payments.Extra, 0), 2), format="f", big.mark=",", digits = 2)) , ").")
+  #The cost-savings ratio 
+  Cost.Savings.Ratio <- paste0("Your Cost:Savings ratio is ", round(Total.Payments.Extra/Actual.Savings.Extra, 2), ". Lower is better.")
   #The month that I have paid as much as I have originally paid
   Paid.Same.As.Loan <- head(which(Repayment.Summary[, "Total.Paid"] >= Principal), 1)
   Paid.Same.As.Loan.sentence <- paste0("The month that you paid as much as your principal loan amount is #", Paid.Same.As.Loan, ".")
@@ -12444,6 +12446,7 @@ loan.calculator <- function(Amount, Rate, Years, Extra=NA, Month=NA) {
   FIR.Plus.Summary <- data.frame(rbind(FIR.Loan.Type.Intro,
                                        FIR.Plus.Summary.Sentence,
                                        total.amount.owed.Extra.sentence,
+                                       Cost.Savings.Ratio,
                                        Repayment.Time,
                                        Extra.Time.Saving.Sentence,
                                        Extra.Int.Saving.Sentence,
@@ -12609,6 +12612,8 @@ loan.calculator <- function(Amount, Rate, Years, Extra=NA, Month=NA) {
                                                  ". ", "You saved about $", noquote(formatC(round(round(Actual.Savings.1.Month, 0), 2), format="f", big.mark=",", digits = 0)), 
                                                  " (loan reduced: $", noquote(formatC(round(round(Total.Saved.1.Month, 0), 2), format="f", big.mark=",", digits = 0)), " - extra payment: $", 
                                                  noquote(formatC(round(round(Total.Payments.1.Month, 2), 2), format="f", big.mark=",", digits = 0)), ").")
+    #The cost-savings ratio 
+    Cost.Savings.Ratio <- paste0("Your Cost:Savings ratio is ", round(Total.Payments.1.Month/Actual.Savings.1.Month, 2), ". Lower is better.")
     
     ################################################################################
     #                              corrections                                          #
@@ -12630,6 +12635,7 @@ loan.calculator <- function(Amount, Rate, Years, Extra=NA, Month=NA) {
     FIR.1.Month.Summary <- data.frame(rbind(FIR.Loan.Type.Intro,
                                             FIR.Plus.Summary.Sentence2,
                                             total.amount.owed.1.Month.sentence, #This needs work
+                                            Cost.Savings.Ratio,
                                             Repayment.Time2,
                                             Extra.Time.Saving2.Sentence,
                                             Extra.Int.Saving.Sentence2,

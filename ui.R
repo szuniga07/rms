@@ -1,4 +1,4 @@
-                   
+                    
 #The code below allows me to print 2 plots in the same panel.   
   shinyUI(  
     fluidPage( 
@@ -930,6 +930,7 @@ br()
                       the second model is more discriminating."),
                    h6("Note: Use the \"boot\" method to view the \"Factors Retained in Backwards Elimination\". These are factors found statistically significant in random draws. First 50 bootstrapped results shown."),
                    h6("A Slope much smaller than 1 indicates that the range of observed risks is much smaller than the range of predicted risks. And vice vera."),
+                   h6("The formula to convert Dxy to the C-statistic: Dxy/2 + 0.5 (e.g., 0.60/2 + .5 = 0.80.)"),
                    verbatimTextOutput("vali_date")),    #Creates a new panel named "Summary"
 
 #############

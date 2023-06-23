@@ -6361,7 +6361,7 @@ plot_itsa_fci_fnc <- function(xcivar, ycivar, zcivar, dataf, LCol,  LWd,
   #Legend line types
   #Intervention group
   if (!is.na(itsa_trt_bin)) {
-    itsa_legend_lty <- c(0,0,1,1,0,2,2)
+    itsa_legend_lty <- c(0,0,1,1,0,2,2) 
   } else {
     itsa_legend_lty <- c(0,1,0,2)
   }

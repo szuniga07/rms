@@ -1506,14 +1506,20 @@ tabPanel("Cost",
          br(),
          h5("Dudley, R. & Harrell, F. (1993). 'Comparison of analytic models for estimating the effect of clinical factors on the cost of coronary artery bypass graft surgery'. Journal of Clinical Epidemiology, 46(3), 261-271."),
          br(),
-         h5("The following 3 questions will set up the types of plots and tabled results."),                   
+         h5("The following 5 questions will set up the types of plots and tabled results."),                   
          h6("Note: If using the Cox PH model with censoring, censor a non-event (e.g., death = 0)."),                   
          h6("Note: Not all tables and plots are applicable to a quantile regression (e.g., means)."), 
          fluidRow(
            column(3, 
                   uiOutput("dens_plt1_typ")),
            column(3, offset=1,
-                  uiOutput("dens_plt1_x")),
+                  uiOutput("dens_plt1_x"))
+         ),
+         fluidRow(
+           column(3, 
+                  uiOutput("dens_plt1_x_nms")),
+           column(3, offset=1,
+                  uiOutput("dens_plt1_x_cstm")),
            column(3, offset=1,
                   uiOutput("run_dens_plt1"))
          ),
@@ -1533,11 +1539,42 @@ fluidRow(
   ),
          h5("Density plot on the outcome, with or without stratification."),
          plotOutput("plot_dens_plt1", height = 700, width="100%"),
-         br(),
-         h4("The plot and tables below are for stratified results."),
+br(),
+h5("Modify the plot space in #5-8. The colors of the lines are assigned according to the value/group order of the stratification variable (e.g., 0, 1 or Control, Treatment)."),
+#Cost Density plot
+fluidRow(
+  column(3, uiOutput("densPltLnClr")),
+  column(3, uiOutput("dens_plot_txt_lbl_sz")),
+  column(3, uiOutput("dns_plot_lab_multi")),
+  column(3, uiOutput("dens_lgd_loc"))
+),
+fluidRow(
+  column(3, uiOutput("dns_Xlim1")),
+  column(3, uiOutput("dns_Xlim2")),
+  column(3, uiOutput("dns_Ylim1")),
+  column(3, uiOutput("dns_Ylim2"))
+),
+br(),
+h4("The plot and tables below are for stratified results."),
          br(),
          h5("We often estimate effects for the 'middle' of the data (e.g., mean), we can also estimate other parts of the data."),
          h5("These are 5 effects at various quantiles for the stratified variable (e.g., we estimate for most and least expensive costing patients)."),
+br(),
+h5("Modify the plot space in #5-8. The colors of the lines are assigned according to the value/group order of the stratification variable (e.g., 0, 1 or Control, Treatment)."),
+#Cost Density plot
+fluidRow(
+  column(3, uiOutput("qntPltLnClr")),
+  column(3, uiOutput("qnt_plot_txt_lbl_sz")),
+  column(3, uiOutput("qnt_plot_lab_multi")),
+  column(3, uiOutput("qnt_lgd_loc"))
+),
+fluidRow(
+  column(3, uiOutput("qnt_Xlim1")),
+  column(3, uiOutput("qnt_Xlim2")),
+  column(3, uiOutput("qnt_Ylim1")),
+  column(3, uiOutput("qnt_Ylim2"))
+),
+br(),
          plotOutput("plot_quant_plt1", height = 700, width="100%"),
          br(),
          h5("Quantiles: Point estimates and confidence intervals of the effects from the 10th/25th/50th/75th/95th percentiles."),

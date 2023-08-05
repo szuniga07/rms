@@ -1625,10 +1625,16 @@ nm_x_var <- reactive({
 #  }
 #})
 
-
-    output$specifications <- renderPrint({   
+#Get model specifications
+model_specs_long <- reactive({         
+  if (input$begin_mdl == "Yes") {
+    specs(fit1(), long=TRUE)  #Summary of model fit.
+  }
+})
+#Print model specifications
+output$specifications <- renderPrint({   
       if (input$begin_mdl == "Yes") {
-      print( specs(fit1(), long=TRUE))  #Summary of model fit.
+        model_specs_long()  #Summary of model fit.
       }
     })
     
@@ -6617,7 +6623,7 @@ output$fci_plot_time_pt_ln_clrs <- renderUI({
 fci_plot_Time_Point_Line_Colors <- reactive({                 
   input$fciPltTPLnClr 
 })
-#21. Select the line label size
+#16. Select the line label size
 output$fci_plot_txt_lbl_sz <- renderUI({                                 
   numericInput("fciPlTxtLblSz", "16. Select the line label size.", 
                value = 2, min=0, step = .1)     
@@ -8143,71 +8149,194 @@ fncTmDnstOut <- function(TDList, Period, Target, Period.Range) {
 #   Plot 1: Density plots on cost by intervention type #
 ########################################################
 #Homemade functions
-#This plots the outcome for all patients
-cost_plot1 <- function(y, x, df) {
-  #####Color codes#####
-  c_red <- 2; c_blue <- 4
-  red_trnspt  <- adjustcolor(c_red, alpha.f = 0.4)                                #Set red color transparency.
-  blue_trnspt <- adjustcolor(c_blue, alpha.f = 0.4)                               #Set blue color transparency.
+#Function to get density function for 1 group
+cost_plot1_density <- function(y, df) {
+  #Density function
+  d_ctl <- density(df[, y], na.rm=T, adjust=2)
+  d_ctl_x <- range(d_ctl$x)
+  d_ctl_y <- range(d_ctl$y)
+  return(list("Density.FUN"= d_ctl,
+              "XLim"= d_ctl_x, 
+              "YLim"= d_ctl_y))
+}
+#Reactive function for the function above
+cost_plt_dens_fun_1_group <- reactive({
+  if(dens_run_plot_yesno() == "Yes") {
+    if(dens_strat_or_unstrat() != "Stratified") {
+      cost_plot1_density(y= outcome(), df= df())
+    }
+  }  
+})
+  
+#Function to get density function for 2 groups
+cost_plot1_group_density <- function(y, x, x0, x1, df) {
+  #Density function
+#  d_ctl0 <- density(df[df[, x] == x0, y], na.rm=T, adjust=2)
+#  d_ctl1 <- density(df[df[, x] == x1, y], na.rm=T, adjust=2)
+  d_ctl0 <- density(df[as.numeric(df[, x]) == min(as.numeric(df[, x]), na.rm=T), y], na.rm=T, adjust=2)
+  d_ctl1 <- density(df[as.numeric(df[, x]) == max(as.numeric(df[, x]), na.rm=T), y], na.rm=T, adjust=2)
+  d_ctl_x <- range( c(d_ctl0$x, d_ctl1$x) )
+  d_ctl_y <- range( c(d_ctl0$y, d_ctl1$y) )
+  return(list("Density.FUN0"= d_ctl0,
+              "Density.FUN1"= d_ctl1, 
+              "XLim"= d_ctl_x, 
+              "YLim"= d_ctl_y))
+}
 
-  d_ctl <- density(df[, y], na.rm=T, adjust=2)                       #Controls
+#Reactive function for the function above
+cost_plt_dens_fun_2_group <- reactive({
+  if(dens_run_plot_yesno() == "Yes") {
+    if(dens_strat_or_unstrat() == "Stratified") {
+      cost_plot1_group_density(y= outcome(), x= dens_stratified() , df= df(), 
+                               x0=dens_strata_actual_values()[1], 
+                               x1=dens_strata_actual_values()[2])
+    }
+  }  
+})
+
+#Reactive function that gets X-Y limits for the density plot
+cost_plt_dens_fun_limits <- reactive({
+  if(dens_run_plot_yesno() == "Yes") {
+    
+    if(dens_strat_or_unstrat() == "Stratified") {
+      cost_plt_dens_fun_2_group()
+    } else {
+      cost_plt_dens_fun_1_group()
+    }
+  }  
+})
+
+#This plots the outcome for all patients
+cost_plot1 <- function(y, x, df, d_ctl, dnsXLim1, dnsXLim2, dnsYLim1, dnsYLim2, 
+                       LCol, Text.Size, labMulti=1, Lgd.Loc) {
+  #####Color codes#####
+  #Set up colors
+  all_clrs <- c("Black", "Red", "Green","Blue","Turquoise","Purple","Yellow","Gray")
+  my_clr <- LCol
+  color_trnspt  <- adjustcolor(which(all_clrs %in% my_clr[1]), alpha.f = 0.4) 
   cst_tbl <- c(mean(df[, y], na.rm=T),
                median(df[, y], na.rm=T))
   names(cst_tbl) <- c("Mean", "Median" )
-  
-  plot(d_ctl, main=paste0("Density plot of ", y), 
-       xlab=y, axes=F)
-  polygon(d_ctl, col=blue_trnspt, border=blue_trnspt) 
+  #Set up plotting space
+  par(mar = c(6, 6, 3, 1) + 0.1)
+  plot(d_ctl, axes=F, type="n", ylab="", xlab="", main="",
+       xlim=c(dnsXLim1, dnsXLim2), ylim=c(dnsYLim1, dnsYLim2))
+  lines(d_ctl)
+  title(paste0("Density plot of ", y), cex.main = 1.1*labMulti) 
+  polygon(d_ctl, col=color_trnspt, border=color_trnspt) 
   
   abline(v=median(df[, y], na.rm=T),
-         col="blue")
+         col=my_clr[1], lwd=Text.Size)
   abline(v=mean(df[, y], na.rm=T),
-         col="blue", lty=3)
-  axis(1)
-  legend("top", legend=c("Mean", "Median"), 
-         col=c(4,4), lty=c(3,1),
-         lwd=2, cex=1)
-  legend("top", legend=c(paste0("Mean= ",round(cst_tbl["Mean"], 0)), paste0("Median= ", round(cst_tbl["Median"], 0))), 
-         col=c(4,4), lty=c(3,1),
-         lwd=2, cex=1.25)
+         col=my_clr[1], lty=3, lwd=Text.Size)
+  axis(1, las=1, cex.axis=1*labMulti )
+  axis(2, las=3, cex.axis=1*labMulti )
+  mtext(y, side = 1, line = 4, cex=1.1*labMulti )
+  mtext("Density", side = 2, line = 4, cex=1.1*labMulti )
+  #Legend
+  legend(Lgd.Loc, legend=c(paste0("Mean= ",round(cst_tbl["Mean"], 0)), 
+                         paste0("Median= ", round(cst_tbl["Median"], 0))), 
+         col=c(my_clr[1], my_clr[1]), lty=c(3,1), bty="n",
+         lwd=(1+Text.Size), cex= Text.Size)
   
+  box()
+}
+
+cost_plot1_grp <- function(y, x, df, Trt.NM, Ctl.NM, 
+                           DENS, dnsXLim1, dnsXLim2, dnsYLim1, dnsYLim2, 
+                           LCol, Text.Size, labMulti=1, Lgd.Loc) {
+  #####Color codes#####
+  #Set up colors
+  all_clrs <- c("Black", "Red", "Green","Blue","Turquoise","Purple","Yellow","Gray")
+  my_clr <- LCol
+  color_trnspt0  <- adjustcolor(which(all_clrs %in% my_clr[1]), alpha.f = 0.4) 
+  color_trnspt1  <- adjustcolor(which(all_clrs %in% my_clr[2]), alpha.f = 0.4) 
+  
+  #Density functions  
+  d_ctl <- DENS$Density.FUN0
+  d_trt <- DENS$Density.FUN1
+  #Treatment/control group means/medians
+  ctl_med <- median(df[, y][as.numeric(df[, x]) == min(as.numeric(df[, x]))], na.rm=T)
+  trt_med <- median(df[, y][as.numeric(df[, x]) == max(as.numeric(df[, x]))], na.rm=T)
+  ctl_mn <- mean(df[, y][as.numeric(df[, x]) == min(as.numeric(df[, x]))], na.rm=T)
+  trt_mn <- mean(df[, y][as.numeric(df[, x]) == max(as.numeric(df[, x]))], na.rm=T)
+  #The graph
+  par(mar = c(6, 6, 3, 1) + 0.1)
+  plot(d_ctl, axes=F, type="n", ylab="", xlab="", main="",
+       xlim=c(dnsXLim1, dnsXLim2), ylim=c(dnsYLim1, dnsYLim2))
+  lines(d_ctl)
+  lines(d_trt)
+  title(paste0("Density plot of ", y, " by ", x), cex.main = 1.1*labMulti) 
+  
+  polygon(d_ctl, col=color_trnspt0, border=color_trnspt0) 
+  polygon(d_trt, col=color_trnspt1, border=color_trnspt1) 
+  
+  ###  
+  abline(v=ctl_med, col= my_clr[1], lwd=Text.Size)
+  abline(v=trt_med, col= my_clr[2], lwd=Text.Size)
+  abline(v=ctl_mn, col= my_clr[1], lty=3, lwd=Text.Size)
+  abline(v=trt_mn, col= my_clr[2], lty=3, lwd=Text.Size)
+  axis(1, las=1, cex.axis=1*labMulti )
+  axis(2, las=3, cex.axis=1*labMulti )
+  mtext(y, side = 1, line = 4, cex=1.1*labMulti )
+  mtext("Density", side = 2, line = 4, cex=1.1*labMulti )
+  
+  legend(Lgd.Loc, legend=c(paste0(Trt.NM, ": Mean= ",round(trt_mn, 0)), 
+                           paste0(Trt.NM, ": Median= ", round(trt_med, 0)), 
+                           paste0(Ctl.NM, ": Mean= ", round(ctl_mn, 0)), 
+                           paste0(Ctl.NM, ": Median= ", round(ctl_med, 0))), 
+         col=c(my_clr[2], my_clr[2], my_clr[1], my_clr[1]), lty=c(3,1,3,1),
+         lwd=(1+Text.Size), cex=Text.Size, bty="n")
   box()
 }
 
 ##################
 # UPDATE START HERE #
 ##################
+
 #This plots the outcome by a binary grouping variable
-cost_plot1_grp <- function(y, x, df) {
-  #####Color codes#####
-  c_red <- 2; c_blue <- 4
-  red_trnspt  <- adjustcolor(c_red, alpha.f = 0.4)                                #Set red color transparency.
-  blue_trnspt <- adjustcolor(c_blue, alpha.f = 0.4)                               #Set blue color transparency.
+quant_plt1_fnc <- function(ests, Y, Trt.NM, Ctl.NM,
+                           qntXLim1, qntXLim2, qntYLim1, qntYLim2, 
+                           LCol, Text.Size, labMulti=1, Lgd.Loc) {
+  est1 <- ests[["est1"]]
+  est2 <- ests[["est2"]]
+  #Set up colors
+  all_clrs <- c("Black", "Red", "Green","Blue","Turquoise","Purple","Yellow","Gray")
+  my_clr <- LCol
+  color_trnspt0  <- adjustcolor(which(all_clrs %in% my_clr[1]), alpha.f = 0.2) 
+  color_trnspt1  <- adjustcolor(which(all_clrs %in% my_clr[2]), alpha.f = 0.2) 
+  #  c_red <- 2; c_blue <- 4
+  #  red_trnspt2  <- adjustcolor(c_red, alpha.f = 0.2)                               #Set red color transparency.
+  #  blue_trnspt2 <- adjustcolor(c_blue, alpha.f = 0.2)                              #Set blue color transparency.
+  #  plot(1:5, est1[, 1], type="n",
+  #       ylab=Y, xlab="Percentiles",
+  #       ylim=c(0, max(est1, na.rm=T)*.9), xlim=c(1, 5),
+  #       axes=F, main= paste0("Estimated ", Y, " over quantiles"))
   
-  d_ctl <- density(df[, y][as.numeric(df[, x]) == min(as.numeric(df[, x]))], na.rm=T, adjust=2) #Controls
-  d_trt <- density(df[, y][as.numeric(df[, x]) == max(as.numeric(df[, x]))], na.rm=T, adjust=2) #x
-  #Treatment/control group means/medians
-  ctl_med <- median(df[, y][as.numeric(df[, x]) == min(as.numeric(df[, x]))], na.rm=T)
-  trt_med <- median(df[, y][as.numeric(df[, x]) == max(as.numeric(df[, x]))], na.rm=T)
-  ctl_mn <- mean(df[, y][as.numeric(df[, x]) == min(as.numeric(df[, x]))], na.rm=T)
-  trt_mn <- mean(df[, y][as.numeric(df[, x]) == max(as.numeric(df[, x]))], na.rm=T)
+  plot(1:5, est1[, 1], axes=F, type="n", ylab="", xlab="", main="",
+       xlim=c(qntXLim1, qntXLim2), ylim=c(qntYLim1, qntYLim2))
+  title(paste0("Estimated ", Y, " over quantiles"), cex.main = 1.1*labMulti) 
+  lines(1:5, est1[, 1], col= my_clr[1], lwd=3)
+  lines(1:5, est1[, 2], col= my_clr[2], lwd=3)
+  #Set up coordinates for polygon function, NOTE: UPPER AND LOWER MEAN THE OPPOSITE 
+  #BECAUSE A COX MODEL VIEWS COST IN THE OPPOSITE DIRECTION.
+  #  axis(1, at=1:5, tick=F,  labels= c("p10", "p25", "p50", "p75", "p90")) #pos=1,
+  #  axis(2)
+  axis(1, at=1:5, tick=F,  labels= c("p10", "p25", "p50", "p75", "p90"),
+       las=1, cex.axis=1*labMulti )
+  axis(2, las=3, cex.axis=1*labMulti )
+  mtext("Percentiles", side = 1, line = 4, cex=1.1*labMulti )
+  mtext(Y, side = 2, line = 4, cex=1.1*labMulti )
   
-  plot(d_trt, main=paste0("Density plot of ", y, " by ", x), 
-       xlab=y, axes=F)
-  lines(d_ctl)
-  polygon(d_ctl, col=red_trnspt, border=red_trnspt) 
-  polygon(d_trt, col=blue_trnspt, border=blue_trnspt) 
-  
-  ###  
-  abline(v=ctl_med, col="red")
-  abline(v=trt_med, col="blue")
-  abline(v=ctl_mn, col="red", lty=3)
-  abline(v=trt_mn, col="blue", lty=3)
-  axis(1)
-  legend("top", legend=c(paste0("Treatment: Mean= ",round(trt_mn, 0)), paste0("Treatment: Median= ", round(trt_med, 0)), 
-                         paste0("Control: Mean= ", round(ctl_mn, 0)), paste0("Control: Median= ", round(ctl_med, 0))), 
-         col=c(4,4,2,2), lty=c(3,1,3,1),
-         lwd=2, cex=1.25)
+  xxt <- c(1:5,5:1)
+  yya <- c(est1$lower2, rev(est1$upper2))  #Treatment
+  yyc <- c(est1$lower1, rev(est1$upper1))  #Control
+  ##plot(xx,yyd, type="n", ylim=c(0,1))
+  polygon(xxt, yya, col = color_trnspt1, border= color_trnspt1)
+  polygon(xxt, yyc, col = color_trnspt0, border=color_trnspt0)
+  legend(Lgd.Loc, legend=c(Trt.NM, Ctl.NM), 
+         col=c(my_clr[2],my_clr[1]), lty=1,
+         lwd=(1+Text.Size), cex=Text.Size, bty="n")
   box()
 }
 
@@ -8225,41 +8354,162 @@ cost_quant <- function(y, x, df) {
   odf_mqt <- as.data.frame(rbind(cbind(round(qt2, 2), round(qt1 ,2)),
                                  cbind(round(trt_mn, 2), round(ctl_mn, 2)) ))
   rownames(odf_mqt) <- c("p10", "p25", "p50", "p75", "p90", "Mean")
-  colnames(odf_mqt) <- c("Treatment", "Control")  #Observed data.frame of the means and quantiles
+  colnames(odf_mqt) <- c(dens_strata_final_stata_names()[2], dens_strata_final_stata_names()[1])  #Observed data.frame of the means and quantiles
   ###  
   return(list("odf_mqt"=odf_mqt))
 }
 
-#Select the type of density plot to run (full sample or by a group)
+#1A. Select the type of density plot to run (full sample or by a group)
 output$dens_plt1_typ <- renderUI({
   selectInput("DensPlt1Typ", "1. Choose the type of analysis.", 
               choices = c("Unstratified", "Stratified"), multiple=FALSE, selected="Unstratified")     
 })
-#Select the grouping variable for the density plot with 2 plots--value of 1=treatment group
+#1B. Reactive function for stratification above 
+dens_strat_or_unstrat <- reactive({
+  input$DensPlt1Typ
+})
+
+#2. Select the grouping variable for the density plot with 2 plots--value of 1=treatment group
 output$dens_plt1_x <- renderUI({
   selectInput("DensPlt1X", "2. Select a binary stratified variable (optional).", 
               choices = predictor())     
 })
-
-#Create a reactive function for the stratified variable in the Cost density plot
+#2A. Create a reactive function for the stratified variable in the Cost density plot
 dens_stratified <- reactive({                  #Outcome is my reactive function name I will use below. 
   input$DensPlt1X                      #DensPlt1X comes from the UI file drop down box.
 })
-
-#Create yes/no box to plot the density plot
-output$run_dens_plt1 <- renderUI({ 
-  selectInput("RunDensPlt1", "3. Do you want to run the plots?", 
-              choices = c("No", "Yes"), multiple=FALSE, selected="No")     
+#3. Select the type of names I will use
+output$dens_plt1_x_nms <- renderUI({
+  selectInput("DensPlt1XNms", "3. Select strata names.", 
+              choices = c("Actual values", "Custom names"), multiple=FALSE, selected="Values")     
+})
+#3A. Create a reactive function to select names based on actual values or custom
+dens_strata_name_type <- reactive({                  #
+  input$DensPlt1XNms
+})
+#3B. Get unique value names from the model specs
+dens_strata_actual_values <- reactive({                  #
+  if ( dens_strata_name_type() == "Actual values" ) {
+    as.character(sort(unique(model_specs_long()[["limits"]][[ dens_stratified() ]])))
+  } 
+})
+#4. Enter custom names
+output$dens_plt1_x_cstm <- renderUI({                                 
+  textInput("DensPlt1XCust", "4. Enter custom names.",
+            value = paste0('c( ', "'",'Control',"'", ', ', "'",'Treatment',"'", ')'))
+})
+#4A. Reactive function for above
+dens_strata_custom_names <- reactive({ 
+  input$DensPlt1XCust 
+})
+#4B. Determine which stratification names to use
+dens_strata_final_stata_names <- reactive({
+  if ( dens_strata_name_type() == "Actual values" ) {
+    dens_strata_actual_values()
+  } else {
+    eval(parse(text=dens_strata_custom_names() )) 
+  }
 })
 
-#This runs the cost_plot1() function above
+#5. Create yes/no box to plot the density plot
+output$run_dens_plt1 <- renderUI({ 
+  selectInput("RunDensPlt1", "5. Do you want to run the plots?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")     
+})
+#5A. Reactive function for  running plots
+dens_run_plot_yesno <- reactive({
+  input$RunDensPlt1
+  })
+
+#######################
+## Cost Density Plot ##
+#######################
+#1. Select line colors
+output$densPltLnClr <- renderUI({                                 
+  selectInput("dn_ln_clr", "1. Select line colors.", 
+              choices = c("Black", "Red", "Green","Blue","Turquoise","Purple","Yellow","Gray"), 
+              multiple=TRUE, 
+              selected= c("Black", "Red", "Green","Blue","Turquoise","Purple","Yellow","Gray")[c(2,4)] )    
+})
+#1A. Reactive function for directly above
+Density_Line_Colors <- reactive({                 
+  input$dn_ln_clr 
+})
+#2. Select the line label size
+output$dens_plot_txt_lbl_sz <- renderUI({                                 
+  numericInput("dnsPlTxtLblSz", "2. Select the legend size.", 
+               value = 2, min=0, step = .1)     
+})
+#2A. Reactive function for directly above
+dens_plot_text_label_size <- reactive({                 
+  input$dnsPlTxtLblSz 
+})
+#3. Select label size multiplier
+output$dns_plot_lab_multi <- renderUI({                                 
+  numericInput("dnsPltLabMlt", "3. Increase XY label sizes.",
+               value = 1, min=.01, step = .1)
+})
+#3A. Reactive function for directly above
+dns_plot_label_multiplier <- reactive({                 
+  input$dnsPltLabMlt 
+})
+#4. Legend location
+output$dens_lgd_loc <- renderUI({                                
+  selectInput("densLgdLoc", "4. Select the legend location.",        
+              choices = c("bottomright","bottom","bottomleft","left","topleft","top","topright","right","center"), 
+              multiple=FALSE, selected="topleft" ) 
+})
+#4A. Reactive function for legend location
+density_legend_location <- reactive({
+  input$densLgdLoc
+})
+
+#5. Indicate lower limit of x-axis
+output$dns_Xlim1 <- renderUI({
+  numericInput("dnsXLim1", "5. Lower X-axis limit.",
+               value = cost_plt_dens_fun_limits()[["XLim"]][1], step = 1)
+})
+#6. Indicate upper limit of x-axis
+output$dns_Xlim2 <- renderUI({
+  numericInput("dnsXLim2", "6. Upper X-axis limit.",
+               value = cost_plt_dens_fun_limits()[["XLim"]][2],
+               step = 1)
+})
+#7. Indicate lower limit of y-axis
+output$dns_Ylim1 <- renderUI({
+  numericInput("dnsYLim1", "7. Lower Y-axis limit.",
+  #value = cost_plt_dens_fun_limits()[["YLim"]][1], step = .1)
+  value = 0, step = .1)
+})
+#8. Indicate upper limit of x-axis
+output$dns_Ylim2 <- renderUI({
+  numericInput("dnsYLim2", "8. Upper Y-axis limit.",
+               value = cost_plt_dens_fun_limits()[["YLim"]][2], step = .1)
+})
+
+#6. This runs the cost_plot1() function above
 dens_plt1 <- reactive({
-  if(input$RunDensPlt1 == "Yes") {
+  if(dens_run_plot_yesno() == "Yes") {
     
-    if(input$DensPlt1Typ == "Stratified") {
-      cost_plot1_grp(y= outcome(), x= dens_stratified() , df= df())
+    if(dens_strat_or_unstrat() == "Stratified") {
+      cost_plot1_grp(y= outcome(), x= dens_stratified() , df= df(), 
+                     Trt.NM=dens_strata_final_stata_names()[2], 
+                     Ctl.NM=dens_strata_final_stata_names()[1],
+                     DENS=cost_plt_dens_fun_2_group(), 
+                     dnsXLim1= input$dnsXLim1, 
+                     dnsXLim2= input$dnsXLim2, 
+                     dnsYLim1= input$dnsYLim1, 
+                     dnsYLim2= input$dnsYLim2, 
+                     LCol=Density_Line_Colors(), Text.Size=dens_plot_text_label_size(), 
+                     labMulti=dns_plot_label_multiplier(), Lgd.Loc=density_legend_location())
     } else {
-      cost_plot1(y= outcome(), df= df())
+      cost_plot1(y= outcome(), df= df(), d_ctl= cost_plt_dens_fun_1_group()$Density.FUN, 
+                 dnsXLim1= input$dnsXLim1, 
+                 dnsXLim2= input$dnsXLim2, 
+                 dnsYLim1= input$dnsYLim1, 
+                 dnsYLim2= input$dnsYLim2, 
+                 LCol=Density_Line_Colors(), Text.Size=dens_plot_text_label_size(), 
+                 labMulti=dns_plot_label_multiplier(), Lgd.Loc=density_legend_location())
     }
   }  
 })
@@ -8291,11 +8541,75 @@ med <- reactive({
   }  
 })
 
+##########################
+## Cost Percentile Plot ##
+##########################
+#1. Select line colors
+output$qntPltLnClr <- renderUI({                                 
+  selectInput("qnt_ln_clr", "1. Select line colors.", 
+              choices = c("Black", "Red", "Green","Blue","Turquoise","Purple","Yellow","Gray"), 
+              multiple=TRUE, 
+              selected= c("Black", "Red", "Green","Blue","Turquoise","Purple","Yellow","Gray")[c(2,4)] )    
+})
+#1A. Reactive function for directly above
+quantile_Line_Colors <- reactive({                 
+  input$qnt_ln_clr 
+})
+#2. Select the line label size
+output$qnt_plot_txt_lbl_sz <- renderUI({                                 
+  numericInput("qntPlTxtLblSz", "2. Select the legend size.", 
+               value = 2, min=0, step = .1)     
+})
+#2A. Reactive function for directly above
+qnt_plot_text_label_size <- reactive({                 
+  input$qntPlTxtLblSz 
+})
+#3. Select label size multiplier
+output$qnt_plot_lab_multi <- renderUI({                                 
+  numericInput("qntPltLabMlt", "3. Increase XY label sizes.",
+               value = 1, min=.01, step = .1)
+})
+#3A. Reactive function for directly above
+qnt_plot_label_multiplier <- reactive({                 
+  input$qntPltLabMlt 
+})
+#4. Legend location
+output$qnt_lgd_loc <- renderUI({                                
+  selectInput("qntLgdLoc", "4. Select the legend location.",        
+              choices = c("bottomright","bottom","bottomleft","left","topleft","top","topright","right","center"), 
+              multiple=FALSE, selected="topleft" ) 
+})
+#4A. Reactive function for legend location
+quantile_legend_location <- reactive({
+  input$qntLgdLoc
+})
+
+#5. Indicate lower limit of x-axis
+output$qnt_Xlim1 <- renderUI({
+  numericInput("qntXLim1", "5. Lower X-axis limit.",
+               value = 1, step = 1)
+})
+#6. Indicate upper limit of x-axis
+output$qnt_Xlim2 <- renderUI({
+  numericInput("qntXLim2", "6. Upper X-axis limit.",
+               value = 5,
+               step = 1)
+})
+#7. Indicate lower limit of y-axis
+output$qnt_Ylim1 <- renderUI({
+  numericInput("qntYLim1", "7. Lower Y-axis limit.",
+               value = as.numeric(describeY()[["counts"]][".05"]), step = .1)
+})
+#8. Indicate upper limit of x-axis
+output$qnt_Ylim2 <- renderUI({
+  numericInput("qntYLim2", "8. Upper Y-axis limit.",
+               value = as.numeric(describeY()[["counts"]][".90"]), step = .1)
+})
 
 ############################################
 #   Plot 2: Estimated cost over quantiles  #
 ############################################
-quant_ests_fnc <- function(fit, Y, X, reg) {
+quant_ests_fnc <- function(fit, Y, X, reg, Trt.NM, Ctl.NM) {
   #Creates function that will make correct value 
   MED_cox <<- Quantile(fit)                                                       #Creates function to compute quantiles
 
@@ -8333,14 +8647,14 @@ quant_ests_fnc <- function(fit, Y, X, reg) {
   
   #Re-arrange order to get values set up for display in the plot
   est2 <- est1[, c(2,6,4,1,5,3)]
-  colnames(est2) <- c("TREATMENT", "L95", "U95","Control", "L95", "U95")
+  colnames(est2) <- c(Trt.NM, "L95", "U95", Ctl.NM, "L95", "U95")
   rownames(est2) <- c("p10", "p25", "p50","p75", "p90")
   #Add cost difference between Treatment and controls 
-  est2$Diff. <- abs(round(est2$Control) - round(est2$TREATMENT))
+  est2$Diff. <- abs(round(est2[, Ctl.NM ]) - round(est2[, Trt.NM]))
   ## Add in weighted average into the table
   #Make row of data
   wtot <- as.data.frame(matrix(nrow=1, ncol=7))
-  colnames(wtot) <- c("TREATMENT", "L95", "U95","Control", "L95", "U95", "Diff.")
+  colnames(wtot) <- c(Trt.NM, "L95", "U95", Ctl.NM, "L95", "U95", "Diff.")
   rownames(wtot) <- "Weighted"
   #Calculate weighted average
   wtot[, "Diff."] <- ((.25 * est2[rownames(est2) =="p10", "Diff."]) + (.25 * est2[rownames(est2) =="p25", "Diff."]) + 
@@ -8351,53 +8665,32 @@ quant_ests_fnc <- function(fit, Y, X, reg) {
   return(list(est1=est1, est2=est2))
 }  
 
-#This runs the quant_plt1_fnc() function above
+#This runs the function above
 quant_ests <- reactive({
   if(input$RunDensPlt1 == "Yes") {
     
     if(input$DensPlt1Typ == "Stratified") {
     #  quant_ests_fnc(fit=fit1(), Y= outcome(), X= input$DensPlt1X, reg=input$regress_type)
-      quant_ests_fnc(fit=fit1(), Y= outcome(), X= dens_stratified(), reg=input$regress_type)
+      quant_ests_fnc(fit=fit1(), Y= outcome(), X= dens_stratified(), reg=input$regress_type,
+                     Trt.NM=dens_strata_final_stata_names()[2], 
+                     Ctl.NM=dens_strata_final_stata_names()[1])
     } 
   }  
 })
 
-  #Graph on differences between intervention groups on expected costs over percentiles 
-quant_plt1_fnc <- function(ests, Y) {
-  est1 <- quant_ests()[["est1"]]
-  est2 <- quant_ests()[["est2"]]
-  #Later shades for second plot
-  c_red <- 2; c_blue <- 4
-  red_trnspt2  <- adjustcolor(c_red, alpha.f = 0.2)                               #Set red color transparency.
-  blue_trnspt2 <- adjustcolor(c_blue, alpha.f = 0.2)                              #Set blue color transparency.
-  plot(1:5, est1[, 1], type="n",
-       ylab=Y, xlab="Percentiles",
-       ylim=c(0, max(est1, na.rm=T)*.9), xlim=c(1, 5),
-       axes=F, main=paste0("Estimated ", Y, " over quantiles"))
-  lines(1:5, est1[, 1], col="red", lwd=3)
-  lines(1:5, est1[, 2], col="blue", lwd=3)
-  #Set up coordinates for polygon function, NOTE: UPPER AND LOWER MEAN THE OPPOSITE 
-  #BECAUSE A COX MODEL VIEWS COST IN THE OPPOSITE DIRECTION.
-  axis(2)
-  axis(1, at=1:5, tick=F,  labels= c("p10", "p25", "p50", "p75", "p90")) #pos=1,
-  xxt <- c(1:5,5:1)
-  yya <- c(est1$lower2, rev(est1$upper2))  #Treatment
-  yyc <- c(est1$lower1, rev(est1$upper1))  #Control
-  #plot(xx,yyd, type="n", ylim=c(0,1))
-  polygon(xxt, yya, col = blue_trnspt2, border=blue_trnspt2)
-  polygon(xxt, yyc, col = red_trnspt2, border=red_trnspt2)
-  legend("topleft", legend=c("Treatment","Control"), 
-         col=c(4,2), lty=1,
-         lwd=2, cex=1.25)
-  box()
-}
 
 #This runs the quant_plt1_fnc() function above
 quant_plt1 <- reactive({
   if(input$RunDensPlt1 == "Yes") {
     
     if(input$DensPlt1Typ == "Stratified") {
-      quant_plt1_fnc(ests=quant_ests(), Y= outcome())
+      quant_plt1_fnc(ests=quant_ests(), Y= outcome(), 
+                     Trt.NM=dens_strata_final_stata_names()[2], 
+                     Ctl.NM=dens_strata_final_stata_names()[1],
+                     qntXLim1=input$qntXLim1, qntXLim2=input$qntXLim2, 
+                     qntYLim1=input$qntYLim1, qntYLim2=input$qntYLim2, 
+                     LCol=quantile_Line_Colors(), Text.Size=qnt_plot_text_label_size(), 
+                     labMulti=qnt_plot_label_multiplier(), Lgd.Loc=quantile_legend_location())
     } 
   }  
 })
@@ -8423,7 +8716,7 @@ output$quant_out1 <- renderTable({
 ##########################
 ### Get mean estimates ###
 ##########################
-mean_ests_fnc <- function(fit, Y, X, reg) {
+mean_ests_fnc <- function(fit, Y, X, reg, Trt.NM, Ctl.NM) {
   #Creates function that will make correct value 
   MN_cox <<- Mean(fit)                                                       #Creates function to compute quantiles
   
@@ -8444,20 +8737,22 @@ mean_ests_fnc <- function(fit, Y, X, reg) {
   
   #Re-arrange order to get values set up for display in the plot
   est2 <- est1[, c(2,6,4,1,5,3)]
-  colnames(est2) <- c("TREATMENT", "L95", "U95","Control", "L95", "U95")
+  colnames(est2) <- c(Trt.NM, "L95", "U95", Ctl.NM, "L95", "U95")
   rownames(est2) <- "Mean"
-  #Add cost difference beteen Treatment and controls 
-  est2$Diff. <- abs(round(est2$Control) - round(est2$TREATMENT))
+  #Add cost difference between Treatment and controls 
+  est2$Diff. <- abs(round(est2[, Ctl.NM]) - round(est2[, Trt.NM]))
   return(list(est1=est1, est2=est2))
 }  
 
-#This runs the quant_plt1_fnc() function above
+#This runs the function above
 mean_ests <- reactive({
   if(input$RunDensPlt1 == "Yes") {
     
     if(input$DensPlt1Typ == "Stratified") {
       #mean_ests_fnc(fit=fit1(), Y= outcome(), X= input$DensPlt1X, reg=input$regress_type)
-      mean_ests_fnc(fit=fit1(), Y= outcome(), X= dens_stratified(), reg=input$regress_type)
+      mean_ests_fnc(fit=fit1(), Y= outcome(), X= dens_stratified(), reg=input$regress_type, 
+                    Trt.NM=dens_strata_final_stata_names()[2], 
+                    Ctl.NM=dens_strata_final_stata_names()[1])
     } 
   }  
 })
@@ -9008,7 +9303,7 @@ quant_reg.90 <- reactive({
 
 
 #Function to get quantile estimates from quantile regression
-pred_qnt_reg5_fnc <- function(qr.10, qr.25, qr.50, qr.75, qr.90, Dens1X) {
+pred_qnt_reg5_fnc <- function(qr.10, qr.25, qr.50, qr.75, qr.90, Dens1X, Trt.NM, Ctl.NM) {
   #Get predicted scores
   pq10 <- do.call("Predict", list(qr.10, Dens1X))
   pq25 <- do.call("Predict", list(qr.25, Dens1X))
@@ -9026,10 +9321,10 @@ pred_qnt_reg5_fnc <- function(qr.10, qr.25, qr.50, qr.75, qr.90, Dens1X) {
                            est1.75, est1.90))
   #Re-arrange order to get values set up for display in the plot
   est2 <- est1[, c(2,4,6,1,3,5)]
-  colnames(est2) <- c("TREATMENT", "L95", "U95","Control", "L95", "U95")
+  colnames(est2) <- c(Trt.NM,  "L95", "U95", Ctl.NM, "L95", "U95")
   rownames(est2) <- c("p10", "p25", "p50","p75", "p90")
-  #Add cost difference beteen Treatment and controls 
-  est2$Diff. <- abs(round(est2$Control) - round(est2$TREATMENT))
+  #Add cost difference between Treatment and controls 
+  est2$Diff. <- abs(round(est2[, Ctl.NM]) - round(est2[, Trt.NM]))
   return(list(est1=est1, est2=est2))
 }
 #pred_qnt_reg5_fnc(qr.10=qr1, qr.25=qr1, qr.50=qr1, qr.75=qr1, qr.90=qr1, Dens1X="intervention")
@@ -9041,14 +9336,16 @@ qr_ests <- reactive({
     if(input$DensPlt1Typ == "Stratified") {
       pred_qnt_reg5_fnc(qr.10=quant_reg.10(), qr.25=quant_reg.25(), qr.50=quant_reg.50(), 
                         #qr.75=quant_reg.75(), qr.90=quant_reg.90(), Dens1X=input$DensPlt1X)
-      qr.75=quant_reg.75(), qr.90=quant_reg.90(), Dens1X=dens_stratified())
+      qr.75=quant_reg.75(), qr.90=quant_reg.90(), Dens1X=dens_stratified(), 
+      Trt.NM=dens_strata_final_stata_names()[2], 
+      Ctl.NM=dens_strata_final_stata_names()[1])
     } 
   }  
 })
       
       ##############
       #Graph on differences between intervention groups on expected costs over percentiles 
-      qr_plt1_fnc <- function(ests, Y) {
+      qr_plt1_fnc <- function(ests, Y, Trt.NM, Ctl.NM) {
         est1 <- ests[["est1"]]
         est2 <- ests[["est2"]]
         #Later shades for second plot
@@ -9071,7 +9368,7 @@ qr_ests <- reactive({
         #plot(xx,yyd, type="n", ylim=c(0,1))
         polygon(xxt, yya, col = blue_trnspt2, border=blue_trnspt2)
         polygon(xxt, yyc, col = red_trnspt2, border=red_trnspt2)
-        legend("topleft", legend=c("Treatment","Control"), 
+        legend("topleft", legend=c(Trt.NM, Ctl.NM), 
                col=c(4,2), lty=1,
                lwd=2, cex=1.25)
         box()
@@ -9082,7 +9379,8 @@ qr_ests <- reactive({
         if(input$RunDensPlt1 == "Yes") {
           
           if(input$DensPlt1Typ == "Stratified") {
-            qr_plt1_fnc(ests=qr_ests(), Y= outcome())
+            qr_plt1_fnc(ests=qr_ests(), Y= outcome(), Trt.NM=dens_strata_final_stata_names()[2], 
+                        Ctl.NM=dens_strata_final_stata_names()[1])
           } 
         }  
       })
@@ -10215,7 +10513,7 @@ output$surv_binary_compare <- renderUI({
 ############################################
 #   Plot 2: Estimated cost over quantiles  #
 ############################################
-surv_quant_ests_fnc <- function(fit, Y, X, reg) {
+surv_quant_ests_fnc <- function(fit, Y, X, reg, Trt.NM, Ctl.NM) {
   #Creates function that will make correct value 
   surv_MED_cox <<- Quantile(fit)                                                       #Creates function to compute quantiles
   
@@ -10260,17 +10558,17 @@ surv_quant_ests_fnc <- function(fit, Y, X, reg) {
   if (reg %in% c("AFT","AFT with censoring") ) {
     est2 <- est1[, c(2,4,6,1,3,5)]
   }
-  colnames(est2) <- c("TREATMENT", "L95", "U95","Control", "L95", "U95")
+  colnames(est2) <- c(Trt.NM, "L95", "U95", Ctl.NM, "L95", "U95")
   rownames(est2) <- c("p10", "p25", "p50","p75", "p90")
   
   #Add cost difference between Treatment and controls 
-  est2$Diff. <- round(est2$TREATMENT - est2$Control, 2 )
+  est2$Diff. <- round(est2[, Trt.NM] - est2[, Ctl.NM], 2 )
   ## Add in weighted average into the table
   #Combine everything
   return(list(est1=est1, est2=est2))
 }  
 
-#This runs the quant_plt1_fnc() function above
+#This runs the function above
 surv_quant_ests <- reactive({
   if(input$survBinComp == "Yes") {
     surv_quant_ests_fnc(fit=fit1(), Y= outcome(), X= survival_var_X(), reg=input$regress_type)
@@ -10288,7 +10586,7 @@ output$surv_quant_out1 <- renderTable({
 ##########################
 ### Get mean estimates ###
 ##########################
-surv_mean_ests_fnc <- function(fit, Y, X, reg) {
+surv_mean_ests_fnc <- function(fit, Y, X, reg, Trt.NM, Ctl.NM) {
   #Creates function that will make correct value 
   surv_MN_cox <<- Mean(fit)                                                       #Creates function to compute quantiles
   
@@ -10316,17 +10614,19 @@ surv_mean_ests_fnc <- function(fit, Y, X, reg) {
   if (reg %in% c("AFT","AFT with censoring") ) {
     est2 <- est1[, c(2,4,6,1,3,5)]
   }
-  colnames(est2) <- c("TREATMENT", "L95", "U95","Control", "L95", "U95")
+  colnames(est2) <- c(Trt.NM, "L95", "U95", Ctl.NM, "L95", "U95")
   rownames(est2) <- "Mean"
-  #Add cost difference beteen Treatment and controls 
-  est2$Diff. <- abs(round(est2$Control) - round(est2$TREATMENT))
+  #Add cost difference between Treatment and controls 
+  est2$Diff. <- abs(round(est2[, Ctl.NM]) - round(est2[, Trt.NM]))
   return(list(est1=est1, est2=est2))
 }  
 
-#This runs the quant_plt1_fnc() function above
+#This runs the function above
 surv_mean_ests <- reactive({
   if(input$survBinComp == "Yes") {
-    surv_mean_ests_fnc(fit=fit1(), Y= outcome(), X= survival_var_X(), reg=input$regress_type)
+    surv_mean_ests_fnc(fit=fit1(), Y= outcome(), X= survival_var_X(), reg=input$regress_type,
+                       Trt.NM=dens_strata_final_stata_names()[2], 
+                       Ctl.NM=dens_strata_final_stata_names()[1])
   }  
 })
 
@@ -10340,7 +10640,7 @@ output$surv_mean_out1 <- renderTable({
 #Observed mean and quantiles
 #This gets quantiles and means
 #Function that gets cost value quantiles between the treatment and control groups 
-surv_quant <- function(y, x, df) {
+surv_quant <- function(y, x, df, Trt.NM, Ctl.NM) {
   
   #Treatment/control group means/medians
   ctl_med <- median(df[, y][as.numeric(df[, x]) == min(as.numeric(df[, x]), na.rm=T)], na.rm=T)
@@ -10353,14 +10653,16 @@ surv_quant <- function(y, x, df) {
   odf_mqt <- as.data.frame(rbind(cbind(round(qt2, 2), round(qt1 ,2)),
                                  cbind(round(trt_mn, 2), round(ctl_mn, 2)) ))
   rownames(odf_mqt) <- c("p10", "p25", "p50", "p75", "p90", "Mean")
-  colnames(odf_mqt) <- c("Treatment", "Control")  #Observed data.frame of the means and quantiles
+  colnames(odf_mqt) <- c(Trt.NM, Ctl.NM)  #Observed data.frame of the means and quantiles
   ###  
   return(list("odf_mqt"=odf_mqt))
 }
 #Run the function above
 surv_quant_run <- reactive({
   if(input$survBinComp == "Yes") {
-    surv_quant(y= outcome(), x= survival_var_X() , df= df())
+    surv_quant(y= outcome(), x= survival_var_X() , df= df(), 
+               Trt.NM=dens_strata_final_stata_names()[2], 
+               Ctl.NM=dens_strata_final_stata_names()[1])
   }  
 })
 

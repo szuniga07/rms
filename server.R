@@ -8312,7 +8312,8 @@ quant_plt1_fnc <- function(ests, Y, Trt.NM, Ctl.NM,
   #       ylab=Y, xlab="Percentiles",
   #       ylim=c(0, max(est1, na.rm=T)*.9), xlim=c(1, 5),
   #       axes=F, main= paste0("Estimated ", Y, " over quantiles"))
-  
+  #Set up plotting space
+  par(mar = c(6, 6, 3, 1) + 0.1)
   plot(1:5, est1[, 1], axes=F, type="n", ylab="", xlab="", main="",
        xlim=c(qntXLim1, qntXLim2), ylim=c(qntYLim1, qntYLim2))
   title(paste0("Estimated ", Y, " over quantiles"), cex.main = 1.1*labMulti) 

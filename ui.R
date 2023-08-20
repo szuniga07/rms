@@ -1506,7 +1506,7 @@ tabPanel("Cost",
          br(),
          h5("Dudley, R. & Harrell, F. (1993). 'Comparison of analytic models for estimating the effect of clinical factors on the cost of coronary artery bypass graft surgery'. Journal of Clinical Epidemiology, 46(3), 261-271."),
          br(),
-         h5("The following 5 questions will set up the types of plots and tabled results."),                   
+         h5("The following 5 questions will set up the types of plots and tabled results. Stratification is by 0 vs. >= 1 for 3+ levels."),                   
          h6("Note: If using the Cox PH model with censoring, censor a non-event (e.g., death = 0)."),                   
          h6("Note: Not all tables and plots are applicable to a quantile regression (e.g., means)."), 
          fluidRow(

@@ -8257,9 +8257,11 @@ cost_plot1_grp <- function(y, x, df, Trt.NM, Ctl.NM,
   d_trt <- DENS$Density.FUN1
   #Treatment/control group means/medians
   ctl_med <- median(df[, y][as.numeric(df[, x]) == min(as.numeric(df[, x]))], na.rm=T)
-  trt_med <- median(df[, y][as.numeric(df[, x]) == max(as.numeric(df[, x]))], na.rm=T)
+#  trt_med <- median(df[, y][as.numeric(df[, x]) == max(as.numeric(df[, x]))], na.rm=T)
+  trt_med <- median(df[, y][as.numeric(df[, x]) != min(as.numeric(df[, x]))], na.rm=T)
   ctl_mn <- mean(df[, y][as.numeric(df[, x]) == min(as.numeric(df[, x]))], na.rm=T)
-  trt_mn <- mean(df[, y][as.numeric(df[, x]) == max(as.numeric(df[, x]))], na.rm=T)
+#  trt_mn <- mean(df[, y][as.numeric(df[, x]) == max(as.numeric(df[, x]))], na.rm=T)
+  trt_mn <- mean(df[, y][as.numeric(df[, x]) != min(as.numeric(df[, x]))], na.rm=T)
   #The graph
   par(mar = c(6, 6, 3, 1) + 0.1)
   plot(d_ctl, axes=F, type="n", ylab="", xlab="", main="",
@@ -8346,12 +8348,15 @@ cost_quant <- function(y, x, df) {
   
   #Treatment/control group means/medians
   ctl_med <- median(df[, y][as.numeric(df[, x]) == min(as.numeric(df[, x]), na.rm=T)], na.rm=T)
-  trt_med <- median(df[, y][as.numeric(df[, x]) == max(as.numeric(df[, x]), na.rm=T)], na.rm=T)
+#  trt_med <- median(df[, y][as.numeric(df[, x]) == max(as.numeric(df[, x]), na.rm=T)], na.rm=T)
+  trt_med <- median(df[, y][as.numeric(df[, x]) != min(as.numeric(df[, x]), na.rm=T)], na.rm=T)
   ctl_mn <- mean(df[, y][as.numeric(df[, x]) == min(as.numeric(df[, x]), na.rm=T)], na.rm=T)
-  trt_mn <- mean(df[, y][as.numeric(df[, x]) == max(as.numeric(df[, x]), na.rm=T)], na.rm=T)
+#  trt_mn <- mean(df[, y][as.numeric(df[, x]) == max(as.numeric(df[, x]), na.rm=T)], na.rm=T)
+  trt_mn <- mean(df[, y][as.numeric(df[, x]) != min(as.numeric(df[, x]), na.rm=T)], na.rm=T)
   #### Get quantiles and bind with means. Partially used in the legend and the observed table in a later section
   qt1 <- quantile(df[, y][as.numeric(df[, x]) == min(as.numeric(df[, x]), na.rm=T)], probs=c(.1, .25, .5, .75, .9), na.rm=T)
-  qt2 <- quantile(df[, y][as.numeric(df[, x]) == max(as.numeric(df[, x]), na.rm=T)], probs=c(.1, .25, .5, .75, .9), na.rm=T)
+#  qt2 <- quantile(df[, y][as.numeric(df[, x]) == max(as.numeric(df[, x]), na.rm=T)], probs=c(.1, .25, .5, .75, .9), na.rm=T)
+  qt2 <- quantile(df[, y][as.numeric(df[, x]) != min(as.numeric(df[, x]), na.rm=T)], probs=c(.1, .25, .5, .75, .9), na.rm=T)
   odf_mqt <- as.data.frame(rbind(cbind(round(qt2, 2), round(qt1 ,2)),
                                  cbind(round(trt_mn, 2), round(ctl_mn, 2)) ))
   rownames(odf_mqt) <- c("p10", "p25", "p50", "p75", "p90", "Mean")

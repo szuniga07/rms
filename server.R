@@ -10519,7 +10519,9 @@ output$surv_binary_compare <- renderUI({
 ############################################
 #   Plot 2: Estimated cost over quantiles  #
 ############################################
-surv_quant_ests_fnc <- function(fit, Y, X, reg, Trt.NM, Ctl.NM) {
+surv_quant_ests_fnc <- function(fit, Y, X, reg )
+                                #, Trt.NM, Ctl.NM) 
+                                {
   #Creates function that will make correct value 
   surv_MED_cox <<- Quantile(fit)                                                       #Creates function to compute quantiles
   
@@ -10564,11 +10566,13 @@ surv_quant_ests_fnc <- function(fit, Y, X, reg, Trt.NM, Ctl.NM) {
   if (reg %in% c("AFT","AFT with censoring") ) {
     est2 <- est1[, c(2,4,6,1,3,5)]
   }
-  colnames(est2) <- c(Trt.NM, "L95", "U95", Ctl.NM, "L95", "U95")
+  #colnames(est2) <- c(Trt.NM, "L95", "U95", Ctl.NM, "L95", "U95")
+  colnames(est2) <- c("Treatment", "L95", "U95", "Control", "L95", "U95")
   rownames(est2) <- c("p10", "p25", "p50","p75", "p90")
   
   #Add cost difference between Treatment and controls 
-  est2$Diff. <- round(est2[, Trt.NM] - est2[, Ctl.NM], 2 )
+#  est2$Diff. <- round(est2[, Trt.NM] - est2[, Ctl.NM], 2 )
+  est2$Diff. <- round(est2[, "Treatment"] - est2[, "Control"], 2 )
   ## Add in weighted average into the table
   #Combine everything
   return(list(est1=est1, est2=est2))
@@ -10592,7 +10596,9 @@ output$surv_quant_out1 <- renderTable({
 ##########################
 ### Get mean estimates ###
 ##########################
-surv_mean_ests_fnc <- function(fit, Y, X, reg, Trt.NM, Ctl.NM) {
+surv_mean_ests_fnc <- function(fit, Y, X, reg) 
+                               #, Trt.NM, Ctl.NM) 
+  {
   #Creates function that will make correct value 
   surv_MN_cox <<- Mean(fit)                                                       #Creates function to compute quantiles
   
@@ -10620,19 +10626,22 @@ surv_mean_ests_fnc <- function(fit, Y, X, reg, Trt.NM, Ctl.NM) {
   if (reg %in% c("AFT","AFT with censoring") ) {
     est2 <- est1[, c(2,4,6,1,3,5)]
   }
-  colnames(est2) <- c(Trt.NM, "L95", "U95", Ctl.NM, "L95", "U95")
+#  colnames(est2) <- c(Trt.NM, "L95", "U95", Ctl.NM, "L95", "U95")
+  colnames(est2) <- c("Treatment", "L95", "U95", "Control", "L95", "U95")
   rownames(est2) <- "Mean"
   #Add cost difference between Treatment and controls 
-  est2$Diff. <- abs(round(est2[, Ctl.NM]) - round(est2[, Trt.NM]))
+  est2$Diff. <- abs(round(est2[, "Control"]) - round(est2[, "Treatment"]))
+#  est2$Diff. <- abs(round(est2[, Ctl.NM]) - round(est2[, Trt.NM]))
   return(list(est1=est1, est2=est2))
 }  
 
 #This runs the function above
 surv_mean_ests <- reactive({
   if(input$survBinComp == "Yes") {
-    surv_mean_ests_fnc(fit=fit1(), Y= outcome(), X= survival_var_X(), reg=input$regress_type,
-                       Trt.NM=dens_strata_final_stata_names()[2], 
-                       Ctl.NM=dens_strata_final_stata_names()[1])
+    surv_mean_ests_fnc(fit=fit1(), Y= outcome(), X= survival_var_X(), reg=input$regress_type
+                       #, Trt.NM=dens_strata_final_stata_names()[2], 
+                       #Ctl.NM=dens_strata_final_stata_names()[1]
+                       )
   }  
 })
 
@@ -10646,7 +10655,9 @@ output$surv_mean_out1 <- renderTable({
 #Observed mean and quantiles
 #This gets quantiles and means
 #Function that gets cost value quantiles between the treatment and control groups 
-surv_quant <- function(y, x, df, Trt.NM, Ctl.NM) {
+surv_quant <- function(y, x, df)
+                       #, Trt.NM, Ctl.NM 
+  {
   
   #Treatment/control group means/medians
   ctl_med <- median(df[, y][as.numeric(df[, x]) == min(as.numeric(df[, x]), na.rm=T)], na.rm=T)
@@ -10659,16 +10670,18 @@ surv_quant <- function(y, x, df, Trt.NM, Ctl.NM) {
   odf_mqt <- as.data.frame(rbind(cbind(round(qt2, 2), round(qt1 ,2)),
                                  cbind(round(trt_mn, 2), round(ctl_mn, 2)) ))
   rownames(odf_mqt) <- c("p10", "p25", "p50", "p75", "p90", "Mean")
-  colnames(odf_mqt) <- c(Trt.NM, Ctl.NM)  #Observed data.frame of the means and quantiles
+#  colnames(odf_mqt) <- c(Trt.NM, Ctl.NM)  #Observed data.frame of the means and quantiles
+  colnames(odf_mqt) <- c("Treatment", "Control")  #Observed data.frame of the means and quantiles
   ###  
   return(list("odf_mqt"=odf_mqt))
 }
 #Run the function above
 surv_quant_run <- reactive({
   if(input$survBinComp == "Yes") {
-    surv_quant(y= outcome(), x= survival_var_X() , df= df(), 
-               Trt.NM=dens_strata_final_stata_names()[2], 
-               Ctl.NM=dens_strata_final_stata_names()[1])
+    surv_quant(y= outcome(), x= survival_var_X() , df= df()  
+#               ,Trt.NM=dens_strata_final_stata_names()[2], 
+#               Ctl.NM=dens_strata_final_stata_names()[1]
+               )
   }  
 })
 

@@ -1,4 +1,4 @@
-                      
+                       
 #The code below allows me to print 2 plots in the same panel.   
   shinyUI(  
     fluidPage( 
@@ -942,7 +942,7 @@ tabPanel("Survival",
          h5("Note: Stratified survival function curves don't include time increment and confidence bands/bars options."),
          h5("The log-minus-log plot is not applicable to the survival and cumulative hazard function plots. The log-minus-log plot can have negative values, adjust y limit values accordingly."),
          br(),
-         h5("Set up the survival plot. The default plot (#4 == 'No') is the Kaplan-Meier survival function (#10 == 'Survival')."),
+         h5("Set up the survival plot. The default plot (#4 == 'No') is the Kaplan-Meier survival function (#12 == 'Survival')."),
          fluidRow(
            column(3, 
                   uiOutput("srv_plt_one_x")),

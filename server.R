@@ -12465,7 +12465,7 @@ fncStSpcLegendFactoLev <- function(Model_fit, X_Lev) {
 #             Additional function to run from the Describe tab                 #
 ################################################################################
 ## Calibration curve ##
-Calibration.Curve <- function(model.fit=fit1(), df.cal=df(), outcome.Y=outcome(), BINS=NULL, POS=NULL, CEX=NULL) {
+Calibration.Curve <- function(model.fit=fit1(), df.cal=df(), outcome.Y=outcome(), BINS=NULL, POS=NULL, CEX=NULL, Reg.Type=input$regress_type) {
   #Create the number of quantiles
   if(is.null(BINS)) {
     quant.pick <- 10
@@ -12485,16 +12485,36 @@ Calibration.Curve <- function(model.fit=fit1(), df.cal=df(), outcome.Y=outcome()
     CEX.cal <- CEX
   }
   
-  cal.quants <- cut2(model.fit$fitted.values, g=quant.pick)    
+  if (Reg.Type %in% c("Linear","Poisson", "Generalized Least Squares", "Quantile")) {
+    cal.quants <- cut2(model.fit$fitted.values, g=quant.pick)    
+  }
+  if (Reg.Type == "Logistic") {
+    cal.quants <- cut2(plogis(model.fit$linear.predictors), g=quant.pick)    
+  }
   quant.ls <- list()
-  for (i in 1:quant.pick) {
-    quant.ls[i] <- mean( model.fit$fitted.values[cal.quants == levels(cal.quants)[i] ] ,na.rm=TRUE)   
+  if (Reg.Type %in% c("Linear","Poisson", "Generalized Least Squares", "Quantile")) {
+    for (i in 1:quant.pick) {
+      quant.ls[i] <- mean( model.fit$fitted.values[cal.quants == levels(cal.quants)[i] ] ,na.rm=TRUE)   
+    }
+  }
+  if (Reg.Type == "Logistic") {
+    for (i in 1:quant.pick) {
+      quant.ls[i] <- mean( plogis(model.fit$linear.predictors)[cal.quants == levels(cal.quants)[i] ] ,na.rm=TRUE)  
+    }
   }
   obsY.ls <- list()
   for (i in 1:quant.pick) {
     obsY.ls[i] <- mean( model.fit$y[cal.quants == levels(cal.quants)[i] ] ,na.rm=TRUE)
   }
-  
+  #  cal.quants <- cut2(model.fit$fitted.values, g=quant.pick)    
+  #  quant.ls <- list()
+  #  for (i in 1:quant.pick) {
+  #    quant.ls[i] <- mean( model.fit$fitted.values[cal.quants == levels(cal.quants)[i] ] ,na.rm=TRUE)   
+  #  }
+  #  obsY.ls <- list()
+  #  for (i in 1:quant.pick) {
+  #    obsY.ls[i] <- mean( model.fit$y[cal.quants == levels(cal.quants)[i] ] ,na.rm=TRUE)
+  #  }  
   plot(1:quant.pick, quant.ls, type="n", 
        ylim=c(min(unlist(quant.ls), unlist(obsY.ls),na.rm=T )* .99, max(unlist(quant.ls), unlist(obsY.ls),na.rm=T) *1.01),
        main="Calibration curve with observed means per bin", xlab="Means of predicted values in bins", 
@@ -12505,8 +12525,9 @@ Calibration.Curve <- function(model.fit=fit1(), df.cal=df(), outcome.Y=outcome()
   lines(1:quant.pick, quant.ls, lwd=5, col="red")
   text(1:quant.pick, unlist(obsY.ls), labels = round(unlist(obsY.ls), 2), cex=(CEX.cal* .5), pos=POS.cal)
   box()
-  return( list("Observed Y means"=unlist(obsY.ls), "Predicted Y means"=unlist(quant.ls)  ) )
-
+  return( list("Observed Y means"=unlist(obsY.ls), "Predicted Y means"=unlist(quant.ls),
+               "Quantiles"=levels(unlist(cal.quants))) )
+  
 }
 
 ## Function to plot a PNG picture ## Add jpeg and a real plot() in the future

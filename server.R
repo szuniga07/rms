@@ -1993,6 +1993,12 @@ descion_crv_plt_ylim2 <- reactive({
     input$dc_Ylim2
   }
 })
+#20. Run the print function 
+output$get_decision_curve_out <- renderPrint({
+  if (decison_curve_analysis_yes_no() =="Yes") {
+    thresh_quant_data_output()[-1]
+  }
+})
 
 ################
 ##  Functions ##
@@ -2071,16 +2077,16 @@ fncYhatClassDf <- function(Fit, Y, Threshold, Censor=NULL, PredTime=NULL, RegTyp
   #Get probability for 4 types of response
 #old  pr_table1 <- prop.table(table(factor(pm1 >= threshLev, levels=c("FALSE","TRUE") )))
 #old  pr_table2 <- prop.table(table(factor(pm2 >= threshLev, levels=c("FALSE","TRUE") )))
-  pr_table1 <- prop.table(table(factor(pm1 > threshLev, levels=c("FALSE","TRUE") )))
-  pr_table2 <- prop.table(table(factor(pm2 > threshLev, levels=c("FALSE","TRUE") )))
+  pr_table1 <- prop.table(table(factor(pm1 >= threshLev, levels=c("FALSE","TRUE") )))
+  pr_table2 <- prop.table(table(factor(pm2 >= threshLev, levels=c("FALSE","TRUE") )))
   #Sensitivity and 1 - specificity
   propAbovMY1 <-  pr_table1["TRUE"]  #Sensitivity
   fls_Neg <-  pr_table1["FALSE"]  #FALSE negative
   propAbovMY0 <- pr_table2["TRUE"]  #1-specificity or false-positive
   specifity <-  pr_table2["FALSE"]  #Specificity
 #Get frequencies
-  f_table1 <- table(factor(pm1 > threshLev, levels=c("FALSE","TRUE") ))
-  f_table2 <- table(factor(pm2 > threshLev, levels=c("FALSE","TRUE") ))
+  f_table1 <- table(factor(pm1 >= threshLev, levels=c("FALSE","TRUE") ))
+  f_table2 <- table(factor(pm2 >= threshLev, levels=c("FALSE","TRUE") ))
   #Sensitivity and 1 - specificity
   N.AbovMY1 <-  f_table1["TRUE"]  #Sensitivity
   N.fls_Neg <-  f_table1["FALSE"]  #FALSE negative
@@ -2373,23 +2379,48 @@ fncClassDfSmry <- function(ClassDF, RegType) {
 ###########################################
 fncThreshQntl <- function(Fit, Y, Threshold, Censor=NULL, PredTime=NULL, RegType, DF, OffSetName) {
   #Get sensitivity and specificity for IQR of predicted values
-  yClass.05 <-  fncYhatClassDf(Fit=Fit, Y=Y, Threshold=as.numeric(Threshold[["counts"]][7]), 
-                               Censor=Censor, PredTime=PredTime, RegType=RegType, DF=DF, OffSetName=OffSetName)
-  yClass.10 <-  fncYhatClassDf(Fit=Fit, Y=Y, Threshold=as.numeric(Threshold[["counts"]][8]), 
-                               Censor=Censor, PredTime=PredTime, RegType=RegType, DF=DF, OffSetName=OffSetName)
-  yClass.25 <-  fncYhatClassDf(Fit=Fit, Y=Y, Threshold=as.numeric(Threshold[["counts"]][9]), 
-                               Censor=Censor, PredTime=PredTime, RegType=RegType, DF=DF, OffSetName=OffSetName)
-  yClass.50 <-  fncYhatClassDf(Fit=Fit, Y=Y, Threshold=as.numeric(Threshold[["counts"]][10]), 
-                               Censor=Censor, PredTime=PredTime, RegType=RegType, DF=DF, OffSetName=OffSetName)
-  yClass.75 <-  fncYhatClassDf(Fit=Fit, Y=Y, Threshold=as.numeric(Threshold[["counts"]][11]), 
-                               Censor=Censor, PredTime=PredTime, RegType=RegType, DF=DF, OffSetName=OffSetName)
-  yClass.90 <-  fncYhatClassDf(Fit=Fit, Y=Y, Threshold=as.numeric(Threshold[["counts"]][12]), 
-                               Censor=Censor, PredTime=PredTime, RegType=RegType, DF=DF, OffSetName=OffSetName)
-  yClass.95 <-  fncYhatClassDf(Fit=Fit, Y=Y, Threshold=as.numeric(Threshold[["counts"]][13]), 
-                               Censor=Censor, PredTime=PredTime, RegType=RegType, DF=DF, OffSetName=OffSetName)
-  #Group the output
-  YClass <- list("yClass.05"=yClass.05, "yClass.10"=yClass.10, "yClass.25"=yClass.25,"yClass.50"=yClass.50,
-                 "yClass.75"=yClass.75, "yClass.90"=yClass.90, "yClass.95"=yClass.95)
+  #Low 5: 5th lowest value
+  yClass.L5 <-  try(fncYhatClassDf(Fit=Fit, Y=Y, Threshold=as.numeric(Threshold[["extremes"]][5]), 
+                               Censor=Censor, PredTime=PredTime, RegType=RegType, DF=DF, OffSetName=OffSetName))
+  yClass.05 <-  try(fncYhatClassDf(Fit=Fit, Y=Y, Threshold=as.numeric(Threshold[["counts"]][7]), 
+                               Censor=Censor, PredTime=PredTime, RegType=RegType, DF=DF, OffSetName=OffSetName))
+  yClass.10 <-  try(fncYhatClassDf(Fit=Fit, Y=Y, Threshold=as.numeric(Threshold[["counts"]][8]), 
+                               Censor=Censor, PredTime=PredTime, RegType=RegType, DF=DF, OffSetName=OffSetName))
+  yClass.25 <-  try(fncYhatClassDf(Fit=Fit, Y=Y, Threshold=as.numeric(Threshold[["counts"]][9]), 
+                               Censor=Censor, PredTime=PredTime, RegType=RegType, DF=DF, OffSetName=OffSetName))
+  yClass.50 <-  try(fncYhatClassDf(Fit=Fit, Y=Y, Threshold=as.numeric(Threshold[["counts"]][10]), 
+                               Censor=Censor, PredTime=PredTime, RegType=RegType, DF=DF, OffSetName=OffSetName))
+  yClass.75 <-  try(fncYhatClassDf(Fit=Fit, Y=Y, Threshold=as.numeric(Threshold[["counts"]][11]), 
+                               Censor=Censor, PredTime=PredTime, RegType=RegType, DF=DF, OffSetName=OffSetName))
+  yClass.90 <-  try(fncYhatClassDf(Fit=Fit, Y=Y, Threshold=as.numeric(Threshold[["counts"]][12]), 
+                               Censor=Censor, PredTime=PredTime, RegType=RegType, DF=DF, OffSetName=OffSetName))
+  yClass.95 <-  try(fncYhatClassDf(Fit=Fit, Y=Y, Threshold=as.numeric(Threshold[["counts"]][13]), 
+                               Censor=Censor, PredTime=PredTime, RegType=RegType, DF=DF, OffSetName=OffSetName))
+  #High 5: 5th highest value
+  yClass.H5 <-  try(fncYhatClassDf(Fit=Fit, Y=Y, Threshold=as.numeric(Threshold[["extremes"]][6]), 
+                               Censor=Censor, PredTime=PredTime, RegType=RegType, DF=DF, OffSetName=OffSetName))
+
+  #Run yhat function when there are too few predictor values
+  yclass_list <- list()
+  if(length(Threshold$counts) != 13) {
+#if(is.null(Threshold$extremes)) {
+    for(i in 1:length(Threshold$values$value)) {
+      yclass_list[[i]] <- fncYhatClassDf(Fit=Fit, Y=Y, Threshold=as.numeric(Threshold[["values"]][[1]][ i ]), 
+                     Censor=Censor, PredTime=PredTime, RegType=RegType, DF=DF, OffSetName=OffSetName)
+      names(yclass_list)[i] <- paste0("yClass.", i)
+    }
+  }
+    
+    #Group the output
+  if(length(Threshold$counts) != 13) {
+    YClass <- yclass_list
+  } else {
+    YClass <- list("yClass.05"=yClass.05, "yClass.10"=yClass.10, "yClass.25"=yClass.25,"yClass.50"=yClass.50,
+                   "yClass.75"=yClass.75, "yClass.90"=yClass.90, "yClass.95"=yClass.95)
+  }
+  
+#  YClass <- list("yClass.L5"=yClass.L5, "yClass.05"=yClass.05, "yClass.10"=yClass.10, "yClass.25"=yClass.25,"yClass.50"=yClass.50,
+#                 "yClass.75"=yClass.75, "yClass.90"=yClass.90, "yClass.95"=yClass.95, "yClass.H5"=yClass.H5)
   #Quantile levels for YClass
   YClass_Quants <- as.numeric(names(Threshold$counts)[7:13])
   

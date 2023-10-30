@@ -266,16 +266,24 @@ h5("Someone may not do more than 10 biopsies to find one high-grade cancer in pa
 fluidRow(
   column(3, 
          uiOutput("pred_class_thresh")),
-  column(3, offset=1,
-         uiOutput("pred_class_time"))
+  column(3,
+         uiOutput("pred_class_time")),
+  column(3, 
+         uiOutput("class_pri_mdl_nm")),
+  column(3,
+         uiOutput("use_pred_cls_pri_mdl_yesno"))
 ),
 br(),
 h5("Get classifcation results from a prior model on new data. Upload prior model in 'Data' or 'PREDs' tabs, set up model above, enter prior model fit name in #3, and answer 'Yes' in #4 below."),
 fluidRow(
   column(3, 
-         uiOutput("class_pri_mdl_nm")),
-  column(3, offset=1,
-         uiOutput("use_pred_cls_pri_mdl_yesno"))
+         uiOutput("pred_class_t_br_clrs")),
+  column(3, 
+         uiOutput("pred_class_f_br_clrs")),
+  column(3, 
+         uiOutput("pred_class_ln_clrs")),
+  column(3, 
+         uiOutput("pred_class_ln_wdth"))
 ),
 br(),
 fluidRow(
@@ -315,7 +323,9 @@ fluidRow(
   column(3, 
          uiOutput("dca_lgd_loc")),
   column(3, 
-         uiOutput("decison_curve_anly_yesno"))
+         uiOutput("dca_plot_ln_clrs")),
+  column(3, 
+         uiOutput("dca_ln_wdth"))
 ),
 fluidRow(
   column(3, 
@@ -327,12 +337,16 @@ fluidRow(
   column(3,
          uiOutput("descionCrvPltYlim2"))
 ),
+fluidRow(
+  column(3, 
+         uiOutput("decison_curve_anly_yesno"))
+),
 br(),
 plotOutput("plot_thresh_quant_run", height = 800, width="100%"),
 h5("The decision curve's weights (e.g., Pt/1-Pt) for 7 predicted values use quantiles (0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95)."),
 h5("The X-axis also represents the binary categories and values when there are < 20 unique values."),
 br(),
-h4("Decision Curve Analysis output for various thresholds along quantiles and 5th lowet/highest values."),
+h4("Decision Curve Analysis output for various thresholds along quantiles."),
 verbatimTextOutput("get_decision_curve_out"),
 h5("The DCA output is for each threshold level listed above."),
 br()

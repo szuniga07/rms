@@ -1750,7 +1750,7 @@ prediction_class_threshold <- reactive({
 
 #2. Select a survival model time (e.g., 7 days)
 output$pred_class_time <- renderUI({                                 
-  numericInput("PredClassTime", "2. Select a survival model time (e.g., 7 days).", 
+  numericInput("PredClassTime", "2. Select a survival model time.", 
                value = 1, step = 1, min=0)     
 })
 #2A. Object for survival model time 
@@ -1773,7 +1773,7 @@ class_prior_model_fit_name <- reactive({
 
 #4. Indicate if you want to use a prior model
 output$use_pred_cls_pri_mdl_yesno <- renderUI({                                 
-  selectInput("useClsPrModelYN", "4. Do you want to use the prior model fit?", 
+  selectInput("useClsPrModelYN", "4. Use the prior model fit?", 
               choices = c("No", "Yes"), multiple=FALSE, selected="No")  
   })
 
@@ -1781,37 +1781,75 @@ output$use_pred_cls_pri_mdl_yesno <- renderUI({
   use_class_prior_model_YN <- reactive({
     input$useClsPrModelYN
   })
+
+  #5. Select TRUE bar colors
+  output$pred_class_t_br_clrs <- renderUI({                                 
+    selectInput("prClTBrClr", "5. Select 'True' bar colors.", 
+                choices = xyplot_Line_Color_Names(), multiple=FALSE, selected= "green")     
+  })
+  #5a. Reactive function for directly above
+  pred_class_T_Bar_Colors <- reactive({                 
+    input$prClTBrClr 
+  })
+  #6. Select FALSE bar colors
+  output$pred_class_f_br_clrs <- renderUI({                                 
+    selectInput("prClFBrClr", "6. Select 'False' bar colors.", 
+                choices = xyplot_Line_Color_Names(), multiple=FALSE, selected= "red")     
+  })
+  #6a. Reactive function for directly above
+  pred_class_F_Bar_Colors <- reactive({                 
+    input$prClFBrClr 
+  })
   
-#5. Select the approximate number of histogram bars
+  #7. Select threshold line colors
+  output$pred_class_ln_clrs <- renderUI({                                 
+    selectInput("prClLnClr", "7. Set threshold line color.", 
+                choices = xyplot_Line_Color_Names(), multiple=FALSE, selected= "blue")     
+  })
+  #7a. Reactive function for directly above
+  pred_class_Line_Colors <- reactive({                 
+    input$prClLnClr 
+  })
+  
+  #8. Select line width
+  output$pred_class_ln_wdth <- renderUI({                                 
+    numericInput("prClLnWd", "8. Set threshold line width.", 
+                 value = 2, min=0, step = 1)     
+  })
+  #8a. Reactive function for directly above
+  pred_class_Line_Width <- reactive({                 
+    input$prClLnWd 
+  })
+  
+#9. Select the approximate number of histogram bars
 output$pred_class_hist_bars <- renderUI({                                 
-  numericInput("PredClassHistBars", "5. Select the approximate number of histogram bars.", 
+  numericInput("PredClassHistBars", "9. Select the approximate number of histogram bars.", 
                value = 15, step = 1, min=2)     
 })
-#5A. Object for histogram bars 
+#9A. Object for histogram bars 
 prediction_class_histogram_bars <- reactive({
 #  if (input$begin_mdl == "Yes") {
     input$PredClassHistBars
 #  }
 })
 
-#6. Select a survival model time (e.g., 7 days)
+#10. Select a survival model time (e.g., 7 days)
 output$class_hist_asp_ratio <- renderUI({                                 
-  selectInput("clsHistAspRtio", "6. Do you want both y-axes on the same scale?", 
+  selectInput("clsHistAspRtio", "10. Do you want both y-axes on the same scale?", 
               choices = c("No", "Yes"), multiple=FALSE, selected="No")     
 })
-#6A. Object for survival model time 
+#10A. Object for survival model time 
 class_histogram_aspect_ratio <- reactive({
 #  if (input$begin_mdl == "Yes") {
     input$clsHistAspRtio
 #  }
 })
-
-#7. Indicate if you want the classification plot
+#11. Indicate if you want the classification plot
 output$pred_class_hist_yesno <- renderUI({                                 
-  selectInput("PredClassHistYN", "7. Do you want to run the classification plot?", 
+  selectInput("PredClassHistYN", "11. Do you want to run the classification plot?", 
               choices = c("No", "Yes"), multiple=FALSE, selected="No")     
 })
-#7A. Object for classification plot 
+#11A. Object for classification plot 
 prediction_class_histogram_yes_no <- reactive({
  # if (input$begin_mdl == "Yes") {
     input$PredClassHistYN
@@ -1857,7 +1895,9 @@ binary_classification_AUC_output <- reactive({
 plot_binary_class_function <- reactive({
   if (prediction_class_histogram_yes_no() =="Yes") {
     fncYhatClassPlt(ClassDF=binary_classification_data_output(), AUC=binary_classification_AUC_output(), 
-                    Brks=prediction_class_histogram_bars(), RegType= input$regress_type, aspectRatio=class_histogram_aspect_ratio() #Dropped, Yhat=describeYhatHistRslt() 
+                    Brks=prediction_class_histogram_bars(), RegType= input$regress_type, 
+                    aspectRatio=class_histogram_aspect_ratio(), TBar=pred_class_T_Bar_Colors(), 
+                    FBar=pred_class_F_Bar_Colors(), ThreshCol=pred_class_Line_Colors(), ThreshSize=pred_class_Line_Width() 
                     )
   }
 })
@@ -1883,6 +1923,16 @@ output$get_bin_class_sens_spc_out <- renderPrint({
 #############################
 ## Decision curve analysis ##
 #############################
+#13. Indicate if you want the classification plot
+output$net_or_intervention <- renderUI({                                 
+  selectInput("netOrIntrvntn", "1. Plot net benefit or interventions avoided?", 
+              choices = c("Net Benefit", "Interventions Avoided"), multiple=FALSE, selected="Net Benefit")     
+})
+#13A. Object for classification plot 
+#prediction_class_histogram_yes_no
+net_benefit_or_interventions <- reactive({
+  input$netOrIntrvntn
+})
 #2. Legend location
 output$dca_lgd_loc <- renderUI({                                
   selectInput("dcaLgdLoc", "2. Select the legend location.",        
@@ -1893,26 +1943,35 @@ output$dca_lgd_loc <- renderUI({
 dca_legend_location <- reactive({
   input$dcaLgdLoc
 })
+#3. Select line colors
+output$dca_plot_ln_clrs <- renderUI({                                 
+  selectInput("dcaPltLnClr", "3. Select line colors.", 
+              choices = xyplot_Line_Color_Names(), multiple=TRUE,
+              selected= xyplot_Line_Color_Names()[c(4,7,8)] )     
+})
+#3a. Reactive function for directly above
+dca_plot_Line_Colors <- reactive({                 
+  input$dcaPltLnClr 
+})
+#4. Select line width
+output$dca_ln_wdth <- renderUI({                                 
+  numericInput("dcaLnWd", "4. Select line width.", 
+               value = 2, min=0, step = 1)     
+})
+#4a. Reactive function for directly above
+dca_Line_Width <- reactive({                 
+  input$dcaLnWd 
+})
 
 #12. Indicate if you want the classification plot
 output$decison_curve_anly_yesno <- renderUI({                                 
-  selectInput("decisCrvAnlYN", "3. Do you want to run the decision curve analysis?", 
+  selectInput("decisCrvAnlYN", "9. Do you want to run the decision curve analysis?", 
               choices = c("No", "Yes"), multiple=FALSE, selected="No")     
 })
 #12A. Object for classification plot 
 #prediction_class_histogram_yes_no
 decison_curve_analysis_yes_no <- reactive({
   input$decisCrvAnlYN
-})
-#13. Indicate if you want the classification plot
-output$net_or_intervention <- renderUI({                                 
-  selectInput("netOrIntrvntn", "1. Plot net benefit or interventions avoided?", 
-              choices = c("Net Benefit", "Interventions Avoided"), multiple=FALSE, selected="Net Benefit")     
-})
-#13A. Object for classification plot 
-#prediction_class_histogram_yes_no
-net_benefit_or_interventions <- reactive({
-  input$netOrIntrvntn
 })
 #Run functions below
 #14. Get data for functions 
@@ -1938,7 +1997,8 @@ plot_thresh_quant_function <- reactive({
   if (decison_curve_analysis_yes_no() =="Yes") {
     fncDcsnCrvPlt(ThreshQntl=thresh_quant_data_output(), CType=net_benefit_or_interventions(),
                   xlim1=descion_crv_plt_xlim1(), xlim2=descion_crv_plt_xlim2(), 
-                  ylim1=descion_crv_plt_ylim1(), ylim2=descion_crv_plt_ylim2(), Legend.Loc=dca_legend_location() )
+                  ylim1=descion_crv_plt_ylim1(), ylim2=descion_crv_plt_ylim2(), 
+                  Legend.Loc=dca_legend_location(), LCol=dca_plot_Line_Colors(), LSize=dca_Line_Width() )
   }
 })
 #15A. Run the plot function 
@@ -1950,7 +2010,7 @@ output$plot_thresh_quant_run <- renderPlot({
 
 #16. Indicate lower limit of x-axis
 output$descionCrvPltXlim1 <- renderUI({
-  numericInput("dc_Xlim1", "4. Lower X-axis limit.",
+  numericInput("dc_Xlim1", "5. Lower X-axis limit.",
                #value = cox_min_time(), step = 1)
                value = 0, step = .1)
 })
@@ -1962,7 +2022,7 @@ descion_crv_plt_xlim1 <- reactive({
 })
 #17. Indicate upper limit of x-axis
 output$descionCrvPltXlim2 <- renderUI({
-  numericInput("dc_Xlim2", "5. Upper X-axis limit.",
+  numericInput("dc_Xlim2", "6. Upper X-axis limit.",
                value = 1, step = .1)
 })
 #17A. Set up Decision Curve
@@ -1973,7 +2033,7 @@ descion_crv_plt_xlim2 <- reactive({
 })
 #18. Indicate lower limit of y-axis
 output$descionCrvPltYlim1 <- renderUI({
-  numericInput("dc_Ylim1", "6. Lower Y-axis limit.",
+  numericInput("dc_Ylim1", "7. Lower Y-axis limit.",
                value = 0, step = .1)
 })
 #18A. Set up Decision Curve
@@ -1984,7 +2044,7 @@ descion_crv_plt_ylim1 <- reactive({
 })
 #19. Indicate upper limit of x-axis
 output$descionCrvPltYlim2 <- renderUI({
-  numericInput("dc_Ylim2", "7. Upper Y-axis limit.",
+  numericInput("dc_Ylim2", "8. Upper Y-axis limit.",
                value = 1, step = .1)
 })
 #19A. Set up Decision Curve
@@ -2077,16 +2137,16 @@ fncYhatClassDf <- function(Fit, Y, Threshold, Censor=NULL, PredTime=NULL, RegTyp
   #Get probability for 4 types of response
 #old  pr_table1 <- prop.table(table(factor(pm1 >= threshLev, levels=c("FALSE","TRUE") )))
 #old  pr_table2 <- prop.table(table(factor(pm2 >= threshLev, levels=c("FALSE","TRUE") )))
-  pr_table1 <- prop.table(table(factor(pm1 >= threshLev, levels=c("FALSE","TRUE") )))
-  pr_table2 <- prop.table(table(factor(pm2 >= threshLev, levels=c("FALSE","TRUE") )))
+  pr_table1 <- prop.table(table(factor(round(pm1, 10) >= round(threshLev, 10), levels=c("FALSE","TRUE") )))
+  pr_table2 <- prop.table(table(factor(round(pm2, 10) >= round(threshLev, 10), levels=c("FALSE","TRUE") )))
   #Sensitivity and 1 - specificity
   propAbovMY1 <-  pr_table1["TRUE"]  #Sensitivity
   fls_Neg <-  pr_table1["FALSE"]  #FALSE negative
   propAbovMY0 <- pr_table2["TRUE"]  #1-specificity or false-positive
   specifity <-  pr_table2["FALSE"]  #Specificity
 #Get frequencies
-  f_table1 <- table(factor(pm1 >= threshLev, levels=c("FALSE","TRUE") ))
-  f_table2 <- table(factor(pm2 >= threshLev, levels=c("FALSE","TRUE") ))
+  f_table1 <- table(factor(round(pm1, 10) >= round(threshLev, 10), levels=c("FALSE","TRUE") ))
+  f_table2 <- table(factor(round(pm2, 10) >= round(threshLev, 10), levels=c("FALSE","TRUE") ))
   #Sensitivity and 1 - specificity
   N.AbovMY1 <-  f_table1["TRUE"]  #Sensitivity
   N.fls_Neg <-  f_table1["FALSE"]  #FALSE negative
@@ -2129,7 +2189,8 @@ fncThreshAUC <- function(ClassDF) {
 ##############
 ## Graphing ##
 ##############
-fncYhatClassPlt <- function(ClassDF, AUC, Brks, RegType, aspectRatio)  {
+fncYhatClassPlt <- function(ClassDF, AUC, Brks, RegType, aspectRatio,
+                            TBar, FBar, ThreshCol, ThreshSize)  {
   par(mfrow=c(2,1))
 #  xlimMin <- Yhat[["extremes"]][1]
 #  xlimMax <- Yhat[["extremes"]][10]
@@ -2162,29 +2223,29 @@ fncYhatClassPlt <- function(ClassDF, AUC, Brks, RegType, aspectRatio)  {
                         "Generalized Least Squares" = round(ClassDF$propAbovMY0, 3) )
   #Bar colors
   Bar.Colors1 <- switch(RegType,                
-                                "Linear"   = c("grey", "green"), 
-                                "Logistic" = c("grey", "green"),
-                        "Proportion Y Logistic" = c("grey", "green"),
-                        "Ordinal Logistic"  = c("grey", "green"),
-                                "Poisson"  = c("grey", "green"),
-                                "Quantile" = c("grey", "green"),
-                                "Cox PH"   = c("grey", "green"),
-                                "Cox PH with censoring"  = c("grey", "green"),
-                                "AFT"  = c("green", "grey"),
-                                "AFT with censoring"     = c("green", "grey"),
-                                "Generalized Least Squares" = c("grey", "green") )
+                                "Linear"   = c(FBar, TBar), 
+                                "Logistic" = c(FBar, TBar),
+                        "Proportion Y Logistic" = c(FBar, TBar),
+                        "Ordinal Logistic"  = c(FBar, TBar),
+                                "Poisson"  = c(FBar, TBar),
+                                "Quantile" = c(FBar, TBar),
+                                "Cox PH"   = c(FBar, TBar),
+                                "Cox PH with censoring"  = c(FBar, TBar),
+                                "AFT"  = c(TBar, FBar),
+                                "AFT with censoring"     = c(TBar, FBar),
+                                "Generalized Least Squares" = c(FBar, TBar) )
   Bar.Colors2 <- switch(RegType,                
-                        "Linear"   = c("grey", "red"), 
-                        "Logistic" = c("grey", "red"),
-                        "Proportion Y Logistic" = c("grey", "red"),
-                        "Ordinal Logistic"  = c("grey", "red"),
-                        "Poisson"  = c("grey", "red"),
-                        "Quantile" = c("grey", "red"),
-                        "Cox PH"   = c("grey", "red"),
-                        "Cox PH with censoring"  = c("grey", "red"),
-                        "AFT"  = c("red", "grey"),
-                        "AFT with censoring"     = c("red", "grey"),
-                        "Generalized Least Squares" = c("grey", "red") )
+                        "Linear"   = c(TBar, FBar), 
+                        "Logistic" = c(TBar, FBar),
+                        "Proportion Y Logistic" = c(TBar, FBar),
+                        "Ordinal Logistic"  = c(TBar, FBar),
+                        "Poisson"  = c(TBar, FBar),
+                        "Quantile" = c(TBar, FBar),
+                        "Cox PH"   = c(TBar, FBar),
+                        "Cox PH with censoring"  = c(TBar, FBar),
+                        "AFT"  = c(FBar, TBar),
+                        "AFT with censoring"     = c(FBar, TBar),
+                        "Generalized Least Squares" = c(TBar, FBar) )
   #AUC value
   AUC_val <- switch(RegType,                
                     "Linear"   = round(AUC, 3), 
@@ -2215,11 +2276,11 @@ fncYhatClassPlt <- function(ClassDF, AUC, Brks, RegType, aspectRatio)  {
   plot(h1, col=Bar.Colors1[cuts1], xlim=c(xlimMin, xlimMax), ylim=c(0, head(hyMAX, 1)),
        main=paste0("Outcome = Yes. (n = ", sum(ClassDF$N.AbovMY1, ClassDF$N.fls_Neg),"). Proportion of predictions at or above cutoff: ", Sens.Value, ".  AUC = ", AUC_val, "." ),
        xlab=paste0("Sensitivity: True-Positives in green using a cutoff of ", ClassDF$threshLev, " (Transformed = ", round(ClassDF$Transform.Threshold, 3), ")." ))
-  abline(v=ClassDF$threshLev, lwd=3, col=4)
+  abline(v=ClassDF$threshLev, lwd=ThreshSize, col=ThreshCol)
   plot(h2, col=Bar.Colors2[cuts2], xlim=c(xlimMin, xlimMax), ylim=c(0, tail(hyMAX, 1)),
        main=paste0("Outcome = No. (n = ", sum(ClassDF$N.specifity, ClassDF$N.AbovMY0),"). Proportion of predictions at or above cutoff: ", Spec.Value, ".  AUC = ", AUC_val, "."  ),
        xlab=paste0("1 - Specificity: False-Positives in red using a cutoff of ", ClassDF$threshLev, " (Transformed = ", round(ClassDF$Transform.Threshold, 3), ")." ))
-  abline(v=ClassDF$threshLev, lwd=3, col=4)
+  abline(v=ClassDF$threshLev, lwd=ThreshSize, col=ThreshCol)
   par(mfrow=c(1,1))
 }
 
@@ -2478,22 +2539,22 @@ fncThreshQntl <- function(Fit, Y, Threshold, Censor=NULL, PredTime=NULL, RegType
 #####################################
 ## Function to plot decision curve ##
 #####################################
-fncDcsnCrvPlt <- function(ThreshQntl, CType, xlim1,xlim2,ylim1,ylim2, Legend.Loc) {
+fncDcsnCrvPlt <- function(ThreshQntl, CType, xlim1,xlim2,ylim1,ylim2, Legend.Loc, LCol, LSize) {
   if(CType == "Net Benefit") {
     par(mar= c(5.1, 4.6, 4.1, 1.6))
     plot(ThreshQntl$Threshold.Level, ThreshQntl$Net.Benefit,type="n", xlim=c(xlim1,xlim2), ylim=c(ylim1,ylim2), 
          main="Decision curve plot of net benefit by threshold levels", xlab="Threshold", ylab="Net Benefit",
          cex.main=2, cex.lab=2)
-    lines(ThreshQntl$Threshold.Level, ThreshQntl$Net.Benefit,cex=2, lwd=3, lty=2)
-    lines(ThreshQntl$Threshold.Level, ThreshQntl$All.Treated,cex=2, lwd=3, lty=1, col=2)
-    abline(h=0, col=8, lwd=2)
+    lines(ThreshQntl$Threshold.Level, ThreshQntl$Net.Benefit,cex=2, lwd=LSize, lty=1, col=LCol[1])
+    lines(ThreshQntl$Threshold.Level, ThreshQntl$All.Treated,cex=2, lwd=LSize, lty=2, col=LCol[2])
+    abline(h=0, col=LCol[3], lwd=LSize)
     legend(x=Legend.Loc, legend=c("Model", "All treated", "None treated"), 
-           col=c(1,2,8), lty=c(2,1,1),
+           col=LCol, lty=c(1,2,1),
            lwd=2, cex=2)
   } else {
     par(mar= c(5.1, 4.6, 4.1, 1.6))
     plot(ThreshQntl$Threshold.Level, ThreshQntl$Interventions.Saved, 
-         lwd=4, type="l", col=4, axes=F, xlim=c(xlim1,xlim2), ylim=c(ylim1,ylim2), 
+         lwd=LSize, type="l", col=LCol[1], axes=F, xlim=c(xlim1,xlim2), ylim=c(ylim1,ylim2), 
          main="Decision curve plot of interventions avoided by threshold levels", xlab="Threshold",
          cex.main=2, cex.lab=2,
          ylab="Interventions avoided per 100 persons")

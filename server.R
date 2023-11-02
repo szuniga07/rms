@@ -12558,8 +12558,8 @@ fncStSpcLegendFactoLev <- function(Model_fit, X_Lev) {
 ################################################################################
 ## Calibration curve ##
 Calibration.Curve <- function(model.fit=NULL, df.cal=NULL, outcome.Y=NULL, 
-                              BINS=NULL, POS=NULL, CEX=NULL, Reg.Type=input$regress_type,
-                              VAL=NULL, RND=NULL, PCol=NULL, LCol=NULL, YLim=NULL) {
+                              BINS=NULL, POS=NULL, CEX=NULL, Reg.Type=NULL,
+                    VAL=FALSE, RND=NULL, PCol=NULL, LCol=NULL, LWD=NULL, YLim=NULL) {
   #Model fit name
   if(is.null(model.fit)) {
     model.fit <- fit1()
@@ -12611,14 +12611,12 @@ Calibration.Curve <- function(model.fit=NULL, df.cal=NULL, outcome.Y=NULL,
     unique.vals <- sort(unique(plogis(model.fit$linear.predictors))) 
   }
   #Select if the cuts are based on actual values
-  if(is.null(VAL)) {
+  if(VAL==FALSE) {
     VAL.cuts <- NULL
-  } else {
-    VAL.cuts <- c(unique.vals, max(unique.vals) + 1)
   }
-  #  if(VAL==TRUE) {
-  #    VAL.cuts <- c(unique.vals, max(unique.vals) + 1)
-  #  } 
+    if(VAL==TRUE) {
+      VAL.cuts <- c(unique.vals, max(unique.vals) + 1)
+    } 
   #Create the rounding digit object
   if(is.null(RND)) {
     RND.VAL <- 2
@@ -12637,10 +12635,15 @@ Calibration.Curve <- function(model.fit=NULL, df.cal=NULL, outcome.Y=NULL,
   } else {
     LCol.Val <- LCol
   }
+  #Create the point color
+  if(is.null(LWD)) {
+    LWD.Val <- 5
+  } else {
+    LWD.Val <- LWD
+  }
   
   #Make cuts
-  if (!is.null(VAL)) {
-    #if (VAL==TRUE) {
+    if (VAL==TRUE) {
     if (Reg.Type %in% c("Linear","Poisson", "Generalized Least Squares", "Quantile")) {
       cal.quants <- cut2(model.fit$fitted.values, cuts=VAL.cuts)    
     } else {
@@ -12665,6 +12668,11 @@ Calibration.Curve <- function(model.fit=NULL, df.cal=NULL, outcome.Y=NULL,
     for (i in 1:quant.pick) {
       quant.ls[i] <- mean( plogis(model.fit$linear.predictors)[cal.quants == levels(cal.quants)[i] ] ,na.rm=TRUE)  
     }
+  }
+  #Get frequency in each bin  
+  Freq.Bin.ls <- list()
+  for (i in 1:quant.pick) {
+    Freq.Bin.ls[i] <- length( model.fit$y[cal.quants == levels(cal.quants)[i] ])
   }
   #Get observed means  
   obsY.ls <- list()
@@ -12704,11 +12712,6 @@ Calibration.Curve <- function(model.fit=NULL, df.cal=NULL, outcome.Y=NULL,
                                                                      model.fit$y == as.numeric(names(table(model.fit$y)[2])) ] ,na.rm=TRUE)  
     }
   }
-  #Get observed counts for the Hosmer-Lemeshow  
-  #  obsY.sum.ls <- list()
-  #  for (i in 1:quant.pick) {
-  #    obsY.ls[[i]] <- table( model.fit$y[cal.quants == levels(cal.quants)[i] ] ,na.rm=TRUE)
-  #  }
   obsY.sum0.ls <- list()
   if (Reg.Type == "Logistic") {
     for (i in 1:quant.pick) {
@@ -12737,10 +12740,23 @@ Calibration.Curve <- function(model.fit=NULL, df.cal=NULL, outcome.Y=NULL,
   } else {
     HLX2 <- NA
   }
+  #HL degrees of freedom
   if (Reg.Type == "Logistic") {
-    HLX2.p.val <- 1-pchisq(HLX2, df= length(HLX2.Bin) - 2)  
+    HLX2.DF <- length(HLX2.Bin) - 2  
+  } else {
+    HLX2.DF <- NA
+  }
+  #HL p-value
+  if (Reg.Type == "Logistic") {
+    HLX2.p.val <- 1-pchisq(HLX2, df= HLX2.DF)  
   } else {
     HLX2.p.val <- NA
+  }
+  #Hosmer-Lemeshow test
+  if (Reg.Type == "Logistic") {
+    HLX2.test <- c("X2"= HLX2, "df"= HLX2.DF, "p-value"= HLX2.p.val)  
+  } else {
+    HLX2.test <- NA
   }
   
   #Y limits...needs to come here so it is calculated
@@ -12755,14 +12771,15 @@ Calibration.Curve <- function(model.fit=NULL, df.cal=NULL, outcome.Y=NULL,
        ylab= outcome.Y, axes=F, cex.lab=1.5, cex.main=2)
   axis(1, at=1:quant.pick, labels= round(unlist(quant.ls), RND.VAL), cex.axis=1.5)
   axis(2, cex.axis=1.5)
+  lines(1:quant.pick, quant.ls, lwd=LWD.Val, col= LCol.Val)
   points(1:quant.pick, unlist(obsY.ls), cex=CEX.cal, pch=20, col= PCol.Val)
-  lines(1:quant.pick, quant.ls, lwd=5, col= LCol.Val)
   text(1:quant.pick, unlist(obsY.ls), labels = round(unlist(obsY.ls), RND.VAL), cex=(CEX.cal* .5), pos=POS.cal)
   box()
-  return( list("Observed Y means"=unlist(obsY.ls), "Predicted Y means"=unlist(quant.ls),
-               "Quantiles"=levels(unlist(cal.quants)), 
-               "Exp.Outcome.1"= unlist(quant.sum1.ls),  "Observed.Outcome.1"= unlist(obsY.sum1.ls),
-               "HL.X2.Bin"=HLX2.Bin, "HL.X2"=HLX2, "HL.X2.p.val"=HLX2.p.val
+  return( list("Quantiles"=levels(unlist(cal.quants)), 
+               "Predicted Y means"=unlist(quant.ls), "Observed Y means"=unlist(obsY.ls), 
+               "Sum of predicted outcomes"= unlist(quant.sum1.ls),  "Sum of observed outcomes"= unlist(obsY.sum1.ls),
+               "Bin N"=unlist(Freq.Bin.ls), "Hosmer-Lemeshow X2 test"=HLX2.test, 
+               "H-L X2 per bin"=HLX2.Bin
   ) )
 }
 

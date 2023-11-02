@@ -12557,7 +12557,34 @@ fncStSpcLegendFactoLev <- function(Model_fit, X_Lev) {
 #             Additional function to run from the Describe tab                 #
 ################################################################################
 ## Calibration curve ##
-Calibration.Curve <- function(model.fit=fit1(), df.cal=df(), outcome.Y=outcome(), BINS=NULL, POS=NULL, CEX=NULL, Reg.Type=input$regress_type) {
+Calibration.Curve <- function(model.fit=NULL, df.cal=NULL, outcome.Y=NULL, 
+                              BINS=NULL, POS=NULL, CEX=NULL, Reg.Type=input$regress_type,
+                              VAL=NULL, RND=NULL, PCol=NULL, LCol=NULL, YLim=NULL) {
+  #Model fit name
+  if(is.null(model.fit)) {
+    model.fit <- fit1()
+  } else {
+    model.fit <- model.fit
+  }
+  #Data frame
+  if(is.null(df.cal)) {
+    df.cal <- df()
+  } else {
+    df.cal <- df.cal
+  }
+  #Outcome
+  if(is.null(outcome.Y)) {
+    outcome.Y <- outcome()
+  } else {
+    outcome.Y <- df.cal
+  }
+  #Regression type
+  if(is.null(Reg.Type)) {
+    Reg.Type <- input$regress_type
+  } else {
+    Reg.Type <- Reg.Type
+  }
+  
   #Create the number of quantiles
   if(is.null(BINS)) {
     quant.pick <- 10
@@ -12576,13 +12603,58 @@ Calibration.Curve <- function(model.fit=fit1(), df.cal=df(), outcome.Y=outcome()
   } else {
     CEX.cal <- CEX
   }
-  
+  #Get unique predicted values 
   if (Reg.Type %in% c("Linear","Poisson", "Generalized Least Squares", "Quantile")) {
-    cal.quants <- cut2(model.fit$fitted.values, g=quant.pick)    
+    unique.vals <- sort(unique(model.fit$fitted.values))    
   }
   if (Reg.Type == "Logistic") {
-    cal.quants <- cut2(plogis(model.fit$linear.predictors), g=quant.pick)    
+    unique.vals <- sort(unique(plogis(model.fit$linear.predictors))) 
   }
+  #Select if the cuts are based on actual values
+  if(is.null(VAL)) {
+    VAL.cuts <- NULL
+  } else {
+    VAL.cuts <- c(unique.vals, max(unique.vals) + 1)
+  }
+  #  if(VAL==TRUE) {
+  #    VAL.cuts <- c(unique.vals, max(unique.vals) + 1)
+  #  } 
+  #Create the rounding digit object
+  if(is.null(RND)) {
+    RND.VAL <- 2
+  } else {
+    RND.VAL <- RND
+  }
+  #Create the point color
+  if(is.null(PCol)) {
+    PCol.Val <- "blue"
+  } else {
+    PCol.Val <- PCol
+  }
+  #Create the point color
+  if(is.null(LCol)) {
+    LCol.Val <- "red"
+  } else {
+    LCol.Val <- LCol
+  }
+  
+  #Make cuts
+  if (!is.null(VAL)) {
+    #if (VAL==TRUE) {
+    if (Reg.Type %in% c("Linear","Poisson", "Generalized Least Squares", "Quantile")) {
+      cal.quants <- cut2(model.fit$fitted.values, cuts=VAL.cuts)    
+    } else {
+      cal.quants <- cut2(plogis(model.fit$linear.predictors), cuts=VAL.cuts)    
+    }
+  } else {
+    if (Reg.Type %in% c("Linear","Poisson", "Generalized Least Squares", "Quantile")) {
+      cal.quants <- cut2(model.fit$fitted.values, g=quant.pick)    
+    } else {
+      cal.quants <- cut2(plogis(model.fit$linear.predictors), g=quant.pick)    
+    }
+  }
+  
+  #Get quantile means  
   quant.ls <- list()
   if (Reg.Type %in% c("Linear","Poisson", "Generalized Least Squares", "Quantile")) {
     for (i in 1:quant.pick) {
@@ -12594,32 +12666,104 @@ Calibration.Curve <- function(model.fit=fit1(), df.cal=df(), outcome.Y=outcome()
       quant.ls[i] <- mean( plogis(model.fit$linear.predictors)[cal.quants == levels(cal.quants)[i] ] ,na.rm=TRUE)  
     }
   }
+  #Get observed means  
   obsY.ls <- list()
   for (i in 1:quant.pick) {
     obsY.ls[i] <- mean( model.fit$y[cal.quants == levels(cal.quants)[i] ] ,na.rm=TRUE)
   }
-  #  cal.quants <- cut2(model.fit$fitted.values, g=quant.pick)    
-  #  quant.ls <- list()
+  
+  #Get quantile counts  
+  quant.ls <- list()
+  if (Reg.Type %in% c("Linear","Poisson", "Generalized Least Squares", "Quantile")) {
+    for (i in 1:quant.pick) {
+      quant.ls[i] <- mean( model.fit$fitted.values[cal.quants == levels(cal.quants)[i] ] ,na.rm=TRUE)   
+    }
+  }
+  if (Reg.Type == "Logistic") {
+    for (i in 1:quant.pick) {
+      quant.ls[i] <- mean( plogis(model.fit$linear.predictors)[cal.quants == levels(cal.quants)[i] ] ,na.rm=TRUE)  
+    }
+  }
+  #Get observed counts  
+  obsY.ls <- list()
+  for (i in 1:quant.pick) {
+    obsY.ls[i] <- mean( model.fit$y[cal.quants == levels(cal.quants)[i] ] ,na.rm=TRUE)
+  }
+  #Get quantile counts for the Hosmer-Lemeshow  
+  quant.sum0.ls <- list()
+  if (Reg.Type == "Logistic") {
+    for (i in 1:quant.pick) {
+      quant.sum0.ls[i] <- sum( plogis(model.fit$linear.predictors)[cal.quants == levels(cal.quants)[i] & 
+                                                                     model.fit$y == as.numeric(names(table(model.fit$y)[1])) ] ,na.rm=TRUE)  
+    }
+  }
+  quant.sum1.ls <- list()
+  if (Reg.Type == "Logistic") {
+    for (i in 1:quant.pick) {
+      quant.sum1.ls[i] <- sum( plogis(model.fit$linear.predictors)[cal.quants == levels(cal.quants)[i] & 
+                                                                     model.fit$y == as.numeric(names(table(model.fit$y)[2])) ] ,na.rm=TRUE)  
+    }
+  }
+  #Get observed counts for the Hosmer-Lemeshow  
+  #  obsY.sum.ls <- list()
   #  for (i in 1:quant.pick) {
-  #    quant.ls[i] <- mean( model.fit$fitted.values[cal.quants == levels(cal.quants)[i] ] ,na.rm=TRUE)   
+  #    obsY.ls[[i]] <- table( model.fit$y[cal.quants == levels(cal.quants)[i] ] ,na.rm=TRUE)
   #  }
-  #  obsY.ls <- list()
-  #  for (i in 1:quant.pick) {
-  #    obsY.ls[i] <- mean( model.fit$y[cal.quants == levels(cal.quants)[i] ] ,na.rm=TRUE)
-  #  }  
-  plot(1:quant.pick, quant.ls, type="n", 
-       ylim=c(min(unlist(quant.ls), unlist(obsY.ls),na.rm=T )* .99, max(unlist(quant.ls), unlist(obsY.ls),na.rm=T) *1.01),
+  obsY.sum0.ls <- list()
+  if (Reg.Type == "Logistic") {
+    for (i in 1:quant.pick) {
+      obsY.sum0.ls[i] <- length( plogis(model.fit$linear.predictors)[cal.quants == levels(cal.quants)[i] & 
+                                                                       model.fit$y == as.numeric(names(table(model.fit$y)[1])) ])  
+    }
+  }
+  obsY.sum1.ls <- list()
+  if (Reg.Type == "Logistic") {
+    for (i in 1:quant.pick) {
+      obsY.sum1.ls[i] <- length( plogis(model.fit$linear.predictors)[cal.quants == levels(cal.quants)[i] & 
+                                                                       model.fit$y == as.numeric(names(table(model.fit$y)[2])) ] )  
+    }
+  }
+  
+  #Hosmer-Lemeshow X2 and contribution per group/bin
+  #Calculate X2 values per Bin
+  if (Reg.Type == "Logistic") {
+    HLX2.Bin <- (( unlist(obsY.sum1.ls) - unlist(quant.sum1.ls) )^2)/ (unlist(obsY.sum0.ls)+unlist(obsY.sum1.ls))*unlist(quant.ls)*(1-unlist(quant.ls))
+  } else {
+    HLX2.Bin <- NA
+  }
+  #Calculate total X2
+  if (Reg.Type == "Logistic") {
+    HLX2 <- sum(HLX2.Bin)
+  } else {
+    HLX2 <- NA
+  }
+  if (Reg.Type == "Logistic") {
+    HLX2.p.val <- 1-pchisq(HLX2, df= length(HLX2.Bin) - 2)  
+  } else {
+    HLX2.p.val <- NA
+  }
+  
+  #Y limits...needs to come here so it is calculated
+  if(is.null(YLim)) {
+    YLim.Val <- c(min(unlist(quant.ls), unlist(obsY.ls),na.rm=T )* .99, max(unlist(quant.ls), unlist(obsY.ls),na.rm=T) *1.01)
+  } else {
+    YLim.Val <- YLim
+  }
+  
+  plot(1:quant.pick, quant.ls, type="n", ylim= YLim.Val,
        main="Calibration curve with observed means per bin", xlab="Means of predicted values in bins", 
        ylab= outcome.Y, axes=F, cex.lab=1.5, cex.main=2)
-  axis(1, at=1:quant.pick, labels= round(unlist(quant.ls), 2), cex.axis=1.5)
+  axis(1, at=1:quant.pick, labels= round(unlist(quant.ls), RND.VAL), cex.axis=1.5)
   axis(2, cex.axis=1.5)
-  points(1:quant.pick, unlist(obsY.ls), cex=CEX.cal, pch=20, col="blue")
-  lines(1:quant.pick, quant.ls, lwd=5, col="red")
-  text(1:quant.pick, unlist(obsY.ls), labels = round(unlist(obsY.ls), 2), cex=(CEX.cal* .5), pos=POS.cal)
+  points(1:quant.pick, unlist(obsY.ls), cex=CEX.cal, pch=20, col= PCol.Val)
+  lines(1:quant.pick, quant.ls, lwd=5, col= LCol.Val)
+  text(1:quant.pick, unlist(obsY.ls), labels = round(unlist(obsY.ls), RND.VAL), cex=(CEX.cal* .5), pos=POS.cal)
   box()
   return( list("Observed Y means"=unlist(obsY.ls), "Predicted Y means"=unlist(quant.ls),
-               "Quantiles"=levels(unlist(cal.quants))) )
-  
+               "Quantiles"=levels(unlist(cal.quants)), 
+               "Exp.Outcome.1"= unlist(quant.sum1.ls),  "Observed.Outcome.1"= unlist(obsY.sum1.ls),
+               "HL.X2.Bin"=HLX2.Bin, "HL.X2"=HLX2, "HL.X2.p.val"=HLX2.p.val
+  ) )
 }
 
 ## Function to plot a PNG picture ## Add jpeg and a real plot() in the future

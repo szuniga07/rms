@@ -5513,7 +5513,8 @@ cidf <- reactive({                  #This indicates the data frame I will use.
 ##########################################
 # Plot function for confidence intervals #
 ##########################################
-plot_ci_fnc <- function(xcivar, ycivar, ydf, cidf, ciconf_lev, alpha_num, Lcol, Pcol, tgt, Cbar, plyCol, labMulti=1) {
+plot_ci_fnc <- function(xcivar, ycivar, ydf, cidf, ciconf_lev, alpha_num, Lcol, 
+                        Pcol, tgt, Cbar, plyCol, labMulti=1, roundVal) {
   if (alpha_num=="Alphabetical") {
     adf <- cidf$adf_alpha
   }
@@ -5525,8 +5526,8 @@ plot_ci_fnc <- function(xcivar, ycivar, ydf, cidf, ciconf_lev, alpha_num, Lcol, 
   rng <- seq(min(adf), max(adf),length.out=nrow(adf))
   par(mar=c(5,7,4,4))
   plot(rng, 1:nrow(adf), type="n", ylab="", 
-       xlab= paste0("Value (grey vertical line = overall mean of ", round(mainYmn, 3), ", ", ciconf_lev * 100, "% ", "CI",
-                    " [", round(cidf[["adf_all"]][,"Lower"], 3), " ,", round(cidf[["adf_all"]][,"Upper"], 3),"]",")"),
+       xlab= paste0("Value (grey vertical line = overall mean of ", round(mainYmn, roundVal), ", ", ciconf_lev * 100, "% ", "CI",
+                    " [", round(cidf[["adf_all"]][,"Lower"], roundVal), ", ", round(cidf[["adf_all"]][,"Upper"], roundVal),"]",")"),
        #main=main_ttl, 
        axes=F,  cex.lab=1*labMulti)
   title(main_ttl, cex.main = 1*labMulti) 
@@ -5541,7 +5542,7 @@ plot_ci_fnc <- function(xcivar, ycivar, ydf, cidf, ciconf_lev, alpha_num, Lcol, 
   axis(1) 
   axis(2,at=1:nrow(adf),labels=substr(rownames(adf), 1, 10), las=1, cex.axis=1*labMulti )
   #  axis(2,at=1:nrow(adf),labels=rownames(adf), las=1, cex.axis=1)
-  axis(4,at=1:nrow(adf),labels=round(adf[, "PointEst"],2), las=1, cex.axis= 1*labMulti*.75 )
+  axis(4,at=1:nrow(adf),labels=round(adf[, "PointEst"], roundVal), las=1, cex.axis= 1*labMulti*.75 )
   
   ## Add confidence bar ##
   #Create x and y data
@@ -5561,7 +5562,8 @@ plot_ci <- reactive({                  #This indicates the data frame I will use
     plot_ci_fnc(xcivar=input$xcivar, ycivar=input$ycivar, ydf=df(), cidf=cidf(), 
                 ciconf_lev=input$ciconf_lev, alpha_num=input$alpha_num, Lcol=ci_plot_Line_Colors(), 
                 Pcol=ci_plot_Point_Colors(), tgt=ci_target_line(), Cbar= Ci_create_total_bar_interval(), 
-                plyCol= ci_plot_Total_Bar_Colors(), labMulti=ci_plot_label_multiplier() )
+                plyCol= ci_plot_Total_Bar_Colors(), labMulti=ci_plot_label_multiplier(),
+                roundVal= ci_plot_round_decimals() )
   }
 })
 
@@ -5679,6 +5681,15 @@ output$ci_plot_lab_multi <- renderUI({
 #Reactive function for directly above
 ci_plot_label_multiplier <- reactive({                 
   input$ciPltLabMlt 
+})
+#Select number of digits to round values by
+output$ci_plot_rnd_decs <- renderUI({                                 
+  numericInput("ciPltRndDec", "13. Round decimals by.",
+               value = 2, step = 1)
+})
+#Reactive function for directly above
+ci_plot_round_decimals <- reactive({                 
+  input$ciPltRndDec 
 })
 
 ## Reactive function to do group tests ##
@@ -6490,7 +6501,8 @@ plot_fci <- reactive({                  #This indicates the data frame I will us
     ci_p_tot=fci_tot_fac()$ci_p, ci_l_tot=fci_tot_fac()$ci_l, ci_u_tot=fci_tot_fac()$ci_u,
     Tot.Color=fci_plot_Overall_Line_Colors(), Tgt.Color=fci_plot_Target_Line_Colors(), 
     Tpt.Color=fci_plot_Time_Point_Line_Colors(), T3.Line.Width=fci_plot_targ_time_Line_Wd(), 
-    Text.Size= fci_plot_text_label_size(), LType=fci_plot_group_line_type(), labMulti=FCI_plot_label_multiplier() )
+    Text.Size= fci_plot_text_label_size(), LType=fci_plot_group_line_type(), 
+    labMulti=FCI_plot_label_multiplier() )
     }
 })
 

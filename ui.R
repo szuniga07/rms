@@ -2001,11 +2001,17 @@ tabPanel("95% CIs",
          fluidRow(   
            column(3, 
                   uiOutput("Ci_create_tot_bar")),
-           column(3,
+           column(3, offset=1,
                   uiOutput("ci_plot_tot_bar_clrs")),
+           column(3, offset=1,
+                  uiOutput("ci_plot_lab_multi"))
+         ),
+         fluidRow(   
            column(3, 
-                  uiOutput("ci_plot_lab_multi")),
-           column(3, 
+                  uiOutput("ci_plot_Xlim1")),
+           column(3, offset=1,
+                  uiOutput("ci_plot_Xlim2")),
+           column(3, offset=1, 
                   uiOutput("ci_plot_rnd_decs"))
          ),
          plotOutput("Plot_Ci_output", height = 800, width="100%"),

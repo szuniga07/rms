@@ -5514,7 +5514,7 @@ cidf <- reactive({                  #This indicates the data frame I will use.
 # Plot function for confidence intervals #
 ##########################################
 plot_ci_fnc <- function(xcivar, ycivar, ydf, cidf, ciconf_lev, alpha_num, Lcol, 
-                        Pcol, tgt, Cbar, plyCol, labMulti=1, roundVal) {
+                        Pcol, tgt, Cbar, plyCol, labMulti=1, roundVal, XLim1, XLim2) {
   if (alpha_num=="Alphabetical") {
     adf <- cidf$adf_alpha
   }
@@ -5529,7 +5529,7 @@ plot_ci_fnc <- function(xcivar, ycivar, ydf, cidf, ciconf_lev, alpha_num, Lcol,
        xlab= paste0("Value (grey vertical line = overall mean of ", round(mainYmn, roundVal), ", ", ciconf_lev * 100, "% ", "CI",
                     " [", round(cidf[["adf_all"]][,"Lower"], roundVal), ", ", round(cidf[["adf_all"]][,"Upper"], roundVal),"]",")"),
        #main=main_ttl, 
-       axes=F,  cex.lab=1*labMulti)
+       axes=F,  cex.lab=1*labMulti, xlim=c(XLim1, XLim2))
   title(main_ttl, cex.main = 1*labMulti) 
   for (i in 1:nrow(adf)) {
     lines(c(adf[,'Lower'][i], adf[,'Upper'][i]), c(i,i), lwd=4, col=Lcol) 
@@ -5563,7 +5563,8 @@ plot_ci <- reactive({                  #This indicates the data frame I will use
                 ciconf_lev=input$ciconf_lev, alpha_num=input$alpha_num, Lcol=ci_plot_Line_Colors(), 
                 Pcol=ci_plot_Point_Colors(), tgt=ci_target_line(), Cbar= Ci_create_total_bar_interval(), 
                 plyCol= ci_plot_Total_Bar_Colors(), labMulti=ci_plot_label_multiplier(),
-                roundVal= ci_plot_round_decimals() )
+                roundVal= ci_plot_round_decimals(), XLim1=ci_plot_Xlim_val1(), 
+                XLim2=ci_plot_Xlim_val2() )
   }
 })
 
@@ -5682,12 +5683,30 @@ output$ci_plot_lab_multi <- renderUI({
 ci_plot_label_multiplier <- reactive({                 
   input$ciPltLabMlt 
 })
-#Select number of digits to round values by
+#13. Indicate lower limit of x-axis
+output$ci_plot_Xlim1 <- renderUI({
+  numericInput("ciXLim1", "13. Lower X-axis limit.",
+               value = round(min(cidf()$adf_alpha$Lower, na.rm=T), 2), step = .01)
+})
+#13a. Indicate lower limit of x-axis
+ci_plot_Xlim_val1 <- reactive({
+  input$ciXLim1
+})
+#14. Indicate upper limit of x-axis
+output$ci_plot_Xlim2 <- renderUI({
+  numericInput("ciXLim2", "14. Upper X-axis limit.",
+               value = round(max(cidf()$adf_alpha$Upper, na.rm=T), 2) , step = .01)
+})
+#14. Indicate upper limit of x-axis
+ci_plot_Xlim_val2 <- reactive({
+  input$ciXLim2
+})
+#15. Select number of digits to round values by
 output$ci_plot_rnd_decs <- renderUI({                                 
-  numericInput("ciPltRndDec", "13. Round decimals by.",
+  numericInput("ciPltRndDec", "15. Round decimals by.",
                value = 2, step = 1)
 })
-#Reactive function for directly above
+#15a. Reactive function for directly above
 ci_plot_round_decimals <- reactive({                 
   input$ciPltRndDec 
 })

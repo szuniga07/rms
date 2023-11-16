@@ -13433,8 +13433,8 @@ format.loan <- function(Loan) {
 #first row begins with a value of 2 to indicate that it's the 2nd predicted value.
 
 ## Function for each cutoff ##
-fncAucLev <- function(Fit, Y, Threshold, Censor=NULL, PredTime=NULL, 
-                      RegType, DF, OffSetName=NULL ) {
+fncAucDcaClass <- function(Fit, Y, Threshold, Censor=NULL, PredTime=NULL, 
+                           RegType, DF, OffSetName=NULL ) {
   
   #Adding way to get unique predictions to select the 
   if(RegType == "Poisson" & length(OffSetName) == 0 ) {
@@ -13457,33 +13457,46 @@ fncAucLev <- function(Fit, Y, Threshold, Censor=NULL, PredTime=NULL,
   ##################
   #For AUC levels
   tmp_auc_ls <- vector(mode = "list", length= length(PREDunique)-1 )
-  #For the value indicator (e.g., 1st prediction = 2nd predicted value = '2')
+  #For the value indictor (e.g., 1st prediction = 2nd predicted value = '2')
   tmp_level_name <- vector(length= length(PREDunique)-1 )
   for (i in 1:length(tmp_ls) ) {
     tmp_auc_ls[[i]] <- fncThreshAUC(ClassDF= tmp_ls[[i]])
     tmp_level_name[i] <- i + 1
   }
+  ##########################
+  ## Classication Results ##
+  ##########################
+  #Make a for loop that goes through each unique prediction (excluding lowest value)
+  #to get the classification results for each prediction as a cutoff
+  tmp_class_ls <- vector(mode = "list", length= length(PREDunique)-1 )
+  for (i in 1:(length(PREDunique)-1)) {
+    tmp_class_ls[[i]] <- unlist(fncClassDfSmry(ClassDF= tmp_ls[[i]], RegType=RegType))
+  }
+  
   ##################
   # Final Results #
   ##################
   #Place the main results into a data frame to copy-and-paste later
   #Main result names from the classifaction
-  Classification.Result.Names <- c( "propAbovMY1", "specifity", "fls_Neg","propAbovMY0",
-                                    "N.AbovMY1", "N.specifity", "N.fls_Neg", "N.AbovMY0",
-                                    "threshLev", "Transform.Threshold")
+  #  Classification.Result.Names <- c( "propAbovMY1", "specifity", "fls_Neg","propAbovMY0",
+  #                                    "N.AbovMY1", "N.specifity", "N.fls_Neg", "N.AbovMY0",
+  #                                    "threshLev", "Transform.Threshold")
+  Threshold.Names <- c( "threshLev", "Transform.Threshold")
   #Transpose of results data
-  Class.Result <- data.frame(t(sapply(tmp_ls, function(x){as.numeric(x[Classification.Result.Names])})))
+  Thresh.Result <- data.frame(t(sapply(tmp_ls, function(x){as.numeric(x[Threshold.Names])})))
+  #Make the Classification Results into a data frame
+  Class.Result <- do.call(rbind.data.frame, tmp_class_ls)
   #Merge the results together with the predicted value order, thresholds, and classification results
-  #Results.Data <- cbind("Order"= as.data.frame(tmp_level_name), "AUC"=as.data.frame(unlist(tmp_auc_ls), Class.Result))
-  #Results.Data <- cbind(as.data.frame(tmp_level_name, unlist(tmp_auc_ls)), Class.Result)
-  Results.Data1 <- data.frame("order"=tmp_level_name, "AUC"=unlist(tmp_auc_ls))
-  Results.Data2 <- cbind(Results.Data1, Class.Result)
+  Results.Data1 <- data.frame("order"=tmp_level_name, Thresh.Result)
+  Results.Data2 <- cbind(Results.Data1, "AUC"=unlist(tmp_auc_ls))
+  Results.Data3 <- cbind(Results.Data2, Class.Result)
   #Give better column names
-  colnames(Results.Data2) <- c("Order", "AUC", "Sensitivity", "Specifity", "False.Neg", 
-                               "False.Pos","N.Sensitivity", "N.Specifity", "N.False.Neg", 
-                               "N.False.Pos", "Threshhold", "Thresh.Trans")
-  return(list("Unique.Predictions"=PREDunique, "Results.Data"=Results.Data2))
-  
+  colnames(Results.Data3) <- c("Order", "Threshhold", "Thresh.Trans", "AUC",
+                               "Sensitivity","Specifity","False.Positives","False.Negatives","Accuracy.Rate",
+                               "Error.Rate","Positive.Predictive.Value","Negative.Predictive.Value","N.Sensitivity",
+                               "N.Specifity","N.False.Positives","N.False.Negatives", "N", "Net.Benefit","All.Treated",
+                               "Interventions.Avoided")
+  return(list("Unique.Predictions"=PREDunique, "Results.Data"=Results.Data3))
 }
 #Try it out
 #getHdata(titanic3)

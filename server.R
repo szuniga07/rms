@@ -13424,6 +13424,73 @@ format.loan <- function(Loan) {
 #plot.loan(loan.calculator(Amount=300000, Rate=.05, Years=30, Extra=20000, Month=12))
 #format.loan(loan.calculator(Amount=300000, Rate=.05, Years=30))
 
+#########################################
+## AUC for cutoffs at each score level ##
+#########################################
+#This will give an AUC using each prediction as a threshold. It naturally doesn't
+#calculate AUC/C-statistic values for the lowest prediction so it begins at the
+#2nd prediction - highest prediction. The "Order" column indicates this and the
+#first row begins with a value of 2 to indicate that it's the 2nd predicted value.
+
+## Function for each cutoff ##
+fncAucLev <- function(Fit, Y, Threshold, Censor=NULL, PredTime=NULL, 
+                      RegType, DF, OffSetName=NULL ) {
+  
+  #Adding way to get unique predictions to select the 
+  if(RegType == "Poisson" & length(OffSetName) == 0 ) {
+    PREDunique <- sort(unique(predict(Fit), na.rm=T)) 
+  } else {
+    PREDunique <- sort(unique(predict( Fit, newdata=DF), na.rm=T ))
+  } 
+  ####################
+  # Model assessment #
+  ####################
+  #Make a for loop that goes through each unique prediction (excluding lowest value)
+  #to get the AUC values for each prediction as a cutoff
+  tmp_ls <- vector(mode = "list", length= length(PREDunique)-1 )
+  for (i in 1:(length(PREDunique)-1)) {
+    tmp_ls[[i]] <- fncYhatClassDf(Fit=Fit, Y=Y, Threshold=PREDunique[-1][i], Censor=Censor, PredTime=NULL, RegType=RegType, 
+                                  DF=DF, OffSetName=OffSetName)
+  }
+  ##################
+  # Get AUC values #
+  ##################
+  #For AUC levels
+  tmp_auc_ls <- vector(mode = "list", length= length(PREDunique)-1 )
+  #For the value indicator (e.g., 1st prediction = 2nd predicted value = '2')
+  tmp_level_name <- vector(length= length(PREDunique)-1 )
+  for (i in 1:length(tmp_ls) ) {
+    tmp_auc_ls[[i]] <- fncThreshAUC(ClassDF= tmp_ls[[i]])
+    tmp_level_name[i] <- i + 1
+  }
+  ##################
+  # Final Results #
+  ##################
+  #Place the main results into a data frame to copy-and-paste later
+  #Main result names from the classifaction
+  Classification.Result.Names <- c( "propAbovMY1", "specifity", "fls_Neg","propAbovMY0",
+                                    "N.AbovMY1", "N.specifity", "N.fls_Neg", "N.AbovMY0",
+                                    "threshLev", "Transform.Threshold")
+  #Transpose of results data
+  Class.Result <- data.frame(t(sapply(tmp_ls, function(x){as.numeric(x[Classification.Result.Names])})))
+  #Merge the results together with the predicted value order, thresholds, and classification results
+  #Results.Data <- cbind("Order"= as.data.frame(tmp_level_name), "AUC"=as.data.frame(unlist(tmp_auc_ls), Class.Result))
+  #Results.Data <- cbind(as.data.frame(tmp_level_name, unlist(tmp_auc_ls)), Class.Result)
+  Results.Data1 <- data.frame("order"=tmp_level_name, "AUC"=unlist(tmp_auc_ls))
+  Results.Data2 <- cbind(Results.Data1, Class.Result)
+  #Give better column names
+  colnames(Results.Data2) <- c("Order", "AUC", "Sensitivity", "Specifity", "False.Neg", 
+                               "False.Pos","N.Sensitivity", "N.Specifity", "N.False.Neg", 
+                               "N.False.Pos", "Threshhold", "Thresh.Trans")
+  return(list("Unique.Predictions"=PREDunique, "Results.Data"=Results.Data2))
+  
+}
+#Try it out
+#getHdata(titanic3)
+#dd <- datadist(titanic3); options(datadist='dd')
+#m1 <- lrm(survived ~ pclass, data=titanic3, x=T, y=T)
+#fncAucLev(Fit=m1, Y="survived", RegType="Logistic", DF=titanic3)
+
 
 ################################################################################
 ## Testing section: Begin  ##

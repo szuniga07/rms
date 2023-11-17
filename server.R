@@ -13486,6 +13486,7 @@ fncAucDcaClass <- function(Fit, Y, Threshold, Censor=NULL, PredTime=NULL,
   Thresh.Result <- data.frame(t(sapply(tmp_ls, function(x){as.numeric(x[Threshold.Names])})))
   #Make the Classification Results into a data frame
   Class.Result <- do.call(rbind.data.frame, tmp_class_ls)
+  
   #Merge the results together with the predicted value order, thresholds, and classification results
   Results.Data1 <- data.frame("order"=tmp_level_name, Thresh.Result)
   Results.Data2 <- cbind(Results.Data1, "AUC"=unlist(tmp_auc_ls))
@@ -13496,13 +13497,20 @@ fncAucDcaClass <- function(Fit, Y, Threshold, Censor=NULL, PredTime=NULL,
                                "Error.Rate","Positive.Predictive.Value","Negative.Predictive.Value","N.Sensitivity",
                                "N.Specifity","N.False.Positives","N.False.Negatives", "N", "Net.Benefit","All.Treated",
                                "Interventions.Avoided")
+  #Create ranks on main results
+  Results.Data3$Rank.AUC <- rank(-Results.Data3$AUC)
+  Results.Data3$Rank.Sensitivity <- rank(-Results.Data3$Sensitivity)
+  Results.Data3$Rank.Specifity <- rank(-Results.Data3$Specifity)
+  Results.Data3$Rank.Accuracy.Rate <- rank(-Results.Data3$Accuracy.Rate)
+  Results.Data3$Rank.Net.Benefit <- rank(-Results.Data3$Net.Benefit)
+  Results.Data3$Rank.Inter.Avoided <- rank(-Results.Data3$Interventions.Avoided)
   return(list("Unique.Predictions"=PREDunique, "Results.Data"=Results.Data3))
 }
 #Try it out
 #getHdata(titanic3)
 #dd <- datadist(titanic3); options(datadist='dd')
 #m1 <- lrm(survived ~ pclass, data=titanic3, x=T, y=T)
-#fncAucLev(Fit=m1, Y="survived", RegType="Logistic", DF=titanic3)
+#fncAucDcaClass(Fit=m1, Y="survived", RegType="Logistic", DF=titanic3)
 
 
 ################################################################################

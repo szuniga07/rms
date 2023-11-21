@@ -13504,6 +13504,16 @@ fncAucDcaClass <- function(Fit, Y, Threshold, Censor=NULL, PredTime=NULL,
   Results.Data3$Rank.Accuracy.Rate <- rank(-Results.Data3$Accuracy.Rate)
   Results.Data3$Rank.Net.Benefit <- rank(-Results.Data3$Net.Benefit)
   Results.Data3$Rank.Inter.Avoided <- rank(-Results.Data3$Interventions.Avoided)
+  #Calculates proportion and N that were predicted to be positive of the outcome. This is how many we intervene on
+  Results.Data3$Prop.Predicted.Pos <- (Results.Data3$N.Sensitivity + Results.Data3$N.False.Positives) / Results.Data3$N
+  Results.Data3$N.Predicted.Pos <- Results.Data3$N.Sensitivity + Results.Data3$N.False.Positives
+  #Re-arrange column order
+  Results.Data3 <- Results.Data3[, c("Order","Threshhold","Thresh.Trans","AUC","Sensitivity","Specifity","False.Positives",
+                                     "False.Negatives", "Accuracy.Rate","Error.Rate","Positive.Predictive.Value",
+                                     "Negative.Predictive.Value","N.Sensitivity","N.Specifity","N.False.Positives",
+                                     "N.False.Negatives", "N", "N.Predicted.Pos", "Prop.Predicted.Pos",
+                                     "Net.Benefit","All.Treated","Interventions.Avoided","Rank.AUC","Rank.Sensitivity",
+                                     "Rank.Specifity","Rank.Accuracy.Rate","Rank.Net.Benefit","Rank.Inter.Avoided")]
   return(list("Unique.Predictions"=PREDunique, "Results.Data"=Results.Data3))
 }
 #Try it out

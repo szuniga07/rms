@@ -2113,9 +2113,241 @@ tabPanel("95% CIs",
          tableOutput("time_ci_out1"),
          h5("Overall rates. Uses all data and used for the 'overall group trend line'."),
          tableOutput("all_time_ci_out1")
-)
+),
+
+## Bayesian Analysis ##
+tabPanel("Bayesian",
+         h3("Check diagnostics, examine parameters, and graph the hierarchical estimation of Bayesian models."),
+         br(),
+         h4("Enter the name of the Coda object with your MCMC simulations."),
+         fluidRow(   
+           column(3, 
+                  uiOutput("dbdaCodaObj"))
+         ),
+br(),
+# Diagnostics #
+h4("Run diagnostics on the parameters from the MCMC simulations."),
+fluidRow(   
+  column(3, 
+         uiOutput("select_dbda_diag_par")),
+  column(3, offset=1,
+         uiOutput("DBDA_Diag_YN"))
+),
+br(),
+plotOutput("plotDbdaDiag", height = 800, width="100%"),
+h3("Bayesian posterior marginal distributions with Highest Density Intervals"),
+br(),
+h4("Select parameters, comparative values, ROPEs (regions of practical equivalence), and display setings."),
+br(),
+fluidRow(   
+  column(3, 
+         uiOutput("dbdaPostPlot1")),
+  column(3, 
+         uiOutput("dbdaPostCompareParYN")),
+  column(3, 
+         uiOutput("dbdaPostPlot2")),
+  column(3, 
+         uiOutput("dbdaPostCenTen"))
+),
+fluidRow(   
+  column(3, 
+         uiOutput("dbdaPostCredibleMass")),
+  column(3, 
+         uiOutput("dbdaPostROPEYN")),
+  column(3, 
+         uiOutput("dbdaPostRopeVal1")),
+  column(3, 
+         uiOutput("dbdaPostRopeVal2"))
+),
+fluidRow(   
+  column(3, 
+         uiOutput("dbdaPostLabMulti")),
+  column(3, 
+         uiOutput("dbdaPostMainTtl")),
+  column(3, 
+         uiOutput("dbdaPostXlab")),
+  column(3, 
+         uiOutput("dbdaPostYlab"))
+),
+fluidRow(   
+  column(3, 
+         uiOutput("dbdaPostShowCur")),
+  column(3, 
+         uiOutput("dbdaPlotLineCol")),
+  column(3, 
+         uiOutput("dbdaPostXaxisLims")),
+  column(3, 
+         uiOutput("dbdaPostPlaceHDIText"))
+),
+fluidRow(   
+  column(3, 
+         uiOutput("dbdaPostCompValYN")),
+  column(3, 
+         uiOutput("dbdaPostCompVal")),
+  column(3, 
+         uiOutput("dbdaPostRun"))
+),
+br(),
+plotOutput("plotDbdaPosteriorDistribution", height = 800, width="100%"),
+h5("Select 2 parameters to compare the difference between them (e.g., Par. 1 - Par. 2)."),
+br(), 
+h3("Hierarchical model: Create a summary of the posterior distribution."),
+br(), 
+h4("List the outcome, group, category, and parameter names for (non)hierarchical models. "),
+h4("Model level refers to the hierarchy: Level-1 = non-hierarhical, Level-2 = group hierarchy (e.g., baseball player), level-3 = categorical hierarchy (e.g., baseball position)."),
+h4("First, load the source data (aggregated or not) in the 'Model Builder' tab."),
+br(),
+fluidRow(   
+  column(3, 
+         uiOutput("dbdaPostSumLev")),
+  column(3, 
+         uiOutput("dbdaPostSumY")),
+  column(3, 
+         uiOutput("dbdaPostSumX1")),
+  column(3, 
+         uiOutput("dbdaPostSumX2"))
+),
+fluidRow(   
+  column(3, 
+         uiOutput("dbdaPostSumTheta")),
+  column(3, 
+         uiOutput("dbdaPostSumOmega2")),
+  column(3, 
+         uiOutput("dbdaPostSumOmega3")),
+  column(3, 
+         uiOutput("dbdaPostSumCenTen"))
+),
+fluidRow(   
+  column(3, 
+         uiOutput("dbdaPostSumAggrYN")),
+  column(3, 
+         uiOutput("dbdaPostSumAggrN")),
+  column(3, 
+         uiOutput("dbdaPostSumRun")),
+  column(3, 
+         uiOutput("dbdaPostSumStructYN")),
+),
+br(),
+h4("Structure of posterior summary"),
+verbatimTextOutput("structure_dbda_posterior_summary"),  
+br(),
+h5("To view the result, go to the 'Describe' tab and run this command: results_dbda_posterior_summary() ."),
+br(), 
+h3("Graph the (non-)Hierarchical Estimation of 1, 2, and 3 level models"),
+br(),
+h4("View different level parameters, select subsets, and modify the graph."),
+fluidRow(   
+  column(3, 
+         uiOutput("dbdaHierlphaNum")),
+  column(3, 
+         uiOutput("dbdaHierViewGroup3")),
+  column(3, 
+         uiOutput("dbdaHierViewSub")),
+  column(3, 
+         uiOutput("dbdaHierSpecGroup"))
+),
+fluidRow(   
+  column(3, 
+         uiOutput("dbdaHierRoundVals")),
+  column(3, 
+         uiOutput("dbdaHierLineCol")),
+  column(3, 
+         uiOutput("dbdaHierPointCol")),
+  column(3, 
+         uiOutput("dbdaHierObsRateCol"))
+),
+fluidRow(   
+  column(3, 
+         uiOutput("dbdaHierTarLine")),
+  column(3, 
+         uiOutput("dbdaHierTarCol")),
+  column(3, 
+         uiOutput("dbdaHierTotalBar")),
+  column(3, 
+         uiOutput("dbdaHierTotalBarCol"))
+),
+fluidRow(   
+  column(3, 
+         uiOutput("dbdaHierXlim1")),
+  column(3, 
+         uiOutput("dbdaHierXlim2")),
+  column(3, 
+         uiOutput("dbdaHierAddLeg")),
+  column(3, 
+         uiOutput("dbdaHierLgdLoc"))
+),
+fluidRow(   
+  column(3, 
+         uiOutput("dbdaHierLabMulti")),
+  column(3, 
+         uiOutput("dbdaHierRun"))
+),
+br(),
+h4("Hierarchical Estimation"),
+plotOutput("plotDbdaHierEstimation", height = 800, width="100%"),
+br(),
+h5("Choose between level-2 groups (e.g., baseball players) and level-3 categories (e.g., positions)."),
+br(),
+h3("Posterior Predictive Check for groups"),
+br(),
+h4("Check how posterior lines fine data from normal or log-normal distributions."),
+h4("Load dataset in 'Builder' tab and MCMC simumlations above."),
+h5("Go to #17 and click 'Yes' to generate group levels in #3."),
+br(),
+fluidRow(   
+  column(3, 
+         uiOutput("dbdaPostCheckY")),
+  column(3, 
+         uiOutput("dbdaPostCheckX")),
+  column(3, 
+         uiOutput("dbdaPostCheckLevX")),
+  column(3, 
+         uiOutput("dbdaPostCheckParMn"))
+),
+fluidRow(   
+  column(3, 
+         uiOutput("dbdaPostCheckParSD")),
+  column(3, 
+         uiOutput("dbdaPostCheckDist")),
+  column(3, 
+         uiOutput("dbdaPostCheckNumPL")),
+  column(3, 
+         uiOutput("dbdaPostCheckMainTtl"))
+),
+fluidRow(   
+  column(3, 
+         uiOutput("dbdaPostCheckXlab")),
+  column(3, 
+         uiOutput("dbdaPostCheckBarCol")),
+  column(3, 
+         uiOutput("dbdaPostCheckLineCol")),
+  column(3, 
+         uiOutput("dbdaPostCheckNumHB"))
+),
+fluidRow(   
+  column(3, 
+         uiOutput("dbdaPostCheckLabMulti")),
+  column(3, 
+         uiOutput("dbdaPostCheckXaxisLims")),
+  column(3, 
+         uiOutput("dbdaPostCheckMinVal")),
+  column(3, 
+         uiOutput("dbdaPostCheckRndPlc"))
+),
+fluidRow(   
+  column(3, 
+         uiOutput("dbdaPostCheckGenGroups")),
+  column(3, 
+         uiOutput("dbdaPostCheckRun"))
+),
+br(),
+plotOutput("plotDbdaPostCheckGroup", height = 800, width="100%"),
+br(),
+h5("Idenitfy mean and SD parameters for each group. X-limits can remain blank if the minimum value is specified."),
+br()
+
+) #End of Bayesian panel  
 ###
-  
 
 ############## TEST SECTION #############################
 #, #THIS COMMA IS COMMENTED OUT IN CASE I EVER NEED THE TEST FUNCTION BELOW    

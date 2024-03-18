@@ -18,6 +18,7 @@ library(sensitivity)
 library(meta)
 library(rpart)
 library(coxme)
+library(coda)
 #Surival package data: cancer colon diabetic flchain heart mgus nafld1 pbc transplant   
 data(lungcancer)
 options(shiny.maxRequestSize=1000*1024^2)    #This will increase the shiny file upload limit from current 5MB max
@@ -41,15 +42,6 @@ shinyServer(
             }
     })
 
-    #DELETE THIS        
-#    default_df_name <- reactive({  
-    #      if ( input$UseText == "No") {
-        #        "mtcars"  
-    #      }  else {
-    #        "text_file"
-    #      }
-    #    })
-    
     atch <- reactive({                  #Used to attach the data frame. 
       attach(df())      #I can only attach within a function...I think
     })
@@ -13516,12 +13508,1734 @@ fncAucDcaClass <- function(Fit, Y, Threshold, Censor=NULL, PredTime=NULL,
                                      "Rank.Specifity","Rank.Accuracy.Rate","Rank.Net.Benefit","Rank.Inter.Avoided")]
   return(list("Unique.Predictions"=PREDunique, "Results.Data"=Results.Data3))
 }
-#Try it out
-#getHdata(titanic3)
-#dd <- datadist(titanic3); options(datadist='dd')
-#m1 <- lrm(survived ~ pclass, data=titanic3, x=T, y=T)
-#fncAucDcaClass(Fit=m1, Y="survived", RegType="Logistic", DF=titanic3)
 
+################################################################################
+#                           Bayesian Analysis                                  #
+################################################################################
+
+###################
+# Get coda object #
+###################
+#1. Enter the name of the coda object that will be used for analysis
+output$dbdaCodaObj <- renderUI({ 
+  textInput("DBDAcoda", "1. Enter the Coda object name",   #Enter coda object
+            value="")
+})
+#1A. Make coda object a reactive function
+DBDA_coda_object_df <- reactive({      #Coda object for Bayesian analysis
+  get(input$DBDAcoda)  
+  })
+
+#####################
+## HDI Diagnostics ##
+#####################
+#Reactive function of Coda object parameter names
+DBDA_parameter_Names <- reactive({
+  if(input$DBDAcoda != "") {
+    colnames(as.matrix(DBDA_coda_object_df(), chains=TRUE))[-1]
+  }
+})
+
+#1. Select the parameters
+output$select_dbda_diag_par <- renderUI({                                 
+  selectInput("selDbPar", "1. Select the parameter.", 
+              choices = DBDA_parameter_Names(), multiple=FALSE)     
+})
+#Reactive function for directly above
+sel_DBDA_par_name <- reactive({                 
+  input$selDbPar 
+})
+#2. Run the Diagnostics?
+output$DBDA_Diag_YN <- renderUI({  
+  selectInput("dbdaDiYn", "2. Run the Diagnostics?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")     
+})
+#2A. Reactive function for above
+dbda_diagnostics_Yes_No <- reactive({
+  input$dbdaDiYn
+})
+#Plot of DBDA diagnostics
+#Confidence interval plot reactive function
+plot_dbda_diagnostics <- reactive({                  #This indicates the data frame I will use.
+  if(dbda_diagnostics_Yes_No() == "Yes") {
+    diagMCMC( codaObject=DBDA_coda_object_df() , parName= sel_DBDA_par_name() ,  
+              saveName=NULL , saveType=NULL )
+  }
+})
+#Diagnostic plot for above
+output$plotDbdaDiag <- renderPlot({ 
+  if(dbda_diagnostics_Yes_No() == "Yes") {
+    plot_dbda_diagnostics()
+  }
+}, height = 800)
+
+#################################
+## Posterior Distribution Plot ##
+#################################
+
+############
+##   UI   ##
+############
+#1. Select the main parameter
+output$dbdaPostPlot1 <- renderUI({                                
+  selectInput("dbdaPP1", "1. Select the parameter.",       
+              choices = DBDA_parameter_Names(), multiple=FALSE, selected=var()[1] )   
+})
+#1a. Reactive function for directly above
+dbda_post_plot_par1 <- reactive({                 
+  input$dbdaPP1 
+})
+#2. Do you want to compare parameter
+output$dbdaPostCompareParYN <- renderUI({
+  selectInput("dbdaPostComP12", "2. Compare parameters?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")
+})
+#3. Select the 2nd parameter
+output$dbdaPostPlot2 <- renderUI({                                
+  selectInput("dbdaPP2", "3. Select 2nd parameter.",       
+              choices = setdiff(DBDA_parameter_Names(), dbda_post_plot_par1()), 
+              multiple=FALSE, selected=setdiff(DBDA_parameter_Names(), dbda_post_plot_par1())[1] )   
+})
+#3a. Reactive function for directly above
+dbda_post_plot_par2 <- reactive({                 
+  input$dbdaPP2 
+})
+#4. Do you want to run the function
+output$dbdaPostCenTen <- renderUI({
+  selectInput("dbdaPstCT", "4. Choose central tendency.", 
+              choices = c("mode","median","mean"), multiple=FALSE, 
+              selected=c("mode","median","mean")[1])
+})
+#4A. Reactive function for above
+dbda_post_central_tendency <- reactive({
+  input$dbdaPstCT
+})
+#5. Specify credible mass
+output$dbdaPostCredibleMass <- renderUI({                                 
+  numericInput("dbdaPstCrdMs", "5. Specify credible mass.",
+               value = 0.95, min=0, max = 1, step = .01)
+})
+#5a. Reactive function for directly above
+dbda_post_credible_mass <- reactive({                 
+  input$dbdaPstCrdMs 
+})
+#6. Do you want to add a ROPE
+output$dbdaPostROPEYN <- renderUI({
+  selectInput("dbdaPstReYN", "6. Add ROPE?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")
+})
+#7. Lower ROPE value
+output$dbdaPostRopeVal1 <- renderUI({                                 
+  numericInput("dbdaPRpVl1", "7. Lower ROPE value.",
+               value = 0, step = .01)
+})
+#7a. Reactive function for directly above
+dbda_post_rope_val_1 <- reactive({
+  if(input$dbdaPstReYN == "Yes") {
+    input$dbdaPRpVl1 
+  } else {
+    NULL
+  }
+})
+#8. Upper ROPE value
+output$dbdaPostRopeVal2 <- renderUI({                                 
+  numericInput("dbdaPRpVl2", "8. Upper ROPE value.",
+               value = 0, step = .01)
+})
+#8a. Reactive function for directly above
+dbda_post_rope_val_2 <- reactive({                 
+  if(input$dbdaPstReYN == "Yes") {
+    input$dbdaPRpVl2 
+  } else {
+    NULL
+  }
+})
+#9. Select label size multiplier
+output$dbdaPostLabMulti <- renderUI({                                 
+  numericInput("dbdaPstLbMlt", "9. Increase XY label sizes.",
+               value = 1.75, min=.01, step = .1)
+})
+#9a. Reactive function for directly above
+dbda_post_label_multiplier <- reactive({                 
+  input$dbdaPstLbMlt 
+})
+#10. Enter a weight variable.
+output$dbdaPostMainTtl <- renderUI({                                 
+  textInput("dbdaPstMnTtl", "10. Type main title.")     
+})
+#10A. Enter a weight variable.
+dbda_post_main_title <- reactive({         
+  input$dbdaPstMnTtl
+})
+#11. Enter a weight variable.
+output$dbdaPostXlab <- renderUI({                                 
+  textInput("dbdaPstXLb", "11. Type x-axis label.")     
+})
+#11A. Enter a weight variable.
+dbda_post_x_label <- reactive({         
+  input$dbdaPstXLb
+})
+#12. Enter a weight variable.
+output$dbdaPostYlab <- renderUI({                                 
+  textInput("dbdaPstYLb", "12. Type y-axis label.")     
+})
+#12A. Enter a weight variable.
+dbda_post_y_label <- reactive({         
+  input$dbdaPstYLb
+})
+#13. Do you want to add a ROPE
+output$dbdaPostShowCur <- renderUI({
+  selectInput("dbdaPstSC", "13. Show curve instead?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")
+})
+#13A. reactive function for above
+dbda_post_show_curve <- reactive({         
+  if(input$dbdaPstSC == "Yes") {
+     TRUE
+  } else {
+    FALSE
+  }
+})
+#14. Select bar colors
+output$dbdaPlotLineCol <- renderUI({                                 
+  selectInput("dbdaPLC", "14. Select bar color.", 
+              choices = xyplot_Line_Color_Names(), multiple=FALSE, 
+              selected= xyplot_Line_Color_Names()[1] )     
+})
+#14a. Reactive function for directly above
+dbda_plot_line_colors <- reactive({                 
+  input$dbdaPLC 
+})
+#15. X-axis limits
+output$dbdaPostXaxisLims <- renderUI({                                 
+  textInput("dbdaPstXLms", "15. List X-axis limits.",
+            value = paste0('c( ', ')'))
+})
+#15a. Reactive function for directly above
+dbda_post_x_axis_limits <- reactive({                 
+  input$dbdaPstXLms 
+})
+
+#16. Place HDI text
+output$dbdaPostPlaceHDIText <- renderUI({                                 
+  numericInput("dbdaPPlHDITxt", "16. Place HDI text.",
+               value = 0.7, step = .01)
+})
+#16a. Reactive function for directly above
+dbda_post_place_hdi_text <- reactive({                 
+  input$dbdaPPlHDITxt 
+})
+#17. Do you want to compare parameter
+output$dbdaPostCompValYN <- renderUI({
+  selectInput("dbdaPstCmpVl", "17. Add comparison value?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")
+})
+#18. Vertical line as a comparative value
+output$dbdaPostCompVal <- renderUI({                                 
+  numericInput("dbdaPCmpVl", "18. Plot comparative value.",
+               value = 0, step = .01)
+})
+#18a. Reactive function for directly above
+dbda_post_comparative_val <- reactive({
+  if (input$dbdaPstCmpVl == "Yes") {
+    input$dbdaPCmpVl 
+  } else {
+    NULL
+  }
+})
+#19. Do you want to run the function
+output$dbdaPostRun <- renderUI({
+  selectInput("dbdaPstRn", "19. Run HDI plot?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")
+})
+#19A. Reactive function for above
+dbda_post_run_Yes_No <- reactive({
+  input$dbdaPstRn
+})
+
+## Plot DBDA Posterior HDI ##
+plot_dbda_posterior_distribution <- reactive({
+  if(dbda_post_run_Yes_No() == "Yes") {
+    par(mar=c(6, 7, 4, 2))
+    if(input$dbdaPostComP12 == "Yes") {
+      plotPost( as.matrix(DBDA_coda_object_df())[, dbda_post_plot_par1()] - as.matrix(DBDA_coda_object_df())[, dbda_post_plot_par2()], 
+                compVal= dbda_post_comparative_val(), cenTend= dbda_post_central_tendency(),
+                ROPE=c(dbda_post_rope_val_1(),dbda_post_rope_val_2()), 
+                credMass= dbda_post_credible_mass(), main= dbda_post_main_title(), 
+                xlab= dbda_post_x_label(), ylab= dbda_post_y_label(), 
+                showCurve= dbda_post_show_curve(), col= dbda_plot_line_colors(), 
+                xlim= (eval(parse(text=dbda_post_x_axis_limits() )) ), 
+                HDItextPlace= dbda_post_place_hdi_text(), cex=dbda_post_label_multiplier(), 
+                cex.main= dbda_post_label_multiplier(), cex.lab= dbda_post_label_multiplier() )
+    } else {
+      plotPost( as.matrix(DBDA_coda_object_df())[, dbda_post_plot_par1()], 
+                compVal= dbda_post_comparative_val(), cenTend= dbda_post_central_tendency(),
+                ROPE=c(dbda_post_rope_val_1(),dbda_post_rope_val_2()), 
+                credMass= dbda_post_credible_mass(), main= dbda_post_main_title(), 
+                xlab= dbda_post_x_label(), ylab= dbda_post_y_label(), 
+                showCurve= dbda_post_show_curve(), col= dbda_plot_line_colors(), 
+                xlim= (eval(parse(text=dbda_post_x_axis_limits() )) ), 
+                HDItextPlace= dbda_post_place_hdi_text(), cex=dbda_post_label_multiplier(), 
+                cex.main= dbda_post_label_multiplier(), cex.lab= dbda_post_label_multiplier() )
+    }
+  }
+})
+
+#Posterior distribution for above
+output$plotDbdaPosteriorDistribution <- renderPlot({ 
+  if(dbda_post_run_Yes_No() == "Yes") {
+    plot_dbda_posterior_distribution()
+  }
+}, height = 800)
+
+##################################
+## Hierarchical Estimation Plot ##
+##################################
+
+## Posterior summary ##
+############
+##   UI   ##
+############
+#1. Select the main parameter
+output$dbdaPostSumLev <- renderUI({                                
+  numericInput("dbdaPSL", "1. Hierarchical model level.",
+               value = 1, min=1, max=3, step = 1)
+})
+#2. Select the outcome
+output$dbdaPostSumY <- renderUI({
+  selectInput("dbdaPSY", "2. Select the outcome.",
+              choices = var(), multiple=FALSE, selected=var()[1] )
+})
+#3. Select hierarchical groupings...level-2
+output$dbdaPostSumX1 <- renderUI({                                 
+  selectInput("dbdaPSX1", "3. Select level-2 Group.", 
+              choices = setdiff(var(), input$dbdaPSY), multiple=FALSE, 
+              selected= setdiff(var(), input$dbdaPSY)[1])
+})
+#4. Select hierarchical groupings...level-3
+output$dbdaPostSumX2 <- renderUI({                                 
+  selectInput("dbdaPSX2", "4. Select level-3 Category.", 
+              choices = setdiff(var(), try(c(input$dbdaPSY, input$dbdaPSX1))), multiple=FALSE, 
+              selected= setdiff(var(), try(c(input$dbdaPSY, input$dbdaPSX1)))[1])
+})
+#5. Enter theta variable name.
+output$dbdaPostSumTheta <- renderUI({                                 
+  textInput("dbdaPstSmTht", "5. Type Theta name.")     
+})
+#6. Enter level-2 omega variable name.
+output$dbdaPostSumOmega2 <- renderUI({                                 
+  textInput("dbdaPstSmOmg2", "6. Type level-2 Omega.")     
+})
+#7. Enter level-2 omega variable name.
+output$dbdaPostSumOmega3 <- renderUI({                                 
+  textInput("dbdaPstSmOmg3", "7. Type level-2 Omega.")     
+})
+#8. Do you want to run the function
+output$dbdaPostSumCenTen <- renderUI({
+  selectInput("dbdaPstSmCT", "8. Choose central tendency.", 
+              choices = c("Mode","Median","Mean"), multiple=FALSE, 
+              selected= c("Mode","Median","Mean")[1])
+})
+#9. Is the data aggregated
+output$dbdaPostSumAggrYN <- renderUI({
+  selectInput("dbdaPstSmAgYN", "9. Is data aggregated?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")
+})
+#10. Pick the aggregated variable that represents the N.
+output$dbdaPostSumAggrN <- renderUI({
+  selectInput("dbdaPSAgN", "10. Select aggregated N value.",
+              choices = var(), multiple=FALSE, selected=var()[1] )
+})
+#11. Do you want to run the function
+output$dbdaPostSumRun <- renderUI({
+  selectInput("dbdaPstSmRn", "11. Run posterior summary?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")
+})
+#11a. Reactive function for directly above
+dbda_post_summary_run <- reactive({                 
+  input$dbdaPstSmRn 
+})
+#12. Print the posterior structure
+output$dbdaPostSumStructYN <- renderUI({
+  selectInput("dbdaPstSmStrYN", "12. Print posterior structure?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")
+})
+#12a. Reactive function for directly above
+dbda_post_summary_structure <- reactive({                 
+  input$dbdaPstSmStrYN 
+})
+## Summary of DBDA Posterior ##
+results_dbda_posterior_summary <- reactive({
+  if(dbda_post_summary_run() == "Yes") {
+    fncHdiBinSmry(MCmatrix=as.matrix(DBDA_coda_object_df(), chains=TRUE), mydf=df(), 
+                  Level=input$dbdaPSL, Outcome=input$dbdaPSY, Group2=input$dbdaPSX1, 
+                  Group3=input$dbdaPSX2, Theta=input$dbdaPstSmTht, Omega2=input$dbdaPstSmOmg2, 
+                  Omega3=input$dbdaPstSmOmg3, Average=input$dbdaPstSmCT, 
+                  AggrDF=input$dbdaPstSmAgYN, AggrN=input$dbdaPSAgN )
+  }
+})
+#Print structure of posterior summary
+output$structure_dbda_posterior_summary <- renderPrint({                                                 
+  if(dbda_post_summary_structure() == "Yes") {
+    str(results_dbda_posterior_summary())
+  }
+})
+
+#############################
+## Hierarchical Estimation ##
+#############################
+#1. Select the sorting order.
+output$dbdaHierlphaNum <- renderUI({                                
+  selectInput("dbdaHrAN", "1. Sort by name or numerical value?",
+              choices = c("Alphabetical", "Numerical"),
+              selected="Alphabetical")
+})
+#1a. Reactive function for directly above
+dbda_hier_alpha_num <- reactive({                 
+  input$dbdaHrAN 
+})
+#2. Select whether to view level-2 or level-3 group
+output$dbdaHierViewGroup3 <- renderUI({
+  selectInput("dbdaHrVwG3YN", "2. View level-3 groups?",
+              choices = c("No", "Yes"),
+              selected="No")
+})
+#2a. Reactive function for directly above
+dbda_hier_view_group_level_3 <- reactive({                 
+  input$dbdaHrVwG3YN 
+})
+#3. Select whether to view a subset
+output$dbdaHierViewSub <- renderUI({
+  selectInput("dbdaHrVwSb", "3. View a subset?",
+              choices = c("No", "Yes"),
+              selected="No")
+})
+#3a. Reactive function for directly above
+dbda_hier_view_subset <- reactive({                 
+  input$dbdaHrVwSb 
+})
+#4c. Get group names
+dbda_hier_group_lev_names <- reactive({                 
+  if (dbda_hier_view_subset() == "Yes") {
+    if(dbda_hier_view_group_level_3() == "Yes") {
+      results_dbda_posterior_summary()$Group3.Names
+    } else {
+      results_dbda_posterior_summary()$Group2.Names
+    }
+  } else {
+    NULL
+  } 
+})
+#4. Select specific groups
+output$dbdaHierSpecGroup <- renderUI({                                 
+  selectInput("dbdaHrGrpLvs", "4. Highlight specific groups?", 
+              choices = dbda_hier_group_lev_names(), multiple=TRUE)     
+})
+#4a. Reactive function to get group levels
+dbda_hier_group_levels <- reactive({                 
+  input$dbdaHrGrpLvs 
+})
+#5. Select number of digits to round values by
+output$dbdaHierRoundVals <- renderUI({                                 
+  numericInput("dbdaHrRndVls", "5. Round decimals by.",
+               value = 2, step = 1)
+})
+#5a. Reactive function for directly above
+dbda_hier_round_decimals <- reactive({                 
+  input$dbdaHrRndVls 
+})
+#6. Select line colors
+output$dbdaHierLineCol <- renderUI({                                 
+  selectInput("dbdaHrLnCl", "6. Select line color.", 
+              choices = xyplot_Line_Color_Names(), multiple=FALSE, selected= "blue")     
+})
+#6a. Reactive function for directly above
+dbda_hier_line_colors <- reactive({                 
+  input$dbdaHrLnCl 
+})
+#7. Select point colors 
+output$dbdaHierPointCol <- renderUI({                                 
+  selectInput("dbdaHrPntCl", "7. Select point color.", 
+              choices = xyplot_Line_Color_Names(), multiple=FALSE, selected= "red")     
+})
+#7a. Reactive function for directly above
+dbda_hier_point_colors <- reactive({                 
+  input$dbdaHrPntCl 
+})
+#8. Select observed rate point color for level-3 graph
+output$dbdaHierObsRateCol <- renderUI({                                 
+  selectInput("dbdaHrObsRtCl", "8. Level-3 observed '+' color.", 
+              choices = xyplot_Line_Color_Names(), multiple=FALSE, selected= "sienna")     
+})
+#8a. Reactive function for directly above
+dbda_hier_obs_rate_colors <- reactive({                 
+  input$dbdaHrObsRtCl 
+})
+#9. Set target lines
+output$dbdaHierTarLine <- renderUI({                                 
+  textInput("dbdaHrTrLn", "9. Set target line(s).",
+            value = paste0('c( ', ')'))
+})
+#9a. Reactive function for directly above
+dbda_hier_target_line <- reactive({                 
+  input$dbdaHrTrLn 
+})
+
+#10. Select target color
+output$dbdaHierTarCol <- renderUI({                                 
+  selectInput("dbdaHrTrCl", "10. Select target color.", 
+              choices = xyplot_Line_Color_Names(), multiple=FALSE, selected= "gray")     
+})
+#10a. Reactive function for directly above
+dbda_hier_target_color <- reactive({                 
+  input$dbdaHrTrCl 
+})
+#11. Select whether to run overall 95% density bar
+output$dbdaHierTotalBar <- renderUI({
+  selectInput("dbdaHrTtlBr", "11. Create overall HDI band?",
+              choices = c("No", "Yes"),
+              selected="No")
+})
+#11a. Reactive function for directly above
+dbda_hier_total_bar_interval <- reactive({                 
+  input$dbdaHrTtlBr 
+})
+#12. Select overall band color
+output$dbdaHierTotalBarCol <- renderUI({                                 
+  selectInput("dbdaHrTtlBCol", "12. Select overall band color.", 
+              choices = xyplot_Line_Color_Names(), multiple=FALSE, selected= "yellow")     
+})
+#12a. Reactive function for directly above
+dbda_hier_total_bar_color <- reactive({                 
+  input$dbdaHrTtlBCol 
+})
+## Lower and uppper x-axis limits ##
+#Lower
+dbda_hier_x_lim_1 <- reactive({                 
+  if (dbda_post_summary_run() == "Yes") {
+    min(results_dbda_posterior_summary()$Post[1:results_dbda_posterior_summary()$LTR, "Obs.Rate"], na.rm=TRUE)* 0.95
+  } else {
+    0
+  } 
+})
+#Upper
+dbda_hier_x_lim_2 <- reactive({                 
+  if (dbda_post_summary_run() == "Yes") {
+    max(results_dbda_posterior_summary()$Post[1:results_dbda_posterior_summary()$LTR, "Obs.Rate"], na.rm=TRUE)* 1.05
+  } else {
+    0
+  } 
+})
+#13. Indicate lower limit of x-axis
+output$dbdaHierXlim1 <- renderUI({
+  numericInput("dbdaHrXLim1", "13. Lower X-axis limit.",
+               value = round(dbda_hier_x_lim_1(), 2), step = .01)
+})
+#13a. Indicate lower limit of x-axis
+dbda_hier_Xlim_val1 <- reactive({
+    input$dbdaHrXLim1
+})
+#14. Indicate upper limit of x-axis
+output$dbdaHierXlim2 <- renderUI({
+  numericInput("dbdaHrXLim2", "14. Upper X-axis limit.",
+               value = round(dbda_hier_x_lim_2(), 2), step = .01)
+})
+#14a. Indicate upper limit of x-axis
+dbda_hier_Xlim_val2 <- reactive({
+    input$dbdaHrXLim2
+})
+#15. Select whether to add a legend or not
+output$dbdaHierAddLeg <- renderUI({
+  selectInput("dbdaHrAdLgd", "15. Add the legend?",
+              choices = c("No", "Yes"),
+              selected="No")
+})
+#15a. Reactive function for directly above
+dbda_hier_add_legend <- reactive({                 
+  input$dbdaHrAdLgd 
+})
+#16. Legend location
+output$dbdaHierLgdLoc <- renderUI({                                
+  selectInput("dbdaHrLgdLc", "16. Select the legend location.",        
+              choices = c("bottomright","bottom","bottomleft","left","topleft","top","topright","right","center"), 
+              multiple=FALSE, selected="topleft" ) 
+})
+#16A. Reactive function for legend location
+dbda_hier_legend_location <- reactive({
+  input$dbdaHrLgdLc
+})
+#17. Select label size multiplier
+output$dbdaHierLabMulti <- renderUI({                                 
+  numericInput("dbdaHrLbMlt", "17. Increase XY label sizes.",
+               value = 1.75, min=.01, step = .1)
+})
+#17a. Reactive function for directly above
+dbda_hier_label_multiplier <- reactive({                 
+  input$dbdaHrLbMlt 
+})
+#18. Do you want to run the function
+output$dbdaHierRun <- renderUI({
+  selectInput("dbdaHrRn", "18. Run HDI plot?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")
+})
+#18A. Reactive function for above
+dbda_hier_run_Yes_No <- reactive({
+  input$dbdaHrRn
+})
+## Plot DBDA Posterior HDI ##
+plot_dbda_hierarchical_estimation <- reactive({
+  if(dbda_hier_run_Yes_No() == "Yes") {
+    par(mar=c(2, 7, 4, 1))
+    fncHdiBinP(MCmatrix=results_dbda_posterior_summary(), Level=input$dbdaPSL, 
+               View.Order=dbda_hier_alpha_num(), View.Level=dbda_hier_view_group_level_3(),
+               GroupX=dbda_hier_group_levels(), Lcol=dbda_hier_line_colors(), 
+               Pcol=dbda_hier_point_colors(), P3.col=dbda_hier_obs_rate_colors(), 
+               tgt=(eval(parse(text=dbda_hier_target_line() )) ), tgt.col=dbda_hier_target_color(),
+               Cbar=dbda_hier_total_bar_interval(), plyCol=dbda_hier_total_bar_color(), 
+               labMulti=dbda_hier_label_multiplier(), roundVal=dbda_hier_round_decimals(), 
+               XLim1=dbda_hier_Xlim_val1(),XLim2=dbda_hier_Xlim_val2(), 
+               Add.Lgd=dbda_hier_add_legend(), Leg.Loc=dbda_hier_legend_location())
+  }
+})
+#Posterior distribution for above
+output$plotDbdaHierEstimation <- renderPlot({ 
+  if(dbda_hier_run_Yes_No() == "Yes") {
+    plot_dbda_hierarchical_estimation()
+  }
+}, height = 800)
+
+#kermit
+
+###########################################
+## Posterior Predictive Check for groups ##
+###########################################
+#1. Select the outcome
+output$dbdaPostCheckY <- renderUI({
+  selectInput("dbdaPcgY", "1. Select the outcome.",
+              choices = var(), multiple=FALSE, selected=var()[1] )
+})
+#1a. Reactive function for directly above
+dbda_post_check_grp_Y <- reactive({                 
+  input$dbdaPcgY 
+})
+#2. Select groups
+output$dbdaPostCheckX <- renderUI({                                 
+  selectInput("dbdaPcgX", "2. Select the Group.", 
+              choices = setdiff(var(), dbda_post_check_grp_Y()), multiple=FALSE, 
+              selected= setdiff(var(), dbda_post_check_grp_Y())[1])
+})
+#2a. Reactive function for directly above
+dbda_post_check_grp_X <- reactive({                 
+  input$dbdaPcgX 
+})
+#3c. Get levels 
+dbda_post_check_grp_X_all_levels <- reactive({                 
+  if (dbda_post_check_grp_gen_YN() == "Yes") {
+    sort(unique(df()[, dbda_post_check_grp_X()])) 
+  }
+})
+#3. Select group levels
+output$dbdaPostCheckLevX <- renderUI({                                 
+    selectInput("dbdaPcgLX", "3. Select the Group.", 
+                choices = dbda_post_check_grp_X_all_levels(), multiple=FALSE, 
+              selected= dbda_post_check_grp_X_all_levels()[1])
+})
+#3a. Reactive function for directly above
+dbda_post_check_grp_level_X <- reactive({
+    input$dbdaPcgLX 
+})
+#4. Select the mean parameter
+output$dbdaPostCheckParMn <- renderUI({                                
+  selectInput("dbdaPcgPM", "4. Select mean parameter.",       
+              choices = DBDA_parameter_Names(), multiple=FALSE, 
+              selected=DBDA_parameter_Names()[1] )   
+})
+#4a. Reactive function for directly above
+dbda_post_check_grp_pm <- reactive({                 
+  input$dbdaPcgPM 
+})
+#5. Select the SD parameter
+output$dbdaPostCheckParSD <- renderUI({                                
+  selectInput("dbdaPcgPSD", "5. Select SD parameter.",       
+              choices = setdiff(DBDA_parameter_Names(), dbda_post_check_grp_pm()), 
+              multiple=FALSE, selected= setdiff(DBDA_parameter_Names(), dbda_post_check_grp_pm())[1] )   
+})
+#5a. Reactive function for directly above
+dbda_post_check_grp_psd <- reactive({                 
+  input$dbdaPcgPSD 
+})
+#6. select the distribution type
+output$dbdaPostCheckDist <- renderUI({
+  selectInput("dbdaPcgDst", "6. Choose the distribution.", 
+              choices = c("Normal", "Log-normal"), multiple=FALSE, 
+              selected=c("Normal", "Log-normal")[1])
+})
+#6A. Reactive function for above
+dbda_post_check_grp_distr <- reactive({
+  input$dbdaPcgDst
+})
+#7. Specify the number of posterior distribution lines
+output$dbdaPostCheckNumPL <- renderUI({                                 
+  numericInput("dbdaPcgNmPL", "7. Number of posterior lines.",
+               value = 20, min=1, step = 1)
+})
+#7a. Reactive function for directly above
+dbda_post_check_grp_number_lines <- reactive({                 
+  input$dbdaPcgNmPL 
+})
+#8. Enter a weight variable.
+output$dbdaPostCheckMainTtl <- renderUI({                                 
+  textInput("dbdaPcgMnTtl", "8. Type main title.")     
+})
+#8A. Enter a weight variable.
+dbda_post_check_grp_main_title <- reactive({         
+  input$dbdaPcgMnTtl
+})
+#9. Enter a weight variable.
+output$dbdaPostCheckXlab <- renderUI({                                 
+  textInput("dbdaPcgXLb", "9. Type x-axis label.")     
+})
+#9A. Enter a weight variable.
+dbda_post_check_grp_x_label <- reactive({         
+  input$dbdaPcgXLb
+})
+#10. Select line colors
+output$dbdaPostCheckBarCol <- renderUI({                                 
+  selectInput("dbdaPcgBrCl", "10. Select line color.", 
+              choices = xyplot_Line_Color_Names(), multiple=FALSE, selected= "blue")     
+})
+#10a. Reactive function for directly above
+dbda_post_check_grp_bar_colors <- reactive({                 
+  input$dbdaPcgBrCl 
+})
+#11. Select line colors
+output$dbdaPostCheckLineCol <- renderUI({                                 
+  selectInput("dbdaPcgLnCl", "11. Select line color.", 
+              choices = xyplot_Line_Color_Names(), multiple=FALSE, selected= "orange")     
+})
+#11a. Reactive function for directly above
+dbda_post_check_grp_line_colors <- reactive({                 
+  input$dbdaPcgLnCl 
+})
+#12. Specify the number of posterior distribution lines
+output$dbdaPostCheckNumHB <- renderUI({                                 
+  numericInput("dbdaPcgNmHB", "12. Number of histogram bars.",
+               value = 30, min=1, step = 1)
+})
+#12a. Reactive function for directly above
+dbda_post_check_grp_number_bars <- reactive({                 
+  input$dbdaPcgNmHB 
+})
+#13. Select label size multiplier
+output$dbdaPostCheckLabMulti <- renderUI({                                 
+  numericInput("dbdaPcgLbMlt", "13. Increase XY label sizes.",
+               value = 1.75, min=.01, step = .1)
+})
+#13a. Reactive function for directly above
+dbda_post_check_grp_label_multiplier <- reactive({                 
+  input$dbdaPcgLbMlt 
+})
+#14. X-axis limits
+output$dbdaPostCheckXaxisLims <- renderUI({                                 
+  textInput("dbdaPcgXLms", "14. List X-axis limits.",
+            value = paste0('c( ', ')'))
+})
+#14a. Reactive function for directly above
+dbda_post_check_grp_x_axis_limits <- reactive({                 
+  input$dbdaPcgXLms 
+})
+#15. Select label size multiplier
+output$dbdaPostCheckMinVal <- renderUI({                                 
+  numericInput("dbdaPcgLbMV", "15. List minimum value.",
+               value = 0, step = 1)
+})
+#15a. Reactive function for directly above
+dbda_post_check_grp_min_value <- reactive({                 
+  input$dbdaPcgLbMV 
+})
+#16. Select label size multiplier
+output$dbdaPostCheckRndPlc <- renderUI({                                 
+  numericInput("dbdaPcgRP", "16. Round decimal places?.",
+               value = 1, step = 1)
+})
+#16a. Reactive function for directly above
+dbda_post_check_grp_round_place <- reactive({                 
+  input$dbdaPcgRP 
+})
+#17. Do you want to run the function
+output$dbdaPostCheckGenGroups <- renderUI({
+  selectInput("dbdaPcgGnGrp", "17. Generate group levels in #3?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")
+})
+#17A. Reactive function for above
+dbda_post_check_grp_gen_YN <- reactive({
+  input$dbdaPcgGnGrp
+})
+#18. Do you want to run the function
+output$dbdaPostCheckRun <- renderUI({
+  selectInput("dbdaPcgRn", "18. Run posterior plot?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")
+})
+#18A. Reactive function for above
+dbda_post_check_grp_run_YN <- reactive({
+  input$dbdaPcgRn
+})
+## Plot DBDA Posterior HDI ##
+plot_dbda_posterior_group_check <- reactive({
+  if(dbda_post_check_grp_run_YN() == "Yes") {
+#    par(mar=c(2, 7, 4, 1))
+    fncGrpPostPredCheck(Coda.Object=DBDA_coda_object_df(), mydf=df(), 
+                        Outcome=dbda_post_check_grp_Y(), Group=dbda_post_check_grp_X(), 
+                        Group.Level=dbda_post_check_grp_level_X(), 
+                        Mean.Var=dbda_post_check_grp_pm(), 
+                        SD.Var=dbda_post_check_grp_psd(), Distribution=dbda_post_check_grp_distr(), 
+                        Num.Lines=dbda_post_check_grp_number_lines(), 
+                        Main.Title=dbda_post_check_grp_main_title(), 
+                        X.Lab=dbda_post_check_grp_x_label(), 
+                        Bar.Color=dbda_post_check_grp_bar_colors(), 
+                        Line.Color=dbda_post_check_grp_line_colors(), 
+                        Hist.Breaks=dbda_post_check_grp_number_bars(), 
+                        CEX.size=dbda_post_check_grp_label_multiplier(), 
+                        X.Lim=(eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
+                        Min.Val=dbda_post_check_grp_min_value(), 
+                        Round.Digits=dbda_post_check_grp_round_place())
+    }
+})
+#Posterior distribution for above
+output$plotDbdaPostCheckGroup <- renderPlot({ 
+  if(dbda_post_check_grp_run_YN() == "Yes") {
+    plot_dbda_posterior_group_check()
+  }
+}, height = 800)
+
+########################################
+## My functions for Bayesian analysis ##
+########################################
+
+################################################################################
+#                  1. Expand aggregated data into  full data                   #
+################################################################################
+#This function expands y ~ x1 + X2 BINARY aggregated data in multi-row data
+#X1= lower level hierarchy (e.g., patients), X2= higher level hierarchy (e.g., States) 
+#Z= Outcome, N= Total count of denominator (e.g., Z/N= rate)
+fncExpAgr <- function(DF, X1, X2, Z, N, Level) {
+  #Add variable that tracks number of 0s
+  t_exp_df <- DF
+  t_exp_df$Yzero <- t_exp_df[, N] - t_exp_df[, Z]
+  #Total rows
+  tot_rows <- nrow(DF)
+  #For loop to get the vectors of 0s and 1s 
+  z_ls <- vector(mode = "list", length = tot_rows)
+  #Level 1 or 2 models
+  if (Level <= 2) {
+    for (i in 1:tot_rows) {
+      z_ls[[i]] <- data.frame(Z=c(rep(0, t_exp_df[i, "Yzero"]), rep(1, t_exp_df[i, Z])), 
+                              X1=rep(t_exp_df[i, X1], t_exp_df[i, N]))
+    }
+  }
+  #Level 3 models
+  if (Level == 3) {
+    for (i in 1:tot_rows) {
+      z_ls[[i]] <- data.frame(Z=c(rep(0, t_exp_df[i, "Yzero"]), rep(1, t_exp_df[i, Z])), 
+                              X1=rep(t_exp_df[i, X1], t_exp_df[i, N]),
+                              X2=rep(t_exp_df[i, X2], t_exp_df[i, N]))
+    }
+  }
+  #Turn list into data frame
+  ExpDF <- do.call(rbind.data.frame, z_ls)
+  #Give column names
+  if (Level <= 2) {
+    colnames(ExpDF) <- c(Z, X1)
+  }
+  if (Level == 3) {
+    colnames(ExpDF) <- c(Z, X1, X2)
+  }
+  return("ExpDF"=ExpDF)
+}
+
+################################################################################
+# 2. Function to get the binary (non)hierarchical estimation posterior summary #
+################################################################################
+#Uses DBDA function below, summarizePost() 
+#MCmatrix= MCMC matrix after: mcmcMat <- as.matrix(codaSamples, chains=TRUE) 
+#mydf: Original data frame (i.e., not the data list used in JAGS) 
+#Level= A 1, 2, or 3 level indicator for the type of model 
+#Outcome= Model outcome 
+#Group2 & Group3= level 2 and 3 group names 
+fncHdiBinSmry <- function(MCmatrix, mydf, Level, Outcome, Group2, Group3=NULL, 
+                          Theta=NULL, Omega2=NULL, Omega3=NULL, Average=NULL, 
+                          AggrDF="No", AggrN=NULL ) {
+  #Get order of participants in rows of aggregated data
+  if (AggrDF == "Yes") {
+    group2_aggr_factor <- factor(mydf[, Group2], levels=c(mydf[, Group2])) 
+  } else {
+    group2_aggr_factor <- levels(factor(mydf[, Group2], levels=unique(mydf[, Group2]))) 
+  }
+  # Use the aggregated data if needed
+  if (AggrDF == "Yes") {
+    mydf <- fncExpAgr(DF=mydf, X1=Group2, X2=Group3, Z=Outcome, N=AggrN, Level=Level) 
+  } else {
+    mydf <- mydf
+  }
+  #Make a factor from aggregated data so that it follows the same order
+  if (AggrDF == "Yes") {
+    mydf[, Group2] <- factor(mydf[, Group2], levels=group2_aggr_factor)
+  } else {
+    mydf[, Group2] <- factor(mydf[, Group2], levels=group2_aggr_factor)
+  }
+  #Get the type of estimate 
+  if (is.null(Average)) {
+    average_type <- "Mode"
+  } else {
+    average_type <- Average
+  }
+  #Number of level-2 groups
+  numGroups <- length(table(mydf[, Group2]))
+  #Number of level-3 categories
+  if(Level== 3) {
+    numCats <- length(table(mydf[, Group3]))
+  }
+  #Get the level-2 group names
+  Group2.Names <- sort(unique(mydf[, Group2]))
+  #Get the level-3 group names
+  if(Level== 3) {  #Get group-3 rates 
+    Group3.Names <- sort(unique(mydf[, Group3]))
+  } else {
+    Group3.Names <- NULL
+  }
+  #Get the column numbers with the Theta and Omega in it
+  #Level-1, non-hierarchical model
+  if(Level== 1) {
+    theta_cols <- grep(Theta, colnames(MCmatrix))
+  } 
+  #Level-2, hierarchical model
+  if(Level== 2) {
+    theta_cols <- grep(Theta, colnames(MCmatrix))
+  }
+  if(Level== 2) {
+    omega2_cols <- grep(Omega2, colnames(MCmatrix))
+  }
+  #Level-3, hierarchical model
+  if(Level== 3) {
+    theta_cols <- grep(Theta, colnames(MCmatrix))
+  }
+  if(Level== 3) {
+    omega3_cols <- grep(Omega3, colnames(MCmatrix))
+  }
+  if(Level== 3) {
+    omega2_cols <- setdiff(grep(Omega2, colnames(MCmatrix)), omega3_cols)
+  }
+  
+  #Get the column numbers with the Theta and Omega in it
+  mat_cols <- 1:length(colnames(MCmatrix))      #Get range of matrix columns 
+  #Level-1, non-hierarchical model
+  if(Level== 1) {
+    pName <- colnames(MCmatrix)
+  } 
+  #Level-2, hierarchical model
+  if(Level== 2) {
+    pName <- colnames(MCmatrix)[c(1, theta_cols, omega2_cols, setdiff(mat_cols, c(1, theta_cols, omega2_cols) ))]
+  }
+  #Level-3, hierarchical model
+  if(Level== 3) {
+    pName <- colnames(MCmatrix)[c(1, theta_cols, omega2_cols, omega3_cols, setdiff(mat_cols, c(1, theta_cols, omega2_cols, omega3_cols)))]
+  }
+  
+  ## Create posterior chain summary ##
+  # pName <- colnames(MCmatrix)   #Parameter names
+  postDF <- list()
+  #  for (i in 1:length(pName[-1]))  {
+  for (i in 1:length(pName[which(pName != "CHAIN")]))  {
+    #    postDF[[i]] <- summarizePost( MCmatrix[, pName[i] ] , compVal=NULL , ROPE=NULL )
+    postDF[[i]] <- summarizePost( MCmatrix[, pName[which(pName != "CHAIN")[i]] ] , compVal=NULL , ROPE=NULL )
+  }
+  #Turn summary into data frame
+  postDF <- data.frame(do.call( "rbind", postDF))
+  #  rownames(postDF) <- pName[-1]
+  rownames(postDF) <- pName[which(pName != "CHAIN")]
+  ## Get number of parameters to create Group 2 variable
+  m_param_tot <- length(colnames(MCmatrix)) - 1 #Total parameters from MCmatrix
+  #Level-2, hierarchical model
+  if(Level== 2) {
+    param2_so_far <- length(c(theta_cols, omega2_cols))
+    other_param2 <- m_param_tot - param2_so_far
+    num_rep_Group2 <- other_param2 + 1
+  }
+  #Level-3, hierarchical model
+  if(Level== 3) {
+    param3_so_far <- length(c(theta_cols, omega2_cols, omega3_cols))
+    other_param3 <- (m_param_tot - param3_so_far) / (numCats + 1)
+    num_rep_Group3 <- other_param3 
+  }
+  #Enter Group/Cat into summary
+  #Level-1, non-hierarchical model
+  if(Level== 1) {
+    row_name <- c(names(table(mydf[, Group2])) )
+  }
+  #Level-2, hierarchical model
+  if(Level== 2) {
+    row_name <- c(names(table(mydf[, Group2])), rep("Overall", num_rep_Group2) )
+  }
+  #Level-3, hierarchical model. try() used if "omega" is only param passed into JAGS function
+  if(Level== 3) {
+    row_name <- c(names(table(mydf[, Group2])), 
+                  rep(names(table(mydf[, Group3])), 1), "Overall",
+                  try(rep(names(table(mydf[, Group3])), num_rep_Group3)), try(rep("Overall", num_rep_Group3)) )
+  }
+  #Make a variable for the group 2 and 3 names
+  postDF[, Group2] <- row_name
+  
+  #Enter Group/Cat counts
+  #Level-1, non-hierarchical model
+  if(Level== 1) {
+    postDF[, Outcome] <- c(table(mydf[, Outcome], mydf[, Group2])[2,])
+  }
+  #Level-2, hierarchical model
+  if(Level== 2) {
+    postDF[, Outcome] <- c(table(mydf[, Outcome], mydf[, Group2])[2,], 
+                           rep(0, nrow(postDF) - length(table(mydf[, Group2])) ))
+  }
+  #Level-3, hierarchical model
+  if(Level== 3) {
+    postDF[, Outcome] <- c(table(mydf[, Outcome], mydf[, Group2])[2,], 
+                           table(mydf[, Outcome], mydf[, Group3])[2,],
+                           rep(0, nrow(postDF) - 
+                                 (length(table(mydf[, Group2])) + length(table(mydf[, Group3]))) ))
+  }
+  #Enter Group/Cat Ns
+  #Level-1, non-hierarchical model
+  if(Level== 1) {
+    postDF[, "N"] <- c(colSums(table(mydf[, Outcome], mydf[, Group2])))
+  }
+  #Level-2, hierarchical model
+  if(Level== 2) {
+    postDF[, "N"] <- c( colSums(table(mydf[, Outcome], mydf[, Group2])), 
+                        rep(0, nrow(postDF) - length(table(mydf[, Group2])) ))
+  }
+  #Level-3, hierarchical model
+  if(Level== 3) {
+    postDF[, "N"] <- c( colSums(table(mydf[, Outcome], mydf[, Group2])), 
+                        colSums(table(mydf[, Outcome], mydf[, Group3])),
+                        rep(0, nrow(postDF) - 
+                              (length(table(mydf[, Group2])) + length(table(mydf[, Group3]))) ))
+  }
+  #Observed rate
+  postDF$Obs.Rate <- postDF[, Outcome] / postDF[, "N"]
+  
+  #Get the row numbers with the Theta and Omega in it
+  #Level-1, non-hierarchical model
+  if(Level== 1) {
+    theta_rows <- grep(Theta, rownames(postDF))
+  } 
+  #Level-2, hierarchical model
+  if(Level== 2) {
+    theta_rows <- grep(Theta, rownames(postDF))
+  }
+  if(Level== 2) {
+    omega2_rows <- grep(Omega2, rownames(postDF))
+  }
+  #Level-3, hierarchical model
+  if(Level== 3) {
+    theta_rows <- grep(Theta, rownames(postDF))
+  }
+  if(Level== 3) {
+    omega2_rows <- grep(Omega2, rownames(postDF))
+  }
+  if(Level== 3) {
+    omega3_rows <- grep(Omega3, rownames(postDF))
+  }
+  #First make length of theta, omega2 and omega3 rows
+  if(Level== 1) {   
+    LTR <- length(theta_rows)
+  }
+  if(Level== 1) {
+    LO2R<- NULL
+  }
+  if(Level== 1) {
+    LO3R <- NULL
+  }
+  if(Level== 2) {   
+    LTR <- length(theta_rows)
+  }
+  if(Level== 2) {   
+    LO2R <- length(omega2_rows)
+  }
+  if(Level== 2) {
+    LO3R <- NULL
+  }
+  if(Level== 3) {   
+    LTR <- length(theta_rows)
+  }
+  if(Level== 3) {   
+    LO2R <- length(setdiff(omega2_rows, omega3_rows))
+  }
+  if(Level== 3) {   
+    LO3R <- length(omega3_rows)
+  }
+  #Create an order by parameter
+  #Level-2, hierarchical model order of results
+  if(Level== 1) {
+    o6 <- c(order(postDF[, average_type][1:numGroups], decreasing = T)) 
+  } 
+  #ISSUE: first 2 elements are kappas and skipped in the order below colnames(mcmcMatTT)
+  if(Level== 2) {
+    o6 <- c(order(postDF[theta_rows, average_type], decreasing = T),  #Theta
+            omega2_rows[order(postDF[omega2_rows, average_type], decreasing = T)], #Omega2
+            setdiff(1:nrow(postDF), c(theta_rows, omega2_rows)))  #All others
+  } 
+  if(Level== 3) {
+    o6 <- c(order(postDF[, average_type][theta_rows], decreasing = T), #Theta and then Omega2
+            setdiff(omega2_rows, omega3_rows)[order(postDF[, average_type][setdiff(omega2_rows, omega3_rows)], decreasing = T)],
+            omega3_rows[ order(postDF[, average_type][omega3_rows], decreasing = T)], #Omega3
+            ((numGroups+numCats+LO3R ):nrow(postDF))[((numGroups+numCats+LO3R):nrow(postDF)) != omega3_rows] ) #All other
+  } 
+  #Re-order the rows now
+  if(Level== 1) {
+    postDFb <- postDF[o6, ]
+  } 
+  if(Level== 2) {
+    postDFb <- rbind(postDF[o6[1:LTR], ], 
+                     postDF[o6[(LTR + 1):(LTR + LO2R )], ],
+                     postDF[ o6[( (LTR + LO2R) + 1):nrow(postDF)], ])
+  } 
+  if(Level== 3) {  #In this order: theta, Omega2, omega3 
+    postDFb <- rbind(postDF[o6[1:LTR], ],                                   #Thetas
+                     postDF[o6[(LTR + 1):(LTR + LO2R )], ],                 #omega2
+                     postDF[o6[(LTR + LO2R + 1):(LTR + LO2R + 1)], ],       #omega3
+                     postDF[ o6[( (LTR + LO2R + LO3R) + 1):nrow(postDF)], ])  #all others
+  } 
+  ## Put postDF in reverse order so that it will plot correctly
+  if(Level== 1) {
+    postDFa <- postDF[rev(1:LTR), ]
+  } 
+  if(Level== 2) {
+    postDFa <- rbind(postDF[rev(1:LTR), ],
+                     postDF[rev(omega2_rows), ],
+                     postDF[ rev(( (LTR + LO2R) + 1):nrow(postDF)), ])
+  } 
+  if(Level== 3) {  #In this order: theta, Omega2, omega3 
+    postDFa <- rbind(postDF[ rev(1:LTR), ],                                   #Thetas
+                     postDF[ rev((LTR + 1):(LTR + LO2R )), ],                 #omega2
+                     postDF[ omega3_rows, ],                                  #omega3
+                     postDF[ rev(setdiff(1:(nrow(postDF)), c(1:(LTR + LO2R), omega3_rows))), ])  #all others
+  } 
+  
+  ## Get the level-3 rates if doing a level-3 model for the plot points
+  #I Changed Area into a 3 level factor to get a better 3rd level
+  if(Level== 3) { 
+    hspa <- aggregate(mydf[, Outcome] ~ mydf[, Group3] + mydf[, Group2] , data=mydf, FUN="sum")
+  }
+  if(Level== 3) { 
+    hspb <- aggregate(mydf[, Outcome] ~ mydf[, Group3] + mydf[, Group2] , data=mydf, FUN="length")
+  }
+  #Merge
+  if(Level== 3) { 
+    a1hsp <- cbind(hspa, hspb[, 3])
+  }
+  if(Level== 3) { 
+    colnames(a1hsp)[4] <- "Nsamp"
+  }
+  if(Level== 3) { 
+    colnames(a1hsp)[1:3] <- c(Group3, Group2, Outcome)
+  }
+  ##(Add 1 to month and) make it a factor so it begins at 1
+  if(Level== 3) { 
+    a1hsp[, Group2] <- as.numeric(a1hsp[, Group2])
+  }
+  if(Level== 3) { 
+    a1hsp[, Group3] <- as.numeric( as.factor(a1hsp[, Group3]) )  #Turning into factor to get numeric
+  }
+  #Make the rate
+  if(Level== 3) { 
+    a1hsp$Rate <- a1hsp[, (ncol(a1hsp)-1)] / a1hsp[, ncol(a1hsp)]
+  }
+  #For loop to create object
+  if(Level== 3) {  #Get group-3 rates 
+    Group3.Obs <- list()
+    for (i in 1:LO2R) {
+      Group3.Obs[[i]] <- a1hsp[a1hsp[, Group3] == i, "Rate"]
+    }
+  } else {
+    Group3.Obs <- NULL
+  }
+  #Reverse order to match Post1
+  if(Level== 3) {  #Get group-3 rates 
+    Group3.Obs1 <- rev(Group3.Obs)
+  } else {
+    Group3.Obs1 <- NULL
+  }
+  #Get numerical order to match with Post2
+  if(Level== 3) {  #Get group-3 rates 
+    g3_order <- as.numeric(gsub("[^0-9.-]", "", rownames(postDFb[ ((LTR + 1):(LTR + LO2R )), ]) ))
+  } else {
+    g3_order <- NULL
+  }
+  #Get level-3 estimates in numerical order
+  if(Level== 3) {  #Get group-3 rates 
+    Group3.Obs2 <- Group3.Obs[g3_order]
+  } else {
+    Group3.Obs2 <- NULL
+  }
+  return(list("Post"=postDF,"Post1"=postDFa, "Post2"=postDFb, "Level"=Level, "Outcome"=Outcome,
+              "Group2.Names"=Group2.Names, "Group3.Names"=Group3.Names, 
+              "Group2"=Group2, "Group3"=Group3,
+              "Theta"=Theta, "Omega2"=Omega2, "Omega3"=Omega3, "Average"=Average,
+              "Order"=o6, "LTR"=LTR, "LO2R"=LO2R, "LO3R"=LO3R,
+              "Lower"= intersect("HDIlow", colnames(postDF)),
+              "Upper"= intersect("HDIhigh",colnames(postDF)), 
+              "ciconf_lev"= unique(postDF$HDImass), "g3_order"=g3_order,
+              "Group3.Obs1"=Group3.Obs1, "Group3.Obs2"=Group3.Obs2 ))
+}
+
+################################################################################
+#           3. Function to plot HDIs for hierarchical estimation               #
+################################################################################
+fncHdiBinP <- function(MCmatrix, Level, View.Order="Alphabetical", View.Level="No",  #View.Order= alpha/numerical, View.Level=Yes/No "View 3rd level?"
+                       GroupX=NULL, Lcol, Pcol, P3.col, tgt=NULL, tgt.col, 
+                       Cbar, plyCol, labMulti=1, 
+                       roundVal, XLim1, XLim2,Add.Lgd, Leg.Loc) {
+  # Assign objects from MCMC matrix objects  
+  Group2 <- MCmatrix$Group2 
+  Group3 <- MCmatrix$Group3 
+  Outcome <- MCmatrix$Outcome 
+  ciconf_lev <- MCmatrix$ciconf_lev 
+  Average <- MCmatrix$Average 
+  Theta <- MCmatrix$Theta 
+  Omega2 <- MCmatrix$Omega2 
+  Omega3 <- MCmatrix$Omega3 
+  LTR <- MCmatrix$LTR
+  LO2R <- MCmatrix$LO2R
+  LO3R <- MCmatrix$LO3R
+  Lower <- MCmatrix$Lower 
+  Upper <- MCmatrix$Upper 
+  Group3.Obs1 <- MCmatrix$Group3.Obs1
+  Group3.Obs2 <- MCmatrix$Group3.Obs2
+  
+  #Select the group levels that determine which rows go into the data frame
+  if(Level== 1) {
+    if (View.Level == "No") {
+      row_numbers <- 1:LTR
+    }
+  }
+  #Level-2, hierarchical model
+  if(Level== 2) {
+    if (View.Level == "No") {
+      row_numbers <- 1:(LTR + LO2R)
+    }
+  }
+  #Level-3, hierarchical model
+  if(Level== 3) {
+    if (View.Level == "Yes") {
+      row_numbers <- setdiff(1:(LTR + LO2R + LO3R), 1:LTR)
+    } else {
+      row_numbers <- setdiff(1:(LTR + LO2R + LO3R), (LTR + 1):(LTR + LO2R))
+    }
+  }
+  #Create hdidf table of Bayesian estimates
+  if(View.Order == "Alphabetical") {                                  #Post1 
+    hdidf <- MCmatrix$Post1[row_numbers , c(Group2, Average, Lower, Upper, "Obs.Rate")]
+  } 
+  if(View.Order == "Numerical") {                                  #Post2 
+    hdidf <- MCmatrix$Post2[row_numbers , c(Group2, Average, Lower, Upper, "Obs.Rate")]
+  }
+  #Create adf table of observed values
+  if(View.Order == "Alphabetical") {                                  #Post1 
+    adf <- MCmatrix$Post1[row_numbers , c(Group2, "Obs.Rate")]
+  } 
+  if(View.Order == "Numerical") {                                  #Post2 
+    adf <- MCmatrix$Post2[row_numbers , c(Group2, "Obs.Rate")]
+  }
+  #Hierarchical average for the highest level (e.g., Omega)  
+  if(Level >= 2) {
+    mainYmn <- hdidf[nrow(hdidf), which(colnames(hdidf)== Average)]
+  } else {
+    mainYmn <- NA
+  }
+  #Select which 3-level category data gets reported
+  if(View.Order == "Alphabetical") {                                  #Post1 
+    Group3.Obs <- Group3.Obs1
+  } 
+  if(View.Order == "Numerical") {                                  #Post2 
+    Group3.Obs <- Group3.Obs2
+  }
+  #Main X labels
+  if(Level >= 2) {
+    X_Label <- paste0("Grey vertical line= Overall hierarchical est. of ", round(mainYmn, roundVal), ", ", ciconf_lev * 100, "% ", "HDI",
+                      " [", round(hdidf[nrow(hdidf), which(colnames(hdidf)== "HDIlow")], roundVal), ", ", 
+                      round(hdidf[nrow(hdidf), which(colnames(hdidf)== "HDIhigh")], roundVal),"]")
+  } else {
+    X_Label <- paste0(Group2, " posterior estimates")
+  }
+  #Main title
+  #Level-3, hierarchical model
+  if(Level== 3) {
+    if (View.Level == "Yes") {
+      main_ttl <- paste0(ciconf_lev * 100, "% ", "Highest Density Intervals of ", Outcome, " by ", Group3)
+    } 
+  }
+  if(Level== 3) {
+    if (View.Level == "No") {
+      main_ttl <- paste0(ciconf_lev * 100, "% ", "Highest Density Intervals of ", Outcome, " by ", Group2)
+    } 
+  }
+  if(Level < 3) {
+    main_ttl <- paste0(ciconf_lev * 100, "% ", "Highest Density Intervals of ", Outcome, " by ", Group2)
+  }
+  #Legend
+  #Level-3, hierarchical model
+  if(Level== 3) {
+    if (View.Level == "Yes") {
+      legend_text <- c(paste0("Observed ", Group2), paste0("Observed ", Group3), "Hierarchical Estimate")
+      legend_type <- c(3, 2, 24)
+      pcol_vector <- c(P3.col, Pcol, Pcol)
+    } 
+  } 
+  if(Level== 3) {
+    if (View.Level == "No") {
+      legend_text <- c("Observed Rate", "Hierarchical Estimate")
+      legend_type <- c(2, 24)
+      pcol_vector <- Pcol
+    } 
+  } 
+  if(Level == 2) {
+    legend_text <- c("Observed Rate", "Hierarchical Estimate")
+    legend_type <- c(2, 24)
+    pcol_vector <- Pcol
+  }
+  if(Level == 1) {
+    legend_text <- c("Estimate")
+    legend_type <- c(24)
+    pcol_vector <- Pcol
+  }
+  
+  #Get names of level 1:3 or just overall level-3 groups
+  if(Level== 3) {
+    if (View.Level == "Yes") {
+      group_names <- hdidf[-nrow(hdidf), Group2]
+    } else {
+      group_names <- hdidf[1:LTR, Group2]
+    }
+  } else {
+    group_names <- hdidf[1:LTR, Group2]
+  }
+  #Determine which group names to plot
+  if (is.null(GroupX)) {
+    plot_group_names <- 1:length(group_names)
+  } else {
+    plot_group_names <- which(group_names %in% GroupX)
+  }
+  
+  #Get rows to use for plots, level 1 print everything, other levels print everything - last row
+  if(Level== 1) {
+    plot_row_numbers <- (1:length(row_numbers))[plot_group_names]
+  } else {
+    plot_row_numbers <- (1:(length(row_numbers) - 1))[plot_group_names]
+  }
+  ## Create plot
+  rng <- seq(min(adf[, "Obs.Rate"], na.rm=TRUE)* 0.95, max(adf[, "Obs.Rate"], na.rm=TRUE)* 1.05, length.out=nrow(adf[plot_row_numbers,]))
+  par(mar=c(5,7,4,4))
+  plot(rng, 1:length(rng), type="n", ylab="", 
+       xlab= X_Label,
+       axes=F,  cex.lab=1*labMulti, xlim=c(XLim1, XLim2))
+  #axes=F,  cex.lab=1*labMulti)
+  title(main_ttl, cex.main = 1*labMulti) 
+  #Merge 2 tables so I can get points in correct order
+  for (i in 1:(length(plot_row_numbers)) ) {
+    lines(c(hdidf[plot_row_numbers, Lower][i], hdidf[plot_row_numbers, Upper][i]), 
+          c((1:length(plot_row_numbers))[i], (1:length(plot_row_numbers))[i]), lwd=4, col=Lcol) 
+    #Points for observed rates and Bayesian estimates
+    points(hdidf[plot_row_numbers, Average][i ], i, pch=24, col=Pcol, lwd=1, bg=Pcol, cex=1.75*labMulti) 
+    if(Level >= 2) {
+      points(hdidf[plot_row_numbers, "Obs.Rate"][i ], (1:length(plot_row_numbers))[i], pch=2, col=Pcol, lwd=1, bg=Pcol, cex=1.75*labMulti)
+    }
+  }
+  #Add points for the level-3 category for each group per category
+  if(Level== 3) {
+    if (View.Level == "Yes") {
+      for (i in 1:LO2R) {
+        points( Group3.Obs[[plot_row_numbers[i]]], rep( (1:LO2R)[i], length(Group3.Obs[[plot_row_numbers[i]]])), pch=3, 
+                col=P3.col, lwd=1)
+      }
+    } 
+  }
+  #Mean line
+  if(Level >= 2) {
+    abline(v=mainYmn, lwd=3, col="grey", lty=3)
+  }
+  #Target line
+  abline(v=tgt, lwd=3, col=tgt.col, lty=1)
+  axis(1) 
+  axis(2, at=1:length(plot_row_numbers), labels= substr(hdidf[plot_row_numbers, Group2], 1, 10), las=1, cex.axis=1*labMulti )
+  axis(4, at=1:length(plot_row_numbers), labels= round(hdidf[plot_row_numbers, Average], roundVal), las=1, cex.axis= 1*labMulti*.75 )
+  ## Add overall confidence bar ##
+  #Create x and y data
+  Cbar_x <- c(rep(hdidf[nrow(hdidf), Lower], length(plot_row_numbers)), rep(hdidf[nrow(hdidf), Upper], length(plot_row_numbers) ))
+  Cbar_y <- c(1:length(plot_row_numbers), length(plot_row_numbers):1)
+  #Create shading
+  if(Cbar=="Yes") {
+    polygon(Cbar_x, Cbar_y, col = adjustcolor(plyCol, alpha.f = 0.4), border= plyCol )
+  }
+  #Add legend
+  if(Add.Lgd =="Yes") {
+    legend(Leg.Loc, legend=legend_text, col=pcol_vector, 
+           pch=legend_type, pt.bg=pcol_vector, cex = 2, bty="n", inset=c(0, .05))
+  } 
+  box()
+}
+
+################################################################################
+#                  4. Posterior Predictive Check for groups                    #
+################################################################################
+#Use the coda object and dataset. Works for normal and log-normal distributions.
+fncGrpPostPredCheck <- function(Coda.Object, mydf, Outcome, Group, Group.Level,
+                                Mean.Var, SD.Var, Distribution, Num.Lines=NULL, 
+                                Main.Title=NULL, X.Lab=NULL, Bar.Color=NULL, 
+                                Line.Color=NULL, Hist.Breaks=NULL, CEX.size=NULL, 
+                                X.Lim=NULL, Min.Val=NULL, Round.Digits=NULL) {
+  #Make coda into as.matrix  
+  MC.Chain <- as.matrix( Coda.Object )
+  chainLength <- NROW(MC.Chain)  #Chain length
+  par( mar=c(4,2,2.5,.25) , mgp=c(2.5,0.5,0) , pty="m" )
+  
+  #Get a number of pseudo-random chains
+  pltIdx <- floor(seq(1, chainLength, length= Num.Lines)) 
+  #Get spread in outcome variable values
+  xComb <- seq( Min.Val , max(mydf[, Outcome]) , length=501 )
+  #Make X limit values, I can set my minimum value
+  if (is.null(X.Lim)) {
+    X.Lim <- c(Min.Val, round(max(mydf[, Outcome]), digits=Round.Digits))
+  }
+  ## Graph ##
+  hist( mydf[, Outcome][mydf[, Group] == Group.Level] , xlab= X.Lab, ylab=NULL, 
+        main= Main.Title, breaks=Hist.Breaks, col= Bar.Color, border="white", 
+        prob=TRUE, cex.lab=CEX.size, cex=CEX.size, cex.main=CEX.size, 
+        xlim=X.Lim, lab=NULL, axes=FALSE)
+  axis(1)  #Put values in labels
+  #This adds in minimum value in case it isn't in range (e.g., show negatve range of normal distribution)
+  axis(1, at=X.Lim[1]) 
+  box()
+  #Add in posterior estimate lines
+  for ( chnIdx in pltIdx ) {
+    #Normal Distribution
+    if (Distribution == "Normal") {
+      lines( xComb ,
+             dnorm( xComb, MC.Chain[chnIdx, Mean.Var], MC.Chain[chnIdx, SD.Var] ),
+             col= Line.Color )
+    }
+    #Log Normal Distribution
+    if (Distribution == "Log-normal") {
+      lines( xComb ,
+             dlnorm( xComb, MC.Chain[chnIdx, Mean.Var], MC.Chain[chnIdx, SD.Var] ),
+             col= Line.Color )
+    }
+  }
+  
+} #End of function
+
+
+
+##########################################
+## DBDA Functions for Bayesian analysis ##
+##########################################
+
+## Need summarizePost and HDIofMCMC
+########################
+## DBDA function code ##
+########################
+summarizePost = function( paramSampleVec , 
+                          compVal=NULL , ROPE=NULL , credMass=0.95 ) {
+  meanParam = mean( paramSampleVec )
+  medianParam = median( paramSampleVec )
+  dres = density( paramSampleVec )
+  modeParam = dres$x[which.max(dres$y)]
+  mcmcEffSz = round( effectiveSize( paramSampleVec ) , 1 )
+  names(mcmcEffSz) = NULL
+  hdiLim = HDIofMCMC( paramSampleVec , credMass=credMass )
+  if ( !is.null(compVal) ) {
+    pcgtCompVal = ( 100 * sum( paramSampleVec > compVal ) 
+                    / length( paramSampleVec ) )
+  } else {
+    compVal=NA
+    pcgtCompVal=NA
+  }
+  if ( !is.null(ROPE) ) {
+    pcltRope = ( 100 * sum( paramSampleVec < ROPE[1] ) 
+                 / length( paramSampleVec ) )
+    pcgtRope = ( 100 * sum( paramSampleVec > ROPE[2] ) 
+                 / length( paramSampleVec ) )
+    pcinRope = 100-(pcltRope+pcgtRope)
+  } else { 
+    ROPE = c(NA,NA)
+    pcltRope=NA 
+    pcgtRope=NA 
+    pcinRope=NA 
+  }  
+  return( c( Mean=meanParam , Median=medianParam , Mode=modeParam , 
+             ESS=mcmcEffSz ,
+             HDImass=credMass , HDIlow=hdiLim[1] , HDIhigh=hdiLim[2] , 
+             CompVal=compVal , PcntGtCompVal=pcgtCompVal , 
+             ROPElow=ROPE[1] , ROPEhigh=ROPE[2] ,
+             PcntLtROPE=pcltRope , PcntInROPE=pcinRope , PcntGtROPE=pcgtRope ) )
+}
+
+########################
+## DBDA function code ##
+########################
+HDIofMCMC = function( sampleVec , credMass=0.95 ) {
+  # Computes highest density interval from a sample of representative values,
+  #   estimated as shortest credible interval.
+  # Arguments:
+  #   sampleVec
+  #     is a vector of representative values from a probability distribution.
+  #   credMass
+  #     is a scalar between 0 and 1, indicating the mass within the credible
+  #     interval that is to be estimated.
+  # Value:
+  #   HDIlim is a vector containing the limits of the HDI
+  sortedPts = sort( sampleVec )
+  ciIdxInc = ceiling( credMass * length( sortedPts ) )
+  nCIs = length( sortedPts ) - ciIdxInc
+  ciWidth = rep( 0 , nCIs )
+  for ( i in 1:nCIs ) {
+    ciWidth[ i ] = sortedPts[ i + ciIdxInc ] - sortedPts[ i ]
+  }
+  HDImin = sortedPts[ which.min( ciWidth ) ]
+  HDImax = sortedPts[ which.min( ciWidth ) + ciIdxInc ]
+  HDIlim = c( HDImin , HDImax )
+  return( HDIlim )
+}
+
+#######################
+## Chain Diagnostics ##
+#######################
+diagMCMC <- function( codaObject , parName=varnames(codaObject)[1] ,
+                     saveName=NULL , saveType="jpg" ) {
+  DBDAplColors = c("skyblue","black","royalblue","steelblue")
+#  openGraph(height=5,width=7)
+  par( mar=0.5+c(3,4,1,0) , oma=0.1+c(0,0,2,0) , mgp=c(2.25,0.7,0) , 
+       cex.lab=1.75 )
+  layout(matrix(1:4,nrow=2))
+  # traceplot and gelman.plot are from CODA package:
+  require(coda)
+  coda::traceplot( codaObject[,c(parName)] , main="" , ylab="Param. Value" ,
+                   col=DBDAplColors ) 
+  tryVal = try(
+    coda::gelman.plot( codaObject[,c(parName)] , main="" , auto.layout=FALSE , 
+                       col=DBDAplColors, autoburnin=FALSE )  #This is the fix so I will always get shrink factor
+  )  
+  # if it runs, gelman.plot returns a list with finite shrink values:
+  if ( class(tryVal)=="try-error" ) {
+    plot.new() 
+    print(paste0("Warning: coda::gelman.plot fails for ",parName))
+  } else { 
+    if ( class(tryVal)=="list" & !is.finite(tryVal$shrink[1]) ) {
+      plot.new() 
+      print(paste0("Warning: coda::gelman.plot fails for ",parName))
+    }
+  }
+  DbdaAcfPlot(codaObject,parName,plColors=DBDAplColors)
+  DbdaDensPlot(codaObject,parName,plColors=DBDAplColors)
+  mtext( text=parName , outer=TRUE , adj=c(0.5,0.5) , cex=2.0 )
+  if ( !is.null(saveName) ) {
+    saveGraph( file=paste0(saveName,"Diag",parName), type=saveType)
+  }
+}
+
+# Function(s) for plotting properties of mcmc coda objects.
+DbdaAcfPlot <- function( codaObject , parName=varnames(codaObject)[1] , plColors=NULL ) {
+  if ( all( parName != varnames(codaObject) ) ) { 
+    stop("parName must be a column name of coda object")
+  }
+  nChain = length(codaObject)
+  if ( is.null(plColors) ) plColors=1:nChain
+  xMat = NULL
+  yMat = NULL
+  for ( cIdx in 1:nChain ) {
+    acfInfo = acf(codaObject[,c(parName)][[cIdx]],plot=FALSE) 
+    xMat = cbind(xMat,acfInfo$lag)
+    yMat = cbind(yMat,acfInfo$acf)
+  }
+  matplot( xMat , yMat , type="o" , pch=20 , col=plColors , ylim=c(0,1) ,
+           main="" , xlab="Lag" , ylab="Autocorrelation" )
+  abline(h=0,lty="dashed")
+  EffChnLngth = effectiveSize(codaObject[,c(parName)])
+  text( x=max(xMat) , y=max(yMat) , adj=c(1.0,1.0) , cex=1.5 ,
+        labels=paste("ESS =",round(EffChnLngth,1)) )
+}
+
+DbdaDensPlot <- function( codaObject , parName=varnames(codaObject)[1] , plColors=NULL ) {
+  if ( all( parName != varnames(codaObject) ) ) { 
+    stop("parName must be a column name of coda object")
+  }
+  nChain = length(codaObject) # or nchain(codaObject)
+  if ( is.null(plColors) ) plColors=1:nChain
+  xMat = NULL
+  yMat = NULL
+  hdiLims = NULL
+  for ( cIdx in 1:nChain ) {
+    densInfo = density(codaObject[,c(parName)][[cIdx]]) 
+    xMat = cbind(xMat,densInfo$x)
+    yMat = cbind(yMat,densInfo$y)
+    hdiLims = cbind(hdiLims,HDIofMCMC(codaObject[,c(parName)][[cIdx]]))
+  }
+  matplot( xMat , yMat , type="l" , col=plColors , 
+           main="" , xlab="Param. Value" , ylab="Density" )
+  abline(h=0)
+  points( hdiLims[1,] , rep(0,nChain) , col=plColors , pch="|" )
+  points( hdiLims[2,] , rep(0,nChain) , col=plColors , pch="|" )
+  text( mean(hdiLims) , 0 , "95% HDI" , adj=c(0.5,-0.2) )
+  EffChnLngth = effectiveSize(codaObject[,c(parName)])
+  MCSE = sd(as.matrix(codaObject[,c(parName)]))/sqrt(EffChnLngth) 
+  text( max(xMat) , max(yMat) , adj=c(1.0,1.0) , cex=1.5 ,
+        paste("MCSE =\n",signif(MCSE,3)) )
+}
+
+#############################
+## Posterior distributions ##
+#############################
+plotPost = function( paramSampleVec , cenTend=c("mode","median","mean")[1] , 
+                     compVal=NULL, ROPE=NULL, credMass=0.95, HDItextPlace=0.7, 
+                     xlab=NULL , xlim=NULL , yaxt=NULL , ylab=NULL , 
+                     main=NULL , cex=NULL , cex.lab=NULL ,
+                     col=NULL , border=NULL , showCurve=FALSE , breaks=NULL , 
+                     ... ) {
+  # Override defaults of hist function, if not specified by user:
+  # (additional arguments "..." are passed to the hist function)
+  if ( is.null(xlab) ) xlab="Param. Val."
+  if ( is.null(cex.lab) ) cex.lab=1.5
+  if ( is.null(cex) ) cex=1.4
+  if ( is.null(xlim) ) xlim=range( c( compVal , ROPE , paramSampleVec ) )
+  if ( is.null(main) ) main=""
+  if ( is.null(yaxt) ) yaxt="n"
+  if ( is.null(ylab) ) ylab=""
+  if ( is.null(col) ) col="skyblue"
+  if ( is.null(border) ) border="white"
+  
+  # convert coda object to matrix:
+  if ( class(paramSampleVec) == "mcmc.list" ) {
+    paramSampleVec = as.matrix(paramSampleVec)
+  }
+  
+  summaryColNames = c("ESS","mean","median","mode",
+                      "hdiMass","hdiLow","hdiHigh",
+                      "compVal","pGtCompVal",
+                      "ROPElow","ROPEhigh","pLtROPE","pInROPE","pGtROPE")
+  postSummary = matrix( NA , nrow=1 , ncol=length(summaryColNames) , 
+                        dimnames=list( c( xlab ) , summaryColNames ) )
+  
+  # require(coda) # for effectiveSize function
+  postSummary[,"ESS"] = effectiveSize(paramSampleVec)
+  
+  postSummary[,"mean"] = mean(paramSampleVec)
+  postSummary[,"median"] = median(paramSampleVec)
+  mcmcDensity = density(paramSampleVec)
+  postSummary[,"mode"] = mcmcDensity$x[which.max(mcmcDensity$y)]
+  
+  HDI = HDIofMCMC( paramSampleVec , credMass )
+  postSummary[,"hdiMass"]=credMass
+  postSummary[,"hdiLow"]=HDI[1]
+  postSummary[,"hdiHigh"]=HDI[2]
+  
+  # Plot histogram.
+  cvCol = "darkgreen"
+  ropeCol = "darkred"
+  if ( is.null(breaks) ) {
+    if ( max(paramSampleVec) > min(paramSampleVec) ) {
+      breaks = c( seq( from=min(paramSampleVec) , to=max(paramSampleVec) ,
+                       by=(HDI[2]-HDI[1])/18 ) , max(paramSampleVec) )
+    } else {
+      breaks=c(min(paramSampleVec)-1.0E-6,max(paramSampleVec)+1.0E-6)
+      border="skyblue"
+    }
+  }
+  if ( !showCurve ) {
+    par(xpd=NA)
+    histinfo = hist( paramSampleVec , xlab=xlab , yaxt=yaxt , ylab=ylab ,
+                     freq=F , border=border , col=col ,
+                     xlim=xlim , main=main , cex=cex , cex.lab=cex.lab ,
+                     breaks=breaks , ... )
+  }
+  if ( showCurve ) {
+    par(xpd=NA)
+    histinfo = hist( paramSampleVec , plot=F )
+    densCurve = density( paramSampleVec , adjust=2 )
+    plot( densCurve$x , densCurve$y , type="l" , lwd=5 , col=col , bty="n" ,
+          xlim=xlim , xlab=xlab , yaxt=yaxt , ylab=ylab ,
+          main=main , cex=cex , cex.lab=cex.lab , ... )
+  }
+  cenTendHt = 0.9*max(histinfo$density)
+  cvHt = 0.7*max(histinfo$density)
+  ROPEtextHt = 0.55*max(histinfo$density)
+  # Display central tendency:
+  mn = mean(paramSampleVec)
+  med = median(paramSampleVec)
+  mcmcDensity = density(paramSampleVec)
+  mo = mcmcDensity$x[which.max(mcmcDensity$y)]
+  if ( cenTend=="mode" ){ 
+    text( mo , cenTendHt ,
+          bquote(mode==.(signif(mo,3))) , adj=c(.5,0) , cex=cex )
+  }
+  if ( cenTend=="median" ){ 
+    text( med , cenTendHt ,
+          bquote(median==.(signif(med,3))) , adj=c(.5,0) , cex=cex , col=cvCol )
+  }
+  if ( cenTend=="mean" ){ 
+    text( mn , cenTendHt ,
+          bquote(mean==.(signif(mn,3))) , adj=c(.5,0) , cex=cex )
+  }
+  # Display the comparison value.
+  if ( !is.null( compVal ) ) {
+    pGtCompVal = sum( paramSampleVec > compVal ) / length( paramSampleVec ) 
+    pLtCompVal = 1 - pGtCompVal
+    lines( c(compVal,compVal) , c(0.96*cvHt,0) , 
+           lty="dotted" , lwd=2 , col=cvCol )
+    text( compVal , cvHt ,
+          bquote( .(round(100*pLtCompVal,1)) * "% < " *
+                    .(signif(compVal,3)) * " < " * 
+                    .(round(100*pGtCompVal,1)) * "%" ) ,
+          adj=c(pLtCompVal,0) , cex=0.8*cex , col=cvCol )
+    postSummary[,"compVal"] = compVal
+    postSummary[,"pGtCompVal"] = pGtCompVal
+  }
+  # Display the ROPE.
+  if ( !is.null( ROPE ) ) {
+    pInROPE = ( sum( paramSampleVec > ROPE[1] & paramSampleVec < ROPE[2] )
+                / length( paramSampleVec ) )
+    pGtROPE = ( sum( paramSampleVec >= ROPE[2] ) / length( paramSampleVec ) )
+    pLtROPE = ( sum( paramSampleVec <= ROPE[1] ) / length( paramSampleVec ) )
+    lines( c(ROPE[1],ROPE[1]) , c(0.96*ROPEtextHt,0) , lty="dotted" , lwd=2 ,
+           col=ropeCol )
+    lines( c(ROPE[2],ROPE[2]) , c(0.96*ROPEtextHt,0) , lty="dotted" , lwd=2 ,
+           col=ropeCol)
+    text( mean(ROPE) , ROPEtextHt ,
+          bquote( .(round(100*pLtROPE,1)) * "% < " * .(ROPE[1]) * " < " * 
+                    .(round(100*pInROPE,1)) * "% < " * .(ROPE[2]) * " < " * 
+                    .(round(100*pGtROPE,1)) * "%" ) ,
+          adj=c(pLtROPE+.5*pInROPE,0) , cex=1 , col=ropeCol )
+    
+    postSummary[,"ROPElow"]=ROPE[1] 
+    postSummary[,"ROPEhigh"]=ROPE[2] 
+    postSummary[,"pLtROPE"]=pLtROPE
+    postSummary[,"pInROPE"]=pInROPE
+    postSummary[,"pGtROPE"]=pGtROPE
+  }
+  # Display the HDI.
+  lines( HDI , c(0,0) , lwd=4 , lend=1 )
+  text( mean(HDI) , 0 , bquote(.(100*credMass) * "% HDI" ) ,
+        adj=c(.5,-1.7) , cex=cex )
+  text( HDI[1] , 0 , bquote(.(signif(HDI[1],3))) ,
+        adj=c(HDItextPlace,-0.5) , cex=cex )
+  text( HDI[2] , 0 , bquote(.(signif(HDI[2],3))) ,
+        adj=c(1.0-HDItextPlace,-0.5) , cex=cex )
+  par(xpd=F)
+  #
+  return( postSummary )
+}
+
+#------------------------------------------------------------------------------
+
+## End of Bayesian section ##
+################################################################################
 
 ################################################################################
 ## Testing section: Begin  ##

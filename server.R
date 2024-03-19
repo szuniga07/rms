@@ -7721,50 +7721,61 @@ output$smry_var_hist_bar_clr <- renderUI({
 summary_var_histogram_bar_color <- reactive({
   input$smryVrHstBrClr
 })
-#6. Indicate if you want to show the mean and median
+#6. Select label size multiplier
+output$smryVrHstLabMulti <- renderUI({                                 
+  numericInput("smryVrHstLbMlt", "6. Increase XY label sizes.",
+               value = 1.75, min=.01, step = .1)
+})
+#6a. Reactive function for directly above
+summary_var_histogram_label_multiplier <- reactive({                 
+  input$smryVrHstLbMlt
+})
+#7. Indicate if you want to show the mean and median
 output$smry_hist_mn_med_yesno <- renderUI({                                 
-  selectInput("smryHstMnMdYN", "6. Want to show the mean and median?", 
+  selectInput("smryHstMnMdYN", "7. Want to show the mean and median?", 
               choices = c("No", "Yes"), multiple=FALSE, selected="No")     
 })
-#6A. Object for the mean and median 
+#7A. Object for the mean and median 
 summary_hist_mean_median_yes_no <- reactive({
   input$smryHstMnMdYN
 })
-#7. Line colors
+#8. Line colors
 output$smry_var_hist_ln_clr <- renderUI({                                
-  selectInput("smryVrHstLnClr", "7. Select Mean/Median line colors.",        
+  selectInput("smryVrHstLnClr", "8. Select Mean/Median line colors.",        
               choices = xyplot_Line_Color_Names(), 
               multiple=TRUE, selected="black" ) 
 })
-#7A. Reactive function for the line color
+#8A. Reactive function for the line color
 summary_var_histogram_line_color <- reactive({
   input$smryVrHstLnClr
 })
-#8. Indicate if you want the histogram
+#9. Indicate if you want the histogram
 output$smry_var_hist_yesno <- renderUI({                                 
-  selectInput("smryVrHstYN", "8. Do you want to run the histogram?", 
+  selectInput("smryVrHstYN", "9. Do you want to run the histogram?", 
               choices = c("No", "Yes"), multiple=FALSE, selected="No")     
 })
-#8A. Object for classification plot 
+#9. Object for classification plot 
 summary_var_hist_yes_no <- reactive({
   input$smryVrHstYN
 })
-#9. Run the histogram function below
+#10. Run the histogram function below
 summary_var_histogram_run <- reactive({
   if(summary_var_hist_yes_no() == "Yes") {    
+    par(mar=c(4, 7, 4, 1))
     if(summary_var_hist_factor_yes_no() =="Yes") {
       #fncMltHstPlt <- function(DF, X, Y, BNS, CLR, LCLR, MN, MED, AddLine) {
         fncMltHstPlt(DF=df(), X=descriptive_summary_histogram_variable(), 
                      Y= descriptive_summary_histogram_factor(),
                   BNS=summary_variable_histogram_bars(), CLR=summary_var_histogram_bar_color(), 
                   LCLR=summary_var_histogram_line_color(), MN=smry_var_hist_mean(), 
-                  MED=smry_var_hist_median(), AddLine=summary_hist_mean_median_yes_no())
-      
+                  MED=smry_var_hist_median(), AddLine=summary_hist_mean_median_yes_no(),
+                  CEX.size= summary_var_histogram_label_multiplier() )
   }  else {
     fncSmryHist(DF=df(), X=descriptive_summary_histogram_variable(), 
                 BNS=summary_variable_histogram_bars(), CLR=summary_var_histogram_bar_color(), 
                 LCLR=summary_var_histogram_line_color(), MN=smry_var_hist_mean(), 
-                MED=smry_var_hist_median(), AddLine=summary_hist_mean_median_yes_no())
+                MED=smry_var_hist_median(), AddLine=summary_hist_mean_median_yes_no(), 
+                CEX.size= summary_var_histogram_label_multiplier())
   }
   }
 })
@@ -7791,7 +7802,7 @@ fncSmryHist <- function(DF, X, BNS, CLR, LCLR, MN, MED, AddLine) {
 ###################################################
 ## Function to get histogram for multiple groups ##
 ###################################################
-fncMltHstPlt <- function(DF, X, Y, BNS, CLR, LCLR, MN, MED, AddLine) {
+fncMltHstPlt <- function(DF, X, Y, BNS, CLR, LCLR, MN, MED, AddLine, CEX.size) {
   YLevs <- sort(unique(DF[, Y]))
   N_Levs <- length(YLevs)
   sqN <- sqrt(N_Levs)
@@ -7819,7 +7830,8 @@ fncMltHstPlt <- function(DF, X, Y, BNS, CLR, LCLR, MN, MED, AddLine) {
     MED <- unlist(MEDIAN)
     hist(x=DF[DF[ ,Y] == YLevs[i], X], breaks=BNS, col=CLR, xlab= paste0(X, " for ", Y, ":", YLevs[i]),
          xlim= c(min(unlist(Xmin)), max(unlist(Xmax))), ylim= c(0, max(unlist(Ymax))),
-         main= paste0("Histogram of ", X, " (Mean= ", round(MN[i], 3),", Median= ", round(MED[i], 3), ")"))
+         cex.lab=CEX.size, cex=CEX.size, cex.main=(CEX.size*.75), cex.axis= CEX.size,
+         main= paste0(X, " (Mean= ", round(MN[i], 3),", Median= ", round(MED[i], 3), ")"))
     #Add mean and median lines
     if (AddLine== "Yes") {
       abline(v= MN[i],  col= head(LCLR, 1), lwd=5, lty=1)
@@ -14244,9 +14256,18 @@ output$dbdaPostCheckXaxisLims <- renderUI({
 dbda_post_check_grp_x_axis_limits <- reactive({                 
   input$dbdaPcgXLms 
 })
+#15. X-axis limits
+output$dbdaPostCheckYaxisLims <- renderUI({                                 
+  textInput("dbdaPcgYLms", "15. List Y-axis limits.",
+            value = paste0('c( ', ')'))
+})
+#14a. Reactive function for directly above
+dbda_post_check_grp_y_axis_limits <- reactive({                 
+  input$dbdaPcgYLms 
+})
 #15. Select label size multiplier
 output$dbdaPostCheckMinVal <- renderUI({                                 
-  numericInput("dbdaPcgLbMV", "15. List minimum value.",
+  numericInput("dbdaPcgLbMV", "16. List minimum value.",
                value = 0, step = 1)
 })
 #15a. Reactive function for directly above
@@ -14255,7 +14276,7 @@ dbda_post_check_grp_min_value <- reactive({
 })
 #16. Select label size multiplier
 output$dbdaPostCheckRndPlc <- renderUI({                                 
-  numericInput("dbdaPcgRP", "16. Round decimal places?.",
+  numericInput("dbdaPcgRP", "17. Round decimal places?.",
                value = 1, step = 1)
 })
 #16a. Reactive function for directly above
@@ -14264,7 +14285,7 @@ dbda_post_check_grp_round_place <- reactive({
 })
 #17. Do you want to run the function
 output$dbdaPostCheckGenGroups <- renderUI({
-  selectInput("dbdaPcgGnGrp", "17. Generate group levels in #3?", 
+  selectInput("dbdaPcgGnGrp", "18. Generate group levels in #3?", 
               choices = c("No", "Yes"), multiple=FALSE, selected="No")
 })
 #17A. Reactive function for above
@@ -14273,7 +14294,7 @@ dbda_post_check_grp_gen_YN <- reactive({
 })
 #18. Do you want to run the function
 output$dbdaPostCheckRun <- renderUI({
-  selectInput("dbdaPcgRn", "18. Run posterior plot?", 
+  selectInput("dbdaPcgRn", "19. Run posterior plot?", 
               choices = c("No", "Yes"), multiple=FALSE, selected="No")
 })
 #18A. Reactive function for above
@@ -14297,6 +14318,7 @@ plot_dbda_posterior_group_check <- reactive({
                         Hist.Breaks=dbda_post_check_grp_number_bars(), 
                         CEX.size=dbda_post_check_grp_label_multiplier(), 
                         X.Lim=(eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
+                        Y.Lim=(eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
                         Min.Val=dbda_post_check_grp_min_value(), 
                         Round.Digits=dbda_post_check_grp_round_place())
     }
@@ -14891,7 +14913,7 @@ fncGrpPostPredCheck <- function(Coda.Object, mydf, Outcome, Group, Group.Level,
                                 Mean.Var, SD.Var, Distribution, Num.Lines=NULL, 
                                 Main.Title=NULL, X.Lab=NULL, Bar.Color=NULL, 
                                 Line.Color=NULL, Hist.Breaks=NULL, CEX.size=NULL, 
-                                X.Lim=NULL, Min.Val=NULL, Round.Digits=NULL) {
+                                X.Lim=NULL, Y.Lim=NULL, Min.Val=NULL, Round.Digits=NULL) {
   #Make coda into as.matrix  
   MC.Chain <- as.matrix( Coda.Object )
   chainLength <- NROW(MC.Chain)  #Chain length
@@ -14900,16 +14922,16 @@ fncGrpPostPredCheck <- function(Coda.Object, mydf, Outcome, Group, Group.Level,
   #Get a number of pseudo-random chains
   pltIdx <- floor(seq(1, chainLength, length= Num.Lines)) 
   #Get spread in outcome variable values
-  xComb <- seq( Min.Val , max(mydf[, Outcome]) , length=501 )
+  xComb <- seq( Min.Val , max(mydf[, Outcome], na.rm=TRUE) , length=501 )
   #Make X limit values, I can set my minimum value
   if (is.null(X.Lim)) {
-    X.Lim <- c(Min.Val, round(max(mydf[, Outcome]), digits=Round.Digits))
+    X.Lim <- c(Min.Val, round(max(mydf[, Outcome], na.rm=TRUE), digits=Round.Digits))
   }
   ## Graph ##
   hist( mydf[, Outcome][mydf[, Group] == Group.Level] , xlab= X.Lab, ylab=NULL, 
         main= Main.Title, breaks=Hist.Breaks, col= Bar.Color, border="white", 
         prob=TRUE, cex.lab=CEX.size, cex=CEX.size, cex.main=CEX.size, 
-        xlim=X.Lim, lab=NULL, axes=FALSE)
+        xlim=X.Lim, ylim=Y.Lim, lab=NULL, axes=FALSE)
   axis(1)  #Put values in labels
   #This adds in minimum value in case it isn't in range (e.g., show negatve range of normal distribution)
   axis(1, at=X.Lim[1]) 
@@ -14931,7 +14953,6 @@ fncGrpPostPredCheck <- function(Coda.Object, mydf, Outcome, Group, Group.Level,
   }
   
 } #End of function
-
 
 
 ##########################################

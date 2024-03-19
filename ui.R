@@ -454,7 +454,9 @@ tabPanel("Describe",
            column(3,
                   uiOutput("smry_var_hist_bars")),
            column(3, offset=1,
-                  uiOutput("smry_var_hist_bar_clr"))
+                  uiOutput("smry_var_hist_bar_clr")),
+           column(3, offset=1,
+                  uiOutput("smryVrHstLabMulti"))
          ),
          fluidRow(   
            column(3, 
@@ -2292,7 +2294,7 @@ h3("Posterior Predictive Check for groups"),
 br(),
 h4("Check how posterior lines fine data from normal or log-normal distributions."),
 h4("Load dataset in 'Builder' tab and MCMC simumlations above."),
-h5("Go to #17 and click 'Yes' to generate group levels in #3."),
+h5("Go to #18 and click 'Yes' to generate group levels in #3."),
 br(),
 fluidRow(   
   column(3, 
@@ -2330,11 +2332,13 @@ fluidRow(
   column(3, 
          uiOutput("dbdaPostCheckXaxisLims")),
   column(3, 
-         uiOutput("dbdaPostCheckMinVal")),
+         uiOutput("dbdaPostCheckYaxisLims")),
   column(3, 
-         uiOutput("dbdaPostCheckRndPlc"))
+         uiOutput("dbdaPostCheckMinVal")),
 ),
 fluidRow(   
+  column(3, 
+         uiOutput("dbdaPostCheckRndPlc")),
   column(3, 
          uiOutput("dbdaPostCheckGenGroups")),
   column(3, 
@@ -2343,7 +2347,8 @@ fluidRow(
 br(),
 plotOutput("plotDbdaPostCheckGroup", height = 800, width="100%"),
 br(),
-h5("Idenitfy mean and SD parameters for each group. X-limits can remain blank if the minimum value is specified."),
+h5("Idenitfy mean and SD parameters for each group (e.g., log-normal model mean= muOfLogY[1], SD= sigmaOfLogY[1])."),
+h5("X-limits can remain blank if the minimum value is specified."),
 br()
 
 ) #End of Bayesian panel  

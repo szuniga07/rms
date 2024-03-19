@@ -7789,8 +7789,9 @@ output$summary_var_histogram_out <- renderPlot({
 ###############################
 ## Function to get histogram ##
 ###############################
-fncSmryHist <- function(DF, X, BNS, CLR, LCLR, MN, MED, AddLine) {
+fncSmryHist <- function(DF, X, BNS, CLR, LCLR, MN, MED, AddLine, CEX.size) {
   hist(x=DF[, X], breaks=BNS, col=CLR, xlab= X,
+       cex.lab=CEX.size, cex=CEX.size, cex.main=(CEX.size*.75), cex.axis= CEX.size,
        main= paste0("Histogram of ", X, " (Mean= ", round(MN, 3),", Median= ", round(MED, 3), ")"))
   #Add mean and median lines
   if (AddLine== "Yes") {

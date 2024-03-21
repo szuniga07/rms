@@ -14071,7 +14071,7 @@ dbda_hier_add_legend <- reactive({
 output$dbdaHierLgdLoc <- renderUI({                                
   selectInput("dbdaHrLgdLc", "16. Select the legend location.",        
               choices = c("bottomright","bottom","bottomleft","left","topleft","top","topright","right","center"), 
-              multiple=FALSE, selected="topleft" ) 
+              multiple=FALSE, selected="topright" ) 
 })
 #16A. Reactive function for legend location
 dbda_hier_legend_location <- reactive({
@@ -14133,7 +14133,7 @@ dbda_post_check_grp_Y <- reactive({
 })
 #2. Select groups
 output$dbdaPostCheckX <- renderUI({                                 
-  selectInput("dbdaPcgX", "2. Select the Group.", 
+  selectInput("dbdaPcgX", "2. Select the group variable.", 
               choices = setdiff(var(), dbda_post_check_grp_Y()), multiple=FALSE, 
               selected= setdiff(var(), dbda_post_check_grp_Y())[1])
 })
@@ -14149,7 +14149,7 @@ dbda_post_check_grp_X_all_levels <- reactive({
 })
 #3. Select group levels
 output$dbdaPostCheckLevX <- renderUI({                                 
-    selectInput("dbdaPcgLX", "3. Select the Group.", 
+    selectInput("dbdaPcgLX", "3. Select the group level.", 
                 choices = dbda_post_check_grp_X_all_levels(), multiple=FALSE, 
               selected= dbda_post_check_grp_X_all_levels()[1])
 })
@@ -14214,7 +14214,7 @@ dbda_post_check_grp_x_label <- reactive({
 })
 #10. Select line colors
 output$dbdaPostCheckBarCol <- renderUI({                                 
-  selectInput("dbdaPcgBrCl", "10. Select line color.", 
+  selectInput("dbdaPcgBrCl", "10. Select bar color.", 
               choices = xyplot_Line_Color_Names(), multiple=FALSE, selected= "blue")     
 })
 #10a. Reactive function for directly above
@@ -14262,50 +14262,89 @@ output$dbdaPostCheckYaxisLims <- renderUI({
   textInput("dbdaPcgYLms", "15. List Y-axis limits.",
             value = paste0('c( ', ')'))
 })
-#14a. Reactive function for directly above
+#15a. Reactive function for directly above
 dbda_post_check_grp_y_axis_limits <- reactive({                 
   input$dbdaPcgYLms 
 })
-#15. Select label size multiplier
+#16. Select label size multiplier
 output$dbdaPostCheckMinVal <- renderUI({                                 
   numericInput("dbdaPcgLbMV", "16. List minimum value.",
                value = 0, step = 1)
 })
-#15a. Reactive function for directly above
+#16a. Reactive function for directly above
 dbda_post_check_grp_min_value <- reactive({                 
   input$dbdaPcgLbMV 
 })
-#16. Select label size multiplier
+#17. X-axis points
+output$dbdaPostCheckXaxisPoint <- renderUI({                                 
+  textInput("dbdaPcgXPts", "17. Add X-axis point(s).",
+            value = paste0('c( ', ')'))
+})
+#17a. Reactive function for directly above
+dbda_post_check_grp_x_axis_points <- reactive({                 
+  input$dbdaPcgXPts 
+})
+#18. Select point colors 
+output$dbdaPostCheckPointCol <- renderUI({                                 
+  selectInput("dbdaPcgPntCl", "18. Select point color.", 
+              choices = xyplot_Line_Color_Names(), multiple=FALSE, selected= "red")     
+})
+#18a. Reactive function for directly above
+dbda_post_check_point_colors <- reactive({                 
+  input$dbdaPcgPntCl 
+})
+
+#19. Select whether to add a legend or not
+output$dbdaPostCheckAddLeg <- renderUI({
+  selectInput("dbdaPcgAdLgd", "19. Add the legend?",
+              choices = c("No", "Yes"),
+              selected="No")
+})
+#19a. Reactive function for directly above
+dbda_post_check_add_legend <- reactive({                 
+  input$dbdaPcgAdLgd 
+})
+#20. Legend location
+output$dbdaPostCheckLgdLoc <- renderUI({                                
+  selectInput("dbdaPcgLgdLc", "20. Select the legend location.",        
+              choices = c("bottomright","bottom","bottomleft","left","topleft","top","topright","right","center"), 
+              multiple=FALSE, selected="topright" ) 
+})
+#20A. Reactive function for legend location
+dbda_post_check_legend_location <- reactive({
+  input$dbdaPcgLgdLc
+})
+#21. Select label size multiplier
 output$dbdaPostCheckRndPlc <- renderUI({                                 
-  numericInput("dbdaPcgRP", "17. Round decimal places?.",
+  numericInput("dbdaPcgRP", "21. Round decimal places?",
                value = 1, step = 1)
 })
-#16a. Reactive function for directly above
+#21a. Reactive function for directly above
 dbda_post_check_grp_round_place <- reactive({                 
   input$dbdaPcgRP 
 })
-#17. Do you want to run the function
+#22. Do you want to run the function
 output$dbdaPostCheckGenGroups <- renderUI({
-  selectInput("dbdaPcgGnGrp", "18. Generate group levels in #3?", 
+  selectInput("dbdaPcgGnGrp", "22. Generate group levels in #3?", 
               choices = c("No", "Yes"), multiple=FALSE, selected="No")
 })
-#17A. Reactive function for above
+#22A. Reactive function for above
 dbda_post_check_grp_gen_YN <- reactive({
   input$dbdaPcgGnGrp
 })
-#18. Do you want to run the function
+#23. Do you want to run the function
 output$dbdaPostCheckRun <- renderUI({
-  selectInput("dbdaPcgRn", "19. Run posterior plot?", 
+  selectInput("dbdaPcgRn", "23. Run posterior plot?", 
               choices = c("No", "Yes"), multiple=FALSE, selected="No")
 })
-#18A. Reactive function for above
+#23A. Reactive function for above
 dbda_post_check_grp_run_YN <- reactive({
   input$dbdaPcgRn
 })
 ## Plot DBDA Posterior HDI ##
 plot_dbda_posterior_group_check <- reactive({
   if(dbda_post_check_grp_run_YN() == "Yes") {
-#    par(mar=c(2, 7, 4, 1))
+    par( mar=c(4,2,2.5,.25) , mgp=c(2.5,0.5,0) , pty="m" )
     fncGrpPostPredCheck(Coda.Object=DBDA_coda_object_df(), mydf=df(), 
                         Outcome=dbda_post_check_grp_Y(), Group=dbda_post_check_grp_X(), 
                         Group.Level=dbda_post_check_grp_level_X(), 
@@ -14321,7 +14360,11 @@ plot_dbda_posterior_group_check <- reactive({
                         X.Lim=(eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
                         Y.Lim=(eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
                         Min.Val=dbda_post_check_grp_min_value(), 
-                        Round.Digits=dbda_post_check_grp_round_place())
+                        Round.Digits=dbda_post_check_grp_round_place(),
+                        Point.Loc= (eval(parse(text=dbda_post_check_grp_x_axis_points() )) ),
+                        PCol = dbda_post_check_point_colors(),
+                        Add.Lgd= dbda_post_check_add_legend(), 
+                        Leg.Loc=dbda_post_check_legend_location() )
     }
 })
 #Posterior distribution for above
@@ -14914,11 +14957,12 @@ fncGrpPostPredCheck <- function(Coda.Object, mydf, Outcome, Group, Group.Level,
                                 Mean.Var, SD.Var, Distribution, Num.Lines=NULL, 
                                 Main.Title=NULL, X.Lab=NULL, Bar.Color=NULL, 
                                 Line.Color=NULL, Hist.Breaks=NULL, CEX.size=NULL, 
-                                X.Lim=NULL, Y.Lim=NULL, Min.Val=NULL, Round.Digits=NULL) {
+                                X.Lim=NULL, Y.Lim=NULL, Min.Val=NULL, Round.Digits=NULL,
+                                Point.Loc= NULL, PCol=NULL, Add.Lgd= NULL, Leg.Loc= NULL) {
   #Make coda into as.matrix  
   MC.Chain <- as.matrix( Coda.Object )
   chainLength <- NROW(MC.Chain)  #Chain length
-  par( mar=c(4,2,2.5,.25) , mgp=c(2.5,0.5,0) , pty="m" )
+#  par( mar=c(4,2,2.5,.25) , mgp=c(2.5,0.5,0) , pty="m" )
   
   #Get a number of pseudo-random chains
   pltIdx <- floor(seq(1, chainLength, length= Num.Lines)) 
@@ -14936,7 +14980,7 @@ fncGrpPostPredCheck <- function(Coda.Object, mydf, Outcome, Group, Group.Level,
   axis(1)  #Put values in labels
   #This adds in minimum value in case it isn't in range (e.g., show negatve range of normal distribution)
   axis(1, at=X.Lim[1]) 
-  box()
+ # box()   #Dropping this for now because it looks better without
   #Add in posterior estimate lines
   for ( chnIdx in pltIdx ) {
     #Normal Distribution
@@ -14950,6 +14994,20 @@ fncGrpPostPredCheck <- function(Coda.Object, mydf, Outcome, Group, Group.Level,
       lines( xComb ,
              dlnorm( xComb, MC.Chain[chnIdx, Mean.Var], MC.Chain[chnIdx, SD.Var] ),
              col= Line.Color )
+    }
+    #Add points 
+    if (!is.null(Point.Loc)) {
+      for (i in 1:length(Point.Loc)) {
+        points(x=Point.Loc[i], y=0, pch=3, lwd=3, cex=CEX.size, col=PCol)
+      }
+    }
+    #Add legend
+    if(Add.Lgd =="Yes") {
+      legend_text <- c(paste0("Observed ", abbreviate(Group.Level, 8)), "Posterior Estimate")
+      legend_type <- c(1, 1)
+      pcol_vector <- c(Bar.Color, Line.Color)
+      legend(Leg.Loc, legend=legend_text, col=pcol_vector, 
+             lty=legend_type, pt.bg=pcol_vector, cex = 2, bty="n", inset=c(0, .05))
     }
   }
   

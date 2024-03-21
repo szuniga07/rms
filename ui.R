@@ -2294,7 +2294,7 @@ h3("Posterior Predictive Check for groups"),
 br(),
 h4("Check how posterior lines fine data from normal or log-normal distributions."),
 h4("Load dataset in 'Builder' tab and MCMC simumlations above."),
-h5("Go to #18 and click 'Yes' to generate group levels in #3."),
+h5("Go to #22 and click 'Yes' to generate group levels in #3."),
 br(),
 fluidRow(   
   column(3, 
@@ -2335,6 +2335,16 @@ fluidRow(
          uiOutput("dbdaPostCheckYaxisLims")),
   column(3, 
          uiOutput("dbdaPostCheckMinVal")),
+),
+fluidRow(   
+  column(3, 
+         uiOutput("dbdaPostCheckXaxisPoint")),
+  column(3, 
+         uiOutput("dbdaPostCheckPointCol")),
+  column(3, 
+         uiOutput("dbdaPostCheckAddLeg")),
+  column(3, 
+         uiOutput("dbdaPostCheckLgdLoc"))
 ),
 fluidRow(   
   column(3, 

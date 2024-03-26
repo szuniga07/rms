@@ -13468,9 +13468,9 @@ fncAucDcaClass <- function(Fit, Y, Threshold, Censor=NULL, PredTime=NULL,
     tmp_auc_ls[[i]] <- fncThreshAUC(ClassDF= tmp_ls[[i]])
     tmp_level_name[i] <- i + 1
   }
-  ##########################
-  ## Classication Results ##
-  ##########################
+  ############################
+  ## Classification Results ##
+  ############################
   #Make a for loop that goes through each unique prediction (excluding lowest value)
   #to get the classification results for each prediction as a cutoff
   tmp_class_ls <- vector(mode = "list", length= length(PREDunique)-1 )
@@ -14266,10 +14266,18 @@ output$dbdaPostCheckYaxisLims <- renderUI({
 dbda_post_check_grp_y_axis_limits <- reactive({                 
   input$dbdaPcgYLms 
 })
-#16. Select label size multiplier
+#16b. Set the selected minimum value based on t-distribution or not
+dbda_post_check_min_value_choice <- reactive({                 
+  if (dbda_post_check_grp_distr() == "t") {
+    95
+  } else {
+     0
+  }
+})
+#16. Select label minimum value
 output$dbdaPostCheckMinVal <- renderUI({                                 
   numericInput("dbdaPcgLbMV", "16. List minimum value.",
-               value = 0, step = 1)
+               value = dbda_post_check_min_value_choice(), step = 1)
 })
 #16a. Reactive function for directly above
 dbda_post_check_grp_min_value <- reactive({                 
@@ -14334,7 +14342,7 @@ dbda_post_check_grp_gen_YN <- reactive({
 })
 #23. Select the mean parameter
 output$dbdaPostCheckParNu <- renderUI({                                
-  selectInput("dbdaPcgPNu", "23. Select V (d.f.) parameter.",       
+  selectInput("dbdaPcgPNu", "23. Select V (nu) d.f. parameter.",       
               choices = DBDA_parameter_Names(), multiple=FALSE, 
               selected=DBDA_parameter_Names()[1] )   
 })
@@ -14410,7 +14418,8 @@ plot_dbda_posterior_group_check <- reactive({
                                 Y.Lim=(eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
                                 PCol = dbda_post_check_point_colors(),
                                 Add.Lgd= dbda_post_check_add_legend(), 
-                                Leg.Loc=dbda_post_check_legend_location() ) )
+                                Leg.Loc=dbda_post_check_legend_location(),
+                                T.Percentage=dbda_post_check_grp_min_value() ) )
   }
 })
 #Posterior distribution for above
@@ -15071,7 +15080,7 @@ fncPlotMcANOVA <- function( codaSamples=NULL, datFrm=NULL , yName=NULL , xName=N
                             MCmean=NULL, MCsigma=NULL, MCnu=NULL, Num.Lines=NULL, 
                             Main.Title=NULL, X.Lab=NULL, Line.Color=NULL, 
                             CEX.size=NULL, X.Lim=NULL, Y.Lim=NULL, PCol = NULL,
-                            Add.Lgd= NULL, Leg.Loc=NULL ) {
+                            Add.Lgd= NULL, Leg.Loc=NULL, T.Percentage=NULL ) {
   mcmcMat <- as.matrix(codaSamples, chains=TRUE)
   chainLength <- NROW( mcmcMat )
   y <- datFrm[, yName]
@@ -15115,14 +15124,16 @@ fncPlotMcANOVA <- function( codaSamples=NULL, datFrm=NULL , yName=NULL , xName=N
       m = mcmcMat[chnIdx, paste(mean_par, "[", xidx, "]", sep="")]
       s = mcmcMat[chnIdx, paste(sigma_par, "[", xidx,"]", sep="")]
       nu = mcmcMat[chnIdx, MCnu]
-      tlim = qt( c(0.025, 0.975) , df= nu )
+      #This controls tails of t distribution. Coverage "*.01" to get proportion
+      tlim= qt( c((0.5 - (T.Percentage*0.01)/2), (0.5 + (T.Percentage*0.01)/2)) , df= nu )  
+      #This controls tails of t distribution
       yl = m + tlim[1]*s
       yh = m + tlim[2]*s
       ycomb=seq(yl, yh, length=501) ##201
       #ynorm = dnorm(ycomb,mean=m,sd=s)
       #ynorm = 0.67*ynorm/max(ynorm)
       yt = dt( (ycomb - m) / s , df= nu )
-      yt = 0.67 * yt / max(yt)
+      yt = 0.67 * yt / max(yt)           #This controls heighth of curve peaks
       lines( xPlotVal - yt , ycomb , col= Line.Color ) #COLOR
     }
   }

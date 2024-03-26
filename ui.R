@@ -2361,7 +2361,7 @@ plotOutput("plotDbdaPostCheckGroup", height = 800, width="100%"),
 br(),
 h5("Idenitfy mean and SD parameters for each group (e.g., log-normal model mean= muOfLogY[1], SD= sigmaOfLogY[1])."),
 h5("X-limits can remain blank if the minimum value is specified."),
-h5("Most questions above fit for t-distribution graph (e.g., not #3). #23's V parameter is a t-distribution's normality/degrees of freedom."),
+h5("Most questions above fit the t-distribution graph (e.g., not #3). #23's V parameter is a t-distribution's normality/degrees of freedom. Expand or narrow t's tails by changing the percentage coverage in #16 (e.g., 95= 0.025 - 0.975)."),
 br()
 
 ) #End of Bayesian panel  

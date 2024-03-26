@@ -2352,6 +2352,8 @@ fluidRow(
   column(3, 
          uiOutput("dbdaPostCheckGenGroups")),
   column(3, 
+         uiOutput("dbdaPostCheckParNu")),
+  column(3, 
          uiOutput("dbdaPostCheckRun"))
 ),
 br(),
@@ -2359,6 +2361,7 @@ plotOutput("plotDbdaPostCheckGroup", height = 800, width="100%"),
 br(),
 h5("Idenitfy mean and SD parameters for each group (e.g., log-normal model mean= muOfLogY[1], SD= sigmaOfLogY[1])."),
 h5("X-limits can remain blank if the minimum value is specified."),
+h5("Most questions above fit for t-distribution graph (e.g., not #3). #23's V parameter is a t-distribution's normality/degrees of freedom."),
 br()
 
 ) #End of Bayesian panel  

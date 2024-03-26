@@ -14180,8 +14180,8 @@ dbda_post_check_grp_psd <- reactive({
 #6. select the distribution type
 output$dbdaPostCheckDist <- renderUI({
   selectInput("dbdaPcgDst", "6. Choose the distribution.", 
-              choices = c("Normal", "Log-normal"), multiple=FALSE, 
-              selected=c("Normal", "Log-normal")[1])
+              choices = c("Normal", "Log-normal", "t"), multiple=FALSE, 
+              selected=c("Normal", "Log-normal", "t")[1])
 })
 #6A. Reactive function for above
 dbda_post_check_grp_distr <- reactive({
@@ -14332,40 +14332,86 @@ output$dbdaPostCheckGenGroups <- renderUI({
 dbda_post_check_grp_gen_YN <- reactive({
   input$dbdaPcgGnGrp
 })
-#23. Do you want to run the function
+#23. Select the mean parameter
+output$dbdaPostCheckParNu <- renderUI({                                
+  selectInput("dbdaPcgPNu", "23. Select V (d.f.) parameter.",       
+              choices = DBDA_parameter_Names(), multiple=FALSE, 
+              selected=DBDA_parameter_Names()[1] )   
+})
+#23a. Reactive function for directly above
+dbda_post_check_grp_pnu <- reactive({                 
+  input$dbdaPcgPNu 
+})
+#24. Do you want to run the function
 output$dbdaPostCheckRun <- renderUI({
-  selectInput("dbdaPcgRn", "23. Run posterior plot?", 
+  selectInput("dbdaPcgRn", "24. Run posterior plot?", 
               choices = c("No", "Yes"), multiple=FALSE, selected="No")
 })
-#23A. Reactive function for above
+#24A. Reactive function for above
 dbda_post_check_grp_run_YN <- reactive({
   input$dbdaPcgRn
 })
 ## Plot DBDA Posterior HDI ##
 plot_dbda_posterior_group_check <- reactive({
-  if(dbda_post_check_grp_run_YN() == "Yes") {
-    par( mar=c(4,2,2.5,.25) , mgp=c(2.5,0.5,0) , pty="m" )
-    fncGrpPostPredCheck(Coda.Object=DBDA_coda_object_df(), mydf=df(), 
-                        Outcome=dbda_post_check_grp_Y(), Group=dbda_post_check_grp_X(), 
-                        Group.Level=dbda_post_check_grp_level_X(), 
-                        Mean.Var=dbda_post_check_grp_pm(), 
-                        SD.Var=dbda_post_check_grp_psd(), Distribution=dbda_post_check_grp_distr(), 
-                        Num.Lines=dbda_post_check_grp_number_lines(), 
-                        Main.Title=dbda_post_check_grp_main_title(), 
-                        X.Lab=dbda_post_check_grp_x_label(), 
-                        Bar.Color=dbda_post_check_grp_bar_colors(), 
-                        Line.Color=dbda_post_check_grp_line_colors(), 
-                        Hist.Breaks=dbda_post_check_grp_number_bars(), 
-                        CEX.size=dbda_post_check_grp_label_multiplier(), 
-                        X.Lim=(eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
-                        Y.Lim=(eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
-                        Min.Val=dbda_post_check_grp_min_value(), 
-                        Round.Digits=dbda_post_check_grp_round_place(),
-                        Point.Loc= (eval(parse(text=dbda_post_check_grp_x_axis_points() )) ),
-                        PCol = dbda_post_check_point_colors(),
-                        Add.Lgd= dbda_post_check_add_legend(), 
-                        Leg.Loc=dbda_post_check_legend_location() )
-    }
+  if(dbda_post_check_grp_run_YN() == "Yes") {     
+    #    par( mar=c(4,2,2.5,.25) , mgp=c(2.5,0.5,0) , pty="m" )       
+    switch(dbda_post_check_grp_distr() ,
+           "Normal" =     fncGrpPostPredCheck(Coda.Object=DBDA_coda_object_df(), mydf=df(), 
+                                              Outcome=dbda_post_check_grp_Y(), Group=dbda_post_check_grp_X(), 
+                                              Group.Level=dbda_post_check_grp_level_X(), 
+                                              Mean.Var=dbda_post_check_grp_pm(), 
+                                              SD.Var=dbda_post_check_grp_psd(), Distribution=dbda_post_check_grp_distr(), 
+                                              Num.Lines=dbda_post_check_grp_number_lines(), 
+                                              Main.Title=dbda_post_check_grp_main_title(), 
+                                              X.Lab=dbda_post_check_grp_x_label(), 
+                                              Bar.Color=dbda_post_check_grp_bar_colors(), 
+                                              Line.Color=dbda_post_check_grp_line_colors(), 
+                                              Hist.Breaks=dbda_post_check_grp_number_bars(), 
+                                              CEX.size=dbda_post_check_grp_label_multiplier(), 
+                                              X.Lim=(eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
+                                              Y.Lim=(eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
+                                              Min.Val=dbda_post_check_grp_min_value(), 
+                                              Round.Digits=dbda_post_check_grp_round_place(),
+                                              Point.Loc= (eval(parse(text=dbda_post_check_grp_x_axis_points() )) ),
+                                              PCol = dbda_post_check_point_colors(),
+                                              Add.Lgd= dbda_post_check_add_legend(), 
+                                              Leg.Loc=dbda_post_check_legend_location() ) , 
+           "Log-normal" =     fncGrpPostPredCheck(Coda.Object=DBDA_coda_object_df(), mydf=df(), 
+                                                  Outcome=dbda_post_check_grp_Y(), Group=dbda_post_check_grp_X(), 
+                                                  Group.Level=dbda_post_check_grp_level_X(), 
+                                                  Mean.Var=dbda_post_check_grp_pm(), 
+                                                  SD.Var=dbda_post_check_grp_psd(), Distribution=dbda_post_check_grp_distr(), 
+                                                  Num.Lines=dbda_post_check_grp_number_lines(), 
+                                                  Main.Title=dbda_post_check_grp_main_title(), 
+                                                  X.Lab=dbda_post_check_grp_x_label(), 
+                                                  Bar.Color=dbda_post_check_grp_bar_colors(), 
+                                                  Line.Color=dbda_post_check_grp_line_colors(), 
+                                                  Hist.Breaks=dbda_post_check_grp_number_bars(), 
+                                                  CEX.size=dbda_post_check_grp_label_multiplier(), 
+                                                  X.Lim=(eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
+                                                  Y.Lim=(eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
+                                                  Min.Val=dbda_post_check_grp_min_value(), 
+                                                  Round.Digits=dbda_post_check_grp_round_place(),
+                                                  Point.Loc= (eval(parse(text=dbda_post_check_grp_x_axis_points() )) ),
+                                                  PCol = dbda_post_check_point_colors(),
+                                                  Add.Lgd= dbda_post_check_add_legend(), 
+                                                  Leg.Loc=dbda_post_check_legend_location() ) ,
+           "t" = fncPlotMcANOVA(codaSamples=DBDA_coda_object_df(), datFrm=df(), 
+                                yName=dbda_post_check_grp_Y(), xName=dbda_post_check_grp_X(), 
+                                MCmean=dbda_post_check_grp_pm(), 
+                                MCsigma=dbda_post_check_grp_psd(), 
+                                MCnu= dbda_post_check_grp_pnu(),
+                                Num.Lines=dbda_post_check_grp_number_lines(), 
+                                Main.Title=dbda_post_check_grp_main_title(), 
+                                X.Lab=dbda_post_check_grp_x_label(), 
+                                Line.Color=dbda_post_check_grp_line_colors(), 
+                                CEX.size=dbda_post_check_grp_label_multiplier(), 
+                                X.Lim=(eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
+                                Y.Lim=(eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
+                                PCol = dbda_post_check_point_colors(),
+                                Add.Lgd= dbda_post_check_add_legend(), 
+                                Leg.Loc=dbda_post_check_legend_location() ) )
+  }
 })
 #Posterior distribution for above
 output$plotDbdaPostCheckGroup <- renderPlot({ 
@@ -14973,6 +15019,7 @@ fncGrpPostPredCheck <- function(Coda.Object, mydf, Outcome, Group, Group.Level,
     X.Lim <- c(Min.Val, round(max(mydf[, Outcome], na.rm=TRUE), digits=Round.Digits))
   }
   ## Graph ##
+  par( mar=c(4,2,2.5,.25) , mgp=c(2.5,0.5,0) , pty="m" )
   hist( mydf[, Outcome][mydf[, Group] == Group.Level] , xlab= X.Lab, ylab=NULL, 
         main= Main.Title, breaks=Hist.Breaks, col= Bar.Color, border="white", 
         prob=TRUE, cex.lab=CEX.size, cex=CEX.size, cex.main=CEX.size, 
@@ -15013,6 +15060,83 @@ fncGrpPostPredCheck <- function(Coda.Object, mydf, Outcome, Group, Group.Level,
   
 } #End of function
 
+################################################################################
+#             5. Posterior predictive check for ANOVA                          #
+################################################################################
+#This is a modified function from PlotMCmeanC: Jags-Ymet-Xnom1fac-MrobustHet.r. 
+#The original plot produces a generic plot, then it shifts the X and Y axes to
+#a completely different area to produce the graphs. Old code embedded below
+#from what looks like normal distributions.
+fncPlotMcANOVA <- function( codaSamples=NULL, datFrm=NULL , yName=NULL , xName=NULL,  
+                            MCmean=NULL, MCsigma=NULL, MCnu=NULL, Num.Lines=NULL, 
+                            Main.Title=NULL, X.Lab=NULL, Line.Color=NULL, 
+                            CEX.size=NULL, X.Lim=NULL, Y.Lim=NULL, PCol = NULL,
+                            Add.Lgd= NULL, Leg.Loc=NULL ) {
+  mcmcMat <- as.matrix(codaSamples, chains=TRUE)
+  chainLength <- NROW( mcmcMat )
+  y <- datFrm[, yName]
+  x <- as.numeric(as.factor(datFrm[, xName]))
+  xlevels <- levels(as.factor(datFrm[, xName]))
+  #Make x-limits
+  if (is.null(X.Lim)) {
+    X.Limits <- c(0.1,length(xlevels) + 0.1)
+  } else {
+    X.Limits <- X.Lim
+  }
+  #Make y-limits
+  if (is.null(Y.Lim)) {
+    Y.Limits <- c(min(y) - 0.2 * (max(y) - min(y)), max(y) + 0.2*(max(y) - min(y)))
+  } else {
+    Y.Limits <- Y.Lim
+  }
+  #Get generic mean parameter name to use for graphing
+  mean_par <- strsplit(MCmean, "[", fixed=TRUE)[[1]][1]
+  #Get generic sigma (SD) parameter name to use for graphing
+  sigma_par <- strsplit(MCsigma, "[", fixed=TRUE)[[1]][1]
+  # Display data with posterior predictive distributions
+  par( mar=c(5,6,2.5,.25))
+  plot(-1,0, 
+       #       xlim=c(0.1,length(xlevels) + 0.1) , 
+       #       ylim=c(min(y) - 0.2 * (max(y) - min(y)), max(y) + 0.2*(max(y) - min(y))) , 
+       xlim= X.Limits, xlab=X.Lab , xaxt="n" , ylab= yName ,
+       ylim= Y.Limits, main=Main.Title, 
+       cex.lab=CEX.size, cex=CEX.size, cex.main=CEX.size )
+  axis( 1 , at=1:length(xlevels) , tick=FALSE , lab=xlevels )
+  for ( xidx in 1:length(xlevels) ) {
+    xPlotVal = xidx 
+    yVals = y[ x == xidx ]
+    points( rep(xPlotVal, length(yVals)) + runif(length(yVals), -0.05, 0.05) , 
+            yVals , pch=1 , cex=CEX.size , col= PCol ) #COLOR
+    chainSub = round(seq(1, chainLength, length= Num.Lines)) #20
+    for ( chnIdx in chainSub ) {
+      #      m = mcmcMat[chnIdx, paste("m[", xidx, "]", sep="")]
+      # m = mcmcMat[chnIdx,paste("b[",xidx,"]",sep="")]
+      #      s = mcmcMat[chnIdx, paste("ySigma[", xidx,"]", sep="")]
+      m = mcmcMat[chnIdx, paste(mean_par, "[", xidx, "]", sep="")]
+      s = mcmcMat[chnIdx, paste(sigma_par, "[", xidx,"]", sep="")]
+      nu = mcmcMat[chnIdx, MCnu]
+      tlim = qt( c(0.025, 0.975) , df= nu )
+      yl = m + tlim[1]*s
+      yh = m + tlim[2]*s
+      ycomb=seq(yl, yh, length=501) ##201
+      #ynorm = dnorm(ycomb,mean=m,sd=s)
+      #ynorm = 0.67*ynorm/max(ynorm)
+      yt = dt( (ycomb - m) / s , df= nu )
+      yt = 0.67 * yt / max(yt)
+      lines( xPlotVal - yt , ycomb , col= Line.Color ) #COLOR
+    }
+  }
+  #Add legend
+  if(Add.Lgd =="Yes") {
+    legend_text <- c("Observed Value", "Posterior Estimate")
+    legend_type <- c(0, 1)
+    pch_type <- c(1, -1)
+    pcol_vector <- c(PCol, Line.Color)
+    legend(Leg.Loc, legend=legend_text, col=pcol_vector, 
+           lty=legend_type, pt.bg=pcol_vector, cex = 2, pch=pch_type, 
+           bty="n", inset=c(0, .05))
+  }
+}
 
 ##########################################
 ## DBDA Functions for Bayesian analysis ##

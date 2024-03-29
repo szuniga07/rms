@@ -15029,10 +15029,20 @@ fncGrpPostPredCheck <- function(Coda.Object, mydf, Outcome, Group, Group.Level,
   }
   ## Graph ##
   par( mar=c(4,2,2.5,.25) , mgp=c(2.5,0.5,0) , pty="m" )
-  hist( mydf[, Outcome][mydf[, Group] == Group.Level] , xlab= X.Lab, ylab=NULL, 
-        main= Main.Title, breaks=Hist.Breaks, col= Bar.Color, border="white", 
-        prob=TRUE, cex.lab=CEX.size, cex=CEX.size, cex.main=CEX.size, 
-        xlim=X.Lim, ylim=Y.Lim, lab=NULL, axes=FALSE)
+  #Allows me to run if I only have 1 group by leaving "generate levels =="No"
+  if (nchar(Group.Level) == 0 ) { 
+    hist( mydf[, Outcome], xlab= X.Lab, ylab=NULL, 
+          main= Main.Title, breaks=Hist.Breaks, col= Bar.Color, border="white", 
+          prob=TRUE, cex.lab=CEX.size, cex=CEX.size, cex.main=CEX.size, 
+          xlim=X.Lim, ylim=Y.Lim, lab=NULL, axes=FALSE)
+  } else {
+    hist( mydf[, Outcome][mydf[, Group] == Group.Level] , xlab= X.Lab, ylab=NULL, 
+          main= Main.Title, breaks=Hist.Breaks, col= Bar.Color, border="white", 
+          prob=TRUE, cex.lab=CEX.size, cex=CEX.size, cex.main=CEX.size, 
+          xlim=X.Lim, ylim=Y.Lim, lab=NULL, axes=FALSE)
+  }
+  
+  
   axis(1)  #Put values in labels
   #This adds in minimum value in case it isn't in range (e.g., show negatve range of normal distribution)
   axis(1, at=X.Lim[1]) 

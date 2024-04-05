@@ -13841,7 +13841,7 @@ output$dbdaPostSumOmega2 <- renderUI({
 })
 #7. Enter level-2 omega variable name.
 output$dbdaPostSumOmega3 <- renderUI({                                 
-  textInput("dbdaPstSmOmg3", "7. Type level-2 Omega.")     
+  textInput("dbdaPstSmOmg3", "7. Type level-3 Omega.")     
 })
 #8. Do you want to run the function
 output$dbdaPostSumCenTen <- renderUI({

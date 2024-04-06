@@ -2282,6 +2282,8 @@ fluidRow(
   column(3, 
          uiOutput("dbdaHierLabMulti")),
   column(3, 
+         uiOutput("dbdaHierLineMulti")),
+  column(3, 
          uiOutput("dbdaHierRun"))
 ),
 br(),

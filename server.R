@@ -14086,12 +14086,22 @@ output$dbdaHierLabMulti <- renderUI({
 dbda_hier_label_multiplier <- reactive({                 
   input$dbdaHrLbMlt 
 })
-#18. Do you want to run the function
+#18. Select label size multiplier
+output$dbdaHierLineMulti <- renderUI({                                 
+  numericInput("dbdaHrLnMlt", "18. Increase line width.",
+               value = 1.75, min=.01, step = .1)
+})
+#18a. Reactive function for directly above
+dbda_hier_line_multiplier <- reactive({                 
+  input$dbdaHrLnMlt 
+})
+
+#19. Do you want to run the function
 output$dbdaHierRun <- renderUI({
-  selectInput("dbdaHrRn", "18. Run HDI plot?", 
+  selectInput("dbdaHrRn", "19. Run HDI plot?", 
               choices = c("No", "Yes"), multiple=FALSE, selected="No")
 })
-#18A. Reactive function for above
+#19A. Reactive function for above
 dbda_hier_run_Yes_No <- reactive({
   input$dbdaHrRn
 })
@@ -14105,7 +14115,8 @@ plot_dbda_hierarchical_estimation <- reactive({
                Pcol=dbda_hier_point_colors(), P3.col=dbda_hier_obs_rate_colors(), 
                tgt=(eval(parse(text=dbda_hier_target_line() )) ), tgt.col=dbda_hier_target_color(),
                Cbar=dbda_hier_total_bar_interval(), plyCol=dbda_hier_total_bar_color(), 
-               labMulti=dbda_hier_label_multiplier(), roundVal=dbda_hier_round_decimals(), 
+               labMulti=dbda_hier_label_multiplier(), lineMulti= dbda_hier_line_multiplier(), 
+               roundVal=dbda_hier_round_decimals(), 
                XLim1=dbda_hier_Xlim_val1(),XLim2=dbda_hier_Xlim_val2(), 
                Add.Lgd=dbda_hier_add_legend(), Leg.Loc=dbda_hier_legend_location())
   }
@@ -14813,7 +14824,7 @@ fncHdiBinSmry <- function(MCmatrix, mydf, Level, Outcome, Group2, Group3=NULL,
 ################################################################################
 fncHdiBinP <- function(MCmatrix, Level, View.Order="Alphabetical", View.Level="No",  #View.Order= alpha/numerical, View.Level=Yes/No "View 3rd level?"
                        GroupX=NULL, Lcol, Pcol, P3.col, tgt=NULL, tgt.col, 
-                       Cbar, plyCol, labMulti=1, 
+                       Cbar, plyCol, labMulti=1, lineMulti=1, 
                        roundVal, XLim1, XLim2,Add.Lgd, Leg.Loc) {
   # Assign objects from MCMC matrix objects  
   Group2 <- MCmatrix$Group2 
@@ -14881,7 +14892,7 @@ fncHdiBinP <- function(MCmatrix, Level, View.Order="Alphabetical", View.Level="N
   }
   #Main X labels
   if(Level >= 2) {
-    X_Label <- paste0("Grey vertical line= Overall hierarchical est. of ", round(mainYmn, roundVal), ", ", ciconf_lev * 100, "% ", "HDI",
+    X_Label <- paste0("Dashed line= Overall hierarchical est. of ", round(mainYmn, roundVal), ", ", ciconf_lev * 100, "% ", "HDI",
                       " [", round(hdidf[nrow(hdidf), which(colnames(hdidf)== "HDIlow")], roundVal), ", ", 
                       round(hdidf[nrow(hdidf), which(colnames(hdidf)== "HDIhigh")], roundVal),"]")
   } else {
@@ -14954,7 +14965,7 @@ fncHdiBinP <- function(MCmatrix, Level, View.Order="Alphabetical", View.Level="N
   }
   ## Create plot
   rng <- seq(min(adf[, "Obs.Rate"], na.rm=TRUE)* 0.95, max(adf[, "Obs.Rate"], na.rm=TRUE)* 1.05, length.out=nrow(adf[plot_row_numbers,]))
-  par(mar=c(5,7,4,4))
+  par(mar=c(5,7,4,6))
   plot(rng, 1:length(rng), type="n", ylab="", 
        xlab= X_Label,
        axes=F,  cex.lab=1*labMulti, xlim=c(XLim1, XLim2))
@@ -14963,7 +14974,8 @@ fncHdiBinP <- function(MCmatrix, Level, View.Order="Alphabetical", View.Level="N
   #Merge 2 tables so I can get points in correct order
   for (i in 1:(length(plot_row_numbers)) ) {
     lines(c(hdidf[plot_row_numbers, Lower][i], hdidf[plot_row_numbers, Upper][i]), 
-          c((1:length(plot_row_numbers))[i], (1:length(plot_row_numbers))[i]), lwd=4, col=Lcol) 
+          c((1:length(plot_row_numbers))[i], (1:length(plot_row_numbers))[i]), 
+          lwd=1*lineMulti, col=Lcol) 
     #Points for observed rates and Bayesian estimates
     points(hdidf[plot_row_numbers, Average][i ], i, pch=24, col=Pcol, lwd=1, bg=Pcol, cex=1.75*labMulti) 
     if(Level >= 2) {
@@ -14981,10 +14993,8 @@ fncHdiBinP <- function(MCmatrix, Level, View.Order="Alphabetical", View.Level="N
   }
   #Mean line
   if(Level >= 2) {
-    abline(v=mainYmn, lwd=3, col="grey", lty=3)
+    abline(v=mainYmn, lwd=1*lineMulti, col="grey", lty=3)
   }
-  #Target line
-  abline(v=tgt, lwd=3, col=tgt.col, lty=1)
   axis(1) 
   axis(2, at=1:length(plot_row_numbers), labels= substr(hdidf[plot_row_numbers, Group2], 1, 10), las=1, cex.axis=1*labMulti )
   axis(4, at=1:length(plot_row_numbers), labels= round(hdidf[plot_row_numbers, Average], roundVal), las=1, cex.axis= 1*labMulti*.75 )
@@ -15001,6 +15011,8 @@ fncHdiBinP <- function(MCmatrix, Level, View.Order="Alphabetical", View.Level="N
     legend(Leg.Loc, legend=legend_text, col=pcol_vector, 
            pch=legend_type, pt.bg=pcol_vector, cex = 2, bty="n", inset=c(0, .05))
   } 
+  #Target line
+  abline(v=tgt, lwd=1*lineMulti, col=tgt.col, lty=1)
   box()
 }
 

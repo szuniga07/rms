@@ -14128,7 +14128,6 @@ output$plotDbdaHierEstimation <- renderPlot({
   }
 }, height = 800)
 
-#kermit
 
 ###########################################
 ## Posterior Predictive Check for groups ##
@@ -14440,6 +14439,99 @@ output$plotDbdaPostCheckGroup <- renderPlot({
   }
 }, height = 800)
 
+#######################################
+## Proportion above specific Y value ##
+#######################################
+#1. Select the main parameter
+output$dbdaPropGtPar1 <- renderUI({                                
+  selectInput("dbdaPgtP1", "1. Select 'Center' parameter.",       
+              choices = DBDA_parameter_Names(), multiple=FALSE, 
+              selected= DBDA_parameter_Names()[1] )   
+})
+#1a. Reactive function for directly above
+dbda_prop_gr_than_par1 <- reactive({                 
+  input$dbdaPgtP1 
+})
+#2. Select the 2nd parameter
+output$dbdaPropGtPar2 <- renderUI({                                
+  selectInput("dbdaPgtP2", "2. Select 'Spread' parameter.",       
+              choices = setdiff(DBDA_parameter_Names(), dbda_prop_gr_than_par1()), 
+              multiple=FALSE, selected=setdiff(DBDA_parameter_Names(), dbda_prop_gr_than_par1())[1] )   
+})
+#2a. Reactive function for directly above
+dbda_prop_gr_than_par2 <- reactive({                 
+  input$dbdaPgtP2 
+})
+#3. select the distribution type
+output$dbdaPropGtDist <- renderUI({
+  selectInput("dbdaPgtDst", "3. Choose the distribution.", 
+              choices = c("Beta", "Log-normal"), multiple=FALSE, 
+              selected=c("Beta", "Log-normal")[1])
+})
+#3A. Reactive function for above
+dbda_prop_gr_than_distr <- reactive({
+  input$dbdaPgtDst
+})
+#4. Do you want to run the function
+output$dbdaPropGtCenTen <- renderUI({
+  selectInput("dbdaPgtCT", "4. Choose central tendency.", 
+              choices = c("Mode","Median","Mean"), multiple=FALSE, 
+              selected=c("Mode","Median","Mean")[1])
+})
+#4A. Reactive function for above
+dbda_prop_gr_than_central_tendency <- reactive({
+  input$dbdaPgtCT
+})
+
+#5. X-axis limits
+output$dbdaPropGtYval <- renderUI({                                 
+  textInput("dbdaPgtYs", "5. List Y-values.",
+            value = paste0('c( ', ')'))
+})
+#5a. Reactive function for directly above
+dbda_prop_gr_than_y_values <- reactive({                 
+  eval(parse(text= input$dbdaPgtYs))  
+})
+#6. X-axis limits
+output$dbdaPropGtQval <- renderUI({                                 
+  textInput("dbdaPgtQs", "6. List Y percentiles.",
+            value = paste0('c( ', ')'))
+})
+#6a. Reactive function for directly above
+dbda_prop_gr_than_q_values <- reactive({                 
+  eval(parse(text=  input$dbdaPgtQs)) 
+})
+#7. Do you want to run the function
+output$dbdaPropGtRun <- renderUI({
+  selectInput("dbdaPgtRn", "7. Run probabilities?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")
+})
+#7A. Reactive function for above
+dbda_prop_gr_than_run_YN <- reactive({
+  input$dbdaPgtRn
+})
+
+## Run the proportion greater than Y value function
+dbda_prop_gr_than_func_run <- reactive({
+  if(dbda_prop_gr_than_run_YN() == "Yes") {
+    fncPropGtY( Coda.Object= DBDA_coda_object_df(), 
+            Distribution= dbda_prop_gr_than_distr(), 
+            yVal= dbda_prop_gr_than_y_values() , 
+            qVal= dbda_prop_gr_than_q_values(), 
+            Center= dbda_prop_gr_than_par1(), 
+            Spread= dbda_prop_gr_than_par2(), 
+            CenTend= dbda_prop_gr_than_central_tendency() )
+  }
+})
+
+#proportion greater than Y value
+output$dbdaPropGt_output <- renderPrint({ 
+  if(dbda_prop_gr_than_run_YN() == "Yes") {
+    dbda_prop_gr_than_func_run()
+      }
+})
+
+#kermit
 ########################################
 ## My functions for Bayesian analysis ##
 ########################################
@@ -15169,6 +15261,177 @@ fncPlotMcANOVA <- function( codaSamples=NULL, datFrm=NULL , yName=NULL , xName=N
            lty=legend_type, pt.bg=pcol_vector, cex = 2, pch=pch_type, 
            bty="n", inset=c(0, .05))
   }
+}
+#kermit
+################################################################################
+#           6. Get proportions above/below specific values                     #
+################################################################################
+#This function calculates the proportion above specific values.
+fncPropGtY <- function( Coda.Object=NULL, Distribution=NULL, yVal=NULL, qVal=NULL, 
+                        Center=NULL, Spread=NULL, CenTend=NULL ) {
+  #Convert into a matrix
+  MC.Matrix <- as.matrix(Coda.Object, chains=TRUE)    
+  
+  #Shape and rate parameters using the mode values of omega and kappa
+  a_shape <- MC.Matrix[, Center] * (MC.Matrix[, Spread] - 2) + 1
+  b_shape <- (1 - MC.Matrix[, Center]) * (MC.Matrix[, Spread] - 2) + 1
+  
+  ###################
+  ## Mean for Beta ##
+  ###################
+  if(!is.null(yVal)) {
+    if(Distribution == "Beta") {
+      mean_val <- a_shape/MC.Matrix[, Spread]
+    }
+  }
+  if(!is.null(yVal)) {
+    if(Distribution == "Beta") {
+      mean_val_dist <- summarizePost(mean_val)[c(c("Mode","Median",
+                                                   "Mean")[which(c("Mode","Median","Mean")== CenTend)],"HDIlow","HDIhigh")]
+    }
+  }
+  #Make NA if not from a beta distribution
+  if (Distribution == "Beta") {
+    mean_val_dist <- mean_val_dist
+  } else {
+    mean_val_dist <- NA
+  }
+  
+  #######################
+  ## Beta distribution ##
+  #######################
+  ## Get summary ##
+  # Proportion greater than Y
+  PbetaGtY <- list()
+  if(!is.null(yVal)) {
+    if(Distribution == "Beta") {
+      for (i in 1:length(yVal)) {
+        PbetaGtY[[i]] <- summarizePost( 1- pbeta(yVal[i], a_shape, 
+                                                 b_shape) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+        names(PbetaGtY)[i] <- paste0("Y_", yVal[i])
+      }
+    }
+  }
+  # Quantiles of Y
+  QbetaGtY <- list()
+  if(!is.null(qVal)) {
+    if(Distribution == "Beta") {
+      for (i in 1:length(qVal)) {
+        QbetaGtY[[i]] <- summarizePost( qbeta(qVal[i], a_shape, 
+                                              b_shape) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+        names(QbetaGtY)[i] <- paste0("Percentile_", qVal[i])
+      }
+    }
+  }
+  #Return NAs for NULL objects
+  #probability
+  if (length(PbetaGtY)==0 ) {
+    PbetaGtY <- NA
+  } else {
+    PbetaGtY <- PbetaGtY
+  } 
+  #quantile
+  if (length(QbetaGtY)==0 ) {
+    QbetaGtY <- NA
+  } else {
+    QbetaGtY <- QbetaGtY
+  } 
+  
+  #############################
+  ## Log-normal distribution ##
+  #############################
+  ## Get summary ##
+  # Proportion greater than Y
+  PlogGtY <- list()
+  if(!is.null(yVal)) {
+    if(Distribution == "Log-normal") {
+      for (i in 1:length(yVal)) {
+        PlogGtY[[i]] <- summarizePost( plnorm(q=yVal[i], meanlog= MC.Matrix[, Center], 
+                                              sdlog= MC.Matrix[, Spread], lower.tail=FALSE) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+        names(PlogGtY)[i] <- paste0("Y_", yVal[i])
+      }
+    }
+  }
+  # Quantiles of Y
+  QlogGtY <- list()
+  if(!is.null(qVal)) {
+    if(Distribution == "Log-normal") {
+      for (i in 1:length(qVal)) {
+        QlogGtY[[i]] <- summarizePost( qlnorm(p=qVal[i], meanlog= MC.Matrix[, Center], 
+                                              sdlog= MC.Matrix[, Spread]) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+        names(QlogGtY)[i] <- paste0("Percentile_", qVal[i])
+      }
+    }
+  }
+  #Return NAs for NULL objects
+  #probability
+  if (length(PlogGtY)==0 ) {
+    PlogGtY <- NA
+  } else {
+    PlogGtY <- PlogGtY
+  } 
+  #quantile
+  if (length(QlogGtY)==0 ) {
+    QlogGtY <- NA
+  } else {
+    QlogGtY <- QlogGtY
+  } 
+  
+  ## Create final distribution values ##
+  #Probability
+  if (Distribution == "Beta") {
+    PdisGtY <- PbetaGtY
+  } 
+  if (Distribution == "Log-normal") {
+    PdisGtY <- PlogGtY
+  } 
+  #Make NA if the above weren't selected
+  if (is.null(PdisGtY)) {
+    PdisGtY <- NA
+  } 
+  #Quantile
+  if (Distribution == "Beta") {
+    QdisGtY <- QbetaGtY
+  } 
+  if (Distribution == "Log-normal") {
+    QdisGtY <- QlogGtY
+  } 
+  #Make NA if the above weren't selected
+  if (is.null(QdisGtY)) {
+    QdisGtY <- NA
+  } 
+  
+  return(list("Est.Prop.GT.Y"= PdisGtY, 
+              "Est.Quantile.Y"= QdisGtY,
+              "Est.Mean.Beta"=mean_val_dist) )
+}
+
+################################################################################
+#                 7. R2 for models with metric only predictors                 #
+################################################################################
+#This produces R2 for normal or t-distribution models with only metric predictors.
+#The formula is used in the bottom example, just needs the correlation matrix
+#from the actual observed dataset and some matrix algebra of the MCMC object's 
+#beta coefficients to get the R2. This works on standardized data but
+#it should work on regular data. And it might work with nominal predictors or 
+#maybe factors. The code for an older Kruschke version is below the function.
+
+fncXmetR2 <- function( codaSamples=NULL , data=NULL , 
+                       Z.Beta=NULL, xName=NULL, yName=NULL) {
+  y = data[, yName]
+  x = as.matrix(data[, xName])
+  MCMC_Mat = as.matrix(codaSamples, chains=TRUE)
+  #  zbeta  = MCMC_Mat[,grep("^zbeta$|^zbeta\\[", colnames(MCMC_Mat))]
+  zbeta  = MCMC_Mat[,grep(paste0("^", Z.Beta,"$|^", Z.Beta, "\\[" ),colnames(MCMC_Mat))]
+  if ( ncol(x)==1 ) { 
+    zbeta = matrix( zbeta , ncol=1 ) 
+  }
+  #-----------------------------------------------------------------------------
+  # Compute R^2 for credible parameters:
+  YcorX = cor( y , x ) # correlation of y with each x predictor
+  R2 = zbeta %*% matrix( YcorX , ncol=1 )
+  #-----------------------------------------------------------------------------
+  return( "R2"=R2)
 }
 
 ##########################################

@@ -2364,6 +2364,35 @@ br(),
 h5("Idenitfy mean and SD parameters for each group (e.g., log-normal model mean= muOfLogY[1], SD= sigmaOfLogY[1])."),
 h5("X-limits can remain blank if the minimum value is specified. Select 'No' for #22 when there is only 1 group for (log-)normal distributions."),
 h5("Most questions above run the t-distribution graph (e.g., not #3). #23's V parameter is a t-distribution's normality/degrees of freedom. Expand or narrow t's tails by changing the percentage coverage in #16 (e.g., 95= 0.025 - 0.975)."),
+br(),
+h4("Predicted Probability Greater than a Specific Value"),
+br(),
+h5("Select values from a Beta or Log-normal distribution to calculate the predicted probabilities above that value."),
+h5("Select quantile values from a Beta or Log-normal distribution to calculate the predicted percentile for that value."),
+br(),
+fluidRow(   
+  column(3, 
+         uiOutput("dbdaPropGtPar1")),
+  column(3, 
+         uiOutput("dbdaPropGtPar2")),
+  column(3, 
+         uiOutput("dbdaPropGtDist")),
+  column(3, 
+         uiOutput("dbdaPropGtCenTen"))
+),
+fluidRow(   
+  column(3, 
+         uiOutput("dbdaPropGtYval")),
+  column(3, 
+         uiOutput("dbdaPropGtQval")),
+  column(3, 
+         uiOutput("dbdaPropGtRun"))
+),
+br(),
+h5("'Est.Prop.GT.Y'= Probability of value > Y; 'Est.Quantile.Y'= Percentile associated with your selected value; 'Est.Mean.Beta'= Mean from Beta distr. shape parameters."),
+verbatimTextOutput("dbdaPropGt_output"),
+br(),
+h5("If using the Beta distribution, the predicted mean is provided. Beta values require posteriors to calculate shape values (e.g., 'theta' and 'omega' from a hierarchical estimation)."),
 br()
 
 ) #End of Bayesian panel  

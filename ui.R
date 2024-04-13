@@ -2187,11 +2187,13 @@ fluidRow(
   column(3, 
          uiOutput("dbdaPostCompVal")),
   column(3, 
-         uiOutput("dbdaPostRun"))
+         uiOutput("dbdaPostRun")),
+  column(3, 
+         uiOutput("dbdaPostEffSize"))
 ),
 br(),
 plotOutput("plotDbdaPosteriorDistribution", height = 800, width="100%"),
-h5("Select 2 parameters to compare the difference between them (e.g., Par. 1 - Par. 2)."),
+h5("Select 2 parameters to compare their difference (e.g., Par. 1 - Par. 2). View 'effect size' by selecting the distribution in #20. Proportions: 0.20= small, 0.50= medium, 0.80= large (Cohen, 1988)."),
 br(), 
 h3("Hierarchical model: Create a summary of the posterior distribution."),
 br(), 

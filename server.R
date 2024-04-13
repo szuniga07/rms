@@ -13603,6 +13603,10 @@ output$dbdaPostCompareParYN <- renderUI({
   selectInput("dbdaPostComP12", "2. Compare parameters?", 
               choices = c("No", "Yes"), multiple=FALSE, selected="No")
 })
+#2a. Reactive function for directly above
+dbda_post_plot_compare_YN <- reactive({                 
+  input$dbdaPostComP12 
+})
 #3. Select the 2nd parameter
 output$dbdaPostPlot2 <- renderUI({                                
   selectInput("dbdaPP2", "3. Select 2nd parameter.",       
@@ -13765,12 +13769,37 @@ output$dbdaPostRun <- renderUI({
 dbda_post_run_Yes_No <- reactive({
   input$dbdaPstRn
 })
+#20. Do you want to run the function
+output$dbdaPostEffSize <- renderUI({
+  selectInput("dbdaPstES", "20. View effect size by distribution?", 
+              choices = c("No", "Beta"), multiple=FALSE, selected="No")
+})
+#20A. Reactive function for above
+dbda_post_effect_size <- reactive({
+  input$dbdaPstES
+})
 
-## Plot DBDA Posterior HDI ##
+# Reactive function to indicate if we compare 2 groups and we want an effect size
+dbda_post_want_to_run_effect_size <- reactive({
+  ifelse(dbda_post_plot_compare_YN()=="Yes" & dbda_post_run_Yes_No()== "Yes" & 
+           dbda_post_effect_size() != "No", 1, 0 )
+  })
+
+# Reactive function that creates posterior for effect sizes
+dbda_post_effect_size_posterior <- reactive({
+  if (dbda_post_want_to_run_effect_size() == 1) {
+    fncBayesEffectSize( Coda.Object=DBDA_coda_object_df(), 
+                        Distribution= dbda_post_effect_size(), 
+                        yVal1= dbda_post_plot_par1(), 
+                        yVal2= dbda_post_plot_par2()) 
+  }
+})
+
+## Plot DBDA Posterior HDI #1. ##
 plot_dbda_posterior_distribution <- reactive({
   if(dbda_post_run_Yes_No() == "Yes") {
     par(mar=c(6, 7, 4, 2))
-    if(input$dbdaPostComP12 == "Yes") {
+    if(dbda_post_plot_compare_YN() == "Yes") {
       plotPost( as.matrix(DBDA_coda_object_df())[, dbda_post_plot_par1()] - as.matrix(DBDA_coda_object_df())[, dbda_post_plot_par2()], 
                 compVal= dbda_post_comparative_val(), cenTend= dbda_post_central_tendency(),
                 ROPE=c(dbda_post_rope_val_1(),dbda_post_rope_val_2()), 
@@ -13794,10 +13823,31 @@ plot_dbda_posterior_distribution <- reactive({
   }
 })
 
+## Plot DBDA Posterior HDI #2. ##
+#Plot effect size
+plot_dbda_post_distr_effect_size <- reactive({
+  if(dbda_post_want_to_run_effect_size() == 1) {
+    par(mar=c(6, 7, 4, 2))
+      plotPost( dbda_post_effect_size_posterior(), 
+                compVal= dbda_post_comparative_val(), cenTend= dbda_post_central_tendency(),
+                ROPE=c(dbda_post_rope_val_1(),dbda_post_rope_val_2()), 
+                credMass= dbda_post_credible_mass(), main= dbda_post_main_title(), 
+                xlab= dbda_post_x_label(), ylab= dbda_post_y_label(), 
+                showCurve= dbda_post_show_curve(), col= dbda_plot_line_colors(), 
+                xlim= (eval(parse(text=dbda_post_x_axis_limits() )) ), 
+                HDItextPlace= dbda_post_place_hdi_text(), cex=dbda_post_label_multiplier(), 
+                cex.main= dbda_post_label_multiplier(), cex.lab= dbda_post_label_multiplier() )
+    }
+})
+
 #Posterior distribution for above
 output$plotDbdaPosteriorDistribution <- renderPlot({ 
   if(dbda_post_run_Yes_No() == "Yes") {
-    plot_dbda_posterior_distribution()
+    if(dbda_post_want_to_run_effect_size() == 1) {
+      plot_dbda_post_distr_effect_size()
+    } else {
+      plot_dbda_posterior_distribution()
+    }
   }
 }, height = 800)
 
@@ -15262,7 +15312,7 @@ fncPlotMcANOVA <- function( codaSamples=NULL, datFrm=NULL , yName=NULL , xName=N
            bty="n", inset=c(0, .05))
   }
 }
-#kermit
+
 ################################################################################
 #           6. Get proportions above/below specific values                     #
 ################################################################################
@@ -15432,6 +15482,31 @@ fncXmetR2 <- function( codaSamples=NULL , data=NULL ,
   R2 = zbeta %*% matrix( YcorX , ncol=1 )
   #-----------------------------------------------------------------------------
   return( "R2"=R2)
+}
+
+################################################################################
+#                    8. Bayesian Effect sizes                                  #
+################################################################################
+#This function calculates the proportion above specific values.
+fncBayesEffectSize <- function( Coda.Object=NULL, Distribution=NULL, 
+                                yVal1=NULL, yVal2=NULL, CenTend=NULL ) {
+  #Convert into a matrix
+  MC.Matrix <- as.matrix(Coda.Object, chains=TRUE)    
+  
+  ###########################
+  ## Calculate effect size ##
+  ###########################
+  
+  ##########
+  ## Beta ##
+  ##########
+  if(Distribution == "Beta") {
+    as1 <- (asin(sign(MC.Matrix[, yVal1]) * sqrt(abs(MC.Matrix[, yVal1]))))*2  
+    as2 <- (asin(sign(MC.Matrix[, yVal2]) * sqrt(abs(MC.Matrix[, yVal2]))))*2  
+    Effect.Size.Output <- abs(as1 - as2 )
+  }
+  
+  return("Effect.Size.Posterior"=Effect.Size.Output )
 }
 
 ##########################################

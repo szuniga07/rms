@@ -13764,7 +13764,7 @@ dbda_post_comparative_val <- reactive({
 output$dbdaPostRun <- renderUI({
   selectInput("dbdaPstRn", "19. Run HDI plot?", 
               choices = c("No", "Yes"), multiple=FALSE, selected="No")
-})
+}) 
 #19A. Reactive function for above
 dbda_post_run_Yes_No <- reactive({
   input$dbdaPstRn

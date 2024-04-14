@@ -2296,7 +2296,7 @@ h5("Choose between level-2 groups (e.g., baseball players) and level-3 categorie
 br(),
 h3("Posterior Predictive Check for groups"),
 br(),
-h4("Check how posterior lines fine data from normal or log-normal distributions."),
+h4("Check how posterior lines fit data from normal, log-normal,  or t distributions."),
 h4("Load dataset in 'Builder' tab and MCMC simumlations above."),
 h5("Go to #22 and click 'Yes' to generate group levels in #3."),
 br(),

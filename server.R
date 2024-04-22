@@ -15373,6 +15373,16 @@ fncPropGtY <- function( Coda.Object=NULL, Distribution=NULL, yVal=NULL, qVal=NUL
       }
     }
   }
+  #Effect size for 2 values, in "yVal"
+  betaEffSize2Y <- list()
+  if(length(yVal) == 2) {
+    if(Distribution == "Beta") {
+      es1 <- (asin(sign(1- pbeta(yVal[1], a_shape, b_shape) ) * sqrt(abs(1- pbeta(yVal[1], a_shape, b_shape) ))))*2  
+      es2 <- (asin(sign(1- pbeta(yVal[2], a_shape, b_shape)  ) * sqrt(abs(1- pbeta(yVal[2], a_shape, b_shape) ))))*2  
+      #Get the posterior summary on effect size between the 2 Y-values
+      betaEffSize2Y <- summarizePost(abs(es1 - es2) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+    }
+  }
   #Return NAs for NULL objects
   #probability
   if (length(PbetaGtY)==0 ) {
@@ -15385,6 +15395,12 @@ fncPropGtY <- function( Coda.Object=NULL, Distribution=NULL, yVal=NULL, qVal=NUL
     QbetaGtY <- NA
   } else {
     QbetaGtY <- QbetaGtY
+  } 
+  #Effect size
+  if (length(betaEffSize2Y)== 0 ) {
+    betaEffSize2Y <- NA
+  } else {
+    betaEffSize2Y <- betaEffSize2Y
   } 
   
   #############################
@@ -15426,9 +15442,10 @@ fncPropGtY <- function( Coda.Object=NULL, Distribution=NULL, yVal=NULL, qVal=NUL
   } else {
     QlogGtY <- QlogGtY
   } 
-  
+  ######################################
   ## Create final distribution values ##
-  #Probability
+  ######################################
+  ## Probability
   if (Distribution == "Beta") {
     PdisGtY <- PbetaGtY
   } 
@@ -15439,7 +15456,7 @@ fncPropGtY <- function( Coda.Object=NULL, Distribution=NULL, yVal=NULL, qVal=NUL
   if (is.null(PdisGtY)) {
     PdisGtY <- NA
   } 
-  #Quantile
+  ## Quantile
   if (Distribution == "Beta") {
     QdisGtY <- QbetaGtY
   } 
@@ -15450,8 +15467,21 @@ fncPropGtY <- function( Coda.Object=NULL, Distribution=NULL, yVal=NULL, qVal=NUL
   if (is.null(QdisGtY)) {
     QdisGtY <- NA
   } 
+  ## Effect size
+  if (Distribution == "Beta") {
+    disEsY <- betaEffSize2Y
+  } 
+  ##IMPORTANT: CODE NOT MADE YET
+#  if (Distribution == "Log-normal") {
+#    QdisEsY <- QbetaEffSize2Y
+#  } 
+  #Make NA if the above weren't selected
+  if (is.null(disEsY)) {
+    disEsY <- NA
+  } 
   
   return(list("Est.Prop.GT.Y"= PdisGtY, 
+              "Est.Effect.Size.2Y"= disEsY, 
               "Est.Quantile.Y"= QdisGtY,
               "Est.Mean.Beta"=mean_val_dist) )
 }
@@ -15829,3 +15859,4 @@ plotPost = function( paramSampleVec , cenTend=c("mode","median","mean")[1] ,
 
   })   #This is the last line of code that closes out the entire server file
   
+ 

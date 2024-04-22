@@ -2392,6 +2392,7 @@ fluidRow(
 ),
 br(),
 h5("'Est.Prop.GT.Y'= Probability of value > Y; 'Est.Quantile.Y'= Percentile associated with your selected value; 'Est.Mean.Beta'= Mean from Beta distr. shape parameters."),
+h5("'Est.Effect.Size.2Y'= Posterior effect size between probabilities of 2 values above Y (e.g., if Beta Prob > Y when 0.61=0.69 and 0.70=0.37, then effect size= 0.57)."),
 verbatimTextOutput("dbdaPropGt_output"),
 br(),
 h5("If using the Beta distribution, the predicted mean is provided. Beta values require posteriors to calculate shape values (e.g., 'theta' and 'omega' from a hierarchical estimation)."),

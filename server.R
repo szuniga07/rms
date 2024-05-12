@@ -1,4 +1,4 @@
-#Install these packages to run this Shiny App
+#Install these packages to run this Shiny App 
 #install.packages("shiny")
 #install.packages("jsonlite")
 #install.packages("rms") 
@@ -14515,8 +14515,8 @@ dbda_prop_gr_than_par2 <- reactive({
 #3. select the distribution type
 output$dbdaPropGtDist <- renderUI({
   selectInput("dbdaPgtDst", "3. Choose the distribution.", 
-              choices = c("Beta", "Log-normal"), multiple=FALSE, 
-              selected=c("Beta", "Log-normal")[1])
+              choices = c("Beta", "Log-normal", "Normal"), multiple=FALSE, 
+              selected=c("Beta", "Log-normal", "Normal")[1])
 })
 #3A. Reactive function for above
 dbda_prop_gr_than_distr <- reactive({
@@ -15442,39 +15442,106 @@ fncPropGtY <- function( Coda.Object=NULL, Distribution=NULL, yVal=NULL, qVal=NUL
   } else {
     QlogGtY <- QlogGtY
   } 
+  
+  #########################
+  ## Normal distribution ##
+  #########################
+  ## Get summary ##
+  # Proportion greater than Y
+  PnormGtY <- list()
+  if(!is.null(yVal)) {
+    if(Distribution == "Normal") {
+      for (i in 1:length(yVal)) {
+        PnormGtY[[i]] <- summarizePost( pnorm(q=yVal[i], mean= MC.Matrix[, Center], 
+                                              sd= MC.Matrix[, Spread], lower.tail=FALSE) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+        names(PnormGtY)[i] <- paste0("Y_", yVal[i])
+      }
+    }
+  }
+  # Quantiles of Y
+  QnormGtY <- list()
+  if(!is.null(qVal)) {
+    if(Distribution == "Normal") {
+      for (i in 1:length(qVal)) {
+        QnormGtY[[i]] <- summarizePost( qnorm(p=qVal[i], mean= MC.Matrix[, Center], 
+                                              sd= MC.Matrix[, Spread]) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+        names(QnormGtY)[i] <- paste0("Percentile_", qVal[i])
+      }
+    }
+  }
+  #Return NAs for NULL objects
+  #probability
+  if (length(PnormGtY)==0 ) {
+    PnormGtY <- NA
+  } else {
+    PnormGtY <- PnormGtY
+  } 
+  #quantile
+  if (length(QnormGtY)==0 ) {
+    QnormGtY <- NA
+  } else {
+    QnormGtY <- QnormGtY
+  } 
+  
   ######################################
   ## Create final distribution values ##
   ######################################
-  ## Probability
+  ## 1. Probability ##
   if (Distribution == "Beta") {
     PdisGtY <- PbetaGtY
   } 
   if (Distribution == "Log-normal") {
     PdisGtY <- PlogGtY
   } 
+  if (Distribution == "Normal") {
+    PdisGtY <- PnormGtY
+  } 
   #Make NA if the above weren't selected
   if (is.null(PdisGtY)) {
     PdisGtY <- NA
   } 
-  ## Quantile
+  ## 2. Quantile ##
   if (Distribution == "Beta") {
     QdisGtY <- QbetaGtY
   } 
   if (Distribution == "Log-normal") {
     QdisGtY <- QlogGtY
   } 
+  if (Distribution == "Normal") {
+    QdisGtY <- QnormGtY
+  } 
   #Make NA if the above weren't selected
   if (is.null(QdisGtY)) {
     QdisGtY <- NA
   } 
-  ## Effect size
+  ## 3. Effect size ##
   if (Distribution == "Beta") {
     disEsY <- betaEffSize2Y
   } 
-  ##IMPORTANT: CODE NOT MADE YET
-#  if (Distribution == "Log-normal") {
-#    QdisEsY <- QbetaEffSize2Y
-#  } 
+  ##################################################
+  ## Gets effect sizes for non-Beta distributions ##
+  ##################################################
+  nonBetaEffSize2Y <- vector()
+  if(length(yVal) == 2) {
+    if(Distribution != "Beta") {
+      oes1 <- (asin(sign( PdisGtY[[1]][1] ) * sqrt(abs(PdisGtY[[1]][1] ))))*2  
+      oes2 <- (asin(sign( PdisGtY[[2]][1]) * sqrt(abs( PdisGtY[[2]][1]))))*2 
+      #Get the posterior summary on effect size between the 2 Y-values
+      nonBetaEffSize2Y <- abs(oes1 - oes2)
+    }
+  }
+  #Effect size
+  if (length(nonBetaEffSize2Y)== 0 ) {
+    nonBetaEffSize2Y <- NA
+  } else {
+    nonBetaEffSize2Y <- nonBetaEffSize2Y
+  } 
+  
+  #This is temp code for log-normal that makes it NA for now
+  if (Distribution != "Beta") {
+    disEsY <- nonBetaEffSize2Y
+  } 
+  
   #Make NA if the above weren't selected
   if (is.null(disEsY)) {
     disEsY <- NA

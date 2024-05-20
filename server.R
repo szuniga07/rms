@@ -13899,31 +13899,51 @@ output$dbdaPostSumCenTen <- renderUI({
               choices = c("Mode","Median","Mean"), multiple=FALSE, 
               selected= c("Mode","Median","Mean")[1])
 })
-#9. Is the data aggregated
+#9. select the distribution type
+output$dbdaPostSumDist <- renderUI({
+  selectInput("dbdaPstSmDst", "9. Choose the distribution.", 
+              choices = c("Beta", "Log-normal", "Normal", "t"), multiple=FALSE, 
+              selected=c("Beta", "Log-normal", "Normal", "t")[1])
+})
+#9A. Reactive function for above
+dbda_post_summary_distr <- reactive({
+  input$dbdaPstSmDst
+})
+
+#10. Specify credible mass
+output$dbdaPostSumCredibleMass <- renderUI({                                 
+  numericInput("dbdaPstSmCrdMs", "10. Specify credible mass.",
+               value = 0.95, min=0, max = 1, step = .01)
+})
+#10a. Reactive function for directly above
+dbda_post_summary_credible_mass <- reactive({                 
+  input$dbdaPstSmCrdMs 
+})
+#11. Is the data aggregated
 output$dbdaPostSumAggrYN <- renderUI({
-  selectInput("dbdaPstSmAgYN", "9. Is data aggregated?", 
+  selectInput("dbdaPstSmAgYN", "11. Is data aggregated?", 
               choices = c("No", "Yes"), multiple=FALSE, selected="No")
 })
-#10. Pick the aggregated variable that represents the N.
+#12. Pick the aggregated variable that represents the N.
 output$dbdaPostSumAggrN <- renderUI({
-  selectInput("dbdaPSAgN", "10. Select aggregated N value.",
+  selectInput("dbdaPSAgN", "12. Select aggregated N value.",
               choices = var(), multiple=FALSE, selected=var()[1] )
 })
-#11. Do you want to run the function
+#13. Do you want to run the function
 output$dbdaPostSumRun <- renderUI({
-  selectInput("dbdaPstSmRn", "11. Run posterior summary?", 
+  selectInput("dbdaPstSmRn", "13. Run posterior summary?", 
               choices = c("No", "Yes"), multiple=FALSE, selected="No")
 })
-#11a. Reactive function for directly above
+#13a. Reactive function for directly above
 dbda_post_summary_run <- reactive({                 
   input$dbdaPstSmRn 
 })
-#12. Print the posterior structure
+#14. Print the posterior structure
 output$dbdaPostSumStructYN <- renderUI({
-  selectInput("dbdaPstSmStrYN", "12. Print posterior structure?", 
+  selectInput("dbdaPstSmStrYN", "14. Print posterior structure?", 
               choices = c("No", "Yes"), multiple=FALSE, selected="No")
 })
-#12a. Reactive function for directly above
+#14a. Reactive function for directly above
 dbda_post_summary_structure <- reactive({                 
   input$dbdaPstSmStrYN 
 })
@@ -13934,7 +13954,8 @@ results_dbda_posterior_summary <- reactive({
                   Level=input$dbdaPSL, Outcome=input$dbdaPSY, Group2=input$dbdaPSX1, 
                   Group3=input$dbdaPSX2, Theta=input$dbdaPstSmTht, Omega2=input$dbdaPstSmOmg2, 
                   Omega3=input$dbdaPstSmOmg3, Average=input$dbdaPstSmCT, 
-                  AggrDF=input$dbdaPstSmAgYN, AggrN=input$dbdaPSAgN )
+                  AggrDF=input$dbdaPstSmAgYN, AggrN=input$dbdaPSAgN,
+                  Distribution=dbda_post_summary_distr(), Cred.Mass=dbda_post_summary_credible_mass())
   }
 })
 #Print structure of posterior summary
@@ -14564,6 +14585,7 @@ dbda_prop_gr_than_run_YN <- reactive({
 ## Run the proportion greater than Y value function
 dbda_prop_gr_than_func_run <- reactive({
   if(dbda_prop_gr_than_run_YN() == "Yes") {
+    options(scipen=30)
     fncPropGtY( Coda.Object= DBDA_coda_object_df(), 
             Distribution= dbda_prop_gr_than_distr(), 
             yVal= dbda_prop_gr_than_y_values() , 
@@ -14638,12 +14660,43 @@ fncExpAgr <- function(DF, X1, X2, Z, N, Level) {
 #Group2 & Group3= level 2 and 3 group names 
 fncHdiBinSmry <- function(MCmatrix, mydf, Level, Outcome, Group2, Group3=NULL, 
                           Theta=NULL, Omega2=NULL, Omega3=NULL, Average=NULL, 
-                          AggrDF="No", AggrN=NULL ) {
+                          AggrDF="No", AggrN=NULL, Distribution=NULL, Cred.Mass=0.95 ) {
+  ###################################################################  
+  ## These next 30 lines will exclude irrelevant parameters ##
+  keep_theta_cols <- NULL
+  keep_omega2_cols <- NULL
+  keep_omega3_cols <- NULL
+  #Level-1, non-hierarchical model
+  if(Level== 1) {
+    keep_theta_cols <- grep(Theta, colnames(MCmatrix))
+  }
+  #Level-2, hierarchical model
+  if(Level== 2) {
+    keep_theta_cols <- grep(Theta, colnames(MCmatrix))
+  }
+  if(Level== 2) {
+    keep_omega2_cols <- grep(Omega2, colnames(MCmatrix))
+  }
+  #Level-3, hierarchical model
+  if(Level== 3) {
+    keep_theta_cols <- grep(Theta, colnames(MCmatrix))
+  }
+  if(Level== 3) {
+    keep_omega3_cols <- grep(Omega3, colnames(MCmatrix))
+  }
+  if(Level== 3) {
+    keep_omega2_cols <- setdiff(grep(Omega2, colnames(MCmatrix)), keep_omega3_cols)
+  }
+  #These are just the columns I need
+  keep_these_cols <- c(which(colnames(MCmatrix) == "CHAIN"), keep_theta_cols, keep_omega2_cols, keep_omega3_cols)
+  #Revise MCMC matrix to just the columns I need
+  MCmatrix <- MCmatrix[, keep_these_cols]
+  ###################################################################  
   #Get order of participants in rows of aggregated data
   if (AggrDF == "Yes") {
     group2_aggr_factor <- factor(mydf[, Group2], levels=c(mydf[, Group2])) 
   } else {
-    group2_aggr_factor <- levels(factor(mydf[, Group2], levels=unique(mydf[, Group2]))) 
+    group2_aggr_factor <- levels(factor(mydf[, Group2], levels=names(table(sort(mydf[, Group2]))) )) 
   }
   # Use the aggregated data if needed
   if (AggrDF == "Yes") {
@@ -14721,7 +14774,7 @@ fncHdiBinSmry <- function(MCmatrix, mydf, Level, Outcome, Group2, Group3=NULL,
   #  for (i in 1:length(pName[-1]))  {
   for (i in 1:length(pName[which(pName != "CHAIN")]))  {
     #    postDF[[i]] <- summarizePost( MCmatrix[, pName[i] ] , compVal=NULL , ROPE=NULL )
-    postDF[[i]] <- summarizePost( MCmatrix[, pName[which(pName != "CHAIN")[i]] ] , compVal=NULL , ROPE=NULL )
+    postDF[[i]] <- summarizePost( MCmatrix[, pName[which(pName != "CHAIN")[i]] ] , compVal=NULL , ROPE=NULL, credMass=Cred.Mass )
   }
   #Turn summary into data frame
   postDF <- data.frame(do.call( "rbind", postDF))
@@ -14793,8 +14846,38 @@ fncHdiBinSmry <- function(MCmatrix, mydf, Level, Outcome, Group2, Group3=NULL,
                         rep(0, nrow(postDF) - 
                               (length(table(mydf[, Group2])) + length(table(mydf[, Group3]))) ))
   }
+  #Enter Group/Cat sums
+  #Level-1, non-hierarchical model
+  if(Level== 1) {
+    cont_sum_ls1 <- by(mydf[, Outcome], mydf[, Group2], FUN=sum, na.rm = TRUE)
+    class(cont_sum_ls1) <- "list"
+    #cont_sum_ls1 <- factor(mydf[, Group2], levels=group2_aggr_factor)
+    postDF[, "Sum"] <- unlist(cont_sum_ls1)
+  }
+  #Level-2, hierarchical model
+  if(Level== 2) {
+    cont_sum_ls1 <- by(mydf[, Outcome], mydf[, Group2], FUN=sum, na.rm = TRUE)
+    class(cont_sum_ls1) <- "list"
+    postDF[, "Sum"] <- c( unlist(cont_sum_ls1), 
+                          rep(0, nrow(postDF) - length(table(mydf[, Group2])) ))
+  }
+  #Level-3, hierarchical model
+  if(Level== 3) {
+    cont_sum_ls1 <- by(mydf[, Outcome], mydf[, Group2], FUN=sum, na.rm = TRUE)
+    class(cont_sum_ls1) <- "list"
+    cont_sum_ls2 <- by(mydf[, Outcome], mydf[, Group3], FUN=sum, na.rm = TRUE)
+    class(cont_sum_ls2) <- "list"
+    postDF[, "Sum"] <- c( unlist(cont_sum_ls1), unlist(cont_sum_ls2) ,
+                          rep(0, nrow(postDF) - 
+                                (length(table(mydf[, Group2])) + length(table(mydf[, Group3]))) ))
+  }
+  
   #Observed rate
-  postDF$Obs.Rate <- postDF[, Outcome] / postDF[, "N"]
+  if (Distribution == "Beta") {
+    postDF$Obs.Rate <- postDF[, Outcome] / postDF[, "N"]
+  } else {
+    postDF$Obs.Rate <- postDF[, "Sum"] / postDF[, "N"]
+  }
   
   #Get the row numbers with the Theta and Omega in it
   #Level-1, non-hierarchical model

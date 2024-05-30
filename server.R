@@ -14203,151 +14203,205 @@ output$plotDbdaHierEstimation <- renderPlot({
 ###########################################
 ## Posterior Predictive Check for groups ##
 ###########################################
-#1. Select the outcome
+#1. select the distribution/Posterior Predictive type
+output$dbdaPostCheckDist <- renderUI({
+  selectInput("dbdaPcgDst", "1. Posterior Predictive Check type.", 
+              choices = c("Normal", "Log-normal", "t", "OLS: Linear",
+                          "OLS: Quadratic", "OLS: Cubic", "Logistic: Linear",
+                          "Logistic: Quadratic", "Logistic: Cubic"), multiple=FALSE, 
+              selected= c("Normal", "Log-normal", "t", "OLS: Linear",
+                          "OLS: Quadratic", "OLS: Cubic", "Logistic: Linear",
+                          "Logistic: Quadratic", "Logistic: Cubic")[1])
+})
+#1A. Reactive function for above
+dbda_post_check_grp_distr <- reactive({
+  input$dbdaPcgDst
+})
+#2. Select the outcome
 output$dbdaPostCheckY <- renderUI({
-  selectInput("dbdaPcgY", "1. Select the outcome.",
+  selectInput("dbdaPcgY", "2. Select the outcome.",
               choices = var(), multiple=FALSE, selected=var()[1] )
 })
-#1a. Reactive function for directly above
+#2a. Reactive function for directly above
 dbda_post_check_grp_Y <- reactive({                 
   input$dbdaPcgY 
 })
-#2. Select groups
+#3. Select groups
 output$dbdaPostCheckX <- renderUI({                                 
-  selectInput("dbdaPcgX", "2. Select the group variable.", 
+  selectInput("dbdaPcgX", "3. Select the group variable.", 
               choices = setdiff(var(), dbda_post_check_grp_Y()), multiple=FALSE, 
               selected= setdiff(var(), dbda_post_check_grp_Y())[1])
 })
-#2a. Reactive function for directly above
+#3a. Reactive function for directly above
 dbda_post_check_grp_X <- reactive({                 
   input$dbdaPcgX 
 })
-#3c. Get levels 
+#4. Do you want to run the function
+output$dbdaPostCheckGenGroups <- renderUI({
+  selectInput("dbdaPcgGnGrp", "4. Generate group levels in #3?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")
+})
+#4A. Reactive function for above
+dbda_post_check_grp_gen_YN <- reactive({
+  input$dbdaPcgGnGrp
+})
+#5c. Get levels 
 dbda_post_check_grp_X_all_levels <- reactive({                 
   if (dbda_post_check_grp_gen_YN() == "Yes") {
     sort(unique(df()[, dbda_post_check_grp_X()])) 
   }
 })
-#3. Select group levels
+#5. Select group levels
 output$dbdaPostCheckLevX <- renderUI({                                 
-    selectInput("dbdaPcgLX", "3. Select the group level.", 
+    selectInput("dbdaPcgLX", "5. Select the group level.", 
                 choices = dbda_post_check_grp_X_all_levels(), multiple=FALSE, 
               selected= dbda_post_check_grp_X_all_levels()[1])
 })
-#3a. Reactive function for directly above
+#5a. Reactive function for directly above
 dbda_post_check_grp_level_X <- reactive({
     input$dbdaPcgLX 
 })
-#4. Select the mean parameter
+#6. Select the mean parameter
 output$dbdaPostCheckParMn <- renderUI({                                
-  selectInput("dbdaPcgPM", "4. Select mean parameter.",       
+  selectInput("dbdaPcgPM", "6. Select mean parameter.",       
               choices = DBDA_parameter_Names(), multiple=FALSE, 
               selected=DBDA_parameter_Names()[1] )   
 })
-#4a. Reactive function for directly above
+#6a. Reactive function for directly above
 dbda_post_check_grp_pm <- reactive({                 
   input$dbdaPcgPM 
 })
-#5. Select the SD parameter
+#7. Select the SD parameter
 output$dbdaPostCheckParSD <- renderUI({                                
-  selectInput("dbdaPcgPSD", "5. Select SD parameter.",       
+  selectInput("dbdaPcgPSD", "7. Select SD parameter.",       
               choices = setdiff(DBDA_parameter_Names(), dbda_post_check_grp_pm()), 
               multiple=FALSE, selected= setdiff(DBDA_parameter_Names(), dbda_post_check_grp_pm())[1] )   
 })
-#5a. Reactive function for directly above
+#7a. Reactive function for directly above
 dbda_post_check_grp_psd <- reactive({                 
   input$dbdaPcgPSD 
 })
-#6. select the distribution type
-output$dbdaPostCheckDist <- renderUI({
-  selectInput("dbdaPcgDst", "6. Choose the distribution.", 
-              choices = c("Normal", "Log-normal", "t"), multiple=FALSE, 
-              selected=c("Normal", "Log-normal", "t")[1])
+#8. Select the mean parameter
+output$dbdaPostCheckParNu <- renderUI({                                
+  selectInput("dbdaPcgPNu", "8. Select V (nu) d.f. parameter.",       
+              choices = DBDA_parameter_Names(), multiple=FALSE, 
+              selected=DBDA_parameter_Names()[1] )   
 })
-#6A. Reactive function for above
-dbda_post_check_grp_distr <- reactive({
-  input$dbdaPcgDst
+#8a. Reactive function for directly above
+dbda_post_check_grp_pnu <- reactive({                 
+  input$dbdaPcgPNu 
 })
-#7. Specify the number of posterior distribution lines
+
+#9. Select regression predictors
+output$dbdaPartPredX <- renderUI({                                 
+  selectInput("dbdaPrPrX", "9. Select regression predictors.", 
+              choices = setdiff(var(), dbda_post_check_grp_Y()), multiple=TRUE, 
+              selected= setdiff(var(), dbda_post_check_grp_Y())[1])
+})
+#9a. Reactive function for directly above
+dbda_post_check_part_pred_X <- reactive({                 
+  input$dbdaPrPrX 
+})
+#10. Select the mean parameter
+output$dbdaPartPredPars <- renderUI({                                
+  selectInput("dbdaPrPrPars", "10. Select regression parameters.",       
+              choices = DBDA_parameter_Names(), multiple=TRUE, 
+              selected=DBDA_parameter_Names()[1] )   
+})
+#10a. Reactive function for directly above
+dbda_post_check_part_pred_pars <- reactive({                 
+  input$dbdaPrPrPars 
+})
+#11. select the distribution/Posterior Predictive type
+output$dbdaPartPredData <- renderUI({
+  selectInput("dbdaPrPrDat", "11. Add trend data?", 
+              choices = c("All", "Unit", "None"), multiple=FALSE, 
+              selected= c("All", "Unit", "None")[3])
+})
+#11A. Reactive function for above
+dbda_post_check_part_pred_data <- reactive({
+  input$dbdaPrPrDat
+})
+#12. Specify the number of posterior distribution lines
 output$dbdaPostCheckNumPL <- renderUI({                                 
-  numericInput("dbdaPcgNmPL", "7. Number of posterior lines.",
+  numericInput("dbdaPcgNmPL", "12. Number of posterior lines.",
                value = 20, min=1, step = 1)
 })
-#7a. Reactive function for directly above
+#12a. Reactive function for directly above
 dbda_post_check_grp_number_lines <- reactive({                 
   input$dbdaPcgNmPL 
 })
-#8. Enter a weight variable.
+#13. Enter a weight variable.
 output$dbdaPostCheckMainTtl <- renderUI({                                 
-  textInput("dbdaPcgMnTtl", "8. Type main title.")     
+  textInput("dbdaPcgMnTtl", "13. Type main title.")     
 })
-#8A. Enter a weight variable.
+#13A. Enter a weight variable.
 dbda_post_check_grp_main_title <- reactive({         
   input$dbdaPcgMnTtl
 })
-#9. Enter a weight variable.
+#14. Enter a weight variable.
 output$dbdaPostCheckXlab <- renderUI({                                 
-  textInput("dbdaPcgXLb", "9. Type x-axis label.")     
+  textInput("dbdaPcgXLb", "14. Type x-axis label.")     
 })
-#9A. Enter a weight variable.
+#14A. Enter a weight variable.
 dbda_post_check_grp_x_label <- reactive({         
   input$dbdaPcgXLb
 })
-#10. Select line colors
+#15. Select line colors
 output$dbdaPostCheckBarCol <- renderUI({                                 
-  selectInput("dbdaPcgBrCl", "10. Select bar color.", 
+  selectInput("dbdaPcgBrCl", "15. Select bar color.", 
               choices = xyplot_Line_Color_Names(), multiple=FALSE, selected= "blue")     
 })
-#10a. Reactive function for directly above
+#15a. Reactive function for directly above
 dbda_post_check_grp_bar_colors <- reactive({                 
   input$dbdaPcgBrCl 
 })
-#11. Select line colors
+#16. Select line colors
 output$dbdaPostCheckLineCol <- renderUI({                                 
-  selectInput("dbdaPcgLnCl", "11. Select line color.", 
+  selectInput("dbdaPcgLnCl", "16. Select line color.", 
               choices = xyplot_Line_Color_Names(), multiple=FALSE, selected= "orange")     
 })
-#11a. Reactive function for directly above
+#16a. Reactive function for directly above
 dbda_post_check_grp_line_colors <- reactive({                 
   input$dbdaPcgLnCl 
 })
-#12. Specify the number of posterior distribution lines
+#17. Specify the number of posterior distribution lines
 output$dbdaPostCheckNumHB <- renderUI({                                 
-  numericInput("dbdaPcgNmHB", "12. Number of histogram bars.",
+  numericInput("dbdaPcgNmHB", "17. Number of histogram bars.",
                value = 30, min=1, step = 1)
 })
-#12a. Reactive function for directly above
+#17a. Reactive function for directly above
 dbda_post_check_grp_number_bars <- reactive({                 
   input$dbdaPcgNmHB 
 })
-#13. Select label size multiplier
+#18. Select label size multiplier
 output$dbdaPostCheckLabMulti <- renderUI({                                 
-  numericInput("dbdaPcgLbMlt", "13. Increase XY label sizes.",
+  numericInput("dbdaPcgLbMlt", "18. Increase XY label sizes.",
                value = 1.75, min=.01, step = .1)
 })
-#13a. Reactive function for directly above
+#18a. Reactive function for directly above
 dbda_post_check_grp_label_multiplier <- reactive({                 
   input$dbdaPcgLbMlt 
 })
-#14. X-axis limits
+#19. X-axis limits
 output$dbdaPostCheckXaxisLims <- renderUI({                                 
-  textInput("dbdaPcgXLms", "14. List X-axis limits.",
+  textInput("dbdaPcgXLms", "19. List X-axis limits.",
             value = paste0('c( ', ')'))
 })
-#14a. Reactive function for directly above
+#19a. Reactive function for directly above
 dbda_post_check_grp_x_axis_limits <- reactive({                 
   input$dbdaPcgXLms 
 })
-#15. X-axis limits
+#20. X-axis limits
 output$dbdaPostCheckYaxisLims <- renderUI({                                 
-  textInput("dbdaPcgYLms", "15. List Y-axis limits.",
+  textInput("dbdaPcgYLms", "20. List Y-axis limits.",
             value = paste0('c( ', ')'))
 })
-#15a. Reactive function for directly above
+#20a. Reactive function for directly above
 dbda_post_check_grp_y_axis_limits <- reactive({                 
   input$dbdaPcgYLms 
 })
-#16b. Set the selected minimum value based on t-distribution or not
+#21b. Set the selected minimum value based on t-distribution or not
 dbda_post_check_min_value_choice <- reactive({                 
   if (dbda_post_check_grp_distr() == "t") {
     95
@@ -14355,88 +14409,69 @@ dbda_post_check_min_value_choice <- reactive({
      0
   }
 })
-#16. Select label minimum value
+#21. Select label minimum value
 output$dbdaPostCheckMinVal <- renderUI({                                 
-  numericInput("dbdaPcgLbMV", "16. List minimum value.",
+  numericInput("dbdaPcgLbMV", "21. List minimum value.",
                value = dbda_post_check_min_value_choice(), step = 1)
 })
-#16a. Reactive function for directly above
+#21a. Reactive function for directly above
 dbda_post_check_grp_min_value <- reactive({                 
   input$dbdaPcgLbMV 
 })
-#17. X-axis points
+#22. X-axis points
 output$dbdaPostCheckXaxisPoint <- renderUI({                                 
-  textInput("dbdaPcgXPts", "17. Add X-axis point(s).",
+  textInput("dbdaPcgXPts", "22. Add X-axis point(s).",
             value = paste0('c( ', ')'))
 })
-#17a. Reactive function for directly above
+#22a. Reactive function for directly above
 dbda_post_check_grp_x_axis_points <- reactive({                 
   input$dbdaPcgXPts 
 })
-#18. Select point colors 
+#23. Select point colors 
 output$dbdaPostCheckPointCol <- renderUI({                                 
-  selectInput("dbdaPcgPntCl", "18. Select point color.", 
+  selectInput("dbdaPcgPntCl", "23. Select point color.", 
               choices = xyplot_Line_Color_Names(), multiple=FALSE, selected= "red")     
 })
-#18a. Reactive function for directly above
+#23a. Reactive function for directly above
 dbda_post_check_point_colors <- reactive({                 
   input$dbdaPcgPntCl 
 })
 
-#19. Select whether to add a legend or not
+#24. Select whether to add a legend or not
 output$dbdaPostCheckAddLeg <- renderUI({
-  selectInput("dbdaPcgAdLgd", "19. Add the legend?",
+  selectInput("dbdaPcgAdLgd", "24. Add the legend?",
               choices = c("No", "Yes"),
               selected="No")
 })
-#19a. Reactive function for directly above
+#24a. Reactive function for directly above
 dbda_post_check_add_legend <- reactive({                 
   input$dbdaPcgAdLgd 
 })
-#20. Legend location
+#25. Legend location
 output$dbdaPostCheckLgdLoc <- renderUI({                                
-  selectInput("dbdaPcgLgdLc", "20. Select the legend location.",        
+  selectInput("dbdaPcgLgdLc", "25. Select the legend location.",        
               choices = c("bottomright","bottom","bottomleft","left","topleft","top","topright","right","center"), 
               multiple=FALSE, selected="topright" ) 
 })
-#20A. Reactive function for legend location
+#25A. Reactive function for legend location
 dbda_post_check_legend_location <- reactive({
   input$dbdaPcgLgdLc
 })
-#21. Select label size multiplier
+#26. Select label size multiplier
 output$dbdaPostCheckRndPlc <- renderUI({                                 
-  numericInput("dbdaPcgRP", "21. Round decimal places?",
+  numericInput("dbdaPcgRP", "26. Round decimal places?",
                value = 1, step = 1)
 })
-#21a. Reactive function for directly above
+#26a. Reactive function for directly above
 dbda_post_check_grp_round_place <- reactive({                 
   input$dbdaPcgRP 
 })
-#22. Do you want to run the function
-output$dbdaPostCheckGenGroups <- renderUI({
-  selectInput("dbdaPcgGnGrp", "22. Generate group levels in #3?", 
-              choices = c("No", "Yes"), multiple=FALSE, selected="No")
-})
-#22A. Reactive function for above
-dbda_post_check_grp_gen_YN <- reactive({
-  input$dbdaPcgGnGrp
-})
-#23. Select the mean parameter
-output$dbdaPostCheckParNu <- renderUI({                                
-  selectInput("dbdaPcgPNu", "23. Select V (nu) d.f. parameter.",       
-              choices = DBDA_parameter_Names(), multiple=FALSE, 
-              selected=DBDA_parameter_Names()[1] )   
-})
-#23a. Reactive function for directly above
-dbda_post_check_grp_pnu <- reactive({                 
-  input$dbdaPcgPNu 
-})
-#24. Do you want to run the function
+#27. Do you want to run the function
 output$dbdaPostCheckRun <- renderUI({
-  selectInput("dbdaPcgRn", "24. Run posterior plot?", 
+  selectInput("dbdaPcgRn", "27. Run posterior plot?", 
               choices = c("No", "Yes"), multiple=FALSE, selected="No")
 })
-#24A. Reactive function for above
+#27A. Reactive function for above
 dbda_post_check_grp_run_YN <- reactive({
   input$dbdaPcgRn
 })
@@ -14500,7 +14535,62 @@ plot_dbda_posterior_group_check <- reactive({
                                 PCol = dbda_post_check_point_colors(),
                                 Add.Lgd= dbda_post_check_add_legend(), 
                                 Leg.Loc=dbda_post_check_legend_location(),
-                                T.Percentage=dbda_post_check_grp_min_value() ) )
+                                T.Percentage=dbda_post_check_grp_min_value() ),
+           "OLS: Linear" = fncBayesOlsPrtPred(Coda.Object=DBDA_coda_object_df() , mydf=df(), 
+                                              Reg.Type= dbda_post_check_grp_distr(),
+                                              Outcome= dbda_post_check_grp_Y(), 
+                                              Group= dbda_post_check_grp_X(),
+                                              Group.Level= dbda_post_check_grp_level_X(), 
+                                              xName= dbda_post_check_part_pred_X(), 
+                                              parX= dbda_post_check_part_pred_pars(), 
+                                              View.Lines= dbda_post_check_part_pred_data(),
+                                              Num.Lines= dbda_post_check_grp_number_lines(), 
+                                              Main.Title= dbda_post_check_grp_main_title(), 
+                                              X.Lab= dbda_post_check_grp_x_label(), 
+                                              Line.Color= dbda_post_check_grp_line_colors(), 
+                                              CEX.size= dbda_post_check_grp_label_multiplier(), 
+                                              X.Lim= (eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ), 
+                                              Y.Lim= (eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
+                                              PCol= dbda_post_check_point_colors(), 
+                                              Add.Lgd= dbda_post_check_add_legend(), 
+                                              Leg.Loc= dbda_post_check_legend_location()), 
+           "OLS: Quadratic" = fncBayesOlsPrtPred(Coda.Object=DBDA_coda_object_df() , mydf=df(), 
+                                              Reg.Type= dbda_post_check_grp_distr(),
+                                              Outcome= dbda_post_check_grp_Y(), 
+                                              Group= dbda_post_check_grp_X(),
+                                              Group.Level= dbda_post_check_grp_level_X(), 
+                                              xName= dbda_post_check_part_pred_X(), 
+                                              parX= dbda_post_check_part_pred_pars(), 
+                                              View.Lines= dbda_post_check_part_pred_data(),
+                                              Num.Lines= dbda_post_check_grp_number_lines(), 
+                                              Main.Title= dbda_post_check_grp_main_title(), 
+                                              X.Lab= dbda_post_check_grp_x_label(), 
+                                              Line.Color= dbda_post_check_grp_line_colors(), 
+                                              CEX.size= dbda_post_check_grp_label_multiplier(), 
+                                              X.Lim= (eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ), 
+                                              Y.Lim= (eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
+                                              PCol= dbda_post_check_point_colors(), 
+                                              Add.Lgd= dbda_post_check_add_legend(), 
+                                              Leg.Loc= dbda_post_check_legend_location()), 
+           "OLS: Cubic" = fncBayesOlsPrtPred(Coda.Object=DBDA_coda_object_df() , mydf=df(), 
+                                                 Reg.Type= dbda_post_check_grp_distr(),
+                                                 Outcome= dbda_post_check_grp_Y(), 
+                                                 Group= dbda_post_check_grp_X(),
+                                                 Group.Level= dbda_post_check_grp_level_X(), 
+                                                 xName= dbda_post_check_part_pred_X(), 
+                                                 parX= dbda_post_check_part_pred_pars(), 
+                                                 View.Lines= dbda_post_check_part_pred_data(),
+                                                 Num.Lines= dbda_post_check_grp_number_lines(), 
+                                                 Main.Title= dbda_post_check_grp_main_title(), 
+                                                 X.Lab= dbda_post_check_grp_x_label(), 
+                                                 Line.Color= dbda_post_check_grp_line_colors(), 
+                                                 CEX.size= dbda_post_check_grp_label_multiplier(), 
+                                                 X.Lim= (eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ), 
+                                                 Y.Lim= (eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
+                                                 PCol= dbda_post_check_point_colors(), 
+                                                 Add.Lgd= dbda_post_check_add_legend(), 
+                                                 Leg.Loc= dbda_post_check_legend_location())
+           )
   }
 })
 #Posterior distribution for above
@@ -15688,6 +15778,159 @@ fncBayesEffectSize <- function( Coda.Object=NULL, Distribution=NULL,
   
   return("Effect.Size.Posterior"=Effect.Size.Output )
 }
+
+################################################################################
+#                9. Posterior Predictive Check for trend lines                 #
+################################################################################
+#May only need code converting y-axis to logits for logistic regression to work
+fncBayesOlsPrtPred <- function(Coda.Object=NULL , mydf=NULL,  Reg.Type=NULL, 
+                               Outcome=NULL , Group=NULL,
+                               Group.Level=NULL, xName=NULL, parX=NULL, View.Lines=NULL,
+                               Num.Lines=NULL, Main.Title=NULL, X.Lab=NULL, 
+                               Line.Color=NULL, CEX.size=NULL, X.Lim=NULL, Y.Lim=NULL,
+                               PCol=NULL, Add.Lgd=NULL, Leg.Loc=NULL) {
+  y = mydf[, Outcome]
+  x = mydf[, xName, drop=FALSE][1]
+  s = factor(mydf[, Group])
+  nSubj = length(unique(s)) # should be same as max(s)
+  mcmcMat = as.matrix(Coda.Object, chains=TRUE)
+  chainLength = NROW( mcmcMat )
+  #-----------------------------------------------------------------------------
+  # mydf with superimposed regression lines and noise distributions:
+  par( mar=c(4,2,2.5,.25) , mgp=c(2.5,0.5,0) , pty="m" ) #This matches other graphs
+  #Original par
+  #par( mar=c(2,2,1,0)+.5 , mgp=c(1.5,0.5,0) )
+  # Plot mydf values:
+  xRang = max(x, na.rm=TRUE) - min(x, na.rm=TRUE)
+  yRang = max(y, na.rm=TRUE) - min(y, na.rm=TRUE)
+  xLimMult = 0.2
+  yLimMult = 0.2
+  xLim= c( min(x, na.rm=TRUE) - xLimMult*xRang , max(x, na.rm=TRUE) + xLimMult*xRang )
+  yLim= c( min(y) - yLimMult*yRang , max(y) + yLimMult*yRang )
+  #############################
+  ## Make prediction formula ##
+  #############################
+  #This creates the xComb based on the primary predictor
+  xComb = seq(xLim[1], xLim[2], length=301)
+  #parX vector stores the parameter names from the chains
+  #xName has X variable names
+  #Vector with X variable mean values
+  txVarMeans <- colMeans(myData[, xName, drop=FALSE], na.rm=TRUE)
+  #Get beta coefficient names
+  tlCoef <- vector()
+  for (i in 1:length(parX)) {
+    tlCoef[i] <- paste0("tlis$B", i-1, "[i]")
+  }
+  #Combines object elements and variable means for polynomial models. 
+  ttfrm <- cbind(tlCoef[-1], txVarMeans)
+  #This will change the mean value to the xComb for linear models
+  ttfrm[1, 2] <- "xComb"
+  #This will change the mean value to the xComb^2 for quadratic models
+  if (Reg.Type %in% c("OLS: Quadratic", "OLS: Cubic")) {
+    ttfrm[2, 2] <- "xComb^2" 
+  }
+  #This will change the mean value to the xComb^3 for cubic models
+  if (Reg.Type %in% c("OLS: Cubic")) {
+    ttfrm[2, 3] <- "xComb^3" 
+  }
+  #This multiplies each coefficient by the x-value and stores it in a vector
+  ttnew <- vector()
+  for (i in 1:nrow(ttfrm)) {
+    ttnew[i] <- paste(ttfrm[i, ], collapse = "*")
+  }
+  #This adds coefficients*x-value and put in intercept
+  ttnew2 <- paste(c(tlCoef[1], ttnew), collapse = "+")
+  #Make list that has key parameter names
+  tlis <- list()
+  for (i in 1:length(parX)) {
+    tlis[[i]] <- NA
+    names(tlis)[i] <- paste0("B", i-1)
+  }
+  #This adds coefficients to each of the key parameter names
+  trow_ls <- floor(seq(1, nrow(mcmcMat), length= Num.Lines)) 
+  #This creates the values needed for the graphs
+  for (i in 1:length(trow_ls)) {
+    for (j in 1:length(parX)) {
+      tlis[[ j]][i] <- mcmcMat[i, paste0( parX[j])]
+    }
+  }
+  ##################  
+  ## Create plots ##
+  ##################  
+  plot( unlist(x) , y , pch="" , cex=CEX.size , col="black" , 
+        xlim=X.Lim, ylim=Y.Lim,xlab=X.Lab , ylab=Outcome , 
+        main= Main.Title, cex.lab=CEX.size, cex.main=CEX.size )
+  #All groups added at once for the overall term
+  if (View.Lines == "All") {
+    for ( sIdx in 1:nSubj ) {
+      thisSrows = (as.numeric(s)==sIdx)
+      lines( x[thisSrows, ] , y[thisSrows] , type="o" , pch=19, col= PCol, cex=CEX.size) 
+    }
+  }
+  # Superimpose a smattering of believable regression lines:
+  #This plots out random regression lines
+  for ( i in 1:length(floor(seq(1, nrow(mcmcMat), length = Num.Lines))) ) { 
+    lines( xComb , eval(parse(text= ttnew2)) , col= Line.Color )
+  }
+  #  nPredCurves = Num.Lines
+  #  for ( i in floor(seq(1, chainLength, length= nPredCurves)) ) {
+  #    abline( mcmcMat[i, parX[1]] , mcmcMat[i, parX[2]] , col=Line.Color, cex=CEX.size )
+  #  }
+  
+  #Determine which observed mydf lines to view
+  if (View.Lines == "Unit") {
+    #For specific groups
+    for ( sIdx in 1:nSubj ) {
+      thisSrows = (as.numeric(s) == as.numeric(s[s == Group.Level]))
+      lines( x[thisSrows, ] , y[thisSrows] , type="o" , pch=19, col= PCol, cex=CEX.size ) 
+    }
+  }
+  
+  #Legend color
+  if (View.Lines== "None") {
+    pcol_vector <- c(Line.Color)
+  }
+  if (View.Lines== "Unit") {
+    pcol_vector <- c(PCol, Line.Color)
+  }
+  if (View.Lines== "All") {
+    pcol_vector <- c(PCol, Line.Color)
+  }
+  #Legend text
+  if (View.Lines== "None") {
+    if (nchar(Group.Level) > 0 ){
+      legend_text <- c(paste0("Posterior Estimate ", abbreviate(Group, 8), ": ", 
+                              abbreviate(Group.Level, 8)))
+    } else {
+      legend_text <- c(paste0("Posterior Estimate: ", abbreviate(Group, 8)))
+    }
+  }
+  if (View.Lines== "Unit") {
+    legend_text <- c(paste0("Observed ", abbreviate(Group, 8), ": ", 
+                            abbreviate(Group.Level, 8)), "Posterior Estimate")
+  }
+  if (View.Lines== "All") {
+    legend_text <- c(paste0("Observed ", abbreviate(Group, 8),": All"), "Posterior Estimate")
+  }
+  #Legend points
+  if (View.Lines== "None") {
+    legend_points <- NULL
+  }
+  if (View.Lines== "Unit") {
+    legend_points <- c(19, NA)
+  }
+  if (View.Lines== "All") {
+    legend_points <- c(19, NA)
+  }
+  #Add legend
+  if(Add.Lgd == "Yes") {
+    legend_type <- c(1)
+    legend(Leg.Loc, legend=legend_text, col=pcol_vector, lty=legend_type, 
+           pch=legend_points, pt.bg=pcol_vector, cex = 2, bty="n", inset=c(0, .05))
+  }
+  #-----------------------------------------------------------------------------
+}
+################################################################################
 
 ##########################################
 ## DBDA Functions for Bayesian analysis ##

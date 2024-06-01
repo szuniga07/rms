@@ -2285,7 +2285,7 @@
                    h4("List the outcome, group, category, and parameter names for (non)hierarchical models. "),
                    h4("Model level refers to the hierarchy: Level-1 = non-hierarhical, Level-2 = group hierarchy (e.g., baseball player), level-3 = categorical hierarchy (e.g., baseball position)."),
                    h4("First, load the source data (aggregated or not) in the 'Model Builder' tab. Make sure factors remain constant in raw and aggregated data."),
-                   h5("Make distinct spelling of Theta and Omega names because of character matching (e.g., 'muOfY' & 'muOfOY' instead of 'muOfY' & 'muOfYO')."),
+                   h5("Make distinct spelling of Theta (low-level 'average' name) and Omega (higher-level 'average' name) names because of character matching (e.g., 'muOfY' & 'muOfOY' instead of 'muOfY' & 'muOfYO')."),
                    br(),
                    fluidRow(   
                      column(3, 

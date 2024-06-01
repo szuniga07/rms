@@ -18,7 +18,7 @@ library(sensitivity)
 library(meta)
 library(rpart)
 library(coxme)
-library(coda)
+library(coda)  #Bayesian tab
 #Surival package data: cancer colon diabetic flchain heart mgus nafld1 pbc transplant   
 data(lungcancer)
 options(shiny.maxRequestSize=1000*1024^2)    #This will increase the shiny file upload limit from current 5MB max

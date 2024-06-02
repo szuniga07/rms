@@ -8,7 +8,7 @@
 #install.packages("meta")
 #install.packages("rpart")
 #install.packages("coxme")
-  
+   
 library(shiny)
 library(jsonlite)
 library(rms)
@@ -15815,7 +15815,7 @@ fncBayesOlsPrtPred <- function(Coda.Object=NULL , mydf=NULL,  Reg.Type=NULL,
   #parX vector stores the parameter names from the chains
   #xName has X variable names
   #Vector with X variable mean values
-  txVarMeans <- colMeans(myData[, xName, drop=FALSE], na.rm=TRUE)
+  txVarMeans <- colMeans(mydf[, xName, drop=FALSE], na.rm=TRUE)
   #Get beta coefficient names
   tlCoef <- vector()
   for (i in 1:length(parX)) {

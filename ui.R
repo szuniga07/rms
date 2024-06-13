@@ -2123,9 +2123,9 @@
                    br(),
                    h4("Some functions are from Kruschke, J. (2015). 'Doing Bayesian Data Analysis: A Tutorial with R, JAGS, and Stan' (2nd Ed.)."),
                    br(),
-                   h5("Distribution choices below refer to the likelihood's distribution."),
+                   h5("Distribution choices below refer to the likelihood's distribution. Enter the data object name in #1 of the 'Model Builder' tab for some sections."),
                    br(),
-                   h4("Enter the name of the Coda object with your MCMC simulations."),
+                   h4("Enter the name of the Coda object with your MCMC simulations.'"),
                    fluidRow(   
                      column(3, 
                             uiOutput("dbdaCodaObj"))
@@ -2204,6 +2204,8 @@
                    h4("Check how posterior lines fit data from normal, log-normal,  or t distributions."),
                    h4("Load dataset in 'Builder' tab and MCMC simumlations above."),
                    h5("Questions 9-11 are for trend lines, denoted analogously to 'Ordinary Least Squares' and Logistic models with polynomial terms ('Linear', 'Quadratic', 'Cubic')."),
+                   h5("For quadratic and cubic polynomial models, enter the variables/parameters of #9 & #11 in this order: Linear, quadratic, cubic, all other numerical variables/paramters in the same order."),
+                   h5("The Difference-in-Difference (DID) graph requires variable/parameter entry of #9 & #11 in this order: (Intercept), Time, Intervention, Time*Intervention, all other numerical variables/paramters in the same order."),
                    br(),
                    fluidRow(   
                      column(3, 

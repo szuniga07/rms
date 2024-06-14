@@ -2121,7 +2121,7 @@
           tabPanel("Bayesian",
                    h3("Check diagnostics, examine parameters, and graph the hierarchical estimation of Bayesian models."),
                    br(),
-                   h4("Some functions are from Kruschke, J. (2015). 'Doing Bayesian Data Analysis: A Tutorial with R, JAGS, and Stan' (2nd Ed.)."),
+                   h4("Some functions are from Kruschke, J. (2015). 'Doing Bayesian Data Analysis: A Tutorial with R, JAGS, and Stan (2nd Ed.)'."),
                    br(),
                    h5("Distribution choices below refer to the likelihood's distribution. Enter the data object name in #1 of the 'Model Builder' tab for some sections."),
                    br(),
@@ -2144,6 +2144,7 @@
                    h3("Bayesian posterior marginal distributions with Highest Density Intervals"),
                    br(),
                    h4("Select parameters, comparative values, ROPEs (regions of practical equivalence), and display setings."),
+                   h5("Make contrasts between single or multiple groups by selecting multiple parameters in #1 and/or #3."),
                    br(),
                    fluidRow(   
                      column(3, 

@@ -13591,8 +13591,8 @@ output$plotDbdaDiag <- renderPlot({
 ############
 #1. Select the main parameter
 output$dbdaPostPlot1 <- renderUI({                                
-  selectInput("dbdaPP1", "1. Select the parameter.",       
-              choices = DBDA_parameter_Names(), multiple=FALSE, selected=var()[1] )   
+  selectInput("dbdaPP1", "1. Select the parameter(s).",       
+              choices = DBDA_parameter_Names(), multiple=TRUE, selected=DBDA_parameter_Names()[1] )   
 })
 #1a. Reactive function for directly above
 dbda_post_plot_par1 <- reactive({                 
@@ -13609,9 +13609,9 @@ dbda_post_plot_compare_YN <- reactive({
 })
 #3. Select the 2nd parameter
 output$dbdaPostPlot2 <- renderUI({                                
-  selectInput("dbdaPP2", "3. Select 2nd parameter.",       
+  selectInput("dbdaPP2", "3. Select 2nd parameter(s).",       
               choices = setdiff(DBDA_parameter_Names(), dbda_post_plot_par1()), 
-              multiple=FALSE, selected=setdiff(DBDA_parameter_Names(), dbda_post_plot_par1())[1] )   
+              multiple=TRUE, selected=setdiff(DBDA_parameter_Names(), dbda_post_plot_par1())[1] )   
 })
 #3a. Reactive function for directly above
 dbda_post_plot_par2 <- reactive({                 
@@ -13800,7 +13800,8 @@ plot_dbda_posterior_distribution <- reactive({
   if(dbda_post_run_Yes_No() == "Yes") {
     par(mar=c(6, 7, 4, 2))
     if(dbda_post_plot_compare_YN() == "Yes") {
-      plotPost( as.matrix(DBDA_coda_object_df())[, dbda_post_plot_par1()] - as.matrix(DBDA_coda_object_df())[, dbda_post_plot_par2()], 
+#      plotPost( as.matrix(DBDA_coda_object_df())[, dbda_post_plot_par1()] - as.matrix(DBDA_coda_object_df())[, dbda_post_plot_par2()], 
+      plotPost( rowMeans(as.matrix(DBDA_coda_object_df())[, dbda_post_plot_par1(), drop=FALSE]) - rowMeans(as.matrix(DBDA_coda_object_df())[, dbda_post_plot_par2(), drop=FALSE]), 
                 compVal= dbda_post_comparative_val(), cenTend= dbda_post_central_tendency(),
                 ROPE=c(dbda_post_rope_val_1(),dbda_post_rope_val_2()), 
                 credMass= dbda_post_credible_mass(), main= dbda_post_main_title(), 
@@ -13810,7 +13811,7 @@ plot_dbda_posterior_distribution <- reactive({
                 HDItextPlace= dbda_post_place_hdi_text(), cex=dbda_post_label_multiplier(), 
                 cex.main= dbda_post_label_multiplier(), cex.lab= dbda_post_label_multiplier() )
     } else {
-      plotPost( as.matrix(DBDA_coda_object_df())[, dbda_post_plot_par1()], 
+      plotPost( as.matrix(DBDA_coda_object_df())[, dbda_post_plot_par1()[1]], 
                 compVal= dbda_post_comparative_val(), cenTend= dbda_post_central_tendency(),
                 ROPE=c(dbda_post_rope_val_1(),dbda_post_rope_val_2()), 
                 credMass= dbda_post_credible_mass(), main= dbda_post_main_title(), 
@@ -15792,8 +15793,10 @@ fncBayesEffectSize <- function( Coda.Object=NULL, Distribution=NULL,
   ## Beta ##
   ##########
   if(Distribution == "Beta") {
-    as1 <- (asin(sign(MC.Matrix[, yVal1]) * sqrt(abs(MC.Matrix[, yVal1]))))*2  
-    as2 <- (asin(sign(MC.Matrix[, yVal2]) * sqrt(abs(MC.Matrix[, yVal2]))))*2  
+#    as1 <- (asin(sign(MC.Matrix[, yVal1]) * sqrt(abs(MC.Matrix[, yVal1]))))*2  
+#    as2 <- (asin(sign(MC.Matrix[, yVal2]) * sqrt(abs(MC.Matrix[, yVal2]))))*2  
+    as1 <- (asin(sign( rowMeans(MC.Matrix[, yVal1, drop=FALSE]) ) * sqrt(abs( rowMeans(MC.Matrix[, yVal1, drop=FALSE]) ))))*2  
+    as2 <- (asin(sign( rowMeans(MC.Matrix[, yVal2, drop=FALSE]) ) * sqrt(abs( rowMeans(MC.Matrix[, yVal2, drop=FALSE]) ))))*2  
     Effect.Size.Output <- abs(as1 - as2 )
   }
   

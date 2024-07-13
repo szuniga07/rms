@@ -9806,14 +9806,36 @@ KM_Surv_Line_Width <- reactive({
   input$km_sp_ln_wd 
 })
 #11. Legend location
-output$KMSurvPltLgdLoc <- renderUI({                                
-  selectInput("km_sp_lgd_loc", "11. Select the legend location.",        
-              choices = c("bottomright","bottom","bottomleft","left","topleft","top","topright","right","center"), 
-              multiple=FALSE, selected="topleft" ) 
+output$KMSurvPltLgdN <- renderUI({                                
+  numericInput("km_sp_lgd_N", "11. How many legends do you want?",        
+              value = 1, min=1, max=3, step = 1) 
 })
 #11A. Reactive function for legend location
+KM_Surv_legend_N <- reactive({
+  input$km_sp_lgd_N
+})
+#11B. Get the number of elements in 1 or more legends
+KM_Surv_legend_elements <- reactive({
+  fncCalcGrpNmbrs(Group.N= length(KM_Surv_Plot_Groups()), Legend.N= KM_Surv_legend_N() ) 
+})
+#12. Legend location
+output$KMSurvPltLgdLoc <- renderUI({                                
+  selectInput("km_sp_lgd_loc", "12. Select the legend location(s).",        
+              choices = c("bottomright","bottom","bottomleft","left","topleft","top","topright","right","center"), 
+              multiple=TRUE, selected="topleft" ) 
+})
+#12A. Reactive function for legend location
 KM_Surv_legend_location <- reactive({
   input$km_sp_lgd_loc
+})
+#13. Select label size multiplier
+output$KMSurvPltCex <- renderUI({                                 
+  numericInput("KMSrvPltCexMlt", "13. Increase XY label sizes.",
+               value = 1.75, min=.01, step = .1)
+})
+#13a. Reactive function for directly above
+KM_Surv_legend_cex_multi <- reactive({                 
+  input$KMSrvPltCexMlt
 })
 
 
@@ -9868,18 +9890,22 @@ KMsrvftUnconFmla <- reactive({
 #Kaplan-Meier survival or hazard plots
 kmSurvPltFnc <- function(KMsrvftFmla, df, Y, km_hazard_plot, KMSrvHzrLbl, km_sp_Xlim1, km_sp_Xlim2,
                          km_sp_Ylim1, km_sp_Ylim2, KMSrvPltX, 
-                         LCOL, LWD, lgnd.loc) {
+                         LCOL, LWD, lgnd.loc, lgnd.elmnt, cexMulti) {
   pltType <- ifelse(km_hazard_plot == "No", "S", "F")
+  par(mar=c(5,7,4,6))
   plot(survfit(KMsrvftFmla, data= df), 
        xlim=c(km_sp_Xlim1, km_sp_Xlim2), ylim=c(km_sp_Ylim1, km_sp_Ylim2),
        ylab= paste0(KMSrvHzrLbl, " Probability"), 
        xlab=Y, mark.time=T, fun=pltType , lwd=LWD, 
+       cex.main= cexMulti, cex.lab= cexMulti, 
        main= paste0("Kaplan-Meier plot of ", tolower(KMSrvHzrLbl), " by ", KMSrvPltX),
        pch=LETTERS[1:length(unique(df[, KMSrvPltX]))],
        col=LCOL, lty= 1:length(unique( df[, KMSrvPltX])))
-  legend(lgnd.loc, legend=sort(unique( df[, KMSrvPltX])), col=LCOL, 
-         lty=1:length(unique(df[, KMSrvPltX] )), bty="n", lwd=LWD, cex=1.5,
-         title=KMSrvPltX)
+  for (i in 1:length(lgnd.elmnt)) {
+        legend(lgnd.loc[i], legend=sort(unique( df[, KMSrvPltX]))[lgnd.elmnt[[i]]], col=LCOL[lgnd.elmnt[[i]]], 
+               lty= (1:length(unique(df[, KMSrvPltX] )))[lgnd.elmnt[[i]]], bty="n", lwd=LWD, cex=1.5,
+               title=KMSrvPltX)
+  }
 }
 
 
@@ -9890,7 +9916,9 @@ KMsrvftPlot <- reactive({
                  KMSrvHzrLbl=KMSrvHzrLbl(), km_sp_Xlim1=input$km_sp_Xlim1, 
                  km_sp_Xlim2=input$km_sp_Xlim2, km_sp_Ylim1=input$km_sp_Ylim1, 
                  km_sp_Ylim2=input$km_sp_Ylim2, KMSrvPltX=input$KMSrvPltX, 
-                 LCOL=KM_Surv_Line_Colors(), LWD=KM_Surv_Line_Width(), lgnd.loc=KM_Surv_legend_location() ) 
+                 LCOL=KM_Surv_Line_Colors(), LWD=KM_Surv_Line_Width(), 
+                 lgnd.loc=KM_Surv_legend_location(), lgnd.elmnt= KM_Surv_legend_elements(),
+                 cexMulti=KM_Surv_legend_cex_multi() ) 
   }
 })
 output$km_plot <- renderPlot({
@@ -9952,6 +9980,54 @@ output$KM_SF_Output_C <- renderPrint({
   }
 })
 
+################################################################################
+#                Function to get equal sized groups for KM plot                #
+################################################################################
+fncCalcGrpNmbrs <- function(Group.N=NULL, Legend.N=NULL) {
+  modulu_result <- Group.N %% Legend.N
+  #Standard of only one legend
+  if (Legend.N == 1) {
+    if (modulu_result <= 1) {
+      Legend.Sections <- Group.N
+    }
+  }
+  #Two legends
+  if (Legend.N == 2) {
+    if (modulu_result <= 1) {
+      Legend.Sections <- c(ceiling(Group.N / 2), floor(Group.N / 2))
+    }
+  }
+  #Three legends
+  if (Legend.N == 3) {
+    if (modulu_result == 0) {
+      Legend.Sections <- c(Group.N / 3, Group.N / 3, Group.N / 3)
+    }
+    if (modulu_result == 1) {
+      Legend.Sections <- c(ceiling(Group.N / 3), floor(Group.N / 3), floor(Group.N / 3))
+    } 
+    if (modulu_result == 2) {
+      Legend.Sections <- c(ceiling(Group.N / 3), ceiling(Group.N / 3), floor(Group.N / 3))
+    } 
+  }
+  #Make element list
+  Legend.Elements <- vector(mode = "list", length= length(Legend.Sections))
+  #Standard of only one legend
+  if (Legend.N == 1) {
+    Legend.Elements[[1]] <- 1:Legend.Sections
+  }
+  #Two legends
+  if (Legend.N == 2) {
+    Legend.Elements[[1]] <- 1:Legend.Sections[1]
+    Legend.Elements[[2]] <- (1 + Legend.Sections[1]):(Legend.Sections[1] + Legend.Sections[2])
+  }
+  #Three legends
+  if (Legend.N == 3) {
+    Legend.Elements[[1]] <- 1:Legend.Sections[1]
+    Legend.Elements[[2]] <- (1 + Legend.Sections[1]):(Legend.Sections[1] + Legend.Sections[2])
+    Legend.Elements[[3]] <- (1 + (Legend.Sections[1] + Legend.Sections[2])):(Legend.Sections[1] + Legend.Sections[2] + Legend.Sections[3]) 
+  }
+  return(Legend.Elements = Legend.Elements)
+}
 
 ############################################ End here
 

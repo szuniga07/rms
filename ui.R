@@ -1037,10 +1037,17 @@
                      column(3,
                             uiOutput("KMSurvPltLnWdt")),
                      column(3,
+                            uiOutput("KMSurvPltLgdN")),
+                     column(3,
                             uiOutput("KMSurvPltLgdLoc"))
                    ),
+                   fluidRow(
+                     column(3,
+                            uiOutput("KMSurvPltCex"))
+                   ),
+                   
                    br(),
-                   plotOutput("km_plot", height = 700, width="100%"),
+                   plotOutput("km_plot", height = 800, width="100%"),
                    br(),
                    h5("Unconditional survival function. Associated with default survival plot, first plot at the top. Modify restricted mean with KM button #4 directly above."),
                    verbatimTextOutput("KM_SF_Output_UC"), 
@@ -2204,9 +2211,9 @@
                    br(),
                    h4("Check how posterior lines fit data from normal, log-normal,  or t distributions."),
                    h4("Load dataset in 'Builder' tab and MCMC simumlations above."),
-                   h5("Questions 9-11 are for trend lines, denoted analogously to 'Ordinary Least Squares' and Logistic models with polynomial terms ('Linear', 'Quadratic', 'Cubic')."),
-                   h5("For quadratic and cubic polynomial models, enter the variables/parameters of #9 & #11 in this order: Linear, quadratic, cubic, all other numerical variables/paramters in the same order."),
-                   h5("The Difference-in-Difference (DID) graph requires variable/parameter entry of #9 & #11 in this order: (Intercept), Time, Intervention, Time*Intervention, all other numerical variables/paramters in the same order."),
+                   h5("Questions 9-11 are for trend lines (ignore 6-8), denoted analogously to 'Ordinary Least Squares' and Logistic models with polynomial terms ('Linear', 'Quadratic', 'Cubic')."),
+                   h5("For quadratic and cubic polynomial models, enter the variables/parameters of #9 & #10 in this order: Linear, quadratic, cubic, all other numerical variables/paramters in the same order."),
+                   h5("The Difference-in-Difference (DID) graph requires variable/parameter entry of #9 & #10 in this order: (Intercept), Time, Intervention, Time*Intervention, all other numerical variables/paramters in the same order."),
                    br(),
                    fluidRow(   
                      column(3, 

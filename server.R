@@ -9784,7 +9784,7 @@ KMSrvHzrLbl <- reactive({
 
 #Reactive function to get group levels
 KM_Surv_Plot_Groups <- reactive({                 
-  unique(df()[, input$KMSrvPltX]) 
+  sort(unique(df()[, input$KMSrvPltX]))[!is.na(sort(unique(df()[, input$KMSrvPltX])))] 
 })
 #9. Select line colors
 output$KMSurvPltLnClr <- renderUI({                                 
@@ -9808,7 +9808,7 @@ KM_Surv_Line_Width <- reactive({
 #11. Legend location
 output$KMSurvPltLgdN <- renderUI({                                
   numericInput("km_sp_lgd_N", "11. How many legends do you want?",        
-              value = 1, min=1, max=3, step = 1) 
+              value = 1, min= -1, max=3, step = 1) 
 })
 #11A. Reactive function for legend location
 KM_Surv_legend_N <- reactive({
@@ -9836,6 +9836,33 @@ output$KMSurvPltCex <- renderUI({
 #13a. Reactive function for directly above
 KM_Surv_legend_cex_multi <- reactive({                 
   input$KMSrvPltCexMlt
+})
+#14. Add a target line
+output$Km_Tgt_Line <- renderUI({                                 
+  numericInput("kmTgtLn", "14. Add horizontal line",
+               value = NULL, step = .01)
+})
+#14. Reactive function for directly above
+km_target_line <- reactive({                 
+  input$kmTgtLn 
+})
+#15. Add a time line
+output$Km_Tm_Line <- renderUI({                                 
+  numericInput("kmTmLn", "15. Add vertical line",
+               value = NULL, step = 1)
+})
+#15. Reactive function for directly above
+km_time_line <- reactive({                 
+  input$kmTmLn 
+})
+#16. Select specific groups
+output$KMSurvPlt_group_levs <- renderUI({                                 
+  selectInput("KMSurvPltGrpLvs", "16. Highlight specific groups?", 
+              choices = KM_Surv_Plot_Groups(), multiple=TRUE)     
+})
+#16. Reactive function to get group levels
+km_surv_plot_Group_Levels <- reactive({                 
+  input$KMSurvPltGrpLvs 
 })
 
 
@@ -9889,11 +9916,17 @@ KMsrvftUnconFmla <- reactive({
 
 #Kaplan-Meier survival or hazard plots
 kmSurvPltFnc <- function(KMsrvftFmla, df, Y, km_hazard_plot, KMSrvHzrLbl, km_sp_Xlim1, km_sp_Xlim2,
-                         km_sp_Ylim1, km_sp_Ylim2, KMSrvPltX, 
-                         LCOL, LWD, lgnd.loc, lgnd.elmnt, cexMulti) {
+                         km_sp_Ylim1, km_sp_Ylim2, KMSrvPltX, LCOL, LWD, 
+                   lgnd.loc, lgnd.elmnt, cexMulti, grp.levs, Legend.N, tgt.line, time.line) {
   pltType <- ifelse(km_hazard_plot == "No", "S", "F")
+  #Figure out which groups to plot or if to plot them all
+  if (!is.null( grp.levs )) {
+    use_km_groups <- grp.levs
+  } else {
+    use_km_groups <- sort(unique( df[, KMSrvPltX]))
+  }
   par(mar=c(5,7,4,6))
-  plot(survfit(KMsrvftFmla, data= df), 
+  plot(survfit(KMsrvftFmla, data= df)[which(sort(unique( as.factor(df[, KMSrvPltX]) )) %in% use_km_groups)], 
        xlim=c(km_sp_Xlim1, km_sp_Xlim2), ylim=c(km_sp_Ylim1, km_sp_Ylim2),
        ylab= paste0(KMSrvHzrLbl, " Probability"), 
        xlab=Y, mark.time=T, fun=pltType , lwd=LWD, 
@@ -9901,11 +9934,25 @@ kmSurvPltFnc <- function(KMsrvftFmla, df, Y, km_hazard_plot, KMSrvHzrLbl, km_sp_
        main= paste0("Kaplan-Meier plot of ", tolower(KMSrvHzrLbl), " by ", KMSrvPltX),
        pch=LETTERS[1:length(unique(df[, KMSrvPltX]))],
        col=LCOL, lty= 1:length(unique( df[, KMSrvPltX])))
+  abline(h=tgt.line)
+  abline(v=time.line)
+  #legend for all groups or no legend
+  if (Legend.N > 0) {
   for (i in 1:length(lgnd.elmnt)) {
         legend(lgnd.loc[i], legend=sort(unique( df[, KMSrvPltX]))[lgnd.elmnt[[i]]], col=LCOL[lgnd.elmnt[[i]]], 
                lty= (1:length(unique(df[, KMSrvPltX] )))[lgnd.elmnt[[i]]], bty="n", lwd=LWD, cex=1.5,
                title=KMSrvPltX)
   }
+  }
+  #Legend for subset
+  if (Legend.N == -1) {
+    for (i in 1:length(grp.levs)) {
+      legend(lgnd.loc[1], legend=grp.levs, col=LCOL, 
+             lty= (1:grp.levs), bty="n", lwd=LWD, cex=1.5,
+             title=KMSrvPltX)
+    }
+  }
+  
 }
 
 
@@ -9918,7 +9965,8 @@ KMsrvftPlot <- reactive({
                  km_sp_Ylim2=input$km_sp_Ylim2, KMSrvPltX=input$KMSrvPltX, 
                  LCOL=KM_Surv_Line_Colors(), LWD=KM_Surv_Line_Width(), 
                  lgnd.loc=KM_Surv_legend_location(), lgnd.elmnt= KM_Surv_legend_elements(),
-                 cexMulti=KM_Surv_legend_cex_multi() ) 
+                 cexMulti=KM_Surv_legend_cex_multi(), grp.levs=km_surv_plot_Group_Levels(),
+                 Legend.N= KM_Surv_legend_N(), tgt.line=km_target_line(), time.line=km_time_line() ) 
   }
 })
 output$km_plot <- renderPlot({

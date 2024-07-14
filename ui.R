@@ -1010,6 +1010,7 @@
                    h4("Kaplan-Meier survival and hazard plots (cumulative probability)"),                   
                    br(),
                    h5("Set up the Kaplan-Meier plot. Default is survival, select hazard option below."),
+                   h5("Select '-1' in #11 to create the legend for a subset."),
                    fluidRow(
                      column(3, 
                             uiOutput("km_srv_plt_one_x")),
@@ -1043,7 +1044,13 @@
                    ),
                    fluidRow(
                      column(3,
-                            uiOutput("KMSurvPltCex"))
+                            uiOutput("KMSurvPltCex")),
+                     column(3,
+                            uiOutput("Km_Tgt_Line")),
+                     column(3,
+                            uiOutput("Km_Tm_Line")),
+                     column(3,
+                            uiOutput("KMSurvPlt_group_levs"))
                    ),
                    
                    br(),

@@ -9642,19 +9642,37 @@ output$SurvPltLnWdt <- renderUI({
 Surv_Line_Width <- reactive({                 
   input$sp_ln_wd 
 })
+#11. Add a horizontal line
+output$SurvPltHrzLn <- renderUI({                                 
+  textInput("SrvHrzLn", "11. Add horizontal line",
+               value = paste0('c( )'))
+})
+#11. Reactive function for directly above
+surv_horizontal_line <- reactive({                 
+  input$SrvHrzLn 
+})
+#12. Add a vertical line
+output$SurvPltVrtLn <- renderUI({                                 
+  textInput("SrvVrtLn", "12. Add vertical line",
+               value = paste0('c( )'))
+})
+#12. Reactive function for directly above
+surv_vertical_line <- reactive({                 
+  input$SrvVrtLn 
+})
 #Create yes/no box to run survival plot
 output$SpTimeInc <- renderUI({                                 
-  numericInput("sp_timeinc", "11. Indicate the X-axis time increment.", 
+  numericInput("sp_timeinc", "13. Indicate the X-axis time increment.", 
                value = round((input$sp_Xlim2/5), 0), step = 1, min=0)     
 })
 #Indicate if you want the hazard function
 output$HazardPlot <- renderUI({                                 
-  selectInput("hazard_plot", "12. Do you want the hazard or survival?", 
+  selectInput("hazard_plot", "14. Do you want the hazard or survival?", 
               choices = c("Cumulative Hazard", "Cumulative Incidence", "Survival"), multiple=FALSE, selected="Survival")     
 })
 #Indicate if you want the log-minus-log plot
 output$SrvLogLog <- renderUI({                                 
-  selectInput("srv_log_log", "13. Want a log-minus-log plot (assess PH)?", 
+  selectInput("srv_log_log", "15. Want a log-minus-log plot (assess PH)?", 
               choices = c("No", "Yes"), multiple=FALSE, selected="No")     
 })
 #"Survival" or "Hazard" to be used for labels
@@ -9703,6 +9721,10 @@ output$surv_plot1 <- renderPlot({
            xlab=paste0(SrvHzrLbl()," functions of time stratified by ", strsplit(names(srvft1()$strata)[1], "=")[[1]][1], 
                        " with ", input$SrvPltLvl*100, "% confidence intervals"), 
            mark.time=T, pch=LETTERS[1:length(names(srvft1()$strata))])
+#      abline(h = surv_horizontal_line())
+#      abline(v = surv_vertical_line())
+      abline(h = as.numeric(eval(parse(text=surv_horizontal_line() ))))
+      abline(v = as.numeric(eval(parse(text= surv_vertical_line() ))))
     } 
           if ( !"strata" %in% names(srvft1()) ) {
       plot(srvft1(), fun=SrvHzr(),
@@ -9710,6 +9732,8 @@ output$surv_plot1 <- renderPlot({
            ylab=paste0(SrvHzrLbl()), label.curves=list(col=Surv_Line_Colors(), cex=Surv_Line_Width()), 
            lwd=Surv_Line_Width(), col=Surv_Line_Colors(),
            xlab=paste0(SrvHzrLbl(), " function of time with ", input$SrvPltLvl*100, "% confidence intervals"))
+            abline(h = as.numeric(eval(parse(text=surv_horizontal_line() ))))
+            abline(v = as.numeric(eval(parse(text= surv_vertical_line() ))))
     }
   } else {
     
@@ -9719,6 +9743,8 @@ output$surv_plot1 <- renderPlot({
                                 xlab=paste0(SrvHzrLbl(), " time by ", input$SrvPltX), time.inc=input$sp_timeinc, 
                                 fun=SrvHzr(), loglog= SrvLogLog(), label.curves=list(col=Surv_Line_Colors(), cex=Surv_Line_Width()), 
                                 lwd=Surv_Line_Width(), col=Surv_Line_Colors() ))) 
+      abline(h = as.numeric(eval(parse(text=surv_horizontal_line() ))))
+      abline(v = as.numeric(eval(parse(text= surv_vertical_line() ))))
     } 
     if(input$surv_plt_run == "Yes") {
       box()
@@ -9839,8 +9865,8 @@ KM_Surv_legend_cex_multi <- reactive({
 })
 #14. Add a target line
 output$Km_Tgt_Line <- renderUI({                                 
-  numericInput("kmTgtLn", "14. Add horizontal line",
-               value = NULL, step = .01)
+  textInput("kmTgtLn", "14. Add horizontal line",
+               value = paste0('c( )')) 
 })
 #14. Reactive function for directly above
 km_target_line <- reactive({                 
@@ -9848,8 +9874,8 @@ km_target_line <- reactive({
 })
 #15. Add a time line
 output$Km_Tm_Line <- renderUI({                                 
-  numericInput("kmTmLn", "15. Add vertical line",
-               value = NULL, step = 1)
+  textInput("kmTmLn", "15. Add vertical line",
+               value = paste0('c( )')) 
 })
 #15. Reactive function for directly above
 km_time_line <- reactive({                 
@@ -9934,8 +9960,8 @@ kmSurvPltFnc <- function(KMsrvftFmla, df, Y, km_hazard_plot, KMSrvHzrLbl, km_sp_
        main= paste0("Kaplan-Meier plot of ", tolower(KMSrvHzrLbl), " by ", KMSrvPltX),
        pch=LETTERS[1:length(unique(df[, KMSrvPltX]))],
        col=LCOL, lty= 1:length(unique( df[, KMSrvPltX])))
-  abline(h=tgt.line)
-  abline(v=time.line)
+  abline(h = as.numeric(eval(parse(text=tgt.line ))))
+  abline(v = as.numeric(eval(parse(text= time.line ))))
   #legend for all groups or no legend
   if (Legend.N > 0) {
   for (i in 1:length(lgnd.elmnt)) {
@@ -9948,7 +9974,7 @@ kmSurvPltFnc <- function(KMsrvftFmla, df, Y, km_hazard_plot, KMSrvHzrLbl, km_sp_
   if (Legend.N == -1) {
     for (i in 1:length(grp.levs)) {
       legend(lgnd.loc[1], legend=grp.levs, col=LCOL, 
-             lty= (1:grp.levs), bty="n", lwd=LWD, cex=1.5,
+             lty= (1:length(grp.levs)), bty="n", lwd=LWD, cex=1.5,
              title=KMSrvPltX)
     }
   }

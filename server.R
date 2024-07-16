@@ -9834,7 +9834,7 @@ KM_Surv_Line_Width <- reactive({
 #11. Legend location
 output$KMSurvPltLgdN <- renderUI({                                
   numericInput("km_sp_lgd_N", "11. How many legends do you want?",        
-              value = 1, min= -1, max=3, step = 1) 
+              value = 1, min= -1, max=5, step = 1) 
 })
 #11A. Reactive function for legend location
 KM_Surv_legend_N <- reactive({
@@ -10083,6 +10083,39 @@ fncCalcGrpNmbrs <- function(Group.N=NULL, Legend.N=NULL) {
       Legend.Sections <- c(ceiling(Group.N / 3), ceiling(Group.N / 3), floor(Group.N / 3))
     } 
   }
+  #Four legends
+  if (Legend.N == 4) {
+    if (modulu_result == 0) {
+      Legend.Sections <- c(Group.N / 4, Group.N / 4, Group.N / 4, Group.N / 4)
+    }
+    if (modulu_result == 1) {
+      Legend.Sections <- c(ceiling(Group.N / 4), floor(Group.N / 4), floor(Group.N / 4), floor(Group.N / 4))
+    } 
+    if (modulu_result == 2) {
+      Legend.Sections <- c(ceiling(Group.N / 4), ceiling(Group.N / 4), floor(Group.N / 4), floor(Group.N / 4))
+    } 
+    if (modulu_result == 3) {
+      Legend.Sections <- c(ceiling(Group.N / 4), ceiling(Group.N / 4), ceiling(Group.N / 4), floor(Group.N / 4))
+    } 
+  }
+  #Five legends
+  if (Legend.N == 5) {
+    if (modulu_result == 0) {
+      Legend.Sections <- c(Group.N / 5, Group.N / 5, Group.N / 5, Group.N / 5, Group.N / 5)
+    }
+    if (modulu_result == 1) {
+      Legend.Sections <- c(ceiling(Group.N / 5), floor(Group.N / 5), floor(Group.N / 5), floor(Group.N / 5), floor(Group.N / 5))
+    } 
+    if (modulu_result == 2) {
+      Legend.Sections <- c(ceiling(Group.N / 5), ceiling(Group.N / 5), floor(Group.N / 5), floor(Group.N / 5), floor(Group.N / 5))
+    } 
+    if (modulu_result == 3) {
+      Legend.Sections <- c(ceiling(Group.N / 5), ceiling(Group.N / 5), ceiling(Group.N / 5), floor(Group.N / 5), floor(Group.N / 5))
+    } 
+    if (modulu_result == 4) {
+      Legend.Sections <- c(ceiling(Group.N / 5), ceiling(Group.N / 5), ceiling(Group.N / 5), ceiling(Group.N / 5), floor(Group.N / 5))
+    } 
+  }
   #Make element list
   Legend.Elements <- vector(mode = "list", length= length(Legend.Sections))
   #Standard of only one legend
@@ -10099,6 +10132,21 @@ fncCalcGrpNmbrs <- function(Group.N=NULL, Legend.N=NULL) {
     Legend.Elements[[1]] <- 1:Legend.Sections[1]
     Legend.Elements[[2]] <- (1 + Legend.Sections[1]):(Legend.Sections[1] + Legend.Sections[2])
     Legend.Elements[[3]] <- (1 + (Legend.Sections[1] + Legend.Sections[2])):(Legend.Sections[1] + Legend.Sections[2] + Legend.Sections[3]) 
+  }
+  #Four legends
+  if (Legend.N == 4) {
+    Legend.Elements[[1]] <- 1:Legend.Sections[1]
+    Legend.Elements[[2]] <- (1 + Legend.Sections[1]):(Legend.Sections[1] + Legend.Sections[2])
+    Legend.Elements[[3]] <- (1 + (Legend.Sections[1] + Legend.Sections[2])):(Legend.Sections[1] + Legend.Sections[2] + Legend.Sections[3]) 
+    Legend.Elements[[4]] <- (1 + (Legend.Sections[1] + Legend.Sections[2] + Legend.Sections[3])):(Legend.Sections[1] + Legend.Sections[2] + Legend.Sections[3] + Legend.Sections[4]) 
+  }
+  #Five legends
+  if (Legend.N == 5) {
+    Legend.Elements[[1]] <- 1:Legend.Sections[1]
+    Legend.Elements[[2]] <- (1 + Legend.Sections[1]):(Legend.Sections[1] + Legend.Sections[2])
+    Legend.Elements[[3]] <- (1 + (Legend.Sections[1] + Legend.Sections[2])):(Legend.Sections[1] + Legend.Sections[2] + Legend.Sections[3]) 
+    Legend.Elements[[4]] <- (1 + (Legend.Sections[1] + Legend.Sections[2] + Legend.Sections[3])):(Legend.Sections[1] + Legend.Sections[2] + Legend.Sections[3] + Legend.Sections[4]) 
+    Legend.Elements[[5]] <- (1 + (Legend.Sections[1] + Legend.Sections[2] + Legend.Sections[3] + Legend.Sections[4])):(Legend.Sections[1] + Legend.Sections[2] + Legend.Sections[3] + Legend.Sections[4] + Legend.Sections[5]) 
   }
   return(Legend.Elements = Legend.Elements)
 }

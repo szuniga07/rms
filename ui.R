@@ -1014,7 +1014,7 @@
                    h4("Kaplan-Meier survival and hazard plots (cumulative probability)"),                   
                    br(),
                    h5("Set up the Kaplan-Meier plot. Default is survival, select hazard option below."),
-                   h5("Select '-1' in #11 to create the legend for a subset."),
+                   h5("Make up to 5 legends. Select '-1' in #11 to create the legend for a subset."),
                    fluidRow(
                      column(3, 
                             uiOutput("km_srv_plt_one_x")),

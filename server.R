@@ -13721,6 +13721,92 @@ fncAucDcaClass <- function(Fit, Y, Threshold, Censor=NULL, PredTime=NULL,
 }
 
 ################################################################################
+#                       Crude Analysis: y ~ x1                                 #
+################################################################################
+#1. Select the outcome
+output$imprtnt_y <- renderUI({ 
+  selectInput("imprtntY", "1. Select the outcome",       
+              choices = var(), multiple=FALSE, selected=var()[1] ) 
+})
+#1a. Reactive function for directly above
+important_y <- reactive({                 
+  input$imprtntY 
+})
+
+#2. Select the predictors to keep.
+output$imprtnt_kp_x <- renderUI({ 
+  selectInput("imprtntKeepX", "2. Keep these predictors", 
+              #              choices = setdiff(var(), important_y()), multiple=TRUE, selected=var()[2]) 
+              choices = setdiff(var(), important_y()), multiple=TRUE, selected=NULL) 
+})
+#2a. Reactive function for directly above
+important_keep_x <- reactive({                 
+  input$imprtntKeepX 
+})
+#3. Select the predictors to drop.
+output$imprtnt_dp_x <- renderUI({ 
+  selectInput("imprtntDropX", "3. Drop these predictors", 
+              choices = setdiff(var(), important_y()), multiple=TRUE, selected=NULL) 
+})
+#3a. Reactive function for directly above
+important_drop_x <- reactive({                 
+  input$imprtntDropX
+})
+#4. Important regression type
+output$imprtnt_reg_typ <- renderUI({
+  selectInput("imprtntRegMeth", "4. Select the regression method",
+              choices = c("Linear", 
+                          "Logistic"),
+              selected="Linear", multiple=FALSE)
+})
+#4a. Reactive function for directly above
+important_regression_method <- reactive({                 
+  input$imprtntRegMeth
+})
+#5. Specify proportion missing
+output$imprtnt_Prop_Miss <- renderUI({                                 
+  numericInput("imprtntPrpMs", "5. Prorportion missing target.",
+               value = 1, min=0, max = 1, step = .01)
+})
+#5a. Reactive function for directly above
+imprtnt_proportion_missing <- reactive({                 
+  input$imprtntPrpMs
+})
+#6. Specify top predictors
+output$imprtnt_Top_N <- renderUI({                                 
+  numericInput("imprtntTpN", "6. Top N predictors.",
+               value = (length(var()) -1), min=1, max = (length(var()) -1), step = 1)
+})
+#6a. Reactive function for directly above
+imprtnt_top_n_predictors <- reactive({                 
+  input$imprtntTpN
+})
+#7. Do you want to run the function
+output$imprtntXVarRun <- renderUI({
+  selectInput("imprtntXRn", "7. Run important predictors?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")
+}) 
+#7A. Reactive function for above
+imprtnt_X_run_Yes_No <- reactive({
+  input$imprtntXRn
+})
+#Create reactive function for the output
+imprtnt_X_function <- reactive({
+  if (imprtnt_X_run_Yes_No() == "Yes") {
+    fncImportantX(y=important_y(), data.name=df(), 
+                  regmth=important_regression_method(), keep=important_keep_x(), 
+                  dropX=important_drop_x(), propmiss=imprtnt_proportion_missing(), 
+                  topX=imprtnt_top_n_predictors() )
+  }
+})
+#Create output 
+output$imprtnt_X_Output <- renderPrint({                                                 
+  if (imprtnt_X_run_Yes_No() == "Yes") {
+    print(imprtnt_X_function())
+  }
+})
+
+################################################################################
 #                           Bayesian Analysis                                  #
 ################################################################################
 

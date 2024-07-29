@@ -716,7 +716,36 @@
           
           tabPanel("Modify", 
                    h4("Fast backwards step-down regression, AIC based suggestions"),
-                   verbatimTextOutput("mod_ify")),    #Creates a new panel named "Summary"
+                   verbatimTextOutput("mod_ify"),
+                   br(),
+                   h3("Crude Analysis"),
+                   br(),
+                   h4("Get variable importance statistics of single predictors for linear or logistic models."),
+                   h4("'Min.Coef' & 'Max.Coef' gives the most extreme coefficient when there is a perfect correlation of Y and X (SD of Y/ SD of X)."),
+                   h4("'Min.Slope.95' & 'Max.Slope.95' gives the product of min/max coefficient * 95th percentile of X."),
+                   h4("Keep or Drop specific variables but don't select both."),
+                   h4("Select the predictors with a threshold on the proportion missing and/or select the top number of predictors."),
+                   br(),
+                   fluidRow(   
+                     column(3, 
+                            uiOutput("imprtnt_y")),
+                     column(3, 
+                            uiOutput("imprtnt_kp_x")),
+                     column(3, 
+                            uiOutput("imprtnt_dp_x")),
+                     column(3, 
+                            uiOutput("imprtnt_reg_typ"))
+                   ),
+                   fluidRow(   
+                     column(3, 
+                            uiOutput("imprtnt_Prop_Miss")),
+                     column(3, 
+                            uiOutput("imprtnt_Top_N")),
+                     column(3, 
+                            uiOutput("imprtntXVarRun"))
+                   ),
+                   verbatimTextOutput("imprtnt_X_Output"),
+                   ),    #Creates a new panel named "Modify"
           tabPanel("Approximate",                       
                    h4("Approximate the model:"),
                    h4("Create a parsimonious model with an equivalent level of prediction as the \"Full Model\" ."  ),

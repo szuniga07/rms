@@ -13876,17 +13876,17 @@ fncImportantX <- function(y=NULL, data.name=NULL, regmth=NULL, keep=NULL, dropX=
     colnames(Important.Result) <- c("X","Chi-Square", "P" )
   }
   #Add in minimum value
-  Important.Result$Min.X <- min_x_range 
+  Important.Result$Min.X <- round(min_x_range, 3) 
   #Add in maximum value
-  Important.Result$Max.X <- max_x_range 
+  Important.Result$Max.X <- round(max_x_range, 3) 
   #Add in minimum effect
-  Important.Result$Min.Coef <- max_x_effect * -1
+  Important.Result$Min.Coef <- round(max_x_effect * -1, 3)
   #Add in maximum effect
-  Important.Result$Max.Coef <- max_x_effect 
+  Important.Result$Max.Coef <- round(max_x_effect, 3) 
   #Add in minimum slope at the 95th percentile of X
-  Important.Result$Min.Slope.95 <- max_slope.95 * -1
+  Important.Result$Min.Slope.95 <- round(max_slope.95 * -1, 3)
   #Add in maximum slope at the 95th percentile of X
-  Important.Result$Max.Slope.95 <- max_slope.95 
+  Important.Result$Max.Slope.95 <- round(max_slope.95, 3) 
   
   #Add in proportion missing
   Important.Result.Missing <- round(do.call(rbind.data.frame, imp_x_missing), 3)

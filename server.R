@@ -13807,6 +13807,115 @@ output$imprtnt_X_Output <- renderPrint({
 })
 
 ################################################################################
+#                 Function to get most important predictors                    #
+################################################################################
+
+fncImportantX <- function(y=NULL, data.name=NULL, regmth=NULL, keep=NULL, dropX=NULL, 
+                          propmiss=NULL, topX=NULL) {
+  #Get standard deviation of Y
+  y_sd <- sd(data.name[, y])
+  #Identify variables I will drop from the analysis
+  if (is.null(keep)) {
+    Drop_X_Vars <- c(y, dropX)
+  } else {
+    Drop_X_Vars <- setdiff(colnames(data.name), keep )
+  }
+  #Select only the variables I am interested in
+  X_Vars <- setdiff(colnames(data.name), Drop_X_Vars)
+  
+  #Get missing values for each X
+  imp_x_missing <- list()
+  for ( i in 1:length(X_Vars)) {
+    imp_x_missing[[i]] <- mean(is.na(data.name[, X_Vars[i]]))
+  }
+  #Get the univariate/crude model results  
+  imp_model <- list()
+  for ( i in 1:length(X_Vars)) {
+    impx_mdl_fmla <- as.formula(paste(y , "~", X_Vars[i]))
+    imp_model[[i]] <- switch(regmth,
+                             "Linear" = anova(ols(impx_mdl_fmla, data=data.name))[1, c("F", "P")],
+                             "Logistic" = anova(lrm(impx_mdl_fmla, data= data.name, tol=1e-100, maxit=20))[1, c("Chi-Square", "P")] 
+    )
+  }
+  ## Min/Max X values ##
+  max_x_effect <- vector()
+  min_x_range <- vector()
+  max_x_range <- vector()
+  quantile.95.x <- vector()
+  max_slope.95 <- vector()
+  
+  for ( i in 1:length(X_Vars)) {
+    if ( typeof(data.name[, X_Vars[i] ]) %in%   c("integer", "double")) {
+      max_x_effect[i] <- y_sd / sd(data.name[, X_Vars[i] ], na.rm=TRUE)   
+      min_x_range[i] <- range(data.name[, X_Vars[i] ], na.rm=TRUE)[1]
+      max_x_range[i] <- range(data.name[, X_Vars[i] ], na.rm=TRUE)[2]
+      quantile.95.x[i] <- quantile(data.name[, X_Vars[i] ], na.rm=TRUE, prob=.95)
+      max_slope.95[i] <- max_x_effect[i] * quantile.95.x[i] 
+    } else {
+      max_x_effect[i] <- NA   
+      min_x_range[i] <- NA
+      max_x_range[i] <- NA
+      quantile.95.x[i] <- NA
+      max_slope.95[i] <- NA 
+    }
+  }
+  #Create lists to store variable importance
+  Important.Result <- do.call(rbind.data.frame, imp_model)
+  # Round values down #
+  Important.Result[, 1] <- round(Important.Result[, 1], 1) 
+  Important.Result[, 2] <- round(Important.Result[, 2], 3) 
+  #Add variable names
+  Important.Result$X <- X_Vars
+  #Re-arrange variables
+  Important.Result <- Important.Result[, c(3,1,2)]
+  #Add in column names
+  if (regmth == "Linear" ) {
+    colnames(Important.Result) <- c("X","F", "P" )
+  }
+  if (regmth == "Logistic" ) {
+    colnames(Important.Result) <- c("X","Chi-Square", "P" )
+  }
+  #Add in minimum value
+  Important.Result$Min.X <- min_x_range 
+  #Add in maximum value
+  Important.Result$Max.X <- max_x_range 
+  #Add in minimum effect
+  Important.Result$Min.Coef <- max_x_effect * -1
+  #Add in maximum effect
+  Important.Result$Max.Coef <- max_x_effect 
+  #Add in minimum slope at the 95th percentile of X
+  Important.Result$Min.Slope.95 <- max_slope.95 * -1
+  #Add in maximum slope at the 95th percentile of X
+  Important.Result$Max.Slope.95 <- max_slope.95 
+  
+  #Add in proportion missing
+  Important.Result.Missing <- round(do.call(rbind.data.frame, imp_x_missing), 3)
+  #Merge files
+  Important.Result <- cbind(Important.Result, Important.Result.Missing)
+  #Add column name
+  colnames(Important.Result)[10] <- "Missing" 
+  #Select only the variables with a certain proportion missing
+  if (!is.null(propmiss) ) {
+    Important.Result <- Important.Result[which(Important.Result$Missing <= propmiss), ]
+  }
+  #Sort with most important first
+  o <- order(Important.Result[, 2])
+  Important.Result.Sorted <- Important.Result[rev(o), ]
+  
+  # Select only the top number of important predictors #
+  if (!is.null(topX) ) {
+    Important.Result.Sorted <- Important.Result.Sorted[1:topX, ]
+  }
+  if (!is.null(topX) ) {
+    Important.Result <- Important.Result[which(Important.Result$X %in% Important.Result.Sorted$X), ]
+  }
+  
+  return(list("Important.Result"=Important.Result,
+              "Important.Result.Sorted"=Important.Result.Sorted,
+              "X.List"= paste0(Important.Result.Sorted[, 1],  collapse="','") ))
+}
+
+################################################################################
 #                           Bayesian Analysis                                  #
 ################################################################################
 

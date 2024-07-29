@@ -725,6 +725,7 @@
                    h4("'Min.Slope.95' & 'Max.Slope.95' gives the product of min/max coefficient * 95th percentile of X."),
                    h4("Keep or Drop specific variables but don't select both."),
                    h4("Select the predictors with a threshold on the proportion missing and/or select the top number of predictors."),
+                   h4("Type imprtnt_X_function() in the describe tab to run the fncImportantX function."),
                    br(),
                    fluidRow(   
                      column(3, 

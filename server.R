@@ -2641,12 +2641,12 @@ output$predictor_smry <- renderPrint({
 #I set a higher tolerance based on Harrell's website
 #https://stat.ethz.ch/pipermail/r-help/2007-September/141709.html  
 output$p_anova <- renderPlot({
-  plot(anova(fit1(), tol=1e-13), cex=1.25, cex.lab=1.25, pch=19)
+  plot(anova(fit1(), tol=1e-100), cex=1.25, cex.lab=1.25, pch=19)
 }, height=700)
 
 #This prints ANOVA to show variable importance.  
 output$anova_smry <- renderPrint({
-  anova(fit1(), digits=4, tol=1e-13)
+  anova(fit1(), digits=4, tol=1e-100)
 })
 
 #####################################

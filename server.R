@@ -14710,9 +14710,9 @@ dbda_post_check_part_pred_pars <- reactive({
 })
 #11. select the distribution/Posterior Predictive type
 output$dbdaPartPredData <- renderUI({
-  selectInput("dbdaPrPrDat", "11. Add trend data?", 
-              choices = c("All", "Unit","DID: Groups", "None"), multiple=FALSE, 
-              selected= c("All", "Unit", "DID: Groups","None")[4])
+  selectInput("dbdaPrPrDat", "11. Add observed data?", 
+              choices = c("All", "Unit","All: Lines", "Unit: Lines","DID: Groups", "None"), 
+              multiple=FALSE, selected= "None")
 })
 #11A. Reactive function for above
 dbda_post_check_part_pred_data <- reactive({
@@ -16274,6 +16274,19 @@ fncBayesOlsPrtPred <- function(Coda.Object=NULL , mydf=NULL,  Reg.Type=NULL,
       tlis[[ j]][i] <- mcmcMat[i, paste0( parX[j])]
     }
   }
+  ## Points vs. lines for observed data ## 
+  if (View.Lines == "All") {
+    line_type <-  "p" 
+  }
+  if (View.Lines == "All: Lines") {
+    line_type <-  "o" 
+  }
+  if (View.Lines == "Unit") {
+    line_type <-  "p" 
+  }
+  if (View.Lines == "Unit: Lines") {
+    line_type <-  "o" 
+  }
   ##############################################################################
   # DID functions
   if (Reg.Type %in% "OLS: DID" ) {
@@ -16344,10 +16357,10 @@ fncBayesOlsPrtPred <- function(Coda.Object=NULL , mydf=NULL,  Reg.Type=NULL,
         main= Main.Title, cex.lab=CEX.size, cex.main=CEX.size, cex.axis=CEX.size )
   #All groups added at once for the overall term
   if (Reg.Type %in% c("OLS: Linear", "OLS: Quadratic", "OLS: Cubic") ) {
-    if (View.Lines == "All") {
+    if (View.Lines %in% c("All", "All: Lines")) {
       for ( sIdx in 1:nSubj ) {
         thisSrows = (as.numeric(s)==sIdx)
-        lines( x[thisSrows, ] , y[thisSrows] , type="o" , pch=19, col= PCol, cex=CEX.size) 
+        lines( x[thisSrows, ] , y[thisSrows] , type=line_type , pch=19, col= PCol, cex=CEX.size) 
       }
     }
   }
@@ -16371,11 +16384,11 @@ fncBayesOlsPrtPred <- function(Coda.Object=NULL , mydf=NULL,  Reg.Type=NULL,
   }
   
   #Determine which observed mydf lines to view
-  if (View.Lines == "Unit") {
-    #For specific groups
+  if (View.Lines %in% c("Unit", "Unit: Lines")) {
+      #For specific groups
     for ( sIdx in 1:nSubj ) {
       thisSrows <- (as.numeric(s) == as.numeric(s[s == Group.Level]))
-      lines( x[thisSrows, ] , y[thisSrows] , type="o" , pch=19, col= PCol, cex=CEX.size ) 
+      lines( x[thisSrows, ] , y[thisSrows] , type= line_type, pch=19, col= PCol, cex=CEX.size ) 
     }
   }
   

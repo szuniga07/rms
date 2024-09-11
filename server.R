@@ -6444,7 +6444,8 @@ plot_itsa_fci_fnc <- function(xcivar, ycivar, zcivar, dataf, LCol,  LWd,
   #Intervention
   if (!is.na(itsa_trt_bin)) {
     abline(lm(as.formula(paste(paste0(ycivar , "~", zcivar))), 
-              data=itsa_df[itsa_df$treatment==1,]), lty=2, col=my_clr[6], lwd=LWd)  
+              #data=itsa_df[itsa_df$treatment==1,]), lty=2, col=my_clr[6], lwd=LWd)  
+              data=itsa_df[itsa_df[, xcivar] ==1,]), lty=2, col=my_clr[6], lwd=LWd)  
   } else {
     abline(lm(as.formula(paste(paste0(ycivar , "~", zcivar))), 
               data=itsa_df), lty=2, col=my_clr[4], lwd=LWd)  
@@ -6452,7 +6453,8 @@ plot_itsa_fci_fnc <- function(xcivar, ycivar, zcivar, dataf, LCol,  LWd,
   #Control
   if (!is.na(itsa_trt_bin)) {
     abline(lm(as.formula(paste(paste0(ycivar , "~", zcivar))), 
-              data=itsa_df[itsa_df$treatment==0,]), lty=2, col=my_clr[7], lwd=LWd)  
+              #data=itsa_df[itsa_df$treatment==0,]), lty=2, col=my_clr[7], lwd=LWd)  
+    data=itsa_df[itsa_df[, xcivar] ==0,]), lty=2, col=my_clr[7], lwd=LWd)  
   } 
   #Time and target lines
   #Add time point line

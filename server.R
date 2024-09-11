@@ -6472,12 +6472,12 @@ plot_itsa_fci_fnc <- function(xcivar, ycivar, zcivar, dataf, LCol,  LWd,
   if (!is.na(itsa_trt_bin)) {
     itsa_legend <- c("Treatment observed means","Control observed means",
                      "Treatment ITSA lines", "Control ITSA lines", 
-                     paste0("Interruption at ", paste(sort(itsa_time_points), collapse=" & ") ),
+                     paste0("Interruption at ", zcivar," ", paste(sort(itsa_time_points), collapse=" & ") ),
                      "Treament regression line", "Control regression line")
   } else {
     itsa_legend <- c("Observed means",
                      "ITSA trend lines", 
-                     paste0("Interruption at ", paste(sort(itsa_time_points), collapse=" & ") ),
+                     paste0("Interruption at ",zcivar," ", paste(sort(itsa_time_points), collapse=" & ") ),
                      "Regression line")
   }
   #Legend line types

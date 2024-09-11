@@ -2156,7 +2156,7 @@
                             uiOutput("FCI__Ylim2"))
                    ),
                    h5("Modify the plot space in #29-32. Enter values into 'c()' for #14 and #15 when needed, separate values with ',' (e.g., c(1, 2) ). For single time point data, use 'Yes: Aggregated data only' in #21."),
-                   h5("For an Interrupted Timer Series Analysis, run the model and modify #1-3 & #24-28 other options (e.g., leave #26 blank if there is no control group, add colors to #9 for lines to appear). "),
+                   h5("For an Interrupted Time Series Analysis, run the model and modify #1-3 & #24-28 and other options (e.g., leave #26 blank if there is no control group, add colors to #9 for lines to appear). "),
                    h5("To see the ITSA graph's data, use this command in the 'Describe' tab: plot_itsa_DF(). Use 'contrast(fit1(), list(zt=14, zxt89=1), list(zt=13, zxt89=0))' to see fewer smoked cigs in the intervention period."),
                    h5("Note: The colors of the lines are assigned according to the group order of the 'point estimate and confidence interval' output below."),
                    br(),

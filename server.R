@@ -10,6 +10,7 @@
 #install.packages("coxme")
    
 library(shiny)
+library(ggplot2)
 library(jsonlite)
 library(rms)
 library(nlme)
@@ -4519,6 +4520,7 @@ output$trans_smry <- renderPrint({
 output$ptrans_plot <- renderPlot({
   if (input$TransChoice == "Yes") {
     ggplot(ptrans(), scale=TRUE) + theme(axis.text.x=element_text(size=6))   #Not all variables having missing data.
+#    plot(ptrans())
   }
 })
 

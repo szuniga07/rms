@@ -20,6 +20,7 @@ library(meta)
 library(rpart)
 library(coxme)
 library(coda)  #Bayesian tab
+library(sn) #Bayesian tab
 #Surival package data: cancer colon diabetic flchain heart mgus nafld1 pbc transplant   
 data(lungcancer)
 options(shiny.maxRequestSize=1000*1024^2)    #This will increase the shiny file upload limit from current 5MB max
@@ -14615,12 +14616,12 @@ output$plotDbdaHierEstimation <- renderPlot({
 #1. select the distribution/Posterior Predictive type
 output$dbdaPostCheckDist <- renderUI({
   selectInput("dbdaPcgDst", "1. Posterior Predictive Check type.", 
-              choices = c("Normal", "Log-normal", "t", "OLS: Linear",
-                          "OLS: Quadratic", "OLS: Cubic", "OLS: DID", 
+              choices = c("Normal", "Log-normal", "Skew-normal", "t: 1 group", "t: ANOVA", 
+                          "OLS: Linear", "OLS: Quadratic", "OLS: Cubic", "OLS: DID", 
                           "Logistic: Linear", "Logistic: Quadratic", 
                           "Logistic: Cubic"), multiple=FALSE, 
-              selected= c("Normal", "Log-normal", "t", "OLS: Linear",
-                          "OLS: Quadratic", "OLS: Cubic", "OLS: DID",
+              selected= c("Normal", "Log-normal", "Skew-normal", "t: 1 group", "t: ANOVA", 
+                          "OLS: Linear", "OLS: Quadratic", "OLS: Cubic", "OLS: DID",
                           "Logistic: Linear", "Logistic: Quadratic", 
                           "Logistic: Cubic")[1])
 })
@@ -14694,7 +14695,7 @@ dbda_post_check_grp_psd <- reactive({
 })
 #8. Select the mean parameter
 output$dbdaPostCheckParNu <- renderUI({                                
-  selectInput("dbdaPcgPNu", "8. Select V (nu) d.f. parameter.",       
+  selectInput("dbdaPcgPNu", "8. Select V (nu) or Skew parameter.",       
               choices = DBDA_parameter_Names(), multiple=FALSE, 
               selected=DBDA_parameter_Names()[1] )   
 })
@@ -14931,7 +14932,44 @@ plot_dbda_posterior_group_check <- reactive({
                                                   PCol = dbda_post_check_point_colors(),
                                                   Add.Lgd= dbda_post_check_add_legend(), 
                                                   Leg.Loc=dbda_post_check_legend_location() ) ,
-           "t" = fncPlotMcANOVA(codaSamples=DBDA_coda_object_df(), datFrm=df(), 
+           "Skew-normal" =     fncGrpPostPredCheck(Coda.Object=DBDA_coda_object_df(), mydf=df(), 
+                                              Outcome=dbda_post_check_grp_Y(), Group=dbda_post_check_grp_X(), 
+                                              Group.Level=dbda_post_check_grp_level_X(), 
+                                              Mean.Var=dbda_post_check_grp_pm(), 
+                                              SD.Var=dbda_post_check_grp_psd(), MCnu= dbda_post_check_grp_pnu(),
+                                              Distribution=dbda_post_check_grp_distr(), 
+                                              Num.Lines=dbda_post_check_grp_number_lines(), 
+                                              Main.Title=dbda_post_check_grp_main_title(), 
+                                              X.Lab=dbda_post_check_grp_x_label(), 
+                                              Bar.Color=dbda_post_check_grp_bar_colors(), 
+                                              Line.Color=dbda_post_check_grp_line_colors(), 
+                                              Hist.Breaks=dbda_post_check_grp_number_bars(), 
+                                              CEX.size=dbda_post_check_grp_label_multiplier(), 
+                                              X.Lim=(eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
+                                              Y.Lim=(eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
+                                              Min.Val=dbda_post_check_grp_min_value(), 
+                                              Round.Digits=dbda_post_check_grp_round_place(),
+                                              Point.Loc= (eval(parse(text=dbda_post_check_grp_x_axis_points() )) ),
+                                              PCol = dbda_post_check_point_colors(),
+                                              Add.Lgd= dbda_post_check_add_legend(), 
+                                              Leg.Loc=dbda_post_check_legend_location() ) , 
+           "t: 1 group" = fncPlotSingleT(codaSamples=DBDA_coda_object_df(), datFrm=df(), 
+                                       yName=dbda_post_check_grp_Y(), 
+                                       MCmean=dbda_post_check_grp_pm(), 
+                                       MCsigma=dbda_post_check_grp_psd(), 
+                                       MCnu= dbda_post_check_grp_pnu(),
+                                       Num.Lines=dbda_post_check_grp_number_lines(), 
+                                       Main.Title=dbda_post_check_grp_main_title(), 
+                                       X.Lab=dbda_post_check_grp_x_label(), 
+                                       Line.Color=dbda_post_check_grp_line_colors(), 
+                                       CEX.size=dbda_post_check_grp_label_multiplier(), 
+                                       X.Lim=(eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
+                                       Y.Lim=(eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
+                                       PCol = dbda_post_check_point_colors(),
+                                       Add.Lgd= dbda_post_check_add_legend(), 
+                                       Leg.Loc=dbda_post_check_legend_location(),
+                                       T.Percentage=dbda_post_check_grp_min_value() ),
+           "t: ANOVA" = fncPlotMcANOVA(codaSamples=DBDA_coda_object_df(), datFrm=df(), 
                                 yName=dbda_post_check_grp_Y(), xName=dbda_post_check_grp_X(), 
                                 MCmean=dbda_post_check_grp_pm(), 
                                 MCsigma=dbda_post_check_grp_psd(), 
@@ -15052,51 +15090,60 @@ output$dbdaPropGtPar2 <- renderUI({
 dbda_prop_gr_than_par2 <- reactive({                 
   input$dbdaPgtP2 
 })
-#3. select the distribution type
-output$dbdaPropGtDist <- renderUI({
-  selectInput("dbdaPgtDst", "3. Choose the distribution.", 
-              choices = c("Beta", "Log-normal", "Normal"), multiple=FALSE, 
-              selected=c("Beta", "Log-normal", "Normal")[1])
+#3. Select the 3rd parameter
+output$dbdaPropGtPar3 <- renderUI({                                
+  selectInput("dbdaPgtP3", "3. Select 'Skew' parameter.",       
+              choices = setdiff(DBDA_parameter_Names(), dbda_prop_gr_than_par1()), 
+              multiple=FALSE, selected=setdiff(DBDA_parameter_Names(), dbda_prop_gr_than_par1())[1] )   
 })
-#3A. Reactive function for above
+#3a. Reactive function for directly above
+dbda_prop_gr_than_par3 <- reactive({                 
+  input$dbdaPgtP3 
+})
+#4. select the distribution type
+output$dbdaPropGtDist <- renderUI({
+  selectInput("dbdaPgtDst", "4. Choose the distribution.", 
+              choices = c("Beta", "Normal", "Log-normal",  "Skew-normal"), multiple=FALSE, 
+              selected=c("Beta", "Normal", "Log-normal", "Skew-normal")[1])
+})
+#4A. Reactive function for above
 dbda_prop_gr_than_distr <- reactive({
   input$dbdaPgtDst
 })
-#4. Do you want to run the function
+#5. Do you want to run the function
 output$dbdaPropGtCenTen <- renderUI({
-  selectInput("dbdaPgtCT", "4. Choose central tendency.", 
+  selectInput("dbdaPgtCT", "5. Choose central tendency.", 
               choices = c("Mode","Median","Mean"), multiple=FALSE, 
               selected=c("Mode","Median","Mean")[1])
 })
-#4A. Reactive function for above
+#5A. Reactive function for above
 dbda_prop_gr_than_central_tendency <- reactive({
   input$dbdaPgtCT
 })
-
-#5. X-axis limits
-output$dbdaPropGtYval <- renderUI({                                 
-  textInput("dbdaPgtYs", "5. List Y-values.",
-            value = paste0('c( ', ')'))
-})
-#5a. Reactive function for directly above
-dbda_prop_gr_than_y_values <- reactive({                 
-  eval(parse(text= input$dbdaPgtYs))  
-})
 #6. X-axis limits
-output$dbdaPropGtQval <- renderUI({                                 
-  textInput("dbdaPgtQs", "6. List Y percentiles.",
+output$dbdaPropGtYval <- renderUI({                                 
+  textInput("dbdaPgtYs", "6. List Y-values.",
             value = paste0('c( ', ')'))
 })
 #6a. Reactive function for directly above
+dbda_prop_gr_than_y_values <- reactive({                 
+  eval(parse(text= input$dbdaPgtYs))  
+})
+#7. X-axis limits
+output$dbdaPropGtQval <- renderUI({                                 
+  textInput("dbdaPgtQs", "7. List Y percentiles.",
+            value = paste0('c( ', ')'))
+})
+#7a. Reactive function for directly above
 dbda_prop_gr_than_q_values <- reactive({                 
   eval(parse(text=  input$dbdaPgtQs)) 
 })
-#7. Do you want to run the function
+#8. Do you want to run the function
 output$dbdaPropGtRun <- renderUI({
-  selectInput("dbdaPgtRn", "7. Run probabilities?", 
+  selectInput("dbdaPgtRn", "8. Run probabilities?", 
               choices = c("No", "Yes"), multiple=FALSE, selected="No")
 })
-#7A. Reactive function for above
+#8A. Reactive function for above
 dbda_prop_gr_than_run_YN <- reactive({
   input$dbdaPgtRn
 })
@@ -15110,7 +15157,8 @@ dbda_prop_gr_than_func_run <- reactive({
             yVal= dbda_prop_gr_than_y_values() , 
             qVal= dbda_prop_gr_than_q_values(), 
             Center= dbda_prop_gr_than_par1(), 
-            Spread= dbda_prop_gr_than_par2(), 
+            Spread= dbda_prop_gr_than_par2(),
+            Skew= dbda_prop_gr_than_par3(),
             CenTend= dbda_prop_gr_than_central_tendency() )
   }
 })
@@ -15765,7 +15813,7 @@ fncHdiBinP <- function(MCmatrix, Level, View.Order="Alphabetical", View.Level="N
 ################################################################################
 #Use the coda object and dataset. Works for normal and log-normal distributions.
 fncGrpPostPredCheck <- function(Coda.Object, mydf, Outcome, Group, Group.Level,
-                                Mean.Var, SD.Var, Distribution, Num.Lines=NULL, 
+                                Mean.Var, SD.Var, MCnu, Distribution, Num.Lines=NULL, 
                                 Main.Title=NULL, X.Lab=NULL, Bar.Color=NULL, 
                                 Line.Color=NULL, Hist.Breaks=NULL, CEX.size=NULL, 
                                 X.Lim=NULL, Y.Lim=NULL, Min.Val=NULL, Round.Digits=NULL,
@@ -15812,11 +15860,17 @@ fncGrpPostPredCheck <- function(Coda.Object, mydf, Outcome, Group, Group.Level,
              dnorm( xComb, MC.Chain[chnIdx, Mean.Var], MC.Chain[chnIdx, SD.Var] ),
              col= Line.Color )
     }
-    #Log Normal Distribution
+    #Log-Normal Distribution
     if (Distribution == "Log-normal") {
       lines( xComb ,
              dlnorm( xComb, MC.Chain[chnIdx, Mean.Var], MC.Chain[chnIdx, SD.Var] ),
              col= Line.Color )
+    }
+    #Skew-Normal Distribution
+    if (Distribution == "Skew-normal") {
+      lines( xComb ,
+             dsn( xComb, xi=MC.Chain[chnIdx, Mean.Var], omega=MC.Chain[chnIdx, SD.Var],
+                  alpha=MC.Chain[chnIdx, MCnu]), col= Line.Color )
     }
     #Add points 
     if (!is.null(Point.Loc)) {
@@ -15917,11 +15971,86 @@ fncPlotMcANOVA <- function( codaSamples=NULL, datFrm=NULL , yName=NULL , xName=N
 }
 
 ################################################################################
+#             5B. Posterior predictive check for ANOVA, single group           #
+################################################################################
+fncPlotSingleT <- function( codaSamples=NULL, datFrm=NULL , yName=NULL ,   
+                            MCmean=NULL, MCsigma=NULL, MCnu=NULL, Num.Lines=NULL, 
+                            Main.Title=NULL, X.Lab=NULL, Line.Color=NULL, 
+                            CEX.size=NULL, X.Lim=NULL, Y.Lim=NULL, PCol = NULL,
+                            Add.Lgd= NULL, Leg.Loc=NULL, T.Percentage=NULL ) {
+  mcmcMat <- as.matrix(codaSamples, chains=TRUE)
+  chainLength <- NROW( mcmcMat )
+  y <- datFrm[, yName]
+#  x <- as.numeric(as.factor(datFrm[, xName]))
+#  xlevels <- levels(as.factor(datFrm[, xName]))
+  #Make x-limits
+  if (is.null(X.Lim)) {
+    X.Limits <- c(0.6, 1 + 0.1)
+  } else {
+    X.Limits <- X.Lim
+  }
+  #Make y-limits
+  if (is.null(Y.Lim)) {
+    Y.Limits <- c(min(y) - 0.2 * (max(y) - min(y)), max(y) + 0.2*(max(y) - min(y)))
+  } else {
+    Y.Limits <- Y.Lim
+  }
+  #Get generic mean parameter name to use for graphing
+ # mean_par <- strsplit(MCmean, "[", fixed=TRUE)[[1]][1]
+  #Get generic sigma (SD) parameter name to use for graphing
+#  sigma_par <- strsplit(MCsigma, "[", fixed=TRUE)[[1]][1]
+  # Display data with posterior predictive distributions
+  par( mar=c(5,6,2.5,.25))
+  plot(-1,0, 
+       xlim= X.Limits, xlab=X.Lab , xaxt="n" , ylab= yName ,
+       ylim= Y.Limits, main=Main.Title, 
+       cex.lab=CEX.size, cex=CEX.size, cex.main=CEX.size )
+#  axis( 1 , at=1:length(xlevels) , tick=FALSE , lab=xlevels )
+  for ( xidx in 1:1 ) {
+    xPlotVal = xidx 
+    yVals = y
+    points( rep(xPlotVal, length(yVals)) + runif(length(yVals), -0.05, 0.05) , 
+            yVals , pch=1 , cex=CEX.size , col= PCol ) #COLOR
+    chainSub = round(seq(1, chainLength, length= Num.Lines)) #20
+    for ( chnIdx in chainSub ) {
+      #      m = mcmcMat[chnIdx, paste("m[", xidx, "]", sep="")]
+      # m = mcmcMat[chnIdx,paste("b[",xidx,"]",sep="")]
+      #      s = mcmcMat[chnIdx, paste("ySigma[", xidx,"]", sep="")]
+      m = mcmcMat[chnIdx, MCmean]
+      s = mcmcMat[chnIdx, MCsigma]
+      nu = mcmcMat[chnIdx, MCnu]
+      #This controls tails of t distribution. Coverage "*.01" to get proportion
+      tlim= qt( c((0.5 - (T.Percentage*0.01)/2), (0.5 + (T.Percentage*0.01)/2)) , df= nu )  
+      #This controls tails of t distribution
+      yl = m + tlim[1]*s
+      yh = m + tlim[2]*s
+      ycomb=seq(yl, yh, length=501) ##201
+      #ynorm = dnorm(ycomb,mean=m,sd=s)
+      #ynorm = 0.67*ynorm/max(ynorm)
+      yt = dt( (ycomb - m) / s , df= nu )
+ #     yt = 0.67 * yt / max(yt)           #This controls heighth of curve peaks
+#      lines( xPlotVal - yt , ycomb , col= Line.Color ) #COLOR
+      lines( xPlotVal - yt , ycomb , col= Line.Color ) #COLOR
+    }
+  }
+  #Add legend
+  if(Add.Lgd =="Yes") {
+    legend_text <- c("Observed Value", "Posterior Estimate")
+    legend_type <- c(0, 1)
+    pch_type <- c(1, -1)
+    pcol_vector <- c(PCol, Line.Color)
+    legend(Leg.Loc, legend=legend_text, col=pcol_vector, 
+           lty=legend_type, pt.bg=pcol_vector, cex = 2, pch=pch_type, 
+           bty="n", inset=c(0, .05))
+  }
+}
+
+################################################################################
 #           6. Get proportions above/below specific values                     #
 ################################################################################
 #This function calculates the proportion above specific values.
 fncPropGtY <- function( Coda.Object=NULL, Distribution=NULL, yVal=NULL, qVal=NULL, 
-                        Center=NULL, Spread=NULL, CenTend=NULL ) {
+                        Center=NULL, Spread=NULL, Skew=NULL, CenTend=NULL ) {
   #Convert into a matrix
   MC.Matrix <- as.matrix(Coda.Object, chains=TRUE)    
   
@@ -16085,6 +16214,48 @@ fncPropGtY <- function( Coda.Object=NULL, Distribution=NULL, yVal=NULL, qVal=NUL
   } else {
     QnormGtY <- QnormGtY
   } 
+
+  ##############################
+  ## Skew-Normal distribution ##
+  ##############################
+  ## Get summary ##
+  # Proportion greater than Y
+  PsnormGtY <- list()
+  if(!is.null(yVal)) {
+    if(Distribution == "Skew-normal") {
+      for (i in 1:length(yVal)) {         #I need to subtract 1-psn to get the right prop > 1
+        PsnormGtY[[i]] <- summarizePost( 1 - psn(x=yVal[i], xi= MC.Matrix[, Center], omega= MC.Matrix[, Spread], 
+                                             alpha= MC.Matrix[, Skew], lower.tail=FALSE) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+        names(PsnormGtY)[i] <- paste0("Y_", yVal[i])
+      }
+    }
+  }
+  # Quantiles of Y.
+  # Needs mapply for qsn() b/c it creates an impossible error for "omega" <= 0. 
+  QsnormGtY <- list()
+  if(!is.null(qVal)) {
+    if(Distribution == "Skew-normal") {
+      for (i in 1:length(qVal)) {
+        QsnormGtY[[i]] <- summarizePost(mapply(qsn, p=qVal[i], xi=MC.Matrix[, Center], omega=MC.Matrix[, Spread], 
+                                 alpha=MC.Matrix[, Skew]))[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+        names(QsnormGtY)[i] <- paste0("Percentile_", qVal[i])
+      }
+    }
+  }
+  
+  #Return NAs for NULL objects
+  #probability
+  if (length(PsnormGtY)==0 ) {
+    PsnormGtY <- NA
+  } else {
+    PsnormGtY <- PsnormGtY
+  } 
+  #quantile
+  if (length(QsnormGtY)==0 ) {
+    QsnormGtY <- NA
+  } else {
+    QsnormGtY <- QsnormGtY
+  } 
   
   ######################################
   ## Create final distribution values ##
@@ -16099,6 +16270,9 @@ fncPropGtY <- function( Coda.Object=NULL, Distribution=NULL, yVal=NULL, qVal=NUL
   if (Distribution == "Normal") {
     PdisGtY <- PnormGtY
   } 
+  if (Distribution == "Skew-normal") {
+    PdisGtY <- PsnormGtY
+  } 
   #Make NA if the above weren't selected
   if (is.null(PdisGtY)) {
     PdisGtY <- NA
@@ -16112,6 +16286,9 @@ fncPropGtY <- function( Coda.Object=NULL, Distribution=NULL, yVal=NULL, qVal=NUL
   } 
   if (Distribution == "Normal") {
     QdisGtY <- QnormGtY
+  } 
+  if (Distribution == "Skew-normal") {
+    QdisGtY <- QsnormGtY
   } 
   #Make NA if the above weren't selected
   if (is.null(QdisGtY)) {

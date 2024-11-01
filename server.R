@@ -7,7 +7,7 @@
 #install.packages("sensitivity")
 #install.packages("meta")
 #install.packages("rpart")
-#install.packages("coxme")
+#install.packages("coxme") 
    
 library(shiny)
 library(ggplot2)
@@ -16066,12 +16066,16 @@ fncPropGtY <- function( Coda.Object=NULL, Distribution=NULL, yVal=NULL, qVal=NUL
       mean_val <- a_shape/MC.Matrix[, Spread]
     }
   }
+  
   if(!is.null(yVal)) {
     if(Distribution == "Beta") {
       mean_val_dist <- summarizePost(mean_val)[c(c("Mode","Median",
                                                    "Mean")[which(c("Mode","Median","Mean")== CenTend)],"HDIlow","HDIhigh")]
     }
+  } else {
+    mean_val_dist <- NA
   }
+  
   #Make NA if not from a beta distribution
   if (Distribution == "Beta") {
     mean_val_dist <- mean_val_dist

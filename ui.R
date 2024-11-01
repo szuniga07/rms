@@ -1,4 +1,4 @@
-                                
+                                  
 #The code below allows me to print 2 plots in the same panel.   
   shinyUI(  
     fluidPage( 
@@ -2466,7 +2466,7 @@
                    ),
                    br(),
                    h5("'Est.Prop.GT.Y'= Probability of value > Y; 'Est.Quantile.Y'= Percentile associated with your selected value; 'Est.Mean.Beta'= Mean from Beta distr. shape parameters."),
-                   h5("'Est.Effect.Size.2Y'= Posterior effect size between probabilities of 2 values above Y from the Beta distribution (e.g., if Beta Prob > Y when 0.61=0.69 and 0.70=0.37, then effect size= 0.57). Or simply effect sizes between the 2 proportions above from non Beta distributions (i.e., not from a posterior)."),
+                   h5("'Est.Effect.Size.2Y'= Posterior effect size between probabilities of 2 Y values from the Beta distribution (e.g., if Beta Prob > Y when 0.61=0.69 and 0.70=0.37, then effect size= 0.57). Or simply the effect sizes between the 2 proportions from non Beta distributions (i.e., not from a posterior)."),
                    h5("Consider using the median central tendency if probabilities appear unlikely because modes can randomly be extreme values."),
                    verbatimTextOutput("dbdaPropGt_output"),
                    br(),

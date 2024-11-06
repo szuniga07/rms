@@ -15103,8 +15103,8 @@ dbda_prop_gr_than_par3 <- reactive({
 #4. select the distribution type
 output$dbdaPropGtDist <- renderUI({
   selectInput("dbdaPgtDst", "4. Choose the distribution.", 
-              choices = c("Beta", "Normal", "Log-normal",  "Skew-normal"), multiple=FALSE, 
-              selected=c("Beta", "Normal", "Log-normal", "Skew-normal")[1])
+              choices = c("Beta", "Normal", "Log-normal",  "Skew-normal", "t"), multiple=FALSE, 
+              selected=c("Beta", "Normal", "Log-normal", "Skew-normal", "t")[1])
 })
 #4A. Reactive function for above
 dbda_prop_gr_than_distr <- reactive({
@@ -16061,27 +16061,28 @@ fncPropGtY <- function( Coda.Object=NULL, Distribution=NULL, yVal=NULL, qVal=NUL
   ###################
   ## Mean for Beta ##
   ###################
-  if(!is.null(yVal)) {
+  #if(!is.null(yVal)) {
     if(Distribution == "Beta") {
       mean_val <- a_shape/MC.Matrix[, Spread]
     }
-  }
+#  }
   
-  if(!is.null(yVal)) {
+#  if(!is.null(yVal)) {
     if(Distribution == "Beta") {
       mean_val_dist <- summarizePost(mean_val)[c(c("Mode","Median",
                                                    "Mean")[which(c("Mode","Median","Mean")== CenTend)],"HDIlow","HDIhigh")]
     }
-  } else {
+ # } 
+  else {
     mean_val_dist <- NA
   }
   
   #Make NA if not from a beta distribution
-  if (Distribution == "Beta") {
-    mean_val_dist <- mean_val_dist
-  } else {
-    mean_val_dist <- NA
-  }
+#  if (Distribution == "Beta") {
+#    mean_val_dist <- mean_val_dist
+#  } else {
+#    mean_val_dist <- NA
+#  }
   
   #######################
   ## Beta distribution ##
@@ -16260,6 +16261,46 @@ fncPropGtY <- function( Coda.Object=NULL, Distribution=NULL, yVal=NULL, qVal=NUL
   } else {
     QsnormGtY <- QsnormGtY
   } 
+
+  ####################
+  ## t distribution ##
+  ####################
+  ## Get summary ##
+  # Proportion greater than Y
+  PtGtY <- list()
+  if(!is.null(yVal)) {
+    if(Distribution == "t") {
+      for (i in 1:length(yVal)) {
+        PtGtY[[i]] <- summarizePost( pt(q=yVal[i], df= MC.Matrix[, Skew], 
+                                        ncp= MC.Matrix[, Center], lower.tail=FALSE) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+        names(PtGtY)[i] <- paste0("Y_", yVal[i])
+      }
+    }
+  }
+  # Quantiles of Y
+  QtGtY <- list()
+  if(!is.null(qVal)) {
+    if(Distribution == "t") {
+      for (i in 1:length(qVal)) {
+        QtGtY[[i]] <- summarizePost( qt(p=qVal[i], df= MC.Matrix[, Skew], 
+                                        ncp= MC.Matrix[, Center]) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+        names(QtGtY)[i] <- paste0("Percentile_", qVal[i])
+      }
+    }
+  }
+  #Return NAs for NULL objects
+  #probability
+  if (length(PtGtY)==0 ) {
+    PtGtY <- NA
+  } else {
+    PtGtY <- PtGtY
+  } 
+  #quantile
+  if (length(QtGtY)==0 ) {
+    QtGtY <- NA
+  } else {
+    QtGtY <- QtGtY
+  } 
   
   ######################################
   ## Create final distribution values ##
@@ -16277,6 +16318,9 @@ fncPropGtY <- function( Coda.Object=NULL, Distribution=NULL, yVal=NULL, qVal=NUL
   if (Distribution == "Skew-normal") {
     PdisGtY <- PsnormGtY
   } 
+  if (Distribution == "t") {
+    PdisGtY <- PtGtY
+  } 
   #Make NA if the above weren't selected
   if (is.null(PdisGtY)) {
     PdisGtY <- NA
@@ -16293,6 +16337,9 @@ fncPropGtY <- function( Coda.Object=NULL, Distribution=NULL, yVal=NULL, qVal=NUL
   } 
   if (Distribution == "Skew-normal") {
     QdisGtY <- QsnormGtY
+  } 
+  if (Distribution == "t") {
+    QdisGtY <- QtGtY
   } 
   #Make NA if the above weren't selected
   if (is.null(QdisGtY)) {

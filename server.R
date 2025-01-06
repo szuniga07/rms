@@ -14312,8 +14312,8 @@ output$dbdaPostSumCenTen <- renderUI({
 #9. select the distribution type
 output$dbdaPostSumDist <- renderUI({
   selectInput("dbdaPstSmDst", "9. Choose the distribution.", 
-              choices = c("Beta", "Log-normal", "Normal", "t"), multiple=FALSE, 
-              selected=c("Beta", "Log-normal", "Normal", "t")[1])
+              choices = c("Beta", "Log-normal", "Normal", "t", "Weibull"), multiple=FALSE, 
+              selected=c("Beta", "Log-normal", "Normal", "t", "Weibull")[1])
 })
 #9A. Reactive function for above
 dbda_post_summary_distr <- reactive({
@@ -14616,11 +14616,11 @@ output$plotDbdaHierEstimation <- renderPlot({
 #1. select the distribution/Posterior Predictive type
 output$dbdaPostCheckDist <- renderUI({
   selectInput("dbdaPcgDst", "1. Posterior Predictive Check type.", 
-              choices = c("Normal", "Log-normal", "Skew-normal", "t: 1 group", "t: ANOVA", 
+              choices = c("Normal", "Log-normal", "Skew-normal", "Weibull", "t: 1 group", "t: ANOVA", 
                           "OLS: Linear", "OLS: Quadratic", "OLS: Cubic", "OLS: DID", 
                           "Logistic: Linear", "Logistic: Quadratic", 
                           "Logistic: Cubic"), multiple=FALSE, 
-              selected= c("Normal", "Log-normal", "Skew-normal", "t: 1 group", "t: ANOVA", 
+              selected= c("Normal", "Log-normal", "Skew-normal", "Weibull", "t: 1 group", "t: ANOVA", 
                           "OLS: Linear", "OLS: Quadratic", "OLS: Cubic", "OLS: DID",
                           "Logistic: Linear", "Logistic: Quadratic", 
                           "Logistic: Cubic")[1])
@@ -14675,7 +14675,7 @@ dbda_post_check_grp_level_X <- reactive({
 })
 #6. Select the mean parameter
 output$dbdaPostCheckParMn <- renderUI({                                
-  selectInput("dbdaPcgPM", "6. Select mean parameter.",       
+  selectInput("dbdaPcgPM", "6. Select mean or 1st parameter.",       
               choices = DBDA_parameter_Names(), multiple=FALSE, 
               selected=DBDA_parameter_Names()[1] )   
 })
@@ -14685,7 +14685,7 @@ dbda_post_check_grp_pm <- reactive({
 })
 #7. Select the SD parameter
 output$dbdaPostCheckParSD <- renderUI({                                
-  selectInput("dbdaPcgPSD", "7. Select SD parameter.",       
+  selectInput("dbdaPcgPSD", "7. Select SD or 2nd parameter.",       
               choices = setdiff(DBDA_parameter_Names(), dbda_post_check_grp_pm()), 
               multiple=FALSE, selected= setdiff(DBDA_parameter_Names(), dbda_post_check_grp_pm())[1] )   
 })
@@ -14695,7 +14695,7 @@ dbda_post_check_grp_psd <- reactive({
 })
 #8. Select the mean parameter
 output$dbdaPostCheckParNu <- renderUI({                                
-  selectInput("dbdaPcgPNu", "8. Select V (nu) or Skew parameter.",       
+  selectInput("dbdaPcgPNu", "8. Select V, Skew, or 3rd parameter.",       
               choices = DBDA_parameter_Names(), multiple=FALSE, 
               selected=DBDA_parameter_Names()[1] )   
 })
@@ -14953,6 +14953,27 @@ plot_dbda_posterior_group_check <- reactive({
                                               PCol = dbda_post_check_point_colors(),
                                               Add.Lgd= dbda_post_check_add_legend(), 
                                               Leg.Loc=dbda_post_check_legend_location() ) , 
+           "Weibull" =     fncGrpPostPredCheck(Coda.Object=DBDA_coda_object_df(), mydf=df(), 
+                                                   Outcome=dbda_post_check_grp_Y(), Group=dbda_post_check_grp_X(), 
+                                                   Group.Level=dbda_post_check_grp_level_X(), 
+                                                   Mean.Var=dbda_post_check_grp_pm(), 
+                                                   SD.Var=dbda_post_check_grp_psd(), MCnu= dbda_post_check_grp_pnu(),
+                                                   Distribution=dbda_post_check_grp_distr(), 
+                                                   Num.Lines=dbda_post_check_grp_number_lines(), 
+                                                   Main.Title=dbda_post_check_grp_main_title(), 
+                                                   X.Lab=dbda_post_check_grp_x_label(), 
+                                                   Bar.Color=dbda_post_check_grp_bar_colors(), 
+                                                   Line.Color=dbda_post_check_grp_line_colors(), 
+                                                   Hist.Breaks=dbda_post_check_grp_number_bars(), 
+                                                   CEX.size=dbda_post_check_grp_label_multiplier(), 
+                                                   X.Lim=(eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
+                                                   Y.Lim=(eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
+                                                   Min.Val=dbda_post_check_grp_min_value(), 
+                                                   Round.Digits=dbda_post_check_grp_round_place(),
+                                                   Point.Loc= (eval(parse(text=dbda_post_check_grp_x_axis_points() )) ),
+                                                   PCol = dbda_post_check_point_colors(),
+                                                   Add.Lgd= dbda_post_check_add_legend(), 
+                                                   Leg.Loc=dbda_post_check_legend_location() ) , 
            "t: 1 group" = fncPlotSingleT(codaSamples=DBDA_coda_object_df(), datFrm=df(), 
                                        yName=dbda_post_check_grp_Y(), 
                                        MCmean=dbda_post_check_grp_pm(), 
@@ -15072,7 +15093,7 @@ output$plotDbdaPostCheckGroup <- renderPlot({
 #######################################
 #1. Select the main parameter
 output$dbdaPropGtPar1 <- renderUI({                                
-  selectInput("dbdaPgtP1", "1. Select 'Center' parameter.",       
+  selectInput("dbdaPgtP1", "1. Select 'Center' or 1st parameter.",       
               choices = DBDA_parameter_Names(), multiple=FALSE, 
               selected= DBDA_parameter_Names()[1] )   
 })
@@ -15082,7 +15103,7 @@ dbda_prop_gr_than_par1 <- reactive({
 })
 #2. Select the 2nd parameter
 output$dbdaPropGtPar2 <- renderUI({                                
-  selectInput("dbdaPgtP2", "2. Select 'Spread' parameter.",       
+  selectInput("dbdaPgtP2", "2. Select 'Spread' or 2nd parameter.",       
               choices = setdiff(DBDA_parameter_Names(), dbda_prop_gr_than_par1()), 
               multiple=FALSE, selected=setdiff(DBDA_parameter_Names(), dbda_prop_gr_than_par1())[1] )   
 })
@@ -15092,7 +15113,7 @@ dbda_prop_gr_than_par2 <- reactive({
 })
 #3. Select the 3rd parameter
 output$dbdaPropGtPar3 <- renderUI({                                
-  selectInput("dbdaPgtP3", "3. Select 'Skew' parameter.",       
+  selectInput("dbdaPgtP3", "3. Select V, 'Skew' or 3rd parameter.",       
               choices = setdiff(DBDA_parameter_Names(), dbda_prop_gr_than_par1()), 
               multiple=FALSE, selected=setdiff(DBDA_parameter_Names(), dbda_prop_gr_than_par1())[1] )   
 })
@@ -15103,8 +15124,8 @@ dbda_prop_gr_than_par3 <- reactive({
 #4. select the distribution type
 output$dbdaPropGtDist <- renderUI({
   selectInput("dbdaPgtDst", "4. Choose the distribution.", 
-              choices = c("Beta", "Normal", "Log-normal",  "Skew-normal", "t"), multiple=FALSE, 
-              selected=c("Beta", "Normal", "Log-normal", "Skew-normal", "t")[1])
+              choices = c("Beta", "Normal", "Log-normal",  "Skew-normal", "t", "Weibull"), multiple=FALSE, 
+              selected=c("Beta", "Normal", "Log-normal", "Skew-normal", "t", "Weibull")[1])
 })
 #4A. Reactive function for above
 dbda_prop_gr_than_distr <- reactive({
@@ -15872,6 +15893,12 @@ fncGrpPostPredCheck <- function(Coda.Object, mydf, Outcome, Group, Group.Level,
              dsn( xComb, xi=MC.Chain[chnIdx, Mean.Var], omega=MC.Chain[chnIdx, SD.Var],
                   alpha=MC.Chain[chnIdx, MCnu]), col= Line.Color )
     }
+    #Weibull Distribution
+    if (Distribution == "Weibull") {
+      lines( xComb ,
+             dweibull( xComb, shape=MC.Chain[chnIdx, Mean.Var], scale=MC.Chain[chnIdx, SD.Var] ),
+             col= Line.Color )
+    }
     #Add points 
     if (!is.null(Point.Loc)) {
       for (i in 1:length(Point.Loc)) {
@@ -16302,6 +16329,46 @@ fncPropGtY <- function( Coda.Object=NULL, Distribution=NULL, yVal=NULL, qVal=NUL
     QtGtY <- QtGtY
   } 
   
+  ##########################
+  ## Weibull distribution ##
+  ##########################
+  ## Get summary ##
+  # Proportion greater than Y
+  PWeibGtY <- list()
+  if(!is.null(yVal)) {
+    if(Distribution == "Weibull") {
+      for (i in 1:length(yVal)) {
+        PWeibGtY[[i]] <- summarizePost( pweibull(q=yVal[i], shape= MC.Matrix[, Center], 
+                                                 scale= MC.Matrix[, Spread], lower.tail=FALSE) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+        names(PWeibGtY)[i] <- paste0("Y_", yVal[i])
+      }
+    }
+  }
+  # Quantiles of Y
+  QWeibGtY <- list()
+  if(!is.null(qVal)) {
+    if(Distribution == "Weibull") {
+      for (i in 1:length(qVal)) {
+        QWeibGtY[[i]] <- summarizePost( qweibull(p=qVal[i], shape= MC.Matrix[, Center], 
+                                                 scale= MC.Matrix[, Spread]) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+        names(QWeibGtY)[i] <- paste0("Percentile_", qVal[i])
+      }
+    }
+  }
+  #Return NAs for NULL objects
+  #probability
+  if (length(PWeibGtY)==0 ) {
+    PWeibGtY <- NA
+  } else {
+    PWeibGtY <- PWeibGtY
+  } 
+  #quantile
+  if (length(QWeibGtY)==0 ) {
+    QWeibGtY <- NA
+  } else {
+    QWeibGtY <- QWeibGtY
+  } 
+  
   ######################################
   ## Create final distribution values ##
   ######################################
@@ -16320,6 +16387,9 @@ fncPropGtY <- function( Coda.Object=NULL, Distribution=NULL, yVal=NULL, qVal=NUL
   } 
   if (Distribution == "t") {
     PdisGtY <- PtGtY
+  } 
+  if (Distribution == "Weibull") {
+    PdisGtY <- PWeibGtY
   } 
   #Make NA if the above weren't selected
   if (is.null(PdisGtY)) {
@@ -16340,6 +16410,9 @@ fncPropGtY <- function( Coda.Object=NULL, Distribution=NULL, yVal=NULL, qVal=NUL
   } 
   if (Distribution == "t") {
     QdisGtY <- QtGtY
+  } 
+  if (Distribution == "Weibull") {
+    QdisGtY <- QWeibGtY
   } 
   #Make NA if the above weren't selected
   if (is.null(QdisGtY)) {

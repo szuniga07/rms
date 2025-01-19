@@ -14312,8 +14312,8 @@ output$dbdaPostSumCenTen <- renderUI({
 #9. select the distribution type
 output$dbdaPostSumDist <- renderUI({
   selectInput("dbdaPstSmDst", "9. Choose the distribution.", 
-              choices = c("Beta", "Log-normal", "Normal", "t", "Weibull"), multiple=FALSE, 
-              selected=c("Beta", "Log-normal", "Normal", "t", "Weibull")[1])
+              choices = c("Beta", "Log-normal", "Normal", "t", "Weibull", "Gamma"), multiple=FALSE, 
+              selected=c("Beta", "Log-normal", "Normal", "t", "Weibull", "Gamma")[1])
 })
 #9A. Reactive function for above
 dbda_post_summary_distr <- reactive({
@@ -14616,11 +14616,11 @@ output$plotDbdaHierEstimation <- renderPlot({
 #1. select the distribution/Posterior Predictive type
 output$dbdaPostCheckDist <- renderUI({
   selectInput("dbdaPcgDst", "1. Posterior Predictive Check type.", 
-              choices = c("Normal", "Log-normal", "Skew-normal", "Weibull", "t: 1 group", "t: ANOVA", 
+              choices = c("Normal", "Log-normal", "Skew-normal", "Weibull", "Gamma", "t: 1 group", "t: ANOVA", 
                           "OLS: Linear", "OLS: Quadratic", "OLS: Cubic", "OLS: DID", 
                           "Logistic: Linear", "Logistic: Quadratic", 
                           "Logistic: Cubic"), multiple=FALSE, 
-              selected= c("Normal", "Log-normal", "Skew-normal", "Weibull", "t: 1 group", "t: ANOVA", 
+              selected= c("Normal", "Log-normal", "Skew-normal", "Weibull", "Gamma", "t: 1 group", "t: ANOVA", 
                           "OLS: Linear", "OLS: Quadratic", "OLS: Cubic", "OLS: DID",
                           "Logistic: Linear", "Logistic: Quadratic", 
                           "Logistic: Cubic")[1])
@@ -14974,6 +14974,27 @@ plot_dbda_posterior_group_check <- reactive({
                                                    PCol = dbda_post_check_point_colors(),
                                                    Add.Lgd= dbda_post_check_add_legend(), 
                                                    Leg.Loc=dbda_post_check_legend_location() ) , 
+           "Gamma" =     fncGrpPostPredCheck(Coda.Object=DBDA_coda_object_df(), mydf=df(), 
+                                               Outcome=dbda_post_check_grp_Y(), Group=dbda_post_check_grp_X(), 
+                                               Group.Level=dbda_post_check_grp_level_X(), 
+                                               Mean.Var=dbda_post_check_grp_pm(), 
+                                               SD.Var=dbda_post_check_grp_psd(), MCnu= dbda_post_check_grp_pnu(),
+                                               Distribution=dbda_post_check_grp_distr(), 
+                                               Num.Lines=dbda_post_check_grp_number_lines(), 
+                                               Main.Title=dbda_post_check_grp_main_title(), 
+                                               X.Lab=dbda_post_check_grp_x_label(), 
+                                               Bar.Color=dbda_post_check_grp_bar_colors(), 
+                                               Line.Color=dbda_post_check_grp_line_colors(), 
+                                               Hist.Breaks=dbda_post_check_grp_number_bars(), 
+                                               CEX.size=dbda_post_check_grp_label_multiplier(), 
+                                               X.Lim=(eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
+                                               Y.Lim=(eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
+                                               Min.Val=dbda_post_check_grp_min_value(), 
+                                               Round.Digits=dbda_post_check_grp_round_place(),
+                                               Point.Loc= (eval(parse(text=dbda_post_check_grp_x_axis_points() )) ),
+                                               PCol = dbda_post_check_point_colors(),
+                                               Add.Lgd= dbda_post_check_add_legend(), 
+                                               Leg.Loc=dbda_post_check_legend_location() ) , 
            "t: 1 group" = fncPlotSingleT(codaSamples=DBDA_coda_object_df(), datFrm=df(), 
                                        yName=dbda_post_check_grp_Y(), 
                                        MCmean=dbda_post_check_grp_pm(), 
@@ -15124,8 +15145,8 @@ dbda_prop_gr_than_par3 <- reactive({
 #4. select the distribution type
 output$dbdaPropGtDist <- renderUI({
   selectInput("dbdaPgtDst", "4. Choose the distribution.", 
-              choices = c("Beta", "Normal", "Log-normal",  "Skew-normal", "t", "Weibull"), multiple=FALSE, 
-              selected=c("Beta", "Normal", "Log-normal", "Skew-normal", "t", "Weibull")[1])
+              choices = c("Beta", "Normal", "Log-normal",  "Skew-normal", "t", "Weibull", "Gamma"), multiple=FALSE, 
+              selected=c("Beta", "Normal", "Log-normal", "Skew-normal", "t", "Weibull", "Gamma")[1])
 })
 #4A. Reactive function for above
 dbda_prop_gr_than_distr <- reactive({
@@ -15899,6 +15920,12 @@ fncGrpPostPredCheck <- function(Coda.Object, mydf, Outcome, Group, Group.Level,
              dweibull( xComb, shape=MC.Chain[chnIdx, Mean.Var], scale=MC.Chain[chnIdx, SD.Var] ),
              col= Line.Color )
     }
+    #Gamma Distribution
+    if (Distribution == "Gamma") {
+      lines( xComb ,
+             dgamma( xComb, shape=MC.Chain[chnIdx, Mean.Var], rate=MC.Chain[chnIdx, SD.Var] ),
+             col= Line.Color )
+    }
     #Add points 
     if (!is.null(Point.Loc)) {
       for (i in 1:length(Point.Loc)) {
@@ -16368,6 +16395,46 @@ fncPropGtY <- function( Coda.Object=NULL, Distribution=NULL, yVal=NULL, qVal=NUL
   } else {
     QWeibGtY <- QWeibGtY
   } 
+
+  ########################
+  ## Gamma distribution ##
+  ########################
+  ## Get summary ##
+  # Proportion greater than Y
+  PGammaGtY <- list()
+  if(!is.null(yVal)) {
+    if(Distribution == "Gamma") {
+      for (i in 1:length(yVal)) {
+        PGammaGtY[[i]] <- summarizePost( pgamma(q=yVal[i], shape= MC.Matrix[, Center], 
+                                                rate= MC.Matrix[, Spread], lower.tail=FALSE) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+        names(PGammaGtY)[i] <- paste0("Y_", yVal[i])
+      }
+    }
+  }
+  # Quantiles of Y
+  QGammaGtY <- list()
+  if(!is.null(qVal)) {
+    if(Distribution == "Gamma") {
+      for (i in 1:length(qVal)) {
+        QGammaGtY[[i]] <- summarizePost( qgamma(p=qVal[i], shape= MC.Matrix[, Center], 
+                                                rate= MC.Matrix[, Spread]) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+        names(QGammaGtY)[i] <- paste0("Percentile_", qVal[i])
+      }
+    }
+  }
+  #Return NAs for NULL objects
+  #probability
+  if (length(PGammaGtY)==0 ) {
+    PGammaGtY <- NA
+  } else {
+    PGammaGtY <- PGammaGtY
+  } 
+  #quantile
+  if (length(QGammaGtY)==0 ) {
+    QGammaGtY <- NA
+  } else {
+    QGammaGtY <- QGammaGtY
+  } 
   
   ######################################
   ## Create final distribution values ##
@@ -16391,6 +16458,9 @@ fncPropGtY <- function( Coda.Object=NULL, Distribution=NULL, yVal=NULL, qVal=NUL
   if (Distribution == "Weibull") {
     PdisGtY <- PWeibGtY
   } 
+  if (Distribution == "Gamma") {
+    PdisGtY <- PGammaGtY
+  } 
   #Make NA if the above weren't selected
   if (is.null(PdisGtY)) {
     PdisGtY <- NA
@@ -16413,6 +16483,9 @@ fncPropGtY <- function( Coda.Object=NULL, Distribution=NULL, yVal=NULL, qVal=NUL
   } 
   if (Distribution == "Weibull") {
     QdisGtY <- QWeibGtY
+  } 
+  if (Distribution == "Gamma") {
+    QdisGtY <- QGammaGtY
   } 
   #Make NA if the above weren't selected
   if (is.null(QdisGtY)) {

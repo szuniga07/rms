@@ -14813,12 +14813,16 @@ output$dbdaPostCheckYaxisLims <- renderUI({
 dbda_post_check_grp_y_axis_limits <- reactive({                 
   input$dbdaPcgYLms 
 })
-#21b. Set the selected minimum value based on t-distribution or not
-dbda_post_check_min_value_choice <- reactive({                 
+#21c. Get the range of values
+dbda_post_check_range_y <- reactive({                 
+  range( df()[, dbda_post_check_grp_Y()], na.rm=T)
+})
+#21b. Set the selected minimum value 
+dbda_post_check_min_value_choice <- reactive({
   if (dbda_post_check_grp_distr() == "t") {
     95
   } else {
-     0
+    dbda_post_check_range_y()[1]
   }
 })
 #21. Select label minimum value
@@ -14830,60 +14834,73 @@ output$dbdaPostCheckMinVal <- renderUI({
 dbda_post_check_grp_min_value <- reactive({                 
   input$dbdaPcgLbMV 
 })
-#22. X-axis points
-output$dbdaPostCheckXaxisPoint <- renderUI({                                 
-  textInput("dbdaPcgXPts", "22. Add X-axis point(s).",
-            value = paste0('c( ', ')'))
+#22b. Set the selected maximum value 
+dbda_post_check_max_value_choice <- reactive({                 
+  dbda_post_check_range_y()[2]
+})
+#22. Select label minimum value
+output$dbdaPostCheckMaxVal <- renderUI({                                 
+  numericInput("dbdaPcgLbMxV", "22. List maximum value.",
+               value = dbda_post_check_max_value_choice(), step = 1)
 })
 #22a. Reactive function for directly above
+dbda_post_check_grp_max_value <- reactive({                 
+  input$dbdaPcgLbMxV 
+})
+#23. X-axis points
+output$dbdaPostCheckXaxisPoint <- renderUI({                                 
+  textInput("dbdaPcgXPts", "23. Add X-axis point(s).",
+            value = paste0('c( ', ')'))
+})
+#23a. Reactive function for directly above
 dbda_post_check_grp_x_axis_points <- reactive({                 
   input$dbdaPcgXPts 
 })
-#23. Select point colors 
+#24. Select point colors 
 output$dbdaPostCheckPointCol <- renderUI({                                 
-  selectInput("dbdaPcgPntCl", "23. Select point color.", 
+  selectInput("dbdaPcgPntCl", "24. Select point color.", 
               choices = xyplot_Line_Color_Names(), multiple=TRUE, selected= "red")     
 })
-#23a. Reactive function for directly above
+#24a. Reactive function for directly above
 dbda_post_check_point_colors <- reactive({                 
   input$dbdaPcgPntCl 
 })
 
-#24. Select whether to add a legend or not
+#25. Select whether to add a legend or not
 output$dbdaPostCheckAddLeg <- renderUI({
-  selectInput("dbdaPcgAdLgd", "24. Add the legend?",
+  selectInput("dbdaPcgAdLgd", "25. Add the legend?",
               choices = c("No", "Yes"),
               selected="No")
 })
-#24a. Reactive function for directly above
+#25a. Reactive function for directly above
 dbda_post_check_add_legend <- reactive({                 
   input$dbdaPcgAdLgd 
 })
-#25. Legend location
+#26. Legend location
 output$dbdaPostCheckLgdLoc <- renderUI({                                
-  selectInput("dbdaPcgLgdLc", "25. Select the legend location.",        
+  selectInput("dbdaPcgLgdLc", "26. Select the legend location.",        
               choices = c("bottomright","bottom","bottomleft","left","topleft","top","topright","right","center"), 
               multiple=FALSE, selected="topright" ) 
 })
-#25A. Reactive function for legend location
+#26A. Reactive function for legend location
 dbda_post_check_legend_location <- reactive({
   input$dbdaPcgLgdLc
 })
-#26. Select label size multiplier
+#27. Select label size multiplier
 output$dbdaPostCheckRndPlc <- renderUI({                                 
-  numericInput("dbdaPcgRP", "26. Round decimal places?",
+  numericInput("dbdaPcgRP", "27. Round decimal places?",
                value = 1, step = 1)
 })
-#26a. Reactive function for directly above
+#27a. Reactive function for directly above
 dbda_post_check_grp_round_place <- reactive({                 
   input$dbdaPcgRP 
 })
-#27. Do you want to run the function
+#28. Do you want to run the function
 output$dbdaPostCheckRun <- renderUI({
-  selectInput("dbdaPcgRn", "27. Run posterior plot?", 
+  selectInput("dbdaPcgRn", "28. Run posterior plot?", 
               choices = c("No", "Yes"), multiple=FALSE, selected="No")
 })
-#27A. Reactive function for above
+#28A. Reactive function for above
 dbda_post_check_grp_run_YN <- reactive({
   input$dbdaPcgRn
 })
@@ -14907,6 +14924,7 @@ plot_dbda_posterior_group_check <- reactive({
                                               X.Lim=(eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
                                               Y.Lim=(eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
                                               Min.Val=dbda_post_check_grp_min_value(), 
+                                              Max.Val=dbda_post_check_grp_max_value(), 
                                               Round.Digits=dbda_post_check_grp_round_place(),
                                               Point.Loc= (eval(parse(text=dbda_post_check_grp_x_axis_points() )) ),
                                               PCol = dbda_post_check_point_colors(),
@@ -14927,6 +14945,7 @@ plot_dbda_posterior_group_check <- reactive({
                                                   X.Lim=(eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
                                                   Y.Lim=(eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
                                                   Min.Val=dbda_post_check_grp_min_value(), 
+                                                  Max.Val=dbda_post_check_grp_max_value(), 
                                                   Round.Digits=dbda_post_check_grp_round_place(),
                                                   Point.Loc= (eval(parse(text=dbda_post_check_grp_x_axis_points() )) ),
                                                   PCol = dbda_post_check_point_colors(),
@@ -14948,6 +14967,7 @@ plot_dbda_posterior_group_check <- reactive({
                                               X.Lim=(eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
                                               Y.Lim=(eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
                                               Min.Val=dbda_post_check_grp_min_value(), 
+                                              Max.Val=dbda_post_check_grp_max_value(), 
                                               Round.Digits=dbda_post_check_grp_round_place(),
                                               Point.Loc= (eval(parse(text=dbda_post_check_grp_x_axis_points() )) ),
                                               PCol = dbda_post_check_point_colors(),
@@ -14969,7 +14989,8 @@ plot_dbda_posterior_group_check <- reactive({
                                                    X.Lim=(eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
                                                    Y.Lim=(eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
                                                    Min.Val=dbda_post_check_grp_min_value(), 
-                                                   Round.Digits=dbda_post_check_grp_round_place(),
+                                               Max.Val=dbda_post_check_grp_max_value(), 
+                                               Round.Digits=dbda_post_check_grp_round_place(),
                                                    Point.Loc= (eval(parse(text=dbda_post_check_grp_x_axis_points() )) ),
                                                    PCol = dbda_post_check_point_colors(),
                                                    Add.Lgd= dbda_post_check_add_legend(), 
@@ -14990,7 +15011,8 @@ plot_dbda_posterior_group_check <- reactive({
                                                X.Lim=(eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
                                                Y.Lim=(eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
                                                Min.Val=dbda_post_check_grp_min_value(), 
-                                               Round.Digits=dbda_post_check_grp_round_place(),
+                                             Max.Val=dbda_post_check_grp_max_value(), 
+                                             Round.Digits=dbda_post_check_grp_round_place(),
                                                Point.Loc= (eval(parse(text=dbda_post_check_grp_x_axis_points() )) ),
                                                PCol = dbda_post_check_point_colors(),
                                                Add.Lgd= dbda_post_check_add_legend(), 
@@ -15858,7 +15880,7 @@ fncGrpPostPredCheck <- function(Coda.Object, mydf, Outcome, Group, Group.Level,
                                 Mean.Var, SD.Var, MCnu, Distribution, Num.Lines=NULL, 
                                 Main.Title=NULL, X.Lab=NULL, Bar.Color=NULL, 
                                 Line.Color=NULL, Hist.Breaks=NULL, CEX.size=NULL, 
-                                X.Lim=NULL, Y.Lim=NULL, Min.Val=NULL, Round.Digits=NULL,
+                                X.Lim=NULL, Y.Lim=NULL, Min.Val=NULL, Max.Val=NULL, Round.Digits=NULL,
                                 Point.Loc= NULL, PCol=NULL, Add.Lgd= NULL, Leg.Loc= NULL) {
   #Make coda into as.matrix  
   MC.Chain <- as.matrix( Coda.Object )
@@ -15868,10 +15890,12 @@ fncGrpPostPredCheck <- function(Coda.Object, mydf, Outcome, Group, Group.Level,
   #Get a number of pseudo-random chains
   pltIdx <- floor(seq(1, chainLength, length= Num.Lines)) 
   #Get spread in outcome variable values
-  xComb <- seq( Min.Val , max(mydf[, Outcome], na.rm=TRUE) , length=501 )
+#  xComb <- seq( Min.Val , max(mydf[, Outcome], na.rm=TRUE) , length=501 )
+  xComb <- seq( Min.Val , Max.Val , length=501 )
   #Make X limit values, I can set my minimum value
   if (is.null(X.Lim)) {
-    X.Lim <- c(Min.Val, round(max(mydf[, Outcome], na.rm=TRUE), digits=Round.Digits))
+#    X.Lim <- c(Min.Val, round(max(mydf[, Outcome], na.rm=TRUE), digits=Round.Digits))
+    X.Lim <- c(Min.Val, round(Max.Val, digits=Round.Digits))
   }
   ## Graph ##
 #  par( mar=c(4,2,2.5,.25) , mgp=c(2.5,0.5,0) , pty="m" )

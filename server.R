@@ -7659,7 +7659,12 @@ output$prnt_desc_summ <- renderPrint({
   if (Desc_Summary_YN() == "Yes") {
     list("Summary"= Desc_Summary_Central_Tendency(),
          "Standard.Deviation"= Desc_Summary_SD(),
-         "Coefficient.of.Variation"= try(Desc_Summary_COV()) )
+         "Coefficient.of.Variation"= if(length(Desc_Summary_SD()) ==1) {
+           try(Desc_Summary_SD() / Desc_Summary_Central_Tendency()["Mean"])
+         } else {
+           try(Desc_Summary_COV()) 
+         }
+)
   }
 })
 

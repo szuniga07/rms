@@ -8,7 +8,7 @@
 #install.packages("meta")
 #install.packages("rpart")
 #install.packages("coxme") 
-   
+    
 library(shiny)
 library(ggplot2)
 library(jsonlite)
@@ -14621,11 +14621,11 @@ output$plotDbdaHierEstimation <- renderPlot({
 #1. select the distribution/Posterior Predictive type
 output$dbdaPostCheckDist <- renderUI({
   selectInput("dbdaPcgDst", "1. Posterior Predictive Check type.", 
-              choices = c("Normal", "Log-normal", "Skew-normal", "Weibull", "Gamma", "t: 1 group", "t: ANOVA", 
+              choices = c("Normal", "Log-normal", "Skew-normal", "Weibull", "Gamma", "t", "t: 1 group", "t: ANOVA", 
                           "OLS: Linear", "OLS: Quadratic", "OLS: Cubic", "OLS: DID", 
                           "Logistic: Linear", "Logistic: Quadratic", 
                           "Logistic: Cubic"), multiple=FALSE, 
-              selected= c("Normal", "Log-normal", "Skew-normal", "Weibull", "Gamma", "t: 1 group", "t: ANOVA", 
+              selected= c("Normal", "Log-normal", "Skew-normal", "Weibull", "Gamma", "t", "t: 1 group", "t: ANOVA", 
                           "OLS: Linear", "OLS: Quadratic", "OLS: Cubic", "OLS: DID",
                           "Logistic: Linear", "Logistic: Quadratic", 
                           "Logistic: Cubic")[1])
@@ -14824,7 +14824,8 @@ dbda_post_check_range_y <- reactive({
 })
 #21b. Set the selected minimum value 
 dbda_post_check_min_value_choice <- reactive({
-  if (dbda_post_check_grp_distr() == "t") {
+  #if (dbda_post_check_grp_distr() == "t") {
+  if (dbda_post_check_grp_distr() %in% c("t: 1 group", "t: ANOVA") ) {
     95
   } else {
     dbda_post_check_range_y()[1]
@@ -15022,6 +15023,28 @@ plot_dbda_posterior_group_check <- reactive({
                                                PCol = dbda_post_check_point_colors(),
                                                Add.Lgd= dbda_post_check_add_legend(), 
                                                Leg.Loc=dbda_post_check_legend_location() ) , 
+           "t" =     fncGrpPostPredCheck(Coda.Object=DBDA_coda_object_df(), mydf=df(), 
+                                         Outcome=dbda_post_check_grp_Y(), Group=dbda_post_check_grp_X(), 
+                                         Group.Level=dbda_post_check_grp_level_X(), 
+                                         Mean.Var=dbda_post_check_grp_pm(), 
+                                         SD.Var=dbda_post_check_grp_psd(), MCnu= dbda_post_check_grp_pnu(),
+                                         Distribution=dbda_post_check_grp_distr(), 
+                                         Num.Lines=dbda_post_check_grp_number_lines(), 
+                                         Main.Title=dbda_post_check_grp_main_title(), 
+                                         X.Lab=dbda_post_check_grp_x_label(), 
+                                         Bar.Color=dbda_post_check_grp_bar_colors(), 
+                                         Line.Color=dbda_post_check_grp_line_colors(), 
+                                         Hist.Breaks=dbda_post_check_grp_number_bars(), 
+                                         CEX.size=dbda_post_check_grp_label_multiplier(), 
+                                         X.Lim=(eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
+                                         Y.Lim=(eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
+                                         Min.Val=dbda_post_check_grp_min_value(), 
+                                         Max.Val=dbda_post_check_grp_max_value(), 
+                                         Round.Digits=dbda_post_check_grp_round_place(),
+                                         Point.Loc= (eval(parse(text=dbda_post_check_grp_x_axis_points() )) ),
+                                         PCol = dbda_post_check_point_colors(),
+                                         Add.Lgd= dbda_post_check_add_legend(), 
+                                         Leg.Loc=dbda_post_check_legend_location() ) , 
            "t: 1 group" = fncPlotSingleT(codaSamples=DBDA_coda_object_df(), datFrm=df(), 
                                        yName=dbda_post_check_grp_Y(), 
                                        MCmean=dbda_post_check_grp_pm(), 
@@ -15953,6 +15976,12 @@ fncGrpPostPredCheck <- function(Coda.Object, mydf, Outcome, Group, Group.Level,
     if (Distribution == "Gamma") {
       lines( xComb ,
              dgamma( xComb, shape=MC.Chain[chnIdx, Mean.Var], rate=MC.Chain[chnIdx, SD.Var] ),
+             col= Line.Color )
+    }
+    #t Distribution
+    if (Distribution == "t") {
+      lines( xComb ,
+             dt( xComb, df= MC.Chain[chnIdx, MCnu], ncp= MC.Chain[chnIdx, Mean.Var] ),
              col= Line.Color )
     }
     #Add points 

@@ -14317,8 +14317,8 @@ output$dbdaPostSumCenTen <- renderUI({
 #9. select the distribution type
 output$dbdaPostSumDist <- renderUI({
   selectInput("dbdaPstSmDst", "9. Choose the distribution.", 
-              choices = c("Beta", "Log-normal", "Normal", "t", "Weibull", "Gamma"), multiple=FALSE, 
-              selected=c("Beta", "Log-normal", "Normal", "t", "Weibull", "Gamma")[1])
+              choices = c("Beta", "Normal", "Log-normal", "Skew-normal", "Gamma", "Weibull", "t"), multiple=FALSE, 
+              selected=c("Beta", "Normal", "Log-normal", "Skew-normal", "Gamma", "Weibull", "t")[1])
 })
 #9A. Reactive function for above
 dbda_post_summary_distr <- reactive({

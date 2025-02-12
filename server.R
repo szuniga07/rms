@@ -14186,7 +14186,8 @@ dbda_post_run_Yes_No <- reactive({
 #20. Do you want to run the function
 output$dbdaPostEffSize <- renderUI({
   selectInput("dbdaPstES", "20. View effect size by distribution?", 
-              choices = c("No", "Beta"), multiple=FALSE, selected="No")
+              choices = c("No","Beta", "Normal", "Log-normal", "Skew-normal", "Gamma", "Weibull", "t"), 
+              multiple=FALSE, selected="No")
 })
 #20A. Reactive function for above
 dbda_post_effect_size <- reactive({
@@ -16639,9 +16640,17 @@ fncBayesEffectSize <- function( Coda.Object=NULL, Distribution=NULL,
     as2 <- (asin(sign( rowMeans(MC.Matrix[, yVal2, drop=FALSE]) ) * sqrt(abs( rowMeans(MC.Matrix[, yVal2, drop=FALSE]) ))))*2  
     Effect.Size.Output <- abs(as1 - as2 )
   }
-  
+  ##########
+  ## t  ##
+  ##########
+  if(Distribution %in% c("No","Beta", "Normal", "Log-normal", "Skew-normal", "Gamma", "Weibull", "t")) {
+    tnum <- abs(MC.Matrix[, yVal1[1]] - MC.Matrix[, yVal2[1]])  
+    tdenom <- mean(c(MC.Matrix[, yVal1[2]], MC.Matrix[, yVal2[2]]))
+    Effect.Size.Output <- tnum/tdenom
+  }
   return("Effect.Size.Posterior"=Effect.Size.Output )
 }
+
 
 ################################################################################
 #                9. Posterior Predictive Check for trend lines                 #

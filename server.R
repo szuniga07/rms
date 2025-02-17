@@ -14623,12 +14623,14 @@ output$plotDbdaHierEstimation <- renderPlot({
 output$dbdaPostCheckDist <- renderUI({
   selectInput("dbdaPcgDst", "1. Posterior Predictive Check type.", 
               choices = c("Normal", "Log-normal", "Skew-normal", "Weibull", "Gamma", "t", "t: 1 group", "t: ANOVA", 
-                          "OLS: Linear", "OLS: Quadratic", "OLS: Cubic", "OLS: DID", 
-                          "Logistic: Linear", "Logistic: Quadratic", 
+                          "OLS: Linear", "OLS: Quadratic", "OLS: Cubic", 
+                          "Hierarchical OLS: Linear", "Hierarchical OLS: Quadratic", "Hierarchical OLS: Cubic",
+                          "OLS: DID", "Logistic: Linear", "Logistic: Quadratic", 
                           "Logistic: Cubic"), multiple=FALSE, 
               selected= c("Normal", "Log-normal", "Skew-normal", "Weibull", "Gamma", "t", "t: 1 group", "t: ANOVA", 
-                          "OLS: Linear", "OLS: Quadratic", "OLS: Cubic", "OLS: DID",
-                          "Logistic: Linear", "Logistic: Quadratic", 
+                          "OLS: Linear", "OLS: Quadratic", "OLS: Cubic", 
+                          "Hierarchical OLS: Linear", "Hierarchical OLS: Quadratic", "Hierarchical OLS: Cubic",
+                          "OLS: DID", "Logistic: Linear", "Logistic: Quadratic", 
                           "Logistic: Cubic")[1])
 })
 #1A. Reactive function for above
@@ -15149,7 +15151,52 @@ plot_dbda_posterior_group_check <- reactive({
                                                  Y.Lim= (eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
                                                  PCol= dbda_post_check_point_colors(), 
                                                  Add.Lgd= dbda_post_check_add_legend(), 
-                                                 Leg.Loc= dbda_post_check_legend_location()) 
+                                                 Leg.Loc= dbda_post_check_legend_location()),
+           "Hierarchical OLS: Linear" = fncBayesMultiOlsPrtPred(Coda.Object=DBDA_coda_object_df() , mydf=df(), 
+                                                         Reg.Type= dbda_post_check_grp_distr(),
+                                                         Outcome= dbda_post_check_grp_Y(), 
+                                                         Group= dbda_post_check_grp_X(),
+                                                         xName= dbda_post_check_part_pred_X(), 
+                                                         parX= dbda_post_check_part_pred_pars(), 
+                                                         Main.Title= dbda_post_check_grp_main_title(), 
+                                                         X.Lab= dbda_post_check_grp_x_label(), 
+                                                         Line.Color= dbda_post_check_grp_line_colors(), 
+                                                         CEX.size= dbda_post_check_grp_label_multiplier(), 
+                                                         X.Lim= (eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ), 
+                                                         Y.Lim= (eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
+                                                         PCol= dbda_post_check_point_colors(), 
+                                                         Add.Lgd= dbda_post_check_add_legend(), 
+                                                         Leg.Loc= dbda_post_check_legend_location()),
+           "Hierarchical OLS: Quadratic" = fncBayesMultiOlsPrtPred(Coda.Object=DBDA_coda_object_df() , mydf=df(), 
+                                                         Reg.Type= dbda_post_check_grp_distr(),
+                                                         Outcome= dbda_post_check_grp_Y(), 
+                                                         Group= dbda_post_check_grp_X(),
+                                                         xName= dbda_post_check_part_pred_X(), 
+                                                         parX= dbda_post_check_part_pred_pars(), 
+                                                         Main.Title= dbda_post_check_grp_main_title(), 
+                                                         X.Lab= dbda_post_check_grp_x_label(), 
+                                                         Line.Color= dbda_post_check_grp_line_colors(), 
+                                                         CEX.size= dbda_post_check_grp_label_multiplier(), 
+                                                         X.Lim= (eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ), 
+                                                         Y.Lim= (eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
+                                                         PCol= dbda_post_check_point_colors(), 
+                                                         Add.Lgd= dbda_post_check_add_legend(), 
+                                                         Leg.Loc= dbda_post_check_legend_location()),
+           "Hierarchical OLS: Cubic" = fncBayesMultiOlsPrtPred(Coda.Object=DBDA_coda_object_df() , mydf=df(), 
+                                                         Reg.Type= dbda_post_check_grp_distr(),
+                                                         Outcome= dbda_post_check_grp_Y(), 
+                                                         Group= dbda_post_check_grp_X(),
+                                                         xName= dbda_post_check_part_pred_X(), 
+                                                         parX= dbda_post_check_part_pred_pars(), 
+                                                         Main.Title= dbda_post_check_grp_main_title(), 
+                                                         X.Lab= dbda_post_check_grp_x_label(), 
+                                                         Line.Color= dbda_post_check_grp_line_colors(), 
+                                                         CEX.size= dbda_post_check_grp_label_multiplier(), 
+                                                         X.Lim= (eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ), 
+                                                         Y.Lim= (eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
+                                                         PCol= dbda_post_check_point_colors(), 
+                                                         Add.Lgd= dbda_post_check_add_legend(), 
+                                                         Leg.Loc= dbda_post_check_legend_location())
            )
   }
 })
@@ -16922,6 +16969,198 @@ fncBayesOlsPrtPred <- function(Coda.Object=NULL , mydf=NULL,  Reg.Type=NULL,
   #-----------------------------------------------------------------------------
 }
 ################################################################################
+
+################################################################################
+#             10. Function to sort parameter names into a list                 #
+################################################################################
+fncBayesMultiOlsPPpar <- function(Coda.Object=NULL , mydf=NULL,  Reg.Type=NULL, 
+                                  Outcome=NULL , Group=NULL,
+                                  xName=NULL, parX=NULL) {
+  #Make list of parameter names, requires that they are entered by parameter type
+  num_parX <- length(parX) #number of parameters
+  #Create lists to store parameters
+  if(Reg.Type == "Hierarchical OLS: Linear") {
+    parX_ls <- vector(mode="list", length= num_parX/2)
+    num_parX_types <- 2 #The number of parameters for linear models
+  }
+  #Use this for a quadratic model
+  if(Reg.Type == "Hierarchical OLS: Quadratic") {
+    parX_ls <- vector(mode="list", length= num_parX/3)
+    num_parX_types <- 3 #The number of parameters for quadratic models
+  }
+  #Use this for a cubic model
+  if(Reg.Type == "Hierarchical OLS: Cubic") {
+    parX_ls <- vector(mode="list", length= num_parX/4)
+    num_parX_types <- 4 #The number of parameters for cubic models
+  }
+  #Put parameters into the list in the appropriate order
+  group_sorted_parX <- list()
+  if(Reg.Type == "Hierarchical OLS: Linear") {
+    for (i in 1:(num_parX/num_parX_types)) {
+      group_sorted_parX[[i]] <- parX[seq(i, i + (num_parX/num_parX_types), by= num_parX/num_parX_types)]
+    }
+  }
+  #Quadratic models
+  if(Reg.Type == "Hierarchical OLS: Quadratic") {
+    for (i in 1:(num_parX/num_parX_types)) {
+      group_sorted_parX[[i]] <- parX[seq(i, i + (num_parX/num_parX_types)*2, by= num_parX/num_parX_types)]
+    }
+  }
+  #Cubic models
+  if(Reg.Type == "Hierarchical OLS: Cubic") {
+    for (i in 1:(num_parX/num_parX_types)) {
+      group_sorted_parX[[i]] <- parX[seq(i, i + (num_parX/num_parX_types)*3, by= num_parX/num_parX_types)]
+    }
+  }
+  return(group_sorted_parX)
+}
+
+################################################################################
+#                11. Function to put coefficients into a formula               #
+################################################################################
+fncBayesOlsPPcoef <- function( parX=NULL, Coda.Object=NULL , mydf=NULL,  
+                               Reg.Type=NULL, Outcome=NULL, Group=NULL, 
+                               xName=NULL) {
+  #Makes the mcmc object
+  mcmcMat = as.matrix(Coda.Object, chains=TRUE)
+  #parX vector stores the parameter names from the chains
+  #xName has X variable names
+  #Vector with X variable mean values
+  txVarMeans <- colMeans(mydf[, xName, drop=FALSE], na.rm=TRUE)
+  #Get beta coefficient names
+  tlCoef <- vector()
+  for (i in 1:length(parX)) {
+    tlCoef[i] <- paste0("tlis$B", i-1, "[i]")
+  }
+  #Combines object elements and variable means for polynomial models. 
+  ttfrm <- cbind(tlCoef[-1], txVarMeans)
+  #This will change the mean value to the xComb for linear models
+  if (Reg.Type %in% c("Hierarchical OLS: Linear", "Hierarchical OLS: Quadratic", "Hierarchical OLS: Cubic") ) {
+    ttfrm[1, 2] <- "xComb"
+  }
+  #This will change the mean value to the xComb^2 for quadratic models
+  if (Reg.Type %in% c("Hierarchical OLS: Quadratic", "Hierarchical OLS: Cubic")) {
+    ttfrm[2, 2] <- "xComb^2" 
+  }
+  #This will change the mean value to the xComb^3 for cubic models
+  if (Reg.Type %in% c("Hierarchical OLS: Cubic")) {
+    ttfrm[2, 3] <- "xComb^3" 
+  }
+  #This multiplies each coefficient by the x-value and stores it in a vector
+  ttnew <- vector()
+  for (i in 1:nrow(ttfrm)) {
+    ttnew[i] <- paste(ttfrm[i, ], collapse = "*")
+  }
+  #This adds coefficients*x-value and put in intercept
+  ttnew2 <- paste(c(tlCoef[1], ttnew), collapse = "+")
+  #Make list that has key parameter names
+  tlis <- list()
+  for (i in 1:length(parX)) {
+    tlis[[i]] <- NA
+    names(tlis)[i] <- paste0("B", i-1)
+  }
+  #This adds coefficients to each of the key parameter names
+  #This creates the values needed for the graphs
+  for (j in 1:length(parX)) {
+    tlis[[ j]] <- mcmcMat[1, paste0( parX[j])]
+  }
+  return(list( "ttnew2"=ttnew2, "tlis"=tlis))
+}  #end of subfunction
+
+
+################################################################################
+#       12. Function to graph multiple hierarchical regression lines           #
+################################################################################
+fncBayesMultiOlsPrtPred <- function(Coda.Object=NULL , mydf=NULL,  Reg.Type=NULL, 
+                                    Outcome=NULL , Group=NULL, xName=NULL, parX=NULL, 
+                                    View.Lines=NULL, Main.Title=NULL, X.Lab=NULL, 
+                                    Line.Color=NULL, CEX.size=NULL, X.Lim=NULL, Y.Lim=NULL,
+                                    PCol=NULL, Add.Lgd=NULL, Leg.Loc=NULL) {
+  #-----------------------------------------------------------------------------
+  y = mydf[, Outcome]
+  x = mydf[, xName, drop=FALSE][1]
+  s = factor(mydf[, Group])
+  nSubj = length(unique(s)) # should be same as max(s)
+  mcmcMat = as.matrix(Coda.Object, chains=TRUE)
+  chainLength = NROW( mcmcMat )
+  # Plot settings
+  par( mar=c(8, 6, 3, .25) , mgp=c(2.5,0.5,0) , pty="m" ) #This matches other graphs
+  #Original par
+  xRang = max(x, na.rm=TRUE) - min(x, na.rm=TRUE)
+  yRang = max(y, na.rm=TRUE) - min(y, na.rm=TRUE)
+  xLimMult = 0.2
+  yLimMult = 0.2
+  xLim= c( min(x, na.rm=TRUE) - xLimMult*xRang , max(x, na.rm=TRUE) + xLimMult*xRang )
+  yLim= c( min(y) - yLimMult*yRang , max(y) + yLimMult*yRang )
+  #This creates the xComb based on the primary predictor
+  xComb = seq(xLim[1], xLim[2], length=301)
+  
+  ## Make parameters ##
+  multi_pars <- fncBayesMultiOlsPPpar(Coda.Object=Coda.Object , mydf=mydf,  
+                                      Reg.Type=Reg.Type, Outcome=Outcome , Group=Group,
+                                      xName=xName, parX=parX)
+  #Get the list of parameters for ttnew2 and tlis
+  multi_coefs <- lapply(multi_pars, fncBayesOlsPPcoef, Coda.Object=Coda.Object, mydf=mydf,  
+                        Reg.Type=Reg.Type, Outcome=Outcome, Group=Group, xName=xName)
+  #Seperate the list elements
+  tl11 <- lapply(multi_coefs, `[[`, 1) #linear formula
+  tl22 <- lapply(multi_coefs, `[[`, 2) #regression coefficients
+  
+  #Convert into a data frame for graphing
+  tlis <- do.call(rbind.data.frame, tl22)
+  #Convert into linear formula for graphing
+  ttnew2 <- as.character(tl11)
+  #Make line colors, 1st spot is for the overall mean if needed
+  multi_line_color <- c()
+  if(length(Line.Color) ==1 ) { 
+    multi_line_color <- rep(Line.Color, nSubj)
+  } else {
+    multi_line_color <- c( rep(Line.Color[2], length(ttnew2)-1), Line.Color[1])
+  }
+  
+  ##################  
+  ## Create plots ##
+  ##################  
+  plot( unlist(x) , y , pch="" , cex=CEX.size , col="black" , 
+        xlim=X.Lim, ylim=Y.Lim,xlab=X.Lab , ylab=Outcome , 
+        main= Main.Title, cex.lab=CEX.size, cex.main=CEX.size, cex.axis=CEX.size )
+  #All groups added at once for the overall term
+  if (Reg.Type %in% c("Hierarchical OLS: Linear", "Hierarchical OLS: Quadratic", "Hierarchical OLS: Cubic") ) {
+    for ( sIdx in 1:nSubj ) {
+      thisSrows = (as.numeric(s)==sIdx)
+      lines( x[thisSrows, ] , y[thisSrows] , type="p" , pch=19, col= PCol, cex=CEX.size) 
+    }
+  }
+  # Superimpose a smattering of believable regression lines:
+  #For each line (e.g., 30), it cycles the 301 X-comb values to create 301 Ys for plot 
+  #This plots out random regression lines
+  if (Reg.Type %in% c("Hierarchical OLS: Linear", "Hierarchical OLS: Quadratic", "Hierarchical OLS: Cubic")) {
+    for ( i in 1:length(ttnew2) ) { 
+      lines( xComb , eval(parse(text= ttnew2[i])) , col= multi_line_color[i], lwd= 4 )
+    }
+  }
+  #Legend color
+  pcol_vector <- c(PCol, Line.Color)
+  #Legend text
+#  if (Reg.Type %in% c("Hierarchical OLS: Linear", "Hierarchical OLS: Quadratic", "Hierarchical OLS: Cubic") ) {
+#    legend_text <- c(paste0("Observed ", abbreviate(Group, 8),": All"), "Posterior Estimate")
+#  }
+  if (length(Line.Color) == 1) { 
+    legend_text <- c(paste0("Observed ", abbreviate(Group, 8),": All"), "Posterior Estimate")
+  } else {
+    legend_text <- c(paste0("Observed ", abbreviate(Group, 8),": All"), "Overall Posterior Estimate", "Group Posterior Estimate")
+  }
+  #Legend points
+  legend_points <- c(19, NA)
+  
+  #Add legend
+  if(Add.Lgd == "Yes") {
+    legend_type <- c(1)
+    legend(Leg.Loc, legend=legend_text, col=pcol_vector, lty=legend_type, 
+           pch=legend_points, pt.bg=pcol_vector, cex = 2, lwd=3,  bty="n", inset=c(0, .05))
+  }
+  #-----------------------------------------------------------------------------
+}
 
 ##########################################
 ## DBDA Functions for Bayesian analysis ##

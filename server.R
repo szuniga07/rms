@@ -17115,7 +17115,14 @@ fncBayesMultiOlsPrtPred <- function(Coda.Object=NULL , mydf=NULL,  Reg.Type=NULL
   if(length(Line.Color) ==1 ) { 
     multi_line_color <- rep(Line.Color, nSubj)
   } else {
-    multi_line_color <- c( rep(Line.Color[2], length(ttnew2)-1), Line.Color[1])
+    multi_line_color <- c( rep(Line.Color[1], length(ttnew2)-1), Line.Color[2])
+  }
+#Multiple line width
+  multi_line_width <- c()
+  if(length(Line.Color) ==1 ) { 
+    multi_line_width <- rep(4, nSubj)
+  } else {
+    multi_line_width <- c( rep(4, length(ttnew2)-1), 7)
   }
   
   ##################  
@@ -17136,7 +17143,7 @@ fncBayesMultiOlsPrtPred <- function(Coda.Object=NULL , mydf=NULL,  Reg.Type=NULL
   #This plots out random regression lines
   if (Reg.Type %in% c("Hierarchical OLS: Linear", "Hierarchical OLS: Quadratic", "Hierarchical OLS: Cubic")) {
     for ( i in 1:length(ttnew2) ) { 
-      lines( xComb , eval(parse(text= ttnew2[i])) , col= multi_line_color[i], lwd= 4 )
+      lines( xComb , eval(parse(text= ttnew2[i])) , col= multi_line_color[i], lwd= multi_line_width[i] )
     }
   }
   #Legend color
@@ -17148,7 +17155,7 @@ fncBayesMultiOlsPrtPred <- function(Coda.Object=NULL , mydf=NULL,  Reg.Type=NULL
   if (length(Line.Color) == 1) { 
     legend_text <- c(paste0("Observed ", abbreviate(Group, 8),": All"), "Posterior Estimate")
   } else {
-    legend_text <- c(paste0("Observed ", abbreviate(Group, 8),": All"), "Overall Posterior Estimate", "Group Posterior Estimate")
+    legend_text <- c(paste0("Observed ", abbreviate(Group, 8),": All"), "Group Posterior Estimate", "Overall Posterior Estimate")
   }
   #Legend points
   legend_points <- c(19, NA)

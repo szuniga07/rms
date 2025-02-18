@@ -2257,7 +2257,7 @@
                    h4("Load dataset in 'Builder' tab and MCMC simumlations above."),
                    h5("Questions 6-8 are for estimating the outcome's distribution (ignore 9-11). Estimated lines are placed over histograms of Y. Use 'scale' in #7 for Weibull."),
                    h5("Questions 9-11 are for trend lines (ignore 6-8), denoted analogously to 'Ordinary Least Squares' and Logistic models with polynomial terms ('Linear', 'Quadratic', 'Cubic')."),
-                   h5("'Hierarchical OLS' gives trend lines from hierarchical models (see questions 9-10). Enter by types of beta coefficients first (i.e., all B0s before any B1s). Select the 'overall' coefficients first and select 2 colors to highlight the hierarchical estimate."),
+                   h5("'Hierarchical OLS' gives trend lines from hierarchical models (see questions 9-10). Enter by types of beta coefficients first (i.e., all B0s before any B1s). Select the 'overall' coefficients last and select 2 colors to highlight the hierarchical estimate."),
                    h5("For quadratic and cubic polynomial models, enter the variables/parameters of #9 & #10 in this order: Linear, quadratic, cubic, all other numerical variables/paramters in the same order."),
                    h5("The Difference-in-Difference (DID) graph requires variable/parameter entry of #9 & #10 in this order: (Intercept), Time, Intervention, Time*Intervention, all other numerical variables/paramters in the same order."),
                    br(),

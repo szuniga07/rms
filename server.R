@@ -15095,6 +15095,8 @@ plot_dbda_posterior_group_check <- reactive({
                                               CEX.size= dbda_post_check_grp_label_multiplier(), 
                                               X.Lim= (eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ), 
                                               Y.Lim= (eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
+                                              X.Min= dbda_post_check_grp_min_value(), 
+                                              X.Max= dbda_post_check_grp_max_value(),
                                               PCol= dbda_post_check_point_colors(), 
                                               Add.Lgd= dbda_post_check_add_legend(), 
                                               Leg.Loc= dbda_post_check_legend_location()), 
@@ -15113,6 +15115,8 @@ plot_dbda_posterior_group_check <- reactive({
                                               CEX.size= dbda_post_check_grp_label_multiplier(), 
                                               X.Lim= (eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ), 
                                               Y.Lim= (eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
+                                              X.Min= dbda_post_check_grp_min_value(), 
+                                              X.Max= dbda_post_check_grp_max_value(),
                                               PCol= dbda_post_check_point_colors(), 
                                               Add.Lgd= dbda_post_check_add_legend(), 
                                               Leg.Loc= dbda_post_check_legend_location()), 
@@ -15131,7 +15135,9 @@ plot_dbda_posterior_group_check <- reactive({
                                                  CEX.size= dbda_post_check_grp_label_multiplier(), 
                                                  X.Lim= (eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ), 
                                                  Y.Lim= (eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
-                                                 PCol= dbda_post_check_point_colors(), 
+                                             X.Min= dbda_post_check_grp_min_value(), 
+                                             X.Max= dbda_post_check_grp_max_value(),
+                                             PCol= dbda_post_check_point_colors(), 
                                                  Add.Lgd= dbda_post_check_add_legend(), 
                                                  Leg.Loc= dbda_post_check_legend_location()),
            "OLS: DID" = fncBayesOlsPrtPred(Coda.Object=DBDA_coda_object_df() , mydf=df(), 
@@ -15164,6 +15170,8 @@ plot_dbda_posterior_group_check <- reactive({
                                                          CEX.size= dbda_post_check_grp_label_multiplier(), 
                                                          X.Lim= (eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ), 
                                                          Y.Lim= (eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
+                                                         X.Min= dbda_post_check_grp_min_value(), 
+                                                         X.Max= dbda_post_check_grp_max_value(),
                                                          PCol= dbda_post_check_point_colors(), 
                                                          Add.Lgd= dbda_post_check_add_legend(), 
                                                          Leg.Loc= dbda_post_check_legend_location()),
@@ -15179,6 +15187,8 @@ plot_dbda_posterior_group_check <- reactive({
                                                          CEX.size= dbda_post_check_grp_label_multiplier(), 
                                                          X.Lim= (eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ), 
                                                          Y.Lim= (eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
+                                                         X.Min= dbda_post_check_grp_min_value(), 
+                                                         X.Max= dbda_post_check_grp_max_value(),
                                                          PCol= dbda_post_check_point_colors(), 
                                                          Add.Lgd= dbda_post_check_add_legend(), 
                                                          Leg.Loc= dbda_post_check_legend_location()),
@@ -15194,6 +15204,8 @@ plot_dbda_posterior_group_check <- reactive({
                                                          CEX.size= dbda_post_check_grp_label_multiplier(), 
                                                          X.Lim= (eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ), 
                                                          Y.Lim= (eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
+                                                         X.Min= dbda_post_check_grp_min_value(), 
+                                                         X.Max= dbda_post_check_grp_max_value(),
                                                          PCol= dbda_post_check_point_colors(), 
                                                          Add.Lgd= dbda_post_check_add_legend(), 
                                                          Leg.Loc= dbda_post_check_legend_location())
@@ -16708,6 +16720,7 @@ fncBayesOlsPrtPred <- function(Coda.Object=NULL , mydf=NULL,  Reg.Type=NULL,
                                Group.Level=NULL, xName=NULL, parX=NULL, View.Lines=NULL,
                                Num.Lines=NULL, Main.Title=NULL, X.Lab=NULL, 
                                Line.Color=NULL, CEX.size=NULL, X.Lim=NULL, Y.Lim=NULL,
+                               X.Min=NULL, X.Max=NULL,
                                PCol=NULL, Add.Lgd=NULL, Leg.Loc=NULL) {
   y = mydf[, Outcome]
   x = mydf[, xName, drop=FALSE][1]
@@ -16732,7 +16745,8 @@ fncBayesOlsPrtPred <- function(Coda.Object=NULL , mydf=NULL,  Reg.Type=NULL,
   ## Make prediction formula ##
   #############################
   #This creates the xComb based on the primary predictor
-  xComb = seq(xLim[1], xLim[2], length=301)
+#  xComb = seq(xLim[1], xLim[2], length=301)
+  xComb = seq(X.Min, X.Max, length=301)
   #parX vector stores the parameter names from the chains
   #xName has X variable names
   #Vector with X variable mean values
@@ -16863,7 +16877,7 @@ fncBayesOlsPrtPred <- function(Coda.Object=NULL , mydf=NULL,  Reg.Type=NULL,
     if (View.Lines %in% c("All", "All: Lines")) {
       for ( sIdx in 1:nSubj ) {
         thisSrows = (as.numeric(s)==sIdx)
-        lines( x[thisSrows, ] , y[thisSrows] , type=line_type , pch=19, col= PCol, cex=CEX.size) 
+        lines( x[thisSrows, ] , y[thisSrows] , type=line_type , pch=19, col= PCol, cex=CEX.size*0.75) 
       }
     }
   }
@@ -17075,6 +17089,7 @@ fncBayesMultiOlsPrtPred <- function(Coda.Object=NULL , mydf=NULL,  Reg.Type=NULL
                                     Outcome=NULL , Group=NULL, xName=NULL, parX=NULL, 
                                     View.Lines=NULL, Main.Title=NULL, X.Lab=NULL, 
                                     Line.Color=NULL, CEX.size=NULL, X.Lim=NULL, Y.Lim=NULL,
+                                    X.Min=NULL, X.Max=NULL,
                                     PCol=NULL, Add.Lgd=NULL, Leg.Loc=NULL) {
   #-----------------------------------------------------------------------------
   y = mydf[, Outcome]
@@ -17092,9 +17107,10 @@ fncBayesMultiOlsPrtPred <- function(Coda.Object=NULL , mydf=NULL,  Reg.Type=NULL
   yLimMult = 0.2
   xLim= c( min(x, na.rm=TRUE) - xLimMult*xRang , max(x, na.rm=TRUE) + xLimMult*xRang )
   yLim= c( min(y) - yLimMult*yRang , max(y) + yLimMult*yRang )
+  #The min and max are alternatives to x limits
   #This creates the xComb based on the primary predictor
-  xComb = seq(xLim[1], xLim[2], length=301)
-  
+#  xComb = seq(xLim[1], xLim[2], length=301)
+  xComb = seq(X.Min, X.Max, length=301)
   ## Make parameters ##
   multi_pars <- fncBayesMultiOlsPPpar(Coda.Object=Coda.Object , mydf=mydf,  
                                       Reg.Type=Reg.Type, Outcome=Outcome , Group=Group,
@@ -17135,7 +17151,7 @@ fncBayesMultiOlsPrtPred <- function(Coda.Object=NULL , mydf=NULL,  Reg.Type=NULL
   if (Reg.Type %in% c("Hierarchical OLS: Linear", "Hierarchical OLS: Quadratic", "Hierarchical OLS: Cubic") ) {
     for ( sIdx in 1:nSubj ) {
       thisSrows = (as.numeric(s)==sIdx)
-      lines( x[thisSrows, ] , y[thisSrows] , type="p" , pch=19, col= PCol, cex=CEX.size) 
+      lines( x[thisSrows, ] , y[thisSrows] , type="p" , pch=19, col= PCol, cex=CEX.size*0.75) 
     }
   }
   # Superimpose a smattering of believable regression lines:

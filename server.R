@@ -14013,9 +14013,12 @@ dbda_post_plot_par1 <- reactive({
   input$dbdaPP1 
 })
 #2. Do you want to compare parameter
+#Working on correlations
 output$dbdaPostCompareParYN <- renderUI({
   selectInput("dbdaPostComP12", "2. Compare parameters?", 
-              choices = c("No", "Yes"), multiple=FALSE, selected="No")
+#              choices = c("No", "Subtration", "Addition", "Division","Multiplication", "Correlation"), 
+              choices = c("No", "Subtration", "Addition", "Division","Multiplication"), 
+              multiple=FALSE, selected="No")
 })
 #2a. Reactive function for directly above
 dbda_post_plot_compare_YN <- reactive({                 
@@ -14196,7 +14199,7 @@ dbda_post_effect_size <- reactive({
 
 # Reactive function to indicate if we compare 2 groups and we want an effect size
 dbda_post_want_to_run_effect_size <- reactive({
-  ifelse(dbda_post_plot_compare_YN()=="Yes" & dbda_post_run_Yes_No()== "Yes" & 
+  ifelse(dbda_post_plot_compare_YN()=="Subtration" & dbda_post_run_Yes_No()== "Yes" & 
            dbda_post_effect_size() != "No", 1, 0 )
   })
 
@@ -14214,8 +14217,8 @@ dbda_post_effect_size_posterior <- reactive({
 plot_dbda_posterior_distribution <- reactive({
   if(dbda_post_run_Yes_No() == "Yes") {
     par(mar=c(6, 7, 4, 2))
-    if(dbda_post_plot_compare_YN() == "Yes") {
-#      plotPost( as.matrix(DBDA_coda_object_df())[, dbda_post_plot_par1()] - as.matrix(DBDA_coda_object_df())[, dbda_post_plot_par2()], 
+    if(dbda_post_plot_compare_YN() == "Subtration") {
+      #Difference between 2 posterios
       plotPost( rowMeans(as.matrix(DBDA_coda_object_df())[, dbda_post_plot_par1(), drop=FALSE]) - rowMeans(as.matrix(DBDA_coda_object_df())[, dbda_post_plot_par2(), drop=FALSE]), 
                 compVal= dbda_post_comparative_val(), cenTend= dbda_post_central_tendency(),
                 ROPE=c(dbda_post_rope_val_1(),dbda_post_rope_val_2()), 
@@ -14225,7 +14228,60 @@ plot_dbda_posterior_distribution <- reactive({
                 xlim= (eval(parse(text=dbda_post_x_axis_limits() )) ), 
                 HDItextPlace= dbda_post_place_hdi_text(), cex=dbda_post_label_multiplier(), 
                 cex.main= dbda_post_label_multiplier(), cex.lab= dbda_post_label_multiplier() )
-    } else {
+    } 
+    #Addition of 2 posteriors
+    if(dbda_post_plot_compare_YN() == "Addition") {
+      plotPost( rowMeans(as.matrix(DBDA_coda_object_df())[, dbda_post_plot_par1(), drop=FALSE]) + rowMeans(as.matrix(DBDA_coda_object_df())[, dbda_post_plot_par2(), drop=FALSE]), 
+                compVal= dbda_post_comparative_val(), cenTend= dbda_post_central_tendency(),
+                ROPE=c(dbda_post_rope_val_1(),dbda_post_rope_val_2()), 
+                credMass= dbda_post_credible_mass(), main= dbda_post_main_title(), 
+                xlab= dbda_post_x_label(), ylab= dbda_post_y_label(), 
+                showCurve= dbda_post_show_curve(), col= dbda_plot_line_colors(), 
+                xlim= (eval(parse(text=dbda_post_x_axis_limits() )) ), 
+                HDItextPlace= dbda_post_place_hdi_text(), cex=dbda_post_label_multiplier(), 
+                cex.main= dbda_post_label_multiplier(), cex.lab= dbda_post_label_multiplier() )
+    } 
+    if(dbda_post_plot_compare_YN() == "Division") {
+      #Difference between 2 posterios
+      plotPost( rowMeans(as.matrix(DBDA_coda_object_df())[, dbda_post_plot_par1(), drop=FALSE]) / rowMeans(as.matrix(DBDA_coda_object_df())[, dbda_post_plot_par2(), drop=FALSE]), 
+                compVal= dbda_post_comparative_val(), cenTend= dbda_post_central_tendency(),
+                ROPE=c(dbda_post_rope_val_1(),dbda_post_rope_val_2()), 
+                credMass= dbda_post_credible_mass(), main= dbda_post_main_title(), 
+                xlab= dbda_post_x_label(), ylab= dbda_post_y_label(), 
+                showCurve= dbda_post_show_curve(), col= dbda_plot_line_colors(), 
+                xlim= (eval(parse(text=dbda_post_x_axis_limits() )) ), 
+                HDItextPlace= dbda_post_place_hdi_text(), cex=dbda_post_label_multiplier(), 
+                cex.main= dbda_post_label_multiplier(), cex.lab= dbda_post_label_multiplier() )
+    } 
+    if(dbda_post_plot_compare_YN() == "Multiplication") {
+      #Difference between 2 posterios
+      plotPost( rowMeans(as.matrix(DBDA_coda_object_df())[, dbda_post_plot_par1(), drop=FALSE]) * rowMeans(as.matrix(DBDA_coda_object_df())[, dbda_post_plot_par2(), drop=FALSE]), 
+                compVal= dbda_post_comparative_val(), cenTend= dbda_post_central_tendency(),
+                ROPE=c(dbda_post_rope_val_1(),dbda_post_rope_val_2()), 
+                credMass= dbda_post_credible_mass(), main= dbda_post_main_title(), 
+                xlab= dbda_post_x_label(), ylab= dbda_post_y_label(), 
+                showCurve= dbda_post_show_curve(), col= dbda_plot_line_colors(), 
+                xlim= (eval(parse(text=dbda_post_x_axis_limits() )) ), 
+                HDItextPlace= dbda_post_place_hdi_text(), cex=dbda_post_label_multiplier(), 
+                cex.main= dbda_post_label_multiplier(), cex.lab= dbda_post_label_multiplier() )
+    } 
+    if(dbda_post_plot_compare_YN() == "Correlation") {
+      #Correlation between 2 posterios
+      plot( 
+        #cor(as.matrix(DBDA_coda_object_df())[, dbda_post_plot_par1()[1]] , as.matrix(DBDA_coda_object_df())[, dbda_post_plot_par2()[1]]), 
+        cor(rowMeans(as.matrix(DBDA_coda_object_df())[, dbda_post_plot_par1(), drop=FALSE]) , rowMeans(as.matrix(DBDA_coda_object_df())[, dbda_post_plot_par2(), drop=FALSE])),             
+            xlab= dbda_post_x_label(), ylab= dbda_post_y_label(), 
+                col= dbda_plot_line_colors(), pch=17,
+                xlim= (eval(parse(text=dbda_post_x_axis_limits() )) ), 
+                cex=dbda_post_label_multiplier(), cex.main= dbda_post_label_multiplier(), 
+            cex.lab= dbda_post_label_multiplier() )
+      text( 1.1, cor(rowMeans(as.matrix(DBDA_coda_object_df())[, dbda_post_plot_par1(), drop=FALSE]) , 
+                 rowMeans(as.matrix(DBDA_coda_object_df())[, dbda_post_plot_par2(), drop=FALSE])),
+            round(cor(rowMeans(as.matrix(DBDA_coda_object_df())[, dbda_post_plot_par1(), drop=FALSE]) , 
+                      rowMeans(as.matrix(DBDA_coda_object_df())[, dbda_post_plot_par2(), drop=FALSE])), 4),
+            cex= dbda_post_label_multiplier())
+    } 
+    if(dbda_post_plot_compare_YN() == "No") {
       plotPost( as.matrix(DBDA_coda_object_df())[, dbda_post_plot_par1()[1]], 
                 compVal= dbda_post_comparative_val(), cenTend= dbda_post_central_tendency(),
                 ROPE=c(dbda_post_rope_val_1(),dbda_post_rope_val_2()), 

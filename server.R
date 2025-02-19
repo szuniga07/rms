@@ -14016,8 +14016,7 @@ dbda_post_plot_par1 <- reactive({
 #Working on correlations
 output$dbdaPostCompareParYN <- renderUI({
   selectInput("dbdaPostComP12", "2. Compare parameters?", 
-              choices = c("No", "Subtration", "Addition", "Division","Multiplication", "Correlation"), 
-#              choices = c("No", "Subtration", "Addition", "Division","Multiplication"), 
+              choices = c("No", "Subtration", "Addition", "Division","Multiplication", "Correlation", "Covariance"), 
               multiple=FALSE, selected="No")
 })
 #2a. Reactive function for directly above
@@ -14269,12 +14268,24 @@ plot_dbda_posterior_distribution <- reactive({
       #Correlation between 2 posterios
       plot( cor(colMeans(as.matrix(DBDA_coda_object_df())[, dbda_post_plot_par1()]), colMeans(as.matrix(DBDA_coda_object_df())[, dbda_post_plot_par2()])),
             xlab= dbda_post_x_label(), ylab= dbda_post_y_label(), 
-                col= dbda_plot_line_colors(), pch=17,
-                xlim= (eval(parse(text=dbda_post_x_axis_limits() )) ), 
-                cex=dbda_post_label_multiplier(), cex.main= dbda_post_label_multiplier(), 
+            main= dbda_post_main_title(), col= dbda_plot_line_colors(), pch=17,
+            xlim= (eval(parse(text=dbda_post_x_axis_limits() )) ), 
+            cex=dbda_post_label_multiplier(), cex.main= dbda_post_label_multiplier(), 
             cex.lab= dbda_post_label_multiplier() )
       text( 1.1, cor(colMeans(as.matrix(DBDA_coda_object_df())[, dbda_post_plot_par1()]), colMeans(as.matrix(DBDA_coda_object_df())[, dbda_post_plot_par2()])),
             round(cor(colMeans(as.matrix(DBDA_coda_object_df())[, dbda_post_plot_par1()]), colMeans(as.matrix(DBDA_coda_object_df())[, dbda_post_plot_par2()])), 4),
+            cex= dbda_post_label_multiplier())
+    } 
+    if(dbda_post_plot_compare_YN() == "Covariance") {
+      #Correlation between 2 posterios
+      plot( cov(colMeans(as.matrix(DBDA_coda_object_df())[, dbda_post_plot_par1()]), colMeans(as.matrix(DBDA_coda_object_df())[, dbda_post_plot_par2()])),
+            xlab= dbda_post_x_label(), ylab= dbda_post_y_label(), 
+            main= dbda_post_main_title(), col= dbda_plot_line_colors(), pch=17,
+            xlim= (eval(parse(text=dbda_post_x_axis_limits() )) ), 
+            cex=dbda_post_label_multiplier(), cex.main= dbda_post_label_multiplier(), 
+            cex.lab= dbda_post_label_multiplier() )
+      text( 1.1, cov(colMeans(as.matrix(DBDA_coda_object_df())[, dbda_post_plot_par1()]), colMeans(as.matrix(DBDA_coda_object_df())[, dbda_post_plot_par2()])),
+            round(cov(colMeans(as.matrix(DBDA_coda_object_df())[, dbda_post_plot_par1()]), colMeans(as.matrix(DBDA_coda_object_df())[, dbda_post_plot_par2()])), 4),
             cex= dbda_post_label_multiplier())
     } 
     if(dbda_post_plot_compare_YN() == "No") {

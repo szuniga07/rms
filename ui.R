@@ -2248,7 +2248,7 @@
                    ),
                    br(),
                    plotOutput("plotDbdaPosteriorDistribution", height = 800, width="100%"),
-                   h5("Select 2 parameters to calculate their values (e.g., Par. 1 - Par. 2). View 'effect size' by selecting the distribution in #20. Proportions and t-tests: 0.20= small, 0.50= medium, 0.80= large (Cohen, 1988). Continuous outcomes, enter the mean and SD in #1 and #3 (e.g., Mean 1, SD 1 and Mean 2, SD 2)."),
+                   h5("Select 2 parameters to calculate their values (e.g., Par. 1 - Par. 2). Correlations are colMeans of posteriors (e.g., R of intercepts & slopes). View 'effect size' by selecting the distribution in #20. Proportions and t-tests: 0.20= small, 0.50= medium, 0.80= large (Cohen, 1988). Continuous outcomes, enter the mean and SD in #1 and #3 (e.g., Mean 1, SD 1 and Mean 2, SD 2)."),
                    h5("The standard deviation in the t-test effect size formula uses the average of both group's SD because Cohen defines sigma as 'the standard deviation of either population (since they are assumed equal)'. (Cohen, 1988, p. 20). Therefore, the average of both would be identical to the average of one (e.g., mean(c(3,3)) == mean(3))."),
                    br(), 
                    h3("Posterior Predictive Check for groups"),

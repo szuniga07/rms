@@ -2477,8 +2477,32 @@
                    verbatimTextOutput("dbdaPropGt_output"),
                    br(),
                    h5("If using the Beta distribution, the predicted mean is provided. Beta values require posteriors to calculate shape values (e.g., 'theta' and 'omega' from a hierarchical estimation)."),
+                   br(),
+                   h4("Bayesian R^2"),
+                   br(),
+                   h5("Slect predictor names and MCMC parameters to calculate the R^2. Enter 'X' and parameters in same order. dbda_r2_model() calculates predicted scores not shown below."),
+                   br(),
+                   fluidRow(   
+                     column(3, 
+                            uiOutput("dbdaR2VarXs")),
+                     column(3, offset=1,
+                            uiOutput("dbdaR2Intercept")),
+                     column(3, offset=1,
+                            uiOutput("dbdaR2MCBs"))
+                   ),
+                   fluidRow(   
+                     column(3, 
+                            uiOutput("dbdaR2Sigma")),
+                     column(3, offset=1,
+                            uiOutput("dbdaR2CenTen")),
+                     column(3, offset=1,
+                            uiOutput("dbdaR2Run"))
+                   ),
+                   br(),
+                   verbatimTextOutput("dbdaR2_output"),
+                   br(),
+                   h5("Formula based on Gelman's article: R-squared for Bayesian regression models. https://sites.stat.columbia.edu/gelman/research/published/bayes_R2_v3.pdf."),
                    br()
-                   
           ) #End of Bayesian panel  
           ###
           

@@ -15386,6 +15386,86 @@ output$dbdaPropGt_output <- renderPrint({
 })
 
 #kermit
+#################
+## Bayesian R2 ##
+#################
+#1. Select the main parameter
+output$dbdaR2VarXs <- renderUI({                                
+  selectInput("dbdaR2Xs", "1. List the predictor variables.",       
+              choices = var(), multiple=TRUE, 
+              selected= var()[1] )   
+})
+#1a. Reactive function for directly above
+dbda_R2_X_variables <- reactive({                 
+  input$dbdaR2Xs 
+})
+#2. Select the the intercept or not (e.g., cox models)
+output$dbdaR2Intercept <- renderUI({                                
+  selectInput("dbdaR2B0", "2. Pick intercept (if needed).",       
+              choices = c("None", DBDA_parameter_Names()), 
+              multiple=FALSE, selected=c("None", DBDA_parameter_Names())[1] )   
+})
+#2a. Reactive function for directly above
+dbda_R2_intercept <- reactive({                 
+  input$dbdaR2B0 
+})
+#3. Select the the beta coefficients from the MCMC
+output$dbdaR2MCBs <- renderUI({                                
+  selectInput("dbdaR2Bs", "3. Select Beta names.",       
+              choices = DBDA_parameter_Names(), 
+              multiple=TRUE, selected=DBDA_parameter_Names()[1] )   
+})
+#3a. Reactive function for directly above
+dbda_R2_betas <- reactive({                 
+  input$dbdaR2Bs 
+})
+#4. Select the residual variance
+output$dbdaR2Sigma <- renderUI({                                
+  selectInput("dbdaR2resSD", "4. Pick residual variance.",       
+              choices = setdiff(DBDA_parameter_Names(), dbda_R2_betas()), 
+              multiple=FALSE, selected=setdiff(DBDA_parameter_Names(), dbda_R2_betas())[1] )   
+})
+#4a. Reactive function for directly above
+dbda_R2_res_sigma <- reactive({                 
+  input$dbdaR2resSD 
+})
+#5. Do you want to run the function
+output$dbdaR2CenTen <- renderUI({
+  selectInput("dbdaR2CT", "5. Choose central tendency.", 
+              choices = c("Mean","Median"), multiple=FALSE, 
+              selected=c("Mean","Median")[1])
+})
+#5A. Reactive function for above
+dbda_R2_central_tendency <- reactive({
+  input$dbdaR2CT
+})
+#6. Do you want to run the function
+output$dbdaR2Run <- renderUI({
+  selectInput("dbdaR2Rn", "6. Calculate R^2?", 
+              choices = c("No", "Yes"), multiple=FALSE, selected="No")
+})
+#6A. Reactive function for above
+dbda_R2_run_YN <- reactive({
+  input$dbdaR2Rn
+})
+
+## Run the R2 function
+dbda_r2_model <- reactive({
+  if(dbda_R2_run_YN() == "Yes") {
+    options(scipen=30)
+    fncBayesOlsR2(Coda_Object=DBDA_coda_object_df(), mydf=df(), xName=dbda_R2_X_variables(), 
+                  Intercept= dbda_R2_intercept(), Betas=dbda_R2_betas(), 
+                  Level1.Sigma=dbda_R2_res_sigma(), Average.type=dbda_R2_central_tendency())
+  }
+})
+
+#R2 results
+output$dbdaR2_output <- renderPrint({ 
+  if(dbda_R2_run_YN() == "Yes") {
+    dbda_r2_model()[-4]
+  }
+})
+
 ########################################
 ## My functions for Bayesian analysis ##
 ########################################
@@ -16738,6 +16818,73 @@ fncXmetR2 <- function( codaSamples=NULL , data=NULL ,
   #-----------------------------------------------------------------------------
   return( "R2"=R2)
 }
+
+################################################################################
+#           7B. Alternative R2 for models with metric only predictors          #
+################################################################################
+fncSingleXR2 <- function( Coda.Object=NULL, Intercept=NULL, Betas=NULL, 
+                          my.data=NULL, xName=NULL, yName=NULL) {
+  MCMC_Mat = as.matrix(Coda.Object, chains=TRUE)
+  chainLength <- nrow(MCMC_Mat)
+  Rsq = rep(0, chainLength)
+  for ( stepIdx in 1:chainLength ) {
+    predY = my.data[, xName] %*% cbind(MCMC_Mat[, Betas][stepIdx]) + 
+      MCMC_Mat[, Intercept][stepIdx]
+    #    predY = t(my.data[, xName]) %*% as.matrix(cbind(MCMC_Mat[, Betas][stepIdx]) + 
+    #      MCMC_Mat[, Intercept][stepIdx])
+  }
+  Rsq = cor(my.data[, yName], predY)^2
+  return("R.Square"=Rsq)
+}
+#m1r2 <- fncSingleXR2( Coda.Object=codaN1, Intercept="beta_0", Betas="beta_1", 
+#                      my.data=myd2, xName="hrt", yName="slos")
+#summary(m1r2)
+
+################################################################################
+#              7c. Gelman R2 for models with metric only predictors            #
+################################################################################
+
+#Use the coda object and dataset. Works for normal and log-normal distributions.
+fncBayesOlsR2 <- function(Coda_Object, mydf, xName=NULL, Intercept=NULL,
+                          Betas=NULL, Level1.Sigma=NULL, Average.type =NULL) {
+  mcmc_coda_object <- as.matrix(Coda_Object, chains=TRUE)
+  mean.Intercept <-  mean(mcmc_coda_object[, which(colnames(mcmc_coda_object) == Intercept)])
+  median.Intercept <-  median(mcmc_coda_object[, which(colnames(mcmc_coda_object) == Intercept)])
+  #Make list to store fitted values (minus the intercept)
+  fitval.mean <- vector(mode="list", length= nrow(mydf))
+  fitval.median <- vector(mode="list", length= nrow(mydf))
+  #when there is only 1 X
+  #when there are multiple X
+  for (i in 1:nrow(mydf)) { 
+    for (j in 1:length(Betas)) {
+      if (Average.type=="Mean") {
+        fitval.mean[[i]][j] <- mean(mcmc_coda_object[, which(colnames(mcmc_coda_object) %in% Betas[j])]*
+                                      mydf[, which(colnames(mydf) %in% xName[j])][i])
+      } else {
+        fitval.median[[i]][j] <- median(mcmc_coda_object[, which(colnames(mcmc_coda_object) %in% Betas[j])]*
+                                          mydf[, which(colnames(mydf) %in% xName[j])][i])
+      }
+    } 
+  }
+  #Get the predicted values from the mean
+  if (Average.type=="Mean") {
+    yPRED <- mapply(fitval.mean, FUN="sum", + mean.Intercept)
+  }  
+  if (Average.type=="Median") {
+    yPRED <- mapply(fitval.median, FUN="sum", + median.Intercept)
+  }  
+  #Get variance of the fit
+  varFit <- sd(yPRED)^2
+  #Get variance of the residuals
+  varRes <- mean(mcmc_coda_object[, Level1.Sigma]^2)
+  #Calculate R^2
+  R2 <- varFit/(varFit + varRes)
+  return(list("R2"=R2, "Variance.Pred.Y"=varFit, "Variance.Residuals"=varRes, "yPRED"=yPRED))
+} #End of function
+
+#fncBayesOlsR2(Coda.Object=codaSamples, mydf=mtcars, xName=c("hp","wt"), 
+#              Intercept= "beta0", Betas=c("beta1", "beta2"), 
+#              Level1.Sigma="sigma", Average.type="Mean")
 
 ################################################################################
 #                    8. Bayesian Effect sizes                                  #

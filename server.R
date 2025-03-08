@@ -14429,7 +14429,7 @@ dbda_post_summary_structure <- reactive({
 ## Summary of DBDA Posterior ##
 results_dbda_posterior_summary <- reactive({
   if(dbda_post_summary_run() == "Yes") {
-    fncHdiBinSmry(MCmatrix=as.matrix(DBDA_coda_object_df(), chains=TRUE), mydf=df(), 
+    fncHdiBinSmry(MCmatrix=as.matrix(DBDA_coda_object_df(), chains=TRUE), datFrm=df(), 
                   Level=input$dbdaPSL, Outcome=input$dbdaPSY, Group2=input$dbdaPSX1, 
                   Group3=input$dbdaPSX2, Theta=input$dbdaPstSmTht, Omega2=input$dbdaPstSmOmg2, 
                   Omega3=input$dbdaPstSmOmg3, Average=input$dbdaPstSmCT, 
@@ -14981,7 +14981,7 @@ plot_dbda_posterior_group_check <- reactive({
   if(dbda_post_check_grp_run_YN() == "Yes") {     
     #    par( mar=c(4,2,2.5,.25) , mgp=c(2.5,0.5,0) , pty="m" )       
     switch(dbda_post_check_grp_distr() ,
-           "Normal" =     fncGrpPostPredCheck(Coda.Object=DBDA_coda_object_df(), mydf=df(), 
+           "Normal" =     fncGrpPostPredCheck(Coda.Object=DBDA_coda_object_df(), datFrm=df(), 
                                               Outcome=dbda_post_check_grp_Y(), Group=dbda_post_check_grp_X(), 
                                               Group.Level=dbda_post_check_grp_level_X(), 
                                               Mean.Var=dbda_post_check_grp_pm(), 
@@ -15002,7 +15002,7 @@ plot_dbda_posterior_group_check <- reactive({
                                               PCol = dbda_post_check_point_colors(),
                                               Add.Lgd= dbda_post_check_add_legend(), 
                                               Leg.Loc=dbda_post_check_legend_location() ) , 
-           "Log-normal" =     fncGrpPostPredCheck(Coda.Object=DBDA_coda_object_df(), mydf=df(), 
+           "Log-normal" =     fncGrpPostPredCheck(Coda.Object=DBDA_coda_object_df(), datFrm=df(), 
                                                   Outcome=dbda_post_check_grp_Y(), Group=dbda_post_check_grp_X(), 
                                                   Group.Level=dbda_post_check_grp_level_X(), 
                                                   Mean.Var=dbda_post_check_grp_pm(), 
@@ -15023,7 +15023,7 @@ plot_dbda_posterior_group_check <- reactive({
                                                   PCol = dbda_post_check_point_colors(),
                                                   Add.Lgd= dbda_post_check_add_legend(), 
                                                   Leg.Loc=dbda_post_check_legend_location() ) ,
-           "Skew-normal" =     fncGrpPostPredCheck(Coda.Object=DBDA_coda_object_df(), mydf=df(), 
+           "Skew-normal" =     fncGrpPostPredCheck(Coda.Object=DBDA_coda_object_df(), datFrm=df(), 
                                               Outcome=dbda_post_check_grp_Y(), Group=dbda_post_check_grp_X(), 
                                               Group.Level=dbda_post_check_grp_level_X(), 
                                               Mean.Var=dbda_post_check_grp_pm(), 
@@ -15045,7 +15045,7 @@ plot_dbda_posterior_group_check <- reactive({
                                               PCol = dbda_post_check_point_colors(),
                                               Add.Lgd= dbda_post_check_add_legend(), 
                                               Leg.Loc=dbda_post_check_legend_location() ) , 
-           "Weibull" =     fncGrpPostPredCheck(Coda.Object=DBDA_coda_object_df(), mydf=df(), 
+           "Weibull" =     fncGrpPostPredCheck(Coda.Object=DBDA_coda_object_df(), datFrm=df(), 
                                                    Outcome=dbda_post_check_grp_Y(), Group=dbda_post_check_grp_X(), 
                                                    Group.Level=dbda_post_check_grp_level_X(), 
                                                    Mean.Var=dbda_post_check_grp_pm(), 
@@ -15067,7 +15067,7 @@ plot_dbda_posterior_group_check <- reactive({
                                                    PCol = dbda_post_check_point_colors(),
                                                    Add.Lgd= dbda_post_check_add_legend(), 
                                                    Leg.Loc=dbda_post_check_legend_location() ) , 
-           "Gamma" =     fncGrpPostPredCheck(Coda.Object=DBDA_coda_object_df(), mydf=df(), 
+           "Gamma" =     fncGrpPostPredCheck(Coda.Object=DBDA_coda_object_df(), datFrm=df(), 
                                                Outcome=dbda_post_check_grp_Y(), Group=dbda_post_check_grp_X(), 
                                                Group.Level=dbda_post_check_grp_level_X(), 
                                                Mean.Var=dbda_post_check_grp_pm(), 
@@ -15089,7 +15089,7 @@ plot_dbda_posterior_group_check <- reactive({
                                                PCol = dbda_post_check_point_colors(),
                                                Add.Lgd= dbda_post_check_add_legend(), 
                                                Leg.Loc=dbda_post_check_legend_location() ) , 
-           "t" =     fncGrpPostPredCheck(Coda.Object=DBDA_coda_object_df(), mydf=df(), 
+           "t" =     fncGrpPostPredCheck(Coda.Object=DBDA_coda_object_df(), datFrm=df(), 
                                          Outcome=dbda_post_check_grp_Y(), Group=dbda_post_check_grp_X(), 
                                          Group.Level=dbda_post_check_grp_level_X(), 
                                          Mean.Var=dbda_post_check_grp_pm(), 
@@ -15143,7 +15143,7 @@ plot_dbda_posterior_group_check <- reactive({
                                 Add.Lgd= dbda_post_check_add_legend(), 
                                 Leg.Loc=dbda_post_check_legend_location(),
                                 T.Percentage=dbda_post_check_grp_min_value() ),
-           "OLS: Linear" = fncBayesOlsPrtPred(Coda.Object=DBDA_coda_object_df() , mydf=df(), 
+           "OLS: Linear" = fncBayesOlsPrtPred(Coda.Object=DBDA_coda_object_df() , datFrm=df(), 
                                               Reg.Type= dbda_post_check_grp_distr(),
                                               Outcome= dbda_post_check_grp_Y(), 
                                               Group= dbda_post_check_grp_X(),
@@ -15163,7 +15163,7 @@ plot_dbda_posterior_group_check <- reactive({
                                               PCol= dbda_post_check_point_colors(), 
                                               Add.Lgd= dbda_post_check_add_legend(), 
                                               Leg.Loc= dbda_post_check_legend_location()), 
-           "OLS: Quadratic" = fncBayesOlsPrtPred(Coda.Object=DBDA_coda_object_df() , mydf=df(), 
+           "OLS: Quadratic" = fncBayesOlsPrtPred(Coda.Object=DBDA_coda_object_df() , datFrm=df(), 
                                               Reg.Type= dbda_post_check_grp_distr(),
                                               Outcome= dbda_post_check_grp_Y(), 
                                               Group= dbda_post_check_grp_X(),
@@ -15183,7 +15183,7 @@ plot_dbda_posterior_group_check <- reactive({
                                               PCol= dbda_post_check_point_colors(), 
                                               Add.Lgd= dbda_post_check_add_legend(), 
                                               Leg.Loc= dbda_post_check_legend_location()), 
-           "OLS: Cubic" = fncBayesOlsPrtPred(Coda.Object=DBDA_coda_object_df() , mydf=df(), 
+           "OLS: Cubic" = fncBayesOlsPrtPred(Coda.Object=DBDA_coda_object_df() , datFrm=df(), 
                                                  Reg.Type= dbda_post_check_grp_distr(),
                                                  Outcome= dbda_post_check_grp_Y(), 
                                                  Group= dbda_post_check_grp_X(),
@@ -15203,7 +15203,7 @@ plot_dbda_posterior_group_check <- reactive({
                                              PCol= dbda_post_check_point_colors(), 
                                                  Add.Lgd= dbda_post_check_add_legend(), 
                                                  Leg.Loc= dbda_post_check_legend_location()),
-           "OLS: DID" = fncBayesOlsPrtPred(Coda.Object=DBDA_coda_object_df() , mydf=df(), 
+           "OLS: DID" = fncBayesOlsPrtPred(Coda.Object=DBDA_coda_object_df() , datFrm=df(), 
                                                  Reg.Type= dbda_post_check_grp_distr(),
                                                  Outcome= dbda_post_check_grp_Y(), 
                                                  Group= dbda_post_check_grp_X(),
@@ -15221,7 +15221,7 @@ plot_dbda_posterior_group_check <- reactive({
                                                  PCol= dbda_post_check_point_colors(), 
                                                  Add.Lgd= dbda_post_check_add_legend(), 
                                                  Leg.Loc= dbda_post_check_legend_location()),
-           "Hierarchical OLS: Linear" = fncBayesMultiOlsPrtPred(Coda.Object=DBDA_coda_object_df() , mydf=df(), 
+           "Hierarchical OLS: Linear" = fncBayesMultiOlsPrtPred(Coda.Object=DBDA_coda_object_df() , datFrm=df(), 
                                                          Reg.Type= dbda_post_check_grp_distr(),
                                                          Outcome= dbda_post_check_grp_Y(), 
                                                          Group= dbda_post_check_grp_X(),
@@ -15237,8 +15237,9 @@ plot_dbda_posterior_group_check <- reactive({
                                                          X.Max= dbda_post_check_grp_max_value(),
                                                          PCol= dbda_post_check_point_colors(), 
                                                          Add.Lgd= dbda_post_check_add_legend(), 
-                                                         Leg.Loc= dbda_post_check_legend_location()),
-           "Hierarchical OLS: Quadratic" = fncBayesMultiOlsPrtPred(Coda.Object=DBDA_coda_object_df() , mydf=df(), 
+                                                         Leg.Loc= dbda_post_check_legend_location(),
+                                                         mc_row_number= dbda_post_check_grp_number_lines()),
+           "Hierarchical OLS: Quadratic" = fncBayesMultiOlsPrtPred(Coda.Object=DBDA_coda_object_df() , datFrm=df(), 
                                                          Reg.Type= dbda_post_check_grp_distr(),
                                                          Outcome= dbda_post_check_grp_Y(), 
                                                          Group= dbda_post_check_grp_X(),
@@ -15254,8 +15255,9 @@ plot_dbda_posterior_group_check <- reactive({
                                                          X.Max= dbda_post_check_grp_max_value(),
                                                          PCol= dbda_post_check_point_colors(), 
                                                          Add.Lgd= dbda_post_check_add_legend(), 
-                                                         Leg.Loc= dbda_post_check_legend_location()),
-           "Hierarchical OLS: Cubic" = fncBayesMultiOlsPrtPred(Coda.Object=DBDA_coda_object_df() , mydf=df(), 
+                                                         Leg.Loc= dbda_post_check_legend_location(),
+                                                         mc_row_number= dbda_post_check_grp_number_lines()),
+           "Hierarchical OLS: Cubic" = fncBayesMultiOlsPrtPred(Coda.Object=DBDA_coda_object_df() , datFrm=df(), 
                                                          Reg.Type= dbda_post_check_grp_distr(),
                                                          Outcome= dbda_post_check_grp_Y(), 
                                                          Group= dbda_post_check_grp_X(),
@@ -15271,8 +15273,9 @@ plot_dbda_posterior_group_check <- reactive({
                                                          X.Max= dbda_post_check_grp_max_value(),
                                                          PCol= dbda_post_check_point_colors(), 
                                                          Add.Lgd= dbda_post_check_add_legend(), 
-                                                         Leg.Loc= dbda_post_check_legend_location())
-           )
+                                                         Leg.Loc= dbda_post_check_legend_location(),
+                                                         mc_row_number= dbda_post_check_grp_number_lines()),
+    )
   }
 })
 #Posterior distribution for above
@@ -15421,7 +15424,7 @@ dbda_R2_betas <- reactive({
 })
 #4. Select the residual variance
 output$dbdaR2Sigma <- renderUI({                                
-  selectInput("dbdaR2resSD", "4. Pick residual variance.",       
+  selectInput("dbdaR2resSD", "4. Pick residual variance (i.e., SD).",       
               choices = setdiff(DBDA_parameter_Names(), dbda_R2_betas()), 
               multiple=FALSE, selected=setdiff(DBDA_parameter_Names(), dbda_R2_betas())[1] )   
 })
@@ -15453,7 +15456,7 @@ dbda_R2_run_YN <- reactive({
 dbda_r2_model <- reactive({
   if(dbda_R2_run_YN() == "Yes") {
     options(scipen=30)
-    fncBayesOlsR2(Coda_Object=DBDA_coda_object_df(), mydf=df(), xName=dbda_R2_X_variables(), 
+    fncBayesOlsR2(Coda_Object=DBDA_coda_object_df(), datFrm=df(), xName=dbda_R2_X_variables(), 
                   Intercept= dbda_R2_intercept(), Betas=dbda_R2_betas(), 
                   Level1.Sigma=dbda_R2_res_sigma(), Average.type=dbda_R2_central_tendency())
   }
@@ -15520,7 +15523,7 @@ fncExpAgr <- function(DF, X1, X2, Z, N, Level) {
 #Level= A 1, 2, or 3 level indicator for the type of model 
 #Outcome= Model outcome 
 #Group2 & Group3= level 2 and 3 group names 
-fncHdiBinSmry <- function(MCmatrix, mydf, Level, Outcome, Group2, Group3=NULL, 
+fncHdiBinSmry <- function(MCmatrix, datFrm, Level, Outcome, Group2, Group3=NULL, 
                           Theta=NULL, Omega2=NULL, Omega3=NULL, Average=NULL, 
                           AggrDF="No", AggrN=NULL, Distribution=NULL, Cred.Mass=0.95 ) {
   ###################################################################  
@@ -15556,21 +15559,21 @@ fncHdiBinSmry <- function(MCmatrix, mydf, Level, Outcome, Group2, Group3=NULL,
   ###################################################################  
   #Get order of participants in rows of aggregated data
   if (AggrDF == "Yes") {
-    group2_aggr_factor <- factor(mydf[, Group2], levels=c(mydf[, Group2])) 
+    group2_aggr_factor <- factor(datFrm[, Group2], levels=c(datFrm[, Group2])) 
   } else {
-    group2_aggr_factor <- levels(factor(mydf[, Group2], levels=names(table(sort(mydf[, Group2]))) )) 
+    group2_aggr_factor <- levels(factor(datFrm[, Group2], levels=names(table(sort(datFrm[, Group2]))) )) 
   }
   # Use the aggregated data if needed
   if (AggrDF == "Yes") {
-    mydf <- fncExpAgr(DF=mydf, X1=Group2, X2=Group3, Z=Outcome, N=AggrN, Level=Level) 
+    datFrm <- fncExpAgr(DF=datFrm, X1=Group2, X2=Group3, Z=Outcome, N=AggrN, Level=Level) 
   } else {
-    mydf <- mydf
+    datFrm <- datFrm
   }
   #Make a factor from aggregated data so that it follows the same order
   if (AggrDF == "Yes") {
-    mydf[, Group2] <- factor(mydf[, Group2], levels=group2_aggr_factor)
+    datFrm[, Group2] <- factor(datFrm[, Group2], levels=group2_aggr_factor)
   } else {
-    mydf[, Group2] <- factor(mydf[, Group2], levels=group2_aggr_factor)
+    datFrm[, Group2] <- factor(datFrm[, Group2], levels=group2_aggr_factor)
   }
   #Get the type of estimate 
   if (is.null(Average)) {
@@ -15579,16 +15582,16 @@ fncHdiBinSmry <- function(MCmatrix, mydf, Level, Outcome, Group2, Group3=NULL,
     average_type <- Average
   }
   #Number of level-2 groups
-  numGroups <- length(table(mydf[, Group2]))
+  numGroups <- length(table(datFrm[, Group2]))
   #Number of level-3 categories
   if(Level== 3) {
-    numCats <- length(table(mydf[, Group3]))
+    numCats <- length(table(datFrm[, Group3]))
   }
   #Get the level-2 group names
-  Group2.Names <- sort(unique(mydf[, Group2]))
+  Group2.Names <- sort(unique(datFrm[, Group2]))
   #Get the level-3 group names
   if(Level== 3) {  #Get group-3 rates 
-    Group3.Names <- sort(unique(mydf[, Group3]))
+    Group3.Names <- sort(unique(datFrm[, Group3]))
   } else {
     Group3.Names <- NULL
   }
@@ -15659,17 +15662,17 @@ fncHdiBinSmry <- function(MCmatrix, mydf, Level, Outcome, Group2, Group3=NULL,
   #Enter Group/Cat into summary
   #Level-1, non-hierarchical model
   if(Level== 1) {
-    row_name <- c(names(table(mydf[, Group2])) )
+    row_name <- c(names(table(datFrm[, Group2])) )
   }
   #Level-2, hierarchical model
   if(Level== 2) {
-    row_name <- c(names(table(mydf[, Group2])), rep("Overall", num_rep_Group2) )
+    row_name <- c(names(table(datFrm[, Group2])), rep("Overall", num_rep_Group2) )
   }
   #Level-3, hierarchical model. try() used if "omega" is only param passed into JAGS function
   if(Level== 3) {
-    row_name <- c(names(table(mydf[, Group2])), 
-                  rep(names(table(mydf[, Group3])), 1), "Overall",
-                  try(rep(names(table(mydf[, Group3])), num_rep_Group3)), try(rep("Overall", num_rep_Group3)) )
+    row_name <- c(names(table(datFrm[, Group2])), 
+                  rep(names(table(datFrm[, Group3])), 1), "Overall",
+                  try(rep(names(table(datFrm[, Group3])), num_rep_Group3)), try(rep("Overall", num_rep_Group3)) )
   }
   #Make a variable for the group 2 and 3 names
   postDF[, Group2] <- row_name
@@ -15677,61 +15680,61 @@ fncHdiBinSmry <- function(MCmatrix, mydf, Level, Outcome, Group2, Group3=NULL,
   #Enter Group/Cat counts
   #Level-1, non-hierarchical model
   if(Level== 1) {
-    postDF[, Outcome] <- c(table(mydf[, Outcome], mydf[, Group2])[2,])
+    postDF[, Outcome] <- c(table(datFrm[, Outcome], datFrm[, Group2])[2,])
   }
   #Level-2, hierarchical model
   if(Level== 2) {
-    postDF[, Outcome] <- c(table(mydf[, Outcome], mydf[, Group2])[2,], 
-                           rep(0, nrow(postDF) - length(table(mydf[, Group2])) ))
+    postDF[, Outcome] <- c(table(datFrm[, Outcome], datFrm[, Group2])[2,], 
+                           rep(0, nrow(postDF) - length(table(datFrm[, Group2])) ))
   }
   #Level-3, hierarchical model
   if(Level== 3) {
-    postDF[, Outcome] <- c(table(mydf[, Outcome], mydf[, Group2])[2,], 
-                           table(mydf[, Outcome], mydf[, Group3])[2,],
+    postDF[, Outcome] <- c(table(datFrm[, Outcome], datFrm[, Group2])[2,], 
+                           table(datFrm[, Outcome], datFrm[, Group3])[2,],
                            rep(0, nrow(postDF) - 
-                                 (length(table(mydf[, Group2])) + length(table(mydf[, Group3]))) ))
+                                 (length(table(datFrm[, Group2])) + length(table(datFrm[, Group3]))) ))
   }
   #Enter Group/Cat Ns
   #Level-1, non-hierarchical model
   if(Level== 1) {
-    postDF[, "N"] <- c(colSums(table(mydf[, Outcome], mydf[, Group2])))
+    postDF[, "N"] <- c(colSums(table(datFrm[, Outcome], datFrm[, Group2])))
   }
   #Level-2, hierarchical model
   if(Level== 2) {
-    postDF[, "N"] <- c( colSums(table(mydf[, Outcome], mydf[, Group2])), 
-                        rep(0, nrow(postDF) - length(table(mydf[, Group2])) ))
+    postDF[, "N"] <- c( colSums(table(datFrm[, Outcome], datFrm[, Group2])), 
+                        rep(0, nrow(postDF) - length(table(datFrm[, Group2])) ))
   }
   #Level-3, hierarchical model
   if(Level== 3) {
-    postDF[, "N"] <- c( colSums(table(mydf[, Outcome], mydf[, Group2])), 
-                        colSums(table(mydf[, Outcome], mydf[, Group3])),
+    postDF[, "N"] <- c( colSums(table(datFrm[, Outcome], datFrm[, Group2])), 
+                        colSums(table(datFrm[, Outcome], datFrm[, Group3])),
                         rep(0, nrow(postDF) - 
-                              (length(table(mydf[, Group2])) + length(table(mydf[, Group3]))) ))
+                              (length(table(datFrm[, Group2])) + length(table(datFrm[, Group3]))) ))
   }
   #Enter Group/Cat sums
   #Level-1, non-hierarchical model
   if(Level== 1) {
-    cont_sum_ls1 <- by(mydf[, Outcome], mydf[, Group2], FUN=sum, na.rm = TRUE)
+    cont_sum_ls1 <- by(datFrm[, Outcome], datFrm[, Group2], FUN=sum, na.rm = TRUE)
     class(cont_sum_ls1) <- "list"
-    #cont_sum_ls1 <- factor(mydf[, Group2], levels=group2_aggr_factor)
+    #cont_sum_ls1 <- factor(datFrm[, Group2], levels=group2_aggr_factor)
     postDF[, "Sum"] <- unlist(cont_sum_ls1)
   }
   #Level-2, hierarchical model
   if(Level== 2) {
-    cont_sum_ls1 <- by(mydf[, Outcome], mydf[, Group2], FUN=sum, na.rm = TRUE)
+    cont_sum_ls1 <- by(datFrm[, Outcome], datFrm[, Group2], FUN=sum, na.rm = TRUE)
     class(cont_sum_ls1) <- "list"
     postDF[, "Sum"] <- c( unlist(cont_sum_ls1), 
-                          rep(0, nrow(postDF) - length(table(mydf[, Group2])) ))
+                          rep(0, nrow(postDF) - length(table(datFrm[, Group2])) ))
   }
   #Level-3, hierarchical model
   if(Level== 3) {
-    cont_sum_ls1 <- by(mydf[, Outcome], mydf[, Group2], FUN=sum, na.rm = TRUE)
+    cont_sum_ls1 <- by(datFrm[, Outcome], datFrm[, Group2], FUN=sum, na.rm = TRUE)
     class(cont_sum_ls1) <- "list"
-    cont_sum_ls2 <- by(mydf[, Outcome], mydf[, Group3], FUN=sum, na.rm = TRUE)
+    cont_sum_ls2 <- by(datFrm[, Outcome], datFrm[, Group3], FUN=sum, na.rm = TRUE)
     class(cont_sum_ls2) <- "list"
     postDF[, "Sum"] <- c( unlist(cont_sum_ls1), unlist(cont_sum_ls2) ,
                           rep(0, nrow(postDF) - 
-                                (length(table(mydf[, Group2])) + length(table(mydf[, Group3]))) ))
+                                (length(table(datFrm[, Group2])) + length(table(datFrm[, Group3]))) ))
   }
   
   #Observed rate
@@ -15842,10 +15845,10 @@ fncHdiBinSmry <- function(MCmatrix, mydf, Level, Outcome, Group2, Group3=NULL,
   ## Get the level-3 rates if doing a level-3 model for the plot points
   #I Changed Area into a 3 level factor to get a better 3rd level
   if(Level== 3) { 
-    hspa <- aggregate(mydf[, Outcome] ~ mydf[, Group3] + mydf[, Group2] , data=mydf, FUN="sum")
+    hspa <- aggregate(datFrm[, Outcome] ~ datFrm[, Group3] + datFrm[, Group2] , data=datFrm, FUN="sum")
   }
   if(Level== 3) { 
-    hspb <- aggregate(mydf[, Outcome] ~ mydf[, Group3] + mydf[, Group2] , data=mydf, FUN="length")
+    hspb <- aggregate(datFrm[, Outcome] ~ datFrm[, Group3] + datFrm[, Group2] , data=datFrm, FUN="length")
   }
   #Merge
   if(Level== 3) { 
@@ -16107,7 +16110,7 @@ fncHdiBinP <- function(MCmatrix, Level, View.Order="Alphabetical", View.Level="N
 #                  4. Posterior Predictive Check for groups                    #
 ################################################################################
 #Use the coda object and dataset. Works for normal and log-normal distributions.
-fncGrpPostPredCheck <- function(Coda.Object, mydf, Outcome, Group, Group.Level,
+fncGrpPostPredCheck <- function(Coda.Object, datFrm, Outcome, Group, Group.Level,
                                 Mean.Var, SD.Var, MCnu, Distribution, Num.Lines=NULL, 
                                 Main.Title=NULL, X.Lab=NULL, Bar.Color=NULL, 
                                 Line.Color=NULL, Hist.Breaks=NULL, CEX.size=NULL, 
@@ -16116,29 +16119,29 @@ fncGrpPostPredCheck <- function(Coda.Object, mydf, Outcome, Group, Group.Level,
   #Make coda into as.matrix  
   MC.Chain <- as.matrix( Coda.Object )
   chainLength <- NROW(MC.Chain)  #Chain length
-#  par( mar=c(4,2,2.5,.25) , mgp=c(2.5,0.5,0) , pty="m" )
+  #  par( mar=c(4,2,2.5,.25) , mgp=c(2.5,0.5,0) , pty="m" )
   
   #Get a number of pseudo-random chains
   pltIdx <- floor(seq(1, chainLength, length= Num.Lines)) 
   #Get spread in outcome variable values
-#  xComb <- seq( Min.Val , max(mydf[, Outcome], na.rm=TRUE) , length=501 )
+  #  xComb <- seq( Min.Val , max(datFrm[, Outcome], na.rm=TRUE) , length=501 )
   xComb <- seq( Min.Val , Max.Val , length=501 )
   #Make X limit values, I can set my minimum value
   if (is.null(X.Lim)) {
-#    X.Lim <- c(Min.Val, round(max(mydf[, Outcome], na.rm=TRUE), digits=Round.Digits))
+    #    X.Lim <- c(Min.Val, round(max(datFrm[, Outcome], na.rm=TRUE), digits=Round.Digits))
     X.Lim <- c(Min.Val, round(Max.Val, digits=Round.Digits))
   }
   ## Graph ##
-#  par( mar=c(4,2,2.5,.25) , mgp=c(2.5,0.5,0) , pty="m" )
+  #  par( mar=c(4,2,2.5,.25) , mgp=c(2.5,0.5,0) , pty="m" )
   par( mar=c(8, 6, 3, .25) , mgp=c(2.5,0.5,0) , pty="m" )
   #Allows me to run if I only have 1 group by leaving "generate levels =="No"
   if (nchar(Group.Level) == 0 ) { 
-    hist( mydf[, Outcome], xlab= X.Lab, ylab=NULL, 
+    hist( datFrm[, Outcome], xlab= X.Lab, ylab=NULL, 
           main= Main.Title, breaks=Hist.Breaks, col= Bar.Color, border="white", 
           prob=TRUE, cex.lab=CEX.size, cex=CEX.size, cex.main=CEX.size, 
           xlim=X.Lim, ylim=Y.Lim, lab=NULL, axes=FALSE)
   } else {
-    hist( mydf[, Outcome][mydf[, Group] == Group.Level] , xlab= X.Lab, ylab=NULL, 
+    hist( datFrm[, Outcome][datFrm[, Group] == Group.Level] , xlab= X.Lab, ylab=NULL, 
           main= Main.Title, breaks=Hist.Breaks, col= Bar.Color, border="white", 
           prob=TRUE, cex.lab=CEX.size, cex=CEX.size, cex.main=CEX.size, 
           xlim=X.Lim, ylim=Y.Lim, lab=NULL, axes=FALSE)
@@ -16148,7 +16151,7 @@ fncGrpPostPredCheck <- function(Coda.Object, mydf, Outcome, Group, Group.Level,
   axis(1)  #Put values in labels
   #This adds in minimum value in case it isn't in range (e.g., show negatve range of normal distribution)
   axis(1, at=X.Lim[1]) 
- # box()   #Dropping this for now because it looks better without
+  # box()   #Dropping this for now because it looks better without
   #Add in posterior estimate lines
   for ( chnIdx in pltIdx ) {
     #Normal Distribution
@@ -16845,24 +16848,24 @@ fncSingleXR2 <- function( Coda.Object=NULL, Intercept=NULL, Betas=NULL,
 ################################################################################
 
 #Use the coda object and dataset. Works for normal and log-normal distributions.
-fncBayesOlsR2 <- function(Coda_Object, mydf, xName=NULL, Intercept=NULL,
+fncBayesOlsR2 <- function(Coda_Object, datFrm, xName=NULL, Intercept=NULL,
                           Betas=NULL, Level1.Sigma=NULL, Average.type =NULL) {
   mcmc_coda_object <- as.matrix(Coda_Object, chains=TRUE)
   mean.Intercept <-  mean(mcmc_coda_object[, which(colnames(mcmc_coda_object) == Intercept)])
   median.Intercept <-  median(mcmc_coda_object[, which(colnames(mcmc_coda_object) == Intercept)])
   #Make list to store fitted values (minus the intercept)
-  fitval.mean <- vector(mode="list", length= nrow(mydf))
-  fitval.median <- vector(mode="list", length= nrow(mydf))
+  fitval.mean <- vector(mode="list", length= nrow(datFrm))
+  fitval.median <- vector(mode="list", length= nrow(datFrm))
   #when there is only 1 X
   #when there are multiple X
-  for (i in 1:nrow(mydf)) { 
+  for (i in 1:nrow(datFrm)) { 
     for (j in 1:length(Betas)) {
       if (Average.type=="Mean") {
         fitval.mean[[i]][j] <- mean(mcmc_coda_object[, which(colnames(mcmc_coda_object) %in% Betas[j])]*
-                                      mydf[, which(colnames(mydf) %in% xName[j])][i])
+                                      datFrm[, which(colnames(datFrm) %in% xName[j])][i])
       } else {
         fitval.median[[i]][j] <- median(mcmc_coda_object[, which(colnames(mcmc_coda_object) %in% Betas[j])]*
-                                          mydf[, which(colnames(mydf) %in% xName[j])][i])
+                                          datFrm[, which(colnames(datFrm) %in% xName[j])][i])
       }
     } 
   }
@@ -16881,6 +16884,7 @@ fncBayesOlsR2 <- function(Coda_Object, mydf, xName=NULL, Intercept=NULL,
   R2 <- varFit/(varFit + varRes)
   return(list("R2"=R2, "Variance.Pred.Y"=varFit, "Variance.Residuals"=varRes, "yPRED"=yPRED))
 } #End of function
+
 
 #fncBayesOlsR2(Coda.Object=codaSamples, mydf=mtcars, xName=c("hp","wt"), 
 #              Intercept= "beta0", Betas=c("beta1", "beta2"), 
@@ -16925,26 +16929,26 @@ fncBayesEffectSize <- function( Coda.Object=NULL, Distribution=NULL,
 #                9. Posterior Predictive Check for trend lines                 #
 ################################################################################
 #May only need code converting y-axis to logits for logistic regression to work
-fncBayesOlsPrtPred <- function(Coda.Object=NULL , mydf=NULL,  Reg.Type=NULL, 
+fncBayesOlsPrtPred <- function(Coda.Object=NULL , datFrm=NULL,  Reg.Type=NULL, 
                                Outcome=NULL , Group=NULL,
                                Group.Level=NULL, xName=NULL, parX=NULL, View.Lines=NULL,
                                Num.Lines=NULL, Main.Title=NULL, X.Lab=NULL, 
                                Line.Color=NULL, CEX.size=NULL, X.Lim=NULL, Y.Lim=NULL,
                                X.Min=NULL, X.Max=NULL,
                                PCol=NULL, Add.Lgd=NULL, Leg.Loc=NULL) {
-  y = mydf[, Outcome]
-  x = mydf[, xName, drop=FALSE][1]
-  s = factor(mydf[, Group])
+  y = datFrm[, Outcome]
+  x = datFrm[, xName, drop=FALSE][1]
+  s = factor(datFrm[, Group])
   nSubj = length(unique(s)) # should be same as max(s)
   mcmcMat = as.matrix(Coda.Object, chains=TRUE)
   chainLength = NROW( mcmcMat )
   #-----------------------------------------------------------------------------
-  # mydf with superimposed regression lines and noise distributions:
-#  par( mar=c(4,2,2.5,.25) , mgp=c(2.5,0.5,0) , pty="m" ) #This matches other graphs
+  # datFrm with superimposed regression lines and noise distributions:
+  #  par( mar=c(4,2,2.5,.25) , mgp=c(2.5,0.5,0) , pty="m" ) #This matches other graphs
   par( mar=c(8, 6, 3, .25) , mgp=c(2.5,0.5,0) , pty="m" ) #This matches other graphs
   #Original par
   #par( mar=c(2,2,1,0)+.5 , mgp=c(1.5,0.5,0) )
-  # Plot mydf values:
+  # Plot datFrm values:
   xRang = max(x, na.rm=TRUE) - min(x, na.rm=TRUE)
   yRang = max(y, na.rm=TRUE) - min(y, na.rm=TRUE)
   xLimMult = 0.2
@@ -16955,12 +16959,12 @@ fncBayesOlsPrtPred <- function(Coda.Object=NULL , mydf=NULL,  Reg.Type=NULL,
   ## Make prediction formula ##
   #############################
   #This creates the xComb based on the primary predictor
-#  xComb = seq(xLim[1], xLim[2], length=301)
+  #  xComb = seq(xLim[1], xLim[2], length=301)
   xComb = seq(X.Min, X.Max, length=301)
   #parX vector stores the parameter names from the chains
   #xName has X variable names
   #Vector with X variable mean values
-  txVarMeans <- colMeans(mydf[, xName, drop=FALSE], na.rm=TRUE)
+  txVarMeans <- colMeans(datFrm[, xName, drop=FALSE], na.rm=TRUE)
   #Get beta coefficient names
   tlCoef <- vector()
   for (i in 1:length(parX)) {
@@ -17017,7 +17021,7 @@ fncBayesOlsPrtPred <- function(Coda.Object=NULL , mydf=NULL,  Reg.Type=NULL,
   ##############################################################################
   # DID functions
   if (Reg.Type %in% "OLS: DID" ) {
-    tab1 <- table(mydf[, xName[1]], mydf[, xName[2]])
+    tab1 <- table(datFrm[, xName[1]], datFrm[, xName[2]])
     xvalPost <- as.numeric(rownames(tab1))
   }
   PostVals <- vector()
@@ -17066,13 +17070,13 @@ fncBayesOlsPrtPred <- function(Coda.Object=NULL , mydf=NULL,  Reg.Type=NULL,
   #Aggregates data to put in as optional observed trend values  
   #Make smaller datasets for the intervention and control groups
   if (Reg.Type %in% "OLS: DID" ) {
-    mydf0 <- mydf[which( mydf[, xName[2]] == min(mydf[, xName[2]], na.rm=T)), c(Outcome, xName[1:2])]
-    mydf1 <- mydf[which( mydf[, xName[2]] == max(mydf[, xName[2]], na.rm=T)), c(Outcome, xName[1:2])]
+    datFrm0 <- datFrm[which( datFrm[, xName[2]] == min(datFrm[, xName[2]], na.rm=T)), c(Outcome, xName[1:2])]
+    datFrm1 <- datFrm[which( datFrm[, xName[2]] == max(datFrm[, xName[2]], na.rm=T)), c(Outcome, xName[1:2])]
   }
   #Make DID aggregated data observed points in the graph 
   if (Reg.Type %in% "OLS: DID" ) { 
-    agDID0  <- aggregate(mydf0[, Outcome] ~ mydf0[, xName[1]] + mydf0[, xName[2]], FUN="mean")
-    agDID1a <- aggregate(mydf1[, Outcome] ~ mydf1[, xName[1]] + mydf1[, xName[2]], FUN="mean")
+    agDID0  <- aggregate(datFrm0[, Outcome] ~ datFrm0[, xName[1]] + datFrm0[, xName[2]], FUN="mean")
+    agDID1a <- aggregate(datFrm1[, Outcome] ~ datFrm1[, xName[1]] + datFrm1[, xName[2]], FUN="mean")
   }
   ##############################################################################
   
@@ -17110,9 +17114,9 @@ fncBayesOlsPrtPred <- function(Coda.Object=NULL , mydf=NULL,  Reg.Type=NULL,
     }
   }
   
-  #Determine which observed mydf lines to view
+  #Determine which observed datFrm lines to view
   if (View.Lines %in% c("Unit", "Unit: Lines")) {
-      #For specific groups
+    #For specific groups
     for ( sIdx in 1:nSubj ) {
       thisSrows <- (as.numeric(s) == as.numeric(s[s == Group.Level]))
       lines( x[thisSrows, ] , y[thisSrows] , type= line_type, pch=19, col= PCol, cex=CEX.size ) 
@@ -17192,12 +17196,13 @@ fncBayesOlsPrtPred <- function(Coda.Object=NULL , mydf=NULL,  Reg.Type=NULL,
   #  return(list( ))
   #-----------------------------------------------------------------------------
 }
+
 ################################################################################
 
 ################################################################################
 #             10. Function to sort parameter names into a list                 #
 ################################################################################
-fncBayesMultiOlsPPpar <- function(Coda.Object=NULL , mydf=NULL,  Reg.Type=NULL, 
+fncBayesMultiOlsPPpar <- function(Coda.Object=NULL , datFrm=NULL,  Reg.Type=NULL, 
                                   Outcome=NULL , Group=NULL,
                                   xName=NULL, parX=NULL) {
   #Make list of parameter names, requires that they are entered by parameter type
@@ -17242,15 +17247,19 @@ fncBayesMultiOlsPPpar <- function(Coda.Object=NULL , mydf=NULL,  Reg.Type=NULL,
 ################################################################################
 #                11. Function to put coefficients into a formula               #
 ################################################################################
-fncBayesOlsPPcoef <- function( parX=NULL, Coda.Object=NULL , mydf=NULL,  
+fncBayesOlsPPcoef <- function( parX=NULL, Coda.Object=NULL , datFrm=NULL,  
                                Reg.Type=NULL, Outcome=NULL, Group=NULL, 
-                               xName=NULL) {
+                               xName=NULL, mc_row_number=NULL) {
   #Makes the mcmc object
   mcmcMat = as.matrix(Coda.Object, chains=TRUE)
+  #Row number if still == NULL
+  if (is.null(  mc_row_number)) {
+    mc_row_number <- 1
+  }
   #parX vector stores the parameter names from the chains
   #xName has X variable names
   #Vector with X variable mean values
-  txVarMeans <- colMeans(mydf[, xName, drop=FALSE], na.rm=TRUE)
+  txVarMeans <- colMeans(datFrm[, xName, drop=FALSE], na.rm=TRUE)
   #Get beta coefficient names
   tlCoef <- vector()
   for (i in 1:length(parX)) {
@@ -17286,7 +17295,7 @@ fncBayesOlsPPcoef <- function( parX=NULL, Coda.Object=NULL , mydf=NULL,
   #This adds coefficients to each of the key parameter names
   #This creates the values needed for the graphs
   for (j in 1:length(parX)) {
-    tlis[[ j]] <- mcmcMat[1, paste0( parX[j])]
+    tlis[[ j]] <- mcmcMat[mc_row_number, paste0( parX[j])]
   }
   return(list( "ttnew2"=ttnew2, "tlis"=tlis))
 }  #end of subfunction
@@ -17295,16 +17304,16 @@ fncBayesOlsPPcoef <- function( parX=NULL, Coda.Object=NULL , mydf=NULL,
 ################################################################################
 #       12. Function to graph multiple hierarchical regression lines           #
 ################################################################################
-fncBayesMultiOlsPrtPred <- function(Coda.Object=NULL , mydf=NULL,  Reg.Type=NULL, 
+fncBayesMultiOlsPrtPred <- function(Coda.Object=NULL , datFrm=NULL,  Reg.Type=NULL, 
                                     Outcome=NULL , Group=NULL, xName=NULL, parX=NULL, 
                                     View.Lines=NULL, Main.Title=NULL, X.Lab=NULL, 
                                     Line.Color=NULL, CEX.size=NULL, X.Lim=NULL, Y.Lim=NULL,
-                                    X.Min=NULL, X.Max=NULL,
-                                    PCol=NULL, Add.Lgd=NULL, Leg.Loc=NULL) {
+                                    X.Min=NULL, X.Max=NULL, PCol=NULL, Add.Lgd=NULL, 
+                                    Leg.Loc=NULL, mc_row_number=NULL) {
   #-----------------------------------------------------------------------------
-  y = mydf[, Outcome]
-  x = mydf[, xName, drop=FALSE][1]
-  s = factor(mydf[, Group])
+  y = datFrm[, Outcome]
+  x = datFrm[, xName, drop=FALSE][1]
+  s = factor(datFrm[, Group])
   nSubj = length(unique(s)) # should be same as max(s)
   mcmcMat = as.matrix(Coda.Object, chains=TRUE)
   chainLength = NROW( mcmcMat )
@@ -17319,15 +17328,16 @@ fncBayesMultiOlsPrtPred <- function(Coda.Object=NULL , mydf=NULL,  Reg.Type=NULL
   yLim= c( min(y) - yLimMult*yRang , max(y) + yLimMult*yRang )
   #The min and max are alternatives to x limits
   #This creates the xComb based on the primary predictor
-#  xComb = seq(xLim[1], xLim[2], length=301)
+  #  xComb = seq(xLim[1], xLim[2], length=301)
   xComb = seq(X.Min, X.Max, length=301)
   ## Make parameters ##
-  multi_pars <- fncBayesMultiOlsPPpar(Coda.Object=Coda.Object , mydf=mydf,  
+  multi_pars <- fncBayesMultiOlsPPpar(Coda.Object=Coda.Object , datFrm=datFrm,  
                                       Reg.Type=Reg.Type, Outcome=Outcome , Group=Group,
                                       xName=xName, parX=parX)
   #Get the list of parameters for ttnew2 and tlis
-  multi_coefs <- lapply(multi_pars, fncBayesOlsPPcoef, Coda.Object=Coda.Object, mydf=mydf,  
-                        Reg.Type=Reg.Type, Outcome=Outcome, Group=Group, xName=xName)
+  multi_coefs <- lapply(multi_pars, fncBayesOlsPPcoef, Coda.Object=Coda.Object, datFrm=datFrm,  
+                        Reg.Type=Reg.Type, Outcome=Outcome, Group=Group, xName=xName,
+                        mc_row_number=mc_row_number)
   #Seperate the list elements
   tl11 <- lapply(multi_coefs, `[[`, 1) #linear formula
   tl22 <- lapply(multi_coefs, `[[`, 2) #regression coefficients
@@ -17343,7 +17353,7 @@ fncBayesMultiOlsPrtPred <- function(Coda.Object=NULL , mydf=NULL,  Reg.Type=NULL
   } else {
     multi_line_color <- c( rep(Line.Color[1], length(ttnew2)-1), Line.Color[2])
   }
-#Multiple line width
+  #Multiple line width
   multi_line_width <- c()
   if(length(Line.Color) ==1 ) { 
     multi_line_width <- rep(4, nSubj)
@@ -17375,9 +17385,9 @@ fncBayesMultiOlsPrtPred <- function(Coda.Object=NULL , mydf=NULL,  Reg.Type=NULL
   #Legend color
   pcol_vector <- c(PCol, Line.Color)
   #Legend text
-#  if (Reg.Type %in% c("Hierarchical OLS: Linear", "Hierarchical OLS: Quadratic", "Hierarchical OLS: Cubic") ) {
-#    legend_text <- c(paste0("Observed ", abbreviate(Group, 8),": All"), "Posterior Estimate")
-#  }
+  #  if (Reg.Type %in% c("Hierarchical OLS: Linear", "Hierarchical OLS: Quadratic", "Hierarchical OLS: Cubic") ) {
+  #    legend_text <- c(paste0("Observed ", abbreviate(Group, 8),": All"), "Posterior Estimate")
+  #  }
   if (length(Line.Color) == 1) { 
     legend_text <- c(paste0("Observed ", abbreviate(Group, 8),": All"), "Posterior Estimate")
   } else {

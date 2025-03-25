@@ -425,6 +425,7 @@
                    h5("Calibration Curve, type into #1 above: Calibration.Curve() . Select 'Graph' in #2 (or 'Results' for statistics). Change the number of bins, text location, colors, digits, and size."),
                    h5("Defaults are: Calibration.Curve(BINS=10, POS=3, CEX=2, VAL=FALSE, RND=2, PCol='blue', LCol='red', LWD=5, YLim). VAL=TRUE bins data by unique predictions."),
                    h5("Works for Linear, Poisson, Quantile, GLS, and Logistic models. Hosmer-Lemeshow X2 test for logistic models."),
+                   h5("Example code for summary of Bayesian posterior: summarizePost(as.matrix(DBDA_coda_object_df(), chains=TRUE)[, 'Parameter']) ."),
                    verbatimTextOutput("prnt_calculation"),
                    plotOutput("plt_calculation", height = 500, width = "100%"),
                    br(),

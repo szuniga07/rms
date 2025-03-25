@@ -14016,7 +14016,7 @@ dbda_post_plot_par1 <- reactive({
 #Working on correlations
 output$dbdaPostCompareParYN <- renderUI({
   selectInput("dbdaPostComP12", "2. Compare parameters?", 
-              choices = c("No", "Subtration", "Addition", "Division","Multiplication", "Correlation", "Covariance"), 
+              choices = c("No", "Subtraction", "Addition", "Division","Multiplication", "Correlation", "Covariance"), 
               multiple=FALSE, selected="No")
 })
 #2a. Reactive function for directly above
@@ -14188,7 +14188,7 @@ dbda_post_run_Yes_No <- reactive({
 #20. Do you want to run the function
 output$dbdaPostEffSize <- renderUI({
   selectInput("dbdaPstES", "20. View effect size by distribution?", 
-              choices = c("No","Beta", "Normal", "Log-normal", "Skew-normal", "Gamma", "Weibull", "t"), 
+              choices = c("No","Correlation","Beta", "Normal", "Log-normal", "Skew-normal", "Gamma", "Weibull", "t"), 
               multiple=FALSE, selected="No")
 })
 #20A. Reactive function for above
@@ -14198,7 +14198,7 @@ dbda_post_effect_size <- reactive({
 
 # Reactive function to indicate if we compare 2 groups and we want an effect size
 dbda_post_want_to_run_effect_size <- reactive({
-  ifelse(dbda_post_plot_compare_YN()=="Subtration" & dbda_post_run_Yes_No()== "Yes" & 
+  ifelse(dbda_post_plot_compare_YN()=="Subtraction" & dbda_post_run_Yes_No()== "Yes" & 
            dbda_post_effect_size() != "No", 1, 0 )
   })
 
@@ -14216,7 +14216,7 @@ dbda_post_effect_size_posterior <- reactive({
 plot_dbda_posterior_distribution <- reactive({
   if(dbda_post_run_Yes_No() == "Yes") {
     par(mar=c(6, 7, 4, 2))
-    if(dbda_post_plot_compare_YN() == "Subtration") {
+    if(dbda_post_plot_compare_YN() == "Subtraction") {
       #Difference between 2 posterios
       plotPost( rowMeans(as.matrix(DBDA_coda_object_df())[, dbda_post_plot_par1(), drop=FALSE]) - rowMeans(as.matrix(DBDA_coda_object_df())[, dbda_post_plot_par2(), drop=FALSE]), 
                 compVal= dbda_post_comparative_val(), cenTend= dbda_post_central_tendency(),
@@ -17102,6 +17102,16 @@ fncBayesEffectSize <- function( Coda.Object=NULL, Distribution=NULL,
     tdenom <- mean(c(MC.Matrix[, yVal1[2]], MC.Matrix[, yVal2[2]]))
     Effect.Size.Output <- tnum/tdenom
   }
+  ################
+  # Correlations #
+  ################
+  #This calculates the q effec size index
+  if(Distribution == "Correlation") {
+    Zr1 <- 1/2 * log((1 + MC.Matrix[, yVal1[1]])/(1 - MC.Matrix[, yVal1[1]]))
+    Zr2 <- 1/2 * log((1 + MC.Matrix[, yVal2[1]])/(1 - MC.Matrix[, yVal2[1]]))
+    Effect.Size.Output <- abs(Zr1 -Zr2 )
+  }
+  
   return("Effect.Size.Posterior"=Effect.Size.Output )
 }
 

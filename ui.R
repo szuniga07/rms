@@ -533,14 +533,16 @@
                      column(3, 
                             uiOutput("smryRc_y")),
                      column(3, offset=1,
-                            uiOutput("smryRc_x"))
+                            uiOutput("smryRc_x")),
+                     column(3, offset=1,
+                            uiOutput("smryRc_strat_yes_no"))
                    ),
                    br(),
                    fluidRow(
                      column(3, 
-                            uiOutput("smryRc_strat_yes_no")),
-                     column(3, offset=1,
                             uiOutput("smryRc_z")),
+                     column(3, offset=1,
+                            uiOutput("SumRc_grp_levs")),
                      column(3, offset=1,
                             uiOutput("smryrc_choice"))
                    ),

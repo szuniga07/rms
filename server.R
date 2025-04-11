@@ -7423,7 +7423,7 @@ fncSctrPlt <- function(DF, X, Y, sct_plt_clr, CT, Add.Reg, Leg.Loc) {
 
 #1. Y variable "Select the response variable"
 output$smryRc_y <- renderUI({                                
-  selectInput("smryrcY", "1. Select the continuous outcome variable",        
+  selectInput("smryrcY", "1. Select the continuous outcome",        
               choices = var(), multiple=FALSE, selected=var()[1] ) 
 })
 #1A. Reactive function for the Y variable
@@ -7446,6 +7446,10 @@ output$smryRc_strat_yes_no <- renderUI({
   selectInput("smryRcStratYN", "3. Do you want to stratify?", 
               choices = c("No", "Yes"), multiple=FALSE, selected="No")     
 })
+#3A. Reactive function for the yes/no stratification variable
+smryRc_Z_strat_yn <- reactive({
+  input$smryRcStratYN
+})
 #4. Select a stratification variable
 output$smryRc_z <- renderUI({                                 #Same idea as output$vy
   selectInput("smryrcZ", "4. Select the stratification variable", 
@@ -7456,18 +7460,38 @@ output$smryRc_z <- renderUI({                                 #Same idea as outp
 smryRc_Z_var <- reactive({
   input$smryrcZ
 })
-#5. Run the graph
+#4B. Reactive function to get group levels from the stratification variable
+sumrc_groups <- reactive({                 
+  if(smryRc_Z_strat_yn() == "Yes") {
+    sort(unique(df()[, smryRc_Z_var()])) 
+  }
+})
+#5. Select specific groups
+output$SumRc_grp_levs <- renderUI({                                 
+  selectInput("sumrcGrpLvs", "5. Highlight specific groups?", 
+              choices = sumrc_groups(), multiple=TRUE)     
+})
+#5A. Reactive function to get group levels
+sumrc_Group_Levels <- reactive({                 
+  input$sumrcGrpLvs
+})
+#6. Run the graph
 output$smryrc_choice <- renderUI({  
-  selectInput("smryRcChoice", "5. Run the summary plot now?", 
+  selectInput("smryRcChoice", "6. Run the summary plot now?", 
               choices = c("No", "Yes"), multiple=FALSE, selected="No")     
+})
+#6A. Reactive function for the yes/no stratification variable
+smryRc_Z_choice <- reactive({
+  input$smryRcChoice
 })
 #6. Run the function below
 summaryRC_plot_function_run <- reactive({
-  if(input$smryRcChoice == "Yes") {
-    if(input$smryRcStratYN == "Yes") {    
-    fncSumRcPlot(X=smryRc_X_var(), Y=smryRc_outcome(), Z=smryRc_Z_var(), DF=df())
+  if(smryRc_Z_choice() == "Yes") {
+    if(smryRc_Z_strat_yn() == "Yes") {    
+    fncSumRcPlot(X=smryRc_X_var(), Y=smryRc_outcome(), Z=smryRc_Z_var(), 
+                 GroupLevs= sumrc_Group_Levels(), DF=df())
   }  else {
-    fncSumRcPlot(X=smryRc_X_var(), Y=smryRc_outcome(), Z=NULL, DF=df())
+    fncSumRcPlot(X=smryRc_X_var(), Y=smryRc_outcome(), Z=NULL, GroupLevs= NULL, DF=df())
   }
 } 
 })
@@ -7478,7 +7502,14 @@ output$summaryRC_plot_function_out <- renderPlot({
   }
 })
 ## Function that creates summaryRc plot ##
-fncSumRcPlot <- function(X, Y, Z=NULL, DF) {
+fncSumRcPlot <- function(X, Y, Z=NULL, GroupLevs, DF) {
+  #Subset data
+  if(is.null(GroupLevs)) {
+    DF <- DF
+  } else {
+    DF <- DF[DF[, Z] %in% GroupLevs, ]
+  }
+  
   Vnms <- X
   #Create formula
   if(is.null(Z)) {
@@ -7497,7 +7528,6 @@ fncSumRcPlot <- function(X, Y, Z=NULL, DF) {
               datadensity=TRUE, trim=.01, label.curves=list(keys='lines'), nloc=FALSE)
   }
 }
-
 
 ## Missing variable plots
 #Select the outcome

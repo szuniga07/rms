@@ -2396,6 +2396,7 @@
                    h3("Graph the (non-)Hierarchical Estimation of 1, 2, and 3 level models"),
                    br(),
                    h4("View different level parameters, select subsets, and modify the graph."),
+                   h5("To view random effects, select level 1 in #1 above and enter the +/- random intercept SD (beta_0_sigma) estimate as a target in #9 below. Same steps for random slopes."),
                    fluidRow(   
                      column(3, 
                             uiOutput("dbdaHierlphaNum")),

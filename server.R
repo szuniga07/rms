@@ -13967,6 +13967,187 @@ fncImportantX <- function(y=NULL, data.name=NULL, regmth=NULL, keep=NULL, dropX=
 }
 
 ################################################################################
+#                 Functions for descriptives & ANOVAS                          #
+################################################################################
+
+################################################################################
+#             1. Function to give descriptive info for multi Y                 #
+################################################################################
+
+fncDesResMulti <-  function(y_var=NULL, x_vars=NULL, mydat=NULL ) {
+  
+  #List for data
+  multi_res_ls <- list()
+  
+  #Get group summaries
+  for (i in 1:length(y_var)) {
+    multi_res_ls[[i]] <- fncDesResGrp(y_var=y_var[i], x_vars=x_vars, mydat=mydat )
+  }
+  #Convert into a single data frame
+  multi_res_df <- do.call(rbind.data.frame, multi_res_ls)
+  
+  #Get overall summary of Y
+  all_res_df <- fncDesRes(y_var=y_var, mydat=mydat)  
+  
+  return(list("Overall"= all_res_df, "Groups"=multi_res_df))
+}
+#fncDesResMulti(y_var=c("mpg", "hp", "disp"), x_vars=c("vs","am"), mydat=mtcars )
+
+################################################################################
+#             2. Function to give descriptive info for groups                  #
+################################################################################
+
+fncDesResGrp <-  function(y_var=NULL, x_vars=NULL, mydat=NULL ) {
+  #Get levels and statistics  
+  x_var_ls <- list()
+  x_levs_ls <- list()
+  mn_res_ls <- list()
+  sd_res_ls <- list()
+  n_res_ls <- list()
+  
+  for (i in 1:length(x_vars)) {
+    x_var_ls[[i]] <- rep(x_vars[i], length(sort(unique(mydat[, x_vars[i]]))))
+    x_levs_ls[[i]] <- as.character(sort(unique(mydat[, x_vars[i]])))
+    mn_res_ls[[i]] <- data.frame(matrix(by(mydat[, y_var], mydat[, x_vars[i]], FUN=mean, na.rm=T), ncol=1))
+    sd_res_ls[[i]] <- data.frame(matrix(by(mydat[, y_var], mydat[, x_vars[i]], FUN=sd, na.rm=T), ncol=1))
+    n_res_ls[[i]] <- data.frame(matrix(by(mydat[, y_var], mydat[, x_vars[i]], FUN= fncSumCC), ncol=1))
+  }
+  #Convert output to columns with row names
+  x_var_df <- unlist(x_var_ls)
+  mn_res_df <- do.call(rbind.data.frame, mn_res_ls)
+  sd_res_df <- do.call(rbind.data.frame, sd_res_ls)
+  n_res_df <- do.call(rbind.data.frame, n_res_ls)
+  
+  #Data frame of mean, sd , N
+  results_DF <- cbind(y_var, x_var_df, unlist(x_levs_ls), mn_res_df, sd_res_df, n_res_df)
+  colnames(results_DF) <- c("Outcome","Variable", "Level","Mean", "SD", "N")
+  
+  #Aggregate sum so I can get the proportion of cases at each level
+  ag1 <- aggregate(N~Variable, FUN="sum", data=results_DF)
+  colnames(ag1)[2] <- "Total"
+  #Merge into main data
+  results_DF <- merge(results_DF, ag1, by= "Variable")
+  #Create proportion variable
+  results_DF$Proportion <- results_DF$N/results_DF$Total 
+  #Re-arrange order 
+  results_DF <- results_DF[, c("Outcome","Variable", "Level","Mean", "SD", "N", "Total", "Proportion")]
+  
+  return(results_DF)
+}
+
+################################################################################
+#                    3. Function to give descriptive info                      #
+################################################################################
+fncDesRes <-  function(y_var=NULL, mydat=NULL ) {
+  #Lists to store results
+  mn_res_ls <- list()
+  sd_res_ls <- list()
+  n_res_ls <- list()
+  
+  for (i in 1:length(y_var)) {
+    mn_res_ls[[i]] <- mean(mydat[, y_var[i]], na.rm=T)
+    sd_res_ls[[i]] <- sd(mydat[, y_var[i]], na.rm=T) 
+    n_res_ls[[i]] <- length(mydat[, y_var[i]]) - sum(is.na(mtcars$hp)) 
+  }
+  #Convert output to columns with row names
+  mn_res_df <- do.call(rbind.data.frame, mn_res_ls)
+  sd_res_df <- do.call(rbind.data.frame, sd_res_ls)
+  n_res_df <- do.call(rbind.data.frame, n_res_ls)
+  
+  #Data frame of mean, sd , N
+  results_DF <- cbind(y_var, mn_res_df, sd_res_df, n_res_df)
+  colnames(results_DF) <- c("Outcome","Mean", "SD", "N")
+  
+  return(results_DF)
+}
+
+################################################################################
+#                     4. Function to do MULTI ANOVAs and Tukeys                #
+################################################################################
+
+fncAnovaMulti <-  function(y_var=NULL, x_vars=NULL, mydat=NULL ) {
+  
+  #List for data
+  multi_res_ls <- list()
+  multi_tukey_ls <- list()
+  
+  #Get group summaries
+  for (i in 1:length(y_var)) {
+    multi_res_ls[[i]] <- fncAnova(y_var=y_var[i], x_vars=x_vars, mydat=mydat )$ANOVA
+    multi_tukey_ls[[i]] <- fncAnova(y_var=y_var[i], x_vars=x_vars, mydat=mydat )$Tukey
+  }
+  
+  #Convert into a single data frame
+  multi_res_df <- do.call(rbind.data.frame, multi_res_ls)
+  multi_tukey_df <- do.call(rbind.data.frame, multi_tukey_ls)
+  
+  return(list("ANOVA"=multi_res_df, "Tukey"= multi_tukey_df))
+  #  return(aov_res)
+}
+#fncAnovaMulti(y_var=c("mpg", "hp", "disp"), x_vars=c("vs","am"), mydat=mtcars )
+
+################################################################################
+#                     5. Function to do ANOVAs and Tukeys                      #
+################################################################################
+
+fncAnova <-  function(y_var=NULL, x_vars=NULL, mydat=NULL ) {
+  #Make lists
+  Form_1 <- list()
+  aov_res <- list()
+  
+  #Run ANOVA tests
+  for (i in 1:length(x_vars)) {
+    #Formula for the ANOVA
+    Form_1[[i]] <- as.formula(paste(paste0(y_var, "~"),   
+                                    paste( "as.factor(", x_vars[i],")" )))
+    #Get the p-value from the ANOVA
+    aov_res[[i]] <- unlist(summary(aov(formula= Form_1[[i]], data=mydat))[[1]][5])[1]
+  }
+  
+  #Run Tukey HSD
+  tukey_ls <- list()
+  Form_2 <- list()
+  for (i in 1:length(x_vars)) {
+    #Formula for the ANOVA
+    Form_2[[i]] <- as.formula(paste(paste0(y_var, "~"),   
+                                    paste( "as.factor(", x_vars[i],")" )))
+    #Tukey's Pairwise comparisons
+    tukey_ls[[i]] <- data.frame(TukeyHSD(aov(formula= Form_1[[i]], data=mydat))[[1]], 
+                                "Outcome"= y_var,"Variable"=x_vars[i],
+                                "Levels"= rownames(data.frame(TukeyHSD(aov(formula= Form_1[[i]], data=mydat))[[1]]) ))    
+  }
+  
+  #Set up ANOVA results
+  aov_res_df <- do.call(rbind.data.frame, aov_res)
+  #Create the data frame
+  aov_df <- data.frame(y_var, x_vars, aov_res_df)
+  colnames(aov_df) <- c("Outcome", "Variable", "P-value")
+  #Make symbol for significance
+  aov_df$Significance <- ""
+  aov_df[, "Significance"][aov_df$"P-value" < 0.1 ] <- "+"
+  aov_df[, "Significance"][aov_df$"P-value" < 0.05 ] <- "*"
+  aov_df[, "Significance"][aov_df$"P-value" < 0.01 ] <- "**"
+  aov_df[, "Significance"][aov_df$"P-value" < 0.001 ] <- "***"
+  
+  #Set up Tukeys
+  tukey_res_df <- do.call(rbind.data.frame, tukey_ls)
+  
+  return(list("ANOVA"=aov_df, "Tukey"= tukey_res_df))
+  
+  #  return(aov_res)
+}
+
+################################################################################
+#                6. Function to sum complete cases for groups                  #
+################################################################################
+#This give the sum for a variable
+fncSumCC <- function(x) {
+  sum(complete.cases(x))
+}
+
+
+
+################################################################################
 #                           Bayesian Analysis                                  #
 ################################################################################
 
